@@ -1,3 +1,15 @@
+# Mac
+.DS_Store
+
+# Node.js
+node_modules
+
+# VisualStudioCode
+.vscode
+
+# Distributed files
+dist
+
 # Logs
 logs
 *.log
