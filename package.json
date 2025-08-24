@@ -10,28 +10,18 @@
     "design assets"
   ],
   "files": [
-    "dist/icons/*.{woff,woff2,css,json,css,scss,svg}",
-    "dist/tokens/**/*.{css,scss,json,js,ts}",
+    "dist/**/*",
+    "!dist/**/.DS_Store",
     "!.DS_Store"
   ],
   "chassis": {
     "defaults": {
-      "brandFolder": "default",
-      "tokensTheme": "light"
+      "brandFolder": "default"
     },
     "build": {
       "brands": [
         "chassis",
         "test"
-      ],
-      "themes": [
-        "light",
-        "dark"
-      ],
-      "templates": [
-        "large",
-        "medium",
-        "small"
       ],
       "apps": {
         "docs": [
@@ -50,8 +40,14 @@
   },
   "scripts": {
     "dist": "node build/copy-assets.js",
+    "build": "node build/copy-assets.js",
+    "clean": "rm -rf dist",
+    "validate": "eslint build/*.js",
+    "test": "node test/build.test.js",
+    "dev": "npm run clean && npm run build",
+    "stats": "node build/analyze-assets.js",
     "release-version": "node build/bump-version.js",
-    "release": "pnpm tokens && pnpm icons"
+    "release": "pnpm run clean && pnpm run build && pnpm run test"
   },
   "devDependencies": {
     "clean-css-cli": "^5.6.3",

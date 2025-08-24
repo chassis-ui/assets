@@ -3,19 +3,22 @@
 /*!
  * Script to update version number references in the project.
  * Copyright 2025 Ozgur Gunes
- * Licensed under MIT (https://github.com/ozgurgunes/chassis-tokens/blob/main/LICENSE)
+ * Licensed under MIT (https://github.com/ozgurgunes/chassis-assets/blob/main/LICENSE)
  */
 
 import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import fs from 'node:fs/promises'
 
+const execFileAsync = promisify(execFile)
 const DRY_RUN = process.argv.includes('--dry') || process.argv.includes('--dry-run')
 
 // These are the files we only care about replacing the version
 const FILES = [
-  'build/font/css.hbs',
-  'build/font/scss.hbs',
-  'build/tokens/build.js'
+  'package.json',
+  'README.md',
+  'build/copy-assets.js',
+  'build/api.js'
 ]
 
 // Blame TC39... https://github.com/benjamingr/RegExp.escape/issues/37
@@ -48,17 +51,19 @@ async function replaceRecursively(file, oldVersion, newVersion) {
   await fs.writeFile(file, newString, 'utf8')
 }
 
-function bumpNpmVersion(newVersion) {
+async function bumpNpmVersion(newVersion) {
   if (DRY_RUN) {
+    console.log(`Would run: pnpm version ${newVersion} --no-git-tag-version`)
     return
   }
 
-  execFile('npm', ['version', newVersion, '--no-git-tag'], { shell: true }, (error) => {
-    if (error) {
-      console.error(error)
-      process.exit(1)
-    }
-  })
+  try {
+    await execFileAsync('pnpm', ['version', newVersion, '--no-git-tag-version'], { shell: true })
+    console.log(`Successfully updated package.json to version ${newVersion}`)
+  } catch (error) {
+    console.error('Failed to update package.json version:', error.message)
+    process.exit(1)
+  }
 }
 
 function showUsage(args) {
@@ -84,12 +89,24 @@ async function main(args) {
     showUsage(args)
   }
 
-  bumpNpmVersion(newVersion)
+  // Validate semantic versioning format
+  const semverRegex = /^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/
+  if (!semverRegex.test(newVersion)) {
+    console.error(`Error: "${newVersion}" is not a valid semantic version`)
+    process.exit(1)
+  }
 
+  console.log(`${DRY_RUN ? '[DRY RUN] ' : ''}Updating version from ${oldVersion} to ${newVersion}`)
+
+  // First update package.json
+  await bumpNpmVersion(newVersion)
+
+  // Then update other files
   try {
     await Promise.all(FILES.map(file => replaceRecursively(file, oldVersion, newVersion)))
+    console.log(`${DRY_RUN ? '[DRY RUN] ' : ''}Version update completed successfully`)
   } catch (error) {
-    console.error(error)
+    console.error('Error updating files:', error.message)
     process.exit(1)
   }
 }
