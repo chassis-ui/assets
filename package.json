@@ -10,8 +10,9 @@
     "design assets"
   ],
   "files": [
-    "dist/**/*",
-    "!dist/**/.DS_Store",
+    "source/**/*",
+    "build/**/*",
+    "!source/**/.DS_Store",
     "!.DS_Store"
   ],
   "chassis": {

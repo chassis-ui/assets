@@ -10,6 +10,26 @@ This project is part of the Chassis ecosystem and specifically handles asset man
 > [!WARNING]
 > This project uses `pnpm` for package management. Ensure you have `pnpm` installed globally before running the commands below.
 
+## 🚀 Quick Start
+
+### NPM Package (Recommended)
+
+```bash
+npm install @ozgurgunes/chassis-assets
+```
+
+### Git Submodule
+
+```bash
+git submodule add https://github.com/ozgurgunes/chassis-assets.git assets/chassis
+```
+
+### GitHub Releases
+
+Download pre-built assets from [GitHub Releases](https://github.com/ozgurgunes/chassis-assets/releases).
+
+**👉 For detailed usage instructions, see [USAGE.md](./USAGE.md)**
+
 ## Install
 
 ```shell
