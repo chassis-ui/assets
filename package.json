@@ -40,17 +40,26 @@
     "access": "public"
   },
   "scripts": {
+    "astro-build": "astro build --root site && rm -rf _site && cp -r site/dist _site",
+    "astro-build:production": "node ../chassis-docs/scripts/update-asset-refs.js && astro build --root site && rm -rf _site && cp -r site/dist _site && node ../chassis-docs/scripts/update-asset-refs.js --restore",
+    "astro-dev": "astro dev --root site --port 4322",
+    "astro-preview": "astro preview --root site",
     "dist": "node build/copy-assets.js",
     "build": "node build/copy-assets.js",
+    "build:site": "npm run astro-build:production",
     "clean": "rm -rf dist",
     "validate": "eslint build/*.js",
     "test": "node test/build.test.js",
     "dev": "npm run clean && npm run build",
+    "dev:site": "npm run astro-dev",
     "stats": "node build/analyze-assets.js",
     "release-version": "node build/bump-version.js",
     "release": "pnpm run clean && pnpm run build && pnpm run test"
   },
   "devDependencies": {
+    "astro": "^5.12.9",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
     "clean-css-cli": "^5.6.3",
     "eslint": "^9.3.0",
     "eslint-config-prettier": "^9.1.0",

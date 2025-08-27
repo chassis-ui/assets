@@ -131,7 +131,9 @@ await chassis.build({
   platforms: ['web'],
   apps: ['docs']
 })
-```## 🎯 Best Practices
+```
+
+## 🎯 Best Practices
 
 ### Choose Your Strategy Based On:
 
