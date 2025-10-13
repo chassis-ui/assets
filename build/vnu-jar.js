@@ -3,7 +3,7 @@
 /*!
  * Script to run vnu-jar if Java is available.
  * Copyright 2025 Ozgur Gunes
- * Licensed under MIT (https://github.com/ozgurgunes/chassis-tokens/blob/main/LICENSE)
+ * Licensed under MIT (https://github.com/chassis-ui/tokens/blob/main/LICENSE)
  */
 
 import { execFile, spawn } from 'node:child_process'

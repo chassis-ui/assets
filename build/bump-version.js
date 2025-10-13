@@ -3,7 +3,7 @@
 /*!
  * Script to update version number references in the project.
  * Copyright 2025 Ozgur Gunes
- * Licensed under MIT (https://github.com/ozgurgunes/chassis-assets/blob/main/LICENSE)
+ * Licensed under MIT (https://github.com/chassis-ui/assets/blob/main/LICENSE)
  */
 
 import { execFile } from 'node:child_process'

@@ -15,25 +15,25 @@ This project is part of the Chassis ecosystem and specifically handles asset man
 ### NPM Package (Recommended)
 
 ```bash
-npm install @ozgurgunes/chassis-assets
+npm install @chassis-ui/assets
 ```
 
 ### Git Submodule
 
 ```bash
-git submodule add https://github.com/ozgurgunes/chassis-assets.git assets/chassis
+git submodule add https://github.com/chassis-ui/assets.git assets/chassis
 ```
 
 ### GitHub Releases
 
-Download pre-built assets from [GitHub Releases](https://github.com/ozgurgunes/chassis-assets/releases).
+Download pre-built assets from [GitHub Releases](https://github.com/chassis-ui/assets/releases).
 
 **👉 For detailed usage instructions, see [USAGE.md](./USAGE.md)**
 
 ## Install
 
 ```shell
-git clone git@github.com:ozgurgunes/chassis-assets.git
+git clone git@github.com:chassis-ui/assets.git
 cd chassis-assets
 pnpm install
 ```
@@ -260,7 +260,7 @@ This provides insights into:
 Use the Chassis Assets API for custom integrations:
 
 ```javascript
-import ChassisAssets from '@ozgurgunes/chassis-assets/build/api.js'
+import ChassisAssets from '@chassis-ui/assets/build/api.js'
 
 const assets = new ChassisAssets()
 

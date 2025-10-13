@@ -55,7 +55,7 @@
 **Time**: ~25 minutes
 
 8. **Dependencies Resolution**
-   - CSS framework expected tokens from `@ozgurgunes/chassis-tokens` package
+   - CSS framework expected tokens from `@chassis-ui/tokens` package
    - Created proper directory structure and copied generated tokens
    - Resolved token variable naming conflicts
 

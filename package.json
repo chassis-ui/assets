@@ -1,9 +1,18 @@
 {
-  "name": "@ozgurgunes/chassis-assets",
+  "name": "@chassis-ui/assets",
   "version": "0.1.0",
   "description": "Design assets for Chassis Design System. Distribute and manage design assets efficiently.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chassis-ui/assets.git",
+    "directory": "packages/docs"
+  },
+  "bugs": {
+    "url": "https://github.com/chassis-ui/assets/issues"
+  },
+  "homepage": "https://chassis-ui.com",
+  "author": "Ozgur Gunes <o.gunes@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/ozgurgunes/chassis-assets",
   "keywords": [
     "chassis",
     "design system",

@@ -60,6 +60,6 @@ jobs:
           - Platform-specific optimizations
 
           ## Assets
-          See the [NPM package](https://www.npmjs.com/package/@ozgurgunes/chassis-assets) for distributed assets.
+          See the [NPM package](https://www.npmjs.com/package/@chassis-ui/assets) for distributed assets.
         draft: false
         prerelease: false

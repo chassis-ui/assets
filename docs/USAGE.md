@@ -7,12 +7,12 @@ This guide explains different ways to use Chassis Assets in your projects.
 **Best for:** Most projects, CI/CD pipelines, automated workflows
 
 ```bash
-npm install @ozgurgunes/chassis-assets
+npm install @chassis-ui/assets
 ```
 
 ```javascript
 // Import the API
-import { ChassisAssets } from '@ozgurgunes/chassis-assets/build/api.js'
+import { ChassisAssets } from '@chassis-ui/assets/build/api.js'
 
 // Initialize and build assets
 const chassis = new ChassisAssets()
@@ -44,7 +44,7 @@ await chassis.build({
 
 ```bash
 # Add as submodule
-git submodule add https://github.com/ozgurgunes/chassis-assets.git assets/chassis
+git submodule add https://github.com/chassis-ui/assets.git assets/chassis
 
 # Initialize and update
 git submodule update --init --recursive
@@ -70,7 +70,7 @@ pnpm run build
 
 **Best for:** Quick prototyping, no build step required
 
-Download pre-built assets from [GitHub Releases](https://github.com/ozgurgunes/chassis-assets/releases).
+Download pre-built assets from [GitHub Releases](https://github.com/chassis-ui/assets/releases).
 
 Each release includes:
 - `chassis-assets-dist.zip` - All built assets for all platforms
@@ -84,7 +84,7 @@ Each release includes:
 // package.json
 {
   "dependencies": {
-    "@ozgurgunes/chassis-assets": "^0.1.0"
+    "@chassis-ui/assets": "^0.1.0"
   },
   "scripts": {
     "build:assets": "node scripts/build-chassis-assets.js",
@@ -93,7 +93,7 @@ Each release includes:
 }
 
 # scripts/build-chassis-assets.js
-import { ChassisAssets } from '@ozgurgunes/chassis-assets/build/api.js'
+import { ChassisAssets } from '@chassis-ui/assets/build/api.js'
 
 const chassis = new ChassisAssets()
 await chassis.build() // This will generate dist/ folder with your assets
@@ -103,7 +103,7 @@ await chassis.build() // This will generate dist/ folder with your assets
 
 ```bash
 # Add submodule to your iOS project
-git submodule add https://github.com/ozgurgunes/chassis-assets.git Chassis
+git submodule add https://github.com/chassis-ui/assets.git Chassis
 
 # Build script for iOS assets
 cd Chassis && pnpm install && pnpm run build
@@ -116,7 +116,7 @@ cp -r dist/ios/your-brand/* YourProject/Assets/
 
 ```javascript
 // Use the API for programmatic builds
-import { ChassisAssets } from '@ozgurgunes/chassis-assets/build/api.js'
+import { ChassisAssets } from '@chassis-ui/assets/build/api.js'
 
 const chassis = new ChassisAssets()
 
@@ -178,7 +178,7 @@ export default {
 
 ```javascript
 // Build specific combinations using the API
-import { ChassisAssets } from '@ozgurgunes/chassis-assets/build/api.js'
+import { ChassisAssets } from '@chassis-ui/assets/build/api.js'
 
 const chassis = new ChassisAssets()
 
@@ -197,14 +197,14 @@ await chassis.build({
 ### From Git Submodule to NPM
 
 1. Remove existing submodule: `git submodule deinit assets/chassis`
-2. Install NPM package: `npm install @ozgurgunes/chassis-assets`
+2. Install NPM package: `npm install @chassis-ui/assets`
 3. Update build scripts to use NPM package API
 4. Update CI/CD to use NPM instead of git clone
 
 ### From NPM to Git Submodule
 
-1. Uninstall NPM package: `npm uninstall @ozgurgunes/chassis-assets`
-2. Add submodule: `git submodule add https://github.com/ozgurgunes/chassis-assets.git`
+1. Uninstall NPM package: `npm uninstall @chassis-ui/assets`
+2. Add submodule: `git submodule add https://github.com/chassis-ui/assets.git`
 3. Update build scripts to use local submodule path
 4. Update CI/CD to handle submodule initialization
 
@@ -227,4 +227,4 @@ await chassis.build({
 - Verify brand/platform configuration
 - Check file permissions
 
-For more help, see [GitHub Issues](https://github.com/ozgurgunes/chassis-assets/issues).
+For more help, see [GitHub Issues](https://github.com/chassis-ui/assets/issues).
