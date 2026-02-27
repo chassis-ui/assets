@@ -1,0 +1,46 @@
+---
+import { getConfig } from '@libs/config'
+import { getChassisDocsPath } from '@libs/path'
+---
+
+<section class="py-6xlarge cxd-masthead">
+  <div class="container py-6xlarge">
+    <div class="row justify-content-center">
+      <div class="col-large-10 col-xlarge-12 text-center">
+        <h1 class="font-jumbo mb-large">
+          <span class="font-normal">Distribute Design Assets Across</span> Brands, Apps & Platforms
+        </h1>
+        <p class="font-lead">
+          Manage fonts, images, icons, and illustrations from a single source and automatically
+          distribute them for web, iOS, and Android with platform-native conventions.
+        </p>
+        <div class="d-flex gap-medium justify-content-center flex-wrap py-4xlarge">
+          <a href="/getting-started" class="button primary large cxd-button">
+            <svg class="icon" aria-hidden="true"><use xlink:href="#book-open-solid"></use></svg>
+            <span>Get Started</span>
+          </a>
+          <a
+            href="https://github.com/chassis-ui/assets"
+            class="button default large cxd-button"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg class="icon" aria-hidden="true"><use xlink:href="#github-brand"></use></svg>
+            <span>View on GitHub</span>
+          </a>
+        </div>
+        <p class="text-body-secondary mb-0">
+          Currently <strong>v{getConfig().current_version}</strong>
+          <span class="px-1">&middot;</span>
+          <a href="https://github.com/chassis-ui/assets/releases" class="link-secondary">Download</a
+          >
+          <span class="px-1">&middot;</span>
+          <a
+            href="https://github.com/chassis-ui/assets/blob/main/CHANGELOG.md"
+            class="link-secondary text-nowrap">All releases</a
+          >
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,339 @@
+---
+title: Other Assets
+description: Managing videos, audio files, documents, and miscellaneous assets across brands and platforms.
+toc: true
+---
+
+## Overview
+
+Beyond fonts, images, and icons, Chassis Assets can manage any additional file types your application needs: videos, audio files, documents, PDFs, data files, and more. These assets are organized and distributed using the same brand-app-platform structure to ensure consistency across all projects.
+
+### Key Benefits
+
+Chassis Assets provides a flexible system for handling miscellaneous asset types with features like:
+
+- **Format Flexibility**: Support for any file type or extension
+- **Platform Distribution**: Automatic copying to Web, iOS, and Android distributions
+- **Brand Variations**: Different assets for different brands
+- **Naming Conventions**: Platform-appropriate filenames (kebab-case for web, snake_case for iOS/Android)
+- **Subfolder Organization**: Maintain custom folder structures within asset directories
+
+## File Organization
+
+Other assets are organized in the source directory by brand, application, and asset type:
+
+```
+source/
+├── default/
+│   └── docs/
+│       ├── videos/                -> Video files
+│       │   ├── onboarding-intro.mp4
+│       │   ├── tutorial-step-1.webm
+│       │   └── background-loop.mov
+│       ├── audio/                 -> Audio files
+│       │   ├── notification-sound.mp3
+│       │   ├── button-click.wav
+│       │   └── success-chime.ogg
+│       ├── documents/             -> PDF and document files
+│       │   ├── user-guide.pdf
+│       │   ├── terms-of-service.pdf
+│       │   └── privacy-policy.pdf
+│       └── data/                  -> JSON, CSV, or other data files
+│           ├── countries.json
+│           ├── cities.csv
+│           └── sample-data.xml
+└── brand-a/
+    └── docs/
+        └── videos/                -> Brand A specific videos that override defaults
+            └── onboarding-intro.mp4
+```
+
+Brand-specific assets will override defaults when building for that brand. If an asset is missing for a brand, the build system will fall back to the default asset.
+
+### File Formats
+
+Chassis Assets supports any file format and extension for maximum flexibility.
+
+**Video Files:**
+- **MP4**: Widely supported video format (recommended for web and mobile)
+- **WebM**: Open format with good compression
+- **MOV**: QuickTime format commonly used in iOS
+- **OGV**: Ogg video format
+
+**Audio Files:**
+- **MP3**: Widely supported audio format (recommended)
+- **WAV**: Uncompressed audio for highest quality
+- **OGG**: Open format with good compression
+- **M4A**: Apple audio format, well-supported on iOS
+- **AAC**: Advanced Audio Coding format
+
+**Document Files:**
+- **PDF**: Portable Document Format for manuals, guides, terms
+- **DOC/DOCX**: Microsoft Word documents
+- **TXT**: Plain text files
+
+**Data Files:**
+- **JSON**: Structured data for configuration or content
+- **CSV**: Comma-separated values for tabular data
+- **XML**: Extensible Markup Language for structured data
+- **YAML**: Human-readable data serialization
+
+### Naming Conventions
+
+Use descriptive, hyphenated names that indicate content and purpose:
+
+**Good examples:**
+- `onboarding-intro.mp4`
+- `tutorial-step-1.webm`
+- `notification-sound.mp3`
+- `button-click.wav`
+- `user-guide.pdf`
+- `terms-of-service.pdf`
+- `countries.json`
+- `sample-data.csv`
+
+**Avoid:**
+- Generic names: `video1.mp4`, `sound.mp3`, `file.pdf`
+- Spaces: `User Guide.pdf` (use hyphens)
+- Special characters: `video#1.mp4`
+- Uppercase: `VIDEO.mp4` (use lowercase)
+
+<Callout type="info">
+Asset files will be renamed to kebab-case for Web and snake_case for iOS and Android distributions. Use lowercase with hyphens in the source directory to ensure consistency.
+</Callout>
+
+## Adding Assets to Project
+
+Prepare your asset files and add them to the source directory following the naming conventions.
+
+### Organize by Type
+
+Create subdirectories within your app folder to organize different asset types:
+
+```bash
+# Add videos to default directory
+cp onboarding-intro.mp4 source/default/docs/videos/
+
+# Add audio files
+cp notification-sound.mp3 source/default/docs/audio/
+cp button-click.wav source/default/docs/audio/
+
+# Add documents
+cp user-guide.pdf source/default/docs/documents/
+cp terms-of-service.pdf source/default/docs/documents/
+
+# Add data files
+cp countries.json source/default/docs/data/
+```
+
+### Brand-Specific Assets
+
+Different brands can use different assets while sharing the same structure:
+
+```
+source/
+├── default/
+│   └── docs/
+│       └── videos/
+│           └── onboarding-intro.mp4     # Default onboarding video
+├── brand-a/
+│   └── docs/
+│       └── videos/
+│           └── onboarding-intro.mp4     # Brand A specific onboarding video
+└── brand-b/
+    └── [no file or folder]              # Brand B uses default, no override needed
+```
+
+The build system automatically uses brand-specific assets when available, falling back to defaults.
+
+### Custom Subfolder Structure
+
+Organize assets into custom subfolders for better maintainability:
+
+```
+source/default/docs/videos/
+├── onboarding/
+│   ├── intro.mp4
+│   ├── step-1.mp4
+│   └── step-2.mp4
+├── tutorials/
+│   ├── feature-a.webm
+│   └── feature-b.webm
+└── backgrounds/
+    └── loop.mov
+```
+
+This structure is preserved in the distribution, making it easier to find and reference assets in your codebase.
+
+## Distribution Structure
+
+After running the build, assets are distributed to platform-specific directories with appropriate naming conventions.
+
+### Web Distribution
+
+Web assets preserve kebab-case filenames and support all file types:
+
+```
+dist/web/[brand]-[app]/videos/
+├── onboarding-intro.mp4
+├── tutorial-step-1.webm
+└── background-loop.mov
+
+dist/web/[brand]-[app]/audio/
+├── notification-sound.mp3
+├── button-click.wav
+└── success-chime.ogg
+
+dist/web/[brand]-[app]/documents/
+├── user-guide.pdf
+└── terms-of-service.pdf
+
+dist/web/[brand]-[app]/data/
+├── countries.json
+└── cities.csv
+```
+
+See [Web Applications]([[docsref:/use-in-project/web-applications#using-other-assets]]) for how to use these assets in your web project.
+
+### iOS Distribution
+
+iOS assets use snake_case naming conventions:
+
+```
+dist/ios/[brand]-[app]/videos/
+├── onboarding_intro.mp4
+├── tutorial_step_1.webm
+└── background_loop.mov
+
+dist/ios/[brand]-[app]/audio/
+├── notification_sound.mp3
+├── button_click.wav
+└── success_chime.ogg
+
+dist/ios/[brand]-[app]/documents/
+├── user_guide.pdf
+└── terms_of_service.pdf
+
+dist/ios/[brand]-[app]/data/
+├── countries.json
+└── cities.csv
+```
+
+See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-other-assets]]) for how to use these assets in your iOS project.
+
+### Android Distribution
+
+Android assets use snake_case naming conventions:
+
+```
+dist/android/[brand]-[app]/videos/
+├── onboarding_intro.mp4
+├── tutorial_step_1.webm
+└── background_loop.mov
+
+dist/android/[brand]-[app]/audio/
+├── notification_sound.mp3
+├── button_click.wav
+└── success_chime.ogg
+
+dist/android/[brand]-[app]/documents/
+├── user_guide.pdf
+└── terms_of_service.pdf
+
+dist/android/[brand]-[app]/data/
+├── countries.json
+└── cities.csv
+```
+
+See [Android Applications]([[docsref:/use-in-project/android-applications#using-other-assets]]) for how to use these assets in your Android project.
+
+## Best Practices
+
+Follow these recommendations to maintain organized and optimized assets across brands and platforms.
+
+### File Size Optimization
+
+Optimize asset files before adding them to the source directory:
+
+**Videos:**
+- Use MP4 with H.264 codec for best compatibility
+- Compress videos to reduce file size while maintaining quality
+- Consider multiple resolutions for different devices
+
+**Audio:**
+- Use MP3 at 128-192kbps for good quality-to-size ratio
+- Consider OGG format as a smaller alternative
+- Keep sound effects short and optimized
+
+**Documents:**
+- Compress PDFs to reduce file size
+- Remove unnecessary metadata
+- Use web-optimized PDF settings
+
+**Data Files:**
+- Minify JSON files by removing whitespace
+- Use CSV instead of JSON for large tabular data
+- Consider compression for large files
+
+### Multiple Brands
+
+Organize brand-specific assets in your design tool or asset library, then export to the source directory with the correct brand folder structure:
+
+```
+source/
+├── default/
+│   └── docs/
+│       └── videos/
+│           └── onboarding-intro.mp4      # Default video for all brands
+├── brand-a/
+│   └── docs/
+│       └── videos/
+│           └── onboarding-intro.mp4      # Brand A specific video
+└── brand-b/
+    └── docs/
+        └── videos/
+            └── onboarding-intro.mp4      # Brand B specific video
+```
+
+This maintains a single source of truth for all assets with brand-specific variations.
+
+### Version Control
+
+For large binary files (videos, audio), consider using Git LFS (Large File Storage):
+
+```bash
+# Install Git LFS
+git lfs install
+
+# Track large file types
+git lfs track "*.mp4"
+git lfs track "*.mov"
+git lfs track "*.wav"
+git lfs track "*.pdf"
+```
+
+This prevents your repository from becoming too large while still maintaining version control.
+
+### Streaming vs Bundled Assets
+
+Consider whether assets should be bundled with your app or loaded from a CDN:
+
+**Bundled (in source directory):**
+- Small files needed immediately at launch
+- Critical UI sounds and short animations
+- Essential documents and terms
+
+**Streamed (external hosting):**
+- Large video files
+- Optional tutorial videos
+- Downloadable content
+- Frequently updated assets
+
+## Related Resources
+
+- [Image Assets]([[docsref:/asset-types/images]]) - Photo and graphic management
+- [Icon Assets]([[docsref:/asset-types/icons]]) - UI icon management
+- [Font Assets]([[docsref:/asset-types/fonts]]) - Typography management
+- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration
+- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration
+- [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration

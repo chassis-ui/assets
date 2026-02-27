@@ -1,11 +1,10 @@
 {
   "name": "@chassis-ui/assets",
-  "version": "0.1.0",
-  "description": "Design assets for Chassis Design System. Distribute and manage design assets efficiently.",
+  "version": "0.1.1",
+  "description": "A multi-brand, multi-product asset management system for distributing fonts, images, icons, and other design files across web, iOS, and Android platforms.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chassis-ui/assets.git",
-    "directory": "packages/docs"
+    "url": "https://github.com/chassis-ui/assets.git"
   },
   "bugs": {
     "url": "https://github.com/chassis-ui/assets/issues"
@@ -13,6 +12,30 @@
   "homepage": "https://chassis-ui.com",
   "author": "Ozgur Gunes <o.gunes@gmail.com>",
   "license": "MIT",
+  "chassis": {
+    "defaults": {
+      "brandFolder": "default"
+    },
+    "build": {
+      "brands": [
+        "chassis",
+        "example"
+      ],
+      "apps": {
+        "docs": [
+          "web"
+        ],
+        "demo": [
+          "ios",
+          "android"
+        ]
+      }
+    }
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "keywords": [
     "chassis",
     "design system",
@@ -24,58 +47,99 @@
     "!source/**/.DS_Store",
     "!.DS_Store"
   ],
-  "chassis": {
-    "defaults": {
-      "brandFolder": "default"
-    },
-    "build": {
-      "brands": [
-        "chassis",
-        "test"
-      ],
-      "apps": {
-        "docs": [
-          "web"
-        ],
-        "test": [
-          "ios",
-          "android"
-        ]
-      }
-    }
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
   "scripts": {
-    "astro-build": "astro build --root site && rm -rf _site && cp -r site/dist _site",
-    "astro-build:production": "node ../chassis-docs/scripts/update-asset-refs.js && astro build --root site && rm -rf _site && cp -r site/dist _site && node ../chassis-docs/scripts/update-asset-refs.js --restore",
-    "astro-dev": "astro dev --root site --port 4322",
-    "astro-preview": "astro preview --root site",
-    "dist": "node build/copy-assets.js",
-    "build": "node build/copy-assets.js",
-    "build:site": "npm run astro-build:production",
-    "clean": "rm -rf dist",
-    "validate": "eslint build/*.js",
-    "test": "node test/build.test.js",
-    "dev": "npm run clean && npm run build",
-    "dev:site": "npm run astro-dev",
-    "stats": "node build/analyze-assets.js",
-    "release-version": "node build/bump-version.js",
-    "release": "pnpm run clean && pnpm run build && pnpm run test"
+    "build": "pnpm site:build",
+    "clean": "pnpm site:clean && rm -rf dist || true",
+    "dev": "pnpm assets:site && pnpm astro:dev",
+    "preview": "pnpm astro:preview",
+    "assets": "node build/build-assets.js",
+    "assets:analyze": "node build/analyze-assets.js",
+    "assets:lint": "eslint build --cache --cache-location .cache/.eslintcache",
+    "assets:test": "node test/build.test.js && node test/analyze.test.js && node test/api.test.js",
+    "assets:test:build": "node test/build.test.js",
+    "assets:test:analyze": "node test/analyze.test.js",
+    "assets:test:api": "node test/api.test.js",
+    "assets:site": "pnpm assets --clean --brand chassis --app docs",
+    "assets:validate": "node build/validate-assets.js",
+    "site": "pnpm site:build && pnpm site:lint",
+    "site:build": "node build/build-site.js",
+    "site:clean": "node build/build-site.js clean",
+    "site:format": "prettier --write --cache site",
+    "site:lint": "pnpm site:lint:eslint && pnpm site:lint:fusv && pnpm site:lint:stylelint && pnpm site:lint:prettier && pnpm site:lint:vnu",
+    "site:lint:fusv": "find-unused-sass-variables site/src/scss/",
+    "site:lint:eslint": "eslint site --cache --cache-location .cache/.eslintcache --report-unused-disable-directives",
+    "site:lint:stylelint": "stylelint site/\"**/*.{css,scss}\" --cache --cache-location .cache/.stylelintcache",
+    "site:lint:prettier": "prettier site -c --cache",
+    "site:lint:vnu": "node build/vnu-jar.js",
+    "site:validate": "node build/build-site.js validate",
+    "astro:dev": "astro dev --root site --port 4325",
+    "astro:build": "astro build --root site",
+    "astro:preview": "astro preview --root site",
+    "check": "pnpm check:lockfile & pnpm check:pnpm & wait",
+    "check:lockfile": "lockfile-lint --allowed-hosts npm --allowed-schemes https: --empty-hostname false --type npm --path package-lock.json",
+    "check:pnpm": "pnpm audit --audit-level moderate",
+    "change-version": "node build/change-version.js"
   },
   "devDependencies": {
-    "astro": "^5.12.9",
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/markdown-remark": "^6.3.6",
+    "@astrojs/mdx": "^4.3.5",
+    "@astrojs/prism": "^3.3.0",
+    "@astrojs/sitemap": "^3.6.0",
+    "@chassis-ui/tokens": "github:chassis-ui/tokens#app/docs",
+    "@chassis-ui/css": "github:chassis-ui/css#app/docs",
+    "@chassis-ui/docs": "^0.1.3",
+    "@chassis-ui/icons": "github:chassis-ui/icons#app/docs",
+    "@docsearch/css": "^3.9.0",
+    "@docsearch/js": "^3.9.0",
+    "@eslint/js": "^9.36.0",
+    "@stackblitz/sdk": "^1.11.0",
+    "@types/google.analytics": "^0.0.46",
+    "@types/hast": "^3.0.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^22.18.6",
+    "@types/prismjs": "^1.26.5",
+    "astro": "^5.13.9",
+    "astro-auto-import": "^0.4.4",
+    "autoprefixer": "^10.4.21",
     "clean-css-cli": "^5.6.3",
-    "eslint": "^9.3.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "prettier": "^3.2.5",
-    "standard": "^17.1.0",
-    "vnu-jar": "23.4.11"
+    "clipboard": "^2.0.11",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-astro": "^1.3.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-unicorn": "^61.0.2",
+    "find-unused-sass-variables": "^6.1.0",
+    "github-slugger": "^2.0.0",
+    "globals": "^16.4.0",
+    "htmlparser2": "^10.0.0",
+    "image-size": "^2.0.2",
+    "js-yaml": "^4.1.0",
+    "lockfile-lint": "^4.14.1",
+    "mdast-util-from-markdown": "^2.0.2",
+    "mdast-util-mdx-jsx": "^3.2.0",
+    "mdast-util-to-string": "^4.0.0",
+    "minimist": "^1.2.8",
+    "picocolors": "^1.1.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-astro": "^0.14.1",
+    "prismjs": "^1.30.0",
+    "rehype-autolink-headings": "^7.1.0",
+    "remark": "^15.0.1",
+    "remark-html": "^16.0.1",
+    "sass": "^1.93.0",
+    "standard": "^17.1.2",
+    "stylelint": "^16.24.0",
+    "stylelint-config-twbs-bootstrap": "^16.1.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0",
+    "vnu-jar": "23.4.11",
+    "zod": "^3.25.76"
   },
   "packageManager": "pnpm@9.15.5+sha512.845196026aab1cc3f098a0474b64dfbab2afe7a1b4e91dd86895d8e4aa32a7a6d03049e2d0ad770bbe4de023a7122fb68c1a1d6e0d033c7076085f9d5d4800d4",
   "type": "module"

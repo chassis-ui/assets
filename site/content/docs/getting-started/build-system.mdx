@@ -1,0 +1,828 @@
+---
+title: Build System
+description: Understanding the Chassis Assets build system architecture and workflow.
+toc: true
+---
+
+## Overview
+
+The Chassis Assets build system transforms source assets into platform-specific distributions. It handles file copying, naming conventions, resolution variants, and platform-specific transformations automatically.
+
+### Key Features
+
+- **Multi-Brand Support**: Build assets for multiple brands from single source
+- **Multi-Platform Support**: Generate web, iOS, and Android distributions  
+- **Selective Building**: Filter by brand, app, or platform
+- **Smart Build Mode**: Full builds clean dist/, filtered builds preserve existing files
+- **Smart Overrides**: Brand-specific assets override defaults automatically
+- **Platform Processing**: Automatic naming conversions and structure transformations
+- **Collision Detection**: Warns about filename conflicts during renaming process
+- **System File Filtering**: Automatically excludes 13 patterns (.DS_Store, Thumbs.db, hidden files, etc.)
+- **Empty Directory Cleanup**: Removes empty folders after filtering operations
+- **macOS Compatibility**: Robust cleanup with retry logic for ENOTEMPTY errors
+- **Asset Analysis**: Built-in analyzer with accurate duplicate detection
+- **Programmatic API**: Use the API for custom integrations and automation
+
+## Build Commands
+
+Run the following commands from your project root:
+
+```bash
+# Build all distributions (cleans dist first)
+pnpm assets
+
+# Build without cleaning (keeps existing dist files)
+pnpm assets --no-clean
+
+# Clean build output manually
+pnpm clean
+
+# Run validation tests
+pnpm test
+
+# View build statistics
+pnpm assets:analyze
+```
+
+### Selective Build
+
+Use command-line filters to build specific combinations. Filters can be combined for precise control.
+
+**By Brand:**
+```bash
+# Single brand
+pnpm assets --brand chassis
+
+# Multiple brands
+pnpm assets --brand chassis example
+```
+
+**By App:**
+```bash
+# Single app
+pnpm assets --app docs
+
+# Multiple apps
+pnpm assets --app docs demo
+```
+
+**By Platform:**
+```bash
+# Web only
+pnpm assets --platform web
+
+# iOS and Android
+pnpm assets --platform ios android
+```
+
+**Combined Filters:**
+```bash
+# Specific brand + platform (preserves existing dist files)
+pnpm assets --brand chassis --platform web
+
+# All three filters (preserves existing dist files)
+pnpm assets --brand chassis --app docs --platform web
+
+# Force clean with filters
+pnpm assets --clean --brand chassis --platform web
+```
+
+**Note:** Using `--brand`, `--app`, or `--platform` filters preserves existing dist/ files by default, allowing you to build different combinations without losing previous work.
+
+### Clean Build
+
+The build system automatically determines whether to clean the `dist` directory:
+
+```bash
+# Clean dist before full build (default behavior)
+pnpm assets
+
+# Keep existing dist for full build
+pnpm assets --no-clean
+
+# Filtered build (preserves existing dist files)
+pnpm assets --brand chassis --platform web
+
+# Force clean even with filters
+pnpm assets --clean --brand chassis --platform web
+
+```
+
+### Analyze Assets
+
+Analyze your asset distribution for optimization opportunities:
+
+```bash
+# Analyze all assets
+pnpm assets:analyze
+
+# Filter analysis by specific criteria:
+pnpm assets:analyze --brand chassis --platform web --app docs
+```
+
+The asset analyzer provides comprehensive insights:
+
+- **File Type Breakdown**: Distribution of file extensions with percentages
+- **Platform Distribution**: Assets across web, iOS, and Android platforms
+- **Brand & App Coverage**: Assets organized by brand and application
+- **Largest Files**: Top 10 largest files with formatted sizes
+- **Duplicate Detection**: Files with identical content within source/ or dist/ directories
+  - Excludes expected source→dist copies (same file distributed to multiple platforms/brands)
+  - Reports only true duplicates (redundant files that should be consolidated)
+- **Smart Recommendations**: Platform-specific optimization suggestions
+- **Configuration Insights**: Validation against build configuration
+
+### Validate Distribution
+
+Validate that your existing `dist` directory is complete and correctly structured without rebuilding:
+
+```bash
+# Validate existing dist/ without rebuilding
+pnpm assets:validate
+```
+
+**What validation does:**
+- ✅ Check if dist/ exists and has content
+- ✅ Verify all brand-app-platform combinations are present
+- ✅ Check asset counts (dist should have > source due to expansion)
+- ✅ Detect empty directories
+- ✅ Validate platform naming conventions (kebab-case, snake_case, ic_ prefix)
+
+**Use validation:**
+- Before deployment to production
+- In CI/CD pipelines
+- After manual dist/ modifications
+- To verify nothing is missing
+
+## Configuration
+
+All build configuration is defined in the `chassis` key of `package.json`.
+
+```json
+{
+  "chassis": {
+    "defaults": {
+      "brandFolder": "default"
+    },
+    "build": {
+      "brands": ["chassis", "example"],
+      "apps": {
+        "docs": ["web"],
+        "mobile": ["ios", "android"]
+      }
+    }
+  }
+}
+```
+
+### Schema
+
+Use the following properties to customize your build process:
+
+#### chassis.defaults
+
+Default values used throughout the build process.
+
+<CxTable>
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `brandFolder` | string | `default` | Source folder name for default/fallback assets |
+</CxTable>
+
+**Example:**
+
+```json
+{
+  "chassis": {
+    "defaults": {
+      "brandFolder": "shared"  // Use 'shared' instead of 'default'
+    }
+  }
+}
+```
+
+#### chassis.build
+
+Build-specific configuration.
+
+<CxTable>
+| Property | Type | Description |
+|----------|------|-------------|
+| `brands` | string[] | Array of brand identifiers to build |
+| `apps` | object | Maps app names to arrays of target platforms |
+</CxTable>
+
+**Supported platforms:** `web`, `ios`, `android`
+
+### Examples
+
+The build system generates every combination of **brand × app × platform**.
+
+#### One Brand, One Platform
+```json
+{
+  "chassis": {
+    "build": {
+      "brands": ["acme"],
+      "apps": {
+        "website": ["web"]
+      }
+    }
+  }
+}
+```
+
+**Output:** 1 combination
+
+```
+dist/web/acme-website/
+```
+
+#### Multi-Brand, One App
+```json
+{
+  "chassis": {
+    "build": {
+      "brands": ["acme", "wonka", "duff"],
+      "apps": {
+        "website": ["web"]
+      }
+    }
+  }
+}
+```
+
+**Output:** 3 combinations
+
+```
+dist/web/acme-website/
+dist/web/wonka-website/
+dist/web/duff-website/
+```
+
+#### One Brand, Multi-Platform
+
+```json
+{
+  "chassis": {
+    "build": {
+      "brands": ["acme"],
+      "apps": {
+        "mobile": ["ios", "android"]
+      }
+    }
+  }
+}
+```
+
+**Output:** 2 combinations
+```
+dist/ios/acme-mobile/
+dist/android/acme-mobile/
+```
+
+#### Multi-Brand, Multi-App
+
+```json
+{
+  "chassis": {
+    "build": {
+      "brands": ["acme", "wonka"],
+      "apps": {
+        "website": ["web"],
+        "mobile": ["ios", "android"]
+      }
+    }
+  }
+}
+```
+
+**Output:** 6 combinations
+
+```
+dist/web/acme-website/
+dist/web/wonka-website/
+dist/ios/acme-mobile/
+dist/ios/wonka-mobile/
+dist/android/acme-mobile/
+dist/android/wonka-mobile/
+```
+
+## Platform Support
+
+Chassis Assets build system applies platform-specific transformations to ensure assets follow native conventions and best practices for each platform.
+
+### Transformations
+
+Each platform has specific rules for naming, structure, and supported formats:
+
+#### Web Platform
+
+- **Naming**: Lowercase with hyphens (kebab-case)
+- **Resolution**: @2x/@3x preserved in filenames
+- **Fonts**: Only WOFF/WOFF2 formats copied (TTF/OTF excluded)
+- **Images**: All formats supported
+- **Icons**: SVG, PNG, WebP supported
+
+#### iOS Platform
+
+- **Naming**: Lowercase with underscores (snake_case)
+- **Resolution**: @2x/@3x preserved in filenames  
+- **Fonts**: Only TTF/OTF formats copied (WOFF/WOFF2 excluded)
+- **Images**: WebP format excluded for compatibility
+- **Icons**: SVG and PDF vector formats supported
+
+#### Android Platform
+
+- **Naming**: Lowercase with underscores (snake_case)
+- **Icon Prefix**: All icon files prefixed with `ic_`
+- **Resolution**: @2x/@3x converted to density folders (drawable-mdpi, drawable-hdpi, drawable-xhdpi, drawable-xxhdpi, drawable-xxxhdpi)
+- **Fonts**: Only TTF/OTF formats copied
+- **Images**: WebP format excluded, resolution files placed in density folders
+- **Icons**: Only SVG format supported
+
+### Comparison Matrix
+
+Quick reference for platform-specific transformations:
+
+<CxTable>
+| Feature | Web | iOS | Android |
+|---------|-----|-----|---------|
+| **Filename Case** | Lowercase | Lowercase | Lowercase |
+| **Separators** | Hyphens | Underscores | Underscores |
+| **Icon Prefix** | None | None | `ic_` |
+| **Font Format** | WOFF, WOFF2 | TTF, OTF | TTF, OTF |
+| **Resolution** | @2x/@3x inline | @2x/@3x inline | Density folders |
+| **Directory Structure** | As-is | As-is | As-is with density folders |
+| **Vector Format** | SVG | PDF | Vector Drawable (XML) |
+</CxTable>
+
+### Custom Platforms
+
+The build system uses modular processor architecture. To add a new platform:
+
+**1. Create processor module** (`build/processors/desktop.js`):
+
+```js
+const desktopProcessor = {
+  name: 'desktop',
+  icon: '🖥️',
+  
+  // Define allowed formats
+  allowedFontFormats: ['.ttf', '.otf'],
+  allowedIconFormats: ['.svg'],
+  excludedImageFormats: [],
+  
+  // Define filename transformation
+  renameFile(fileName) {
+    // Implement platform-specific naming convention
+    return fileName.toLowerCase()
+  }
+}
+
+export default desktopProcessor
+```
+
+**2. Register processor** (`build/processors/index.js`):
+
+```js
+import desktopProcessor from './desktop.js'
+
+export const platformProcessors = {
+  web: webProcessor,
+  ios: iosProcessor,
+  android: androidProcessor,
+  desktop: desktopProcessor  // Add new processor
+}
+```
+
+**3. Update configuration:**
+
+```json
+{
+  "chassis": {
+    "build": {
+      "brands": ["chassis"],
+      "apps": {
+        "demo": ["desktop"]
+      }
+    }
+  }
+}
+```
+
+**4. Test the new platform:**
+
+```bash
+pnpm assets --platform desktop
+```
+
+## Programmatic API
+
+Use the Chassis Assets API for custom integrations:
+
+```javascript
+import ChassisAssets from '@chassis-ui/assets/build/api/index.js'
+import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
+import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
+
+// Build assets programmatically
+const assets = new ChassisAssets()
+
+// Get asset inventory
+const inventory = assets.getAssetInventory('chassis', 'docs')
+
+// Build specific combinations
+await assets.build({
+  brands: ['chassis'],
+  apps: ['docs'],
+  platforms: ['web']
+})
+
+// Get build statistics
+const stats = assets.getStats()
+
+// Analyze assets programmatically
+const analyzer = new AssetAnalyzer()
+
+// Analyze with filters
+analyzer.options = { brand: 'chassis', apps: ['docs'], platforms: ['web'] }
+analyzer.analyze()  // Note: synchronous, not async
+
+// Access analysis results
+console.log('Total files:', analyzer.stats.totalFiles)
+console.log('Real duplicates in source:', analyzer.stats.duplicatesInSource.length)
+console.log('Real duplicates in dist:', analyzer.stats.duplicatesInDist.length)
+console.log('Total size:', analyzer.formatBytes(analyzer.stats.totalSize))
+```
+
+### API Methods
+
+**ChassisAssets Class:**
+- `getBrands()` - Get list of configured brands
+- `getApps()` - Get list of configured app names  
+- `getPlatforms()` - Get list of all platforms used across apps
+- `getCombinations()` - Get all brand+app+platform combinations
+- `assetsExist(brand, app)` - Check if source assets exist
+- `getAssetInventory(brand, app)` - Get categorized asset list
+- `build(options)` - Build with specific brand/app/platform filters
+- `getStats()` - Get source and dist asset counts
+- `validate()` - Validate configuration and source files
+
+**AssetAnalyzer Class:**
+- `analyze()` - Run full analysis (synchronous)
+- `analyzeDirectory(path, type)` - Analyze specific directory
+- `analyzeFile(path, stat, type)` - Analyze single file
+- `detectDuplicates()` - Find duplicate files by content hash
+- `formatBytes(bytes)` - Convert bytes to human-readable format
+- `stats` - Access analysis results object
+  - `totalFiles` - Total file count
+  - `totalSize` - Total size in bytes
+  - `fileTypes` - File extension distribution
+  - `duplicatesInSource` - Real duplicates within source
+  - `duplicatesInDist` - Real duplicates within dist
+  - `largestFiles` - Top 10 largest files
+
+### Quiet Mode
+
+For automated testing or CI/CD pipelines, use quiet mode to suppress verbose output:
+
+```javascript
+import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
+import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
+
+// Build assets silently (only errors shown)
+await generateAssets({ quiet: true })
+
+// Analyze assets silently
+const analyzer = new AssetAnalyzer({ quiet: true })
+analyzer.analyze()
+
+// Errors are always visible even in quiet mode
+console.log('Analysis complete:', analyzer.stats.totalFiles, 'files')
+```
+
+## CI/CD Integration
+
+### Basic GitHub Actions
+
+```yaml
+name: Build Assets
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build assets
+        run: pnpm assets --platform web
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-assets
+          path: dist/web/
+```
+
+### Build Only Changed Assets
+
+```bash
+#!/bin/bash
+# build-changed.sh - Build only assets for changed brands
+
+# Get list of changed brands from git diff
+CHANGED_BRANDS=$(git diff --name-only ${{ github.event.before }} HEAD | \
+  grep "^source/" | \
+  cut -d'/' -f2 | \
+  sort -u)
+
+if [ -z "$CHANGED_BRANDS" ]; then
+  echo "No brand changes detected"
+  exit 0
+fi
+
+# Build each changed brand
+for brand in $CHANGED_BRANDS; do
+  if [ "$brand" != "default" ]; then
+    echo "Building assets for brand: $brand"
+    pnpm assets --brand $brand
+  fi
+done
+
+# If default changed, rebuild all
+if echo "$CHANGED_BRANDS" | grep -q "default"; then
+  echo "Default assets changed, rebuilding all"
+  pnpm assets
+fi
+```
+
+**Use in GitHub Actions:**
+
+```yaml
+- name: Build changed assets
+  run: bash ./build-changed.sh
+  env:
+    BEFORE_SHA: ${{ github.event.before }}
+```
+
+### Platform-Specific Jobs
+
+Run builds in parallel for faster CI:
+
+```yaml
+name: Multi-Platform Build
+
+on: [push]
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - run: pnpm install
+      - run: pnpm assets --platform web
+      - uses: actions/upload-artifact@v3
+        with:
+          name: web-assets
+          path: dist/web/
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - run: pnpm install
+      - run: pnpm assets --platform ios
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ios-assets
+          path: dist/ios/
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - run: pnpm install
+      - run: pnpm assets --platform android
+      - uses: actions/upload-artifact@v3
+        with:
+          name: android-assets
+          path: dist/android/
+```
+
+### Branch-Based Builds
+
+```bash
+# Different builds based on branch
+case $BRANCH_NAME in
+  main|master)
+    echo "Production: Full build"
+    pnpm assets
+    ;;
+    
+  develop)
+    echo "Development: Build dev brand only"
+    pnpm assets --brand dev
+    ;;
+    
+  feature/web-*)
+    echo "Feature: Web only"
+    pnpm assets --platform web
+    ;;
+    
+  feature/mobile-*)
+    echo "Feature: Mobile platforms only"
+    pnpm assets --platform ios android
+    ;;
+    
+  hotfix/*)
+    echo "Hotfix: Build affected brand"
+    BRAND=$(echo $BRANCH_NAME | cut -d'/' -f2)
+    pnpm assets --brand $BRAND
+    ;;
+    
+  *)
+    echo "Other: Quick web build"
+    pnpm assets --brand chassis --platform web
+    ;;
+esac
+```
+
+### Deploy-Specific Builds
+
+```yaml
+name: Deploy Assets
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+    if: contains(github.ref, 'web')
+    steps:
+      - uses: actions/checkout@v3
+      - run: pnpm install
+      - run: pnpm assets --platform web
+      - name: Deploy to CDN
+        run: aws s3 sync dist/web/ s3://assets-cdn/
+
+  deploy-mobile:
+    runs-on: ubuntu-latest
+    if: contains(github.ref, 'mobile')
+    steps:
+      - uses: actions/checkout@v3
+      - run: pnpm install
+      - run: pnpm assets --platform ios android
+      - name: Upload to app stores
+        run: ./deploy-mobile-assets.sh
+```
+
+### Conditional Builds by Path
+
+```yaml
+name: Smart Build
+
+on:
+  push:
+    paths:
+      - 'source/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      
+      - id: changed-files
+        uses: tj-actions/changed-files@v40
+        with:
+          files: |
+            source/**
+      
+      - name: Determine build scope
+        id: scope
+        run: |
+          BRANDS=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | \
+            grep -o 'source/[^/]*' | cut -d'/' -f2 | sort -u | tr '\n' ' ')
+          echo "brands=$BRANDS" >> $GITHUB_OUTPUT
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      
+      - run: pnpm install
+      
+      - name: Build changed brands
+        run: |
+          for brand in ${{ steps.scope.outputs.brands }}; do
+            if [ "$brand" != "default" ]; then
+              echo "Building brand: $brand"
+              pnpm assets --brand $brand
+            fi
+          done
+```
+
+## Best Practices
+
+Follow these best practices when configuring and using the build system:
+
+### Project Configuration
+
+**✅ Do:**
+- Use clear, descriptive names for brands and apps
+- Keep names lowercase with hyphens (e.g., `my-brand`)
+- Match app names to their actual purpose (e.g., `docs`, `mobile-app`)
+
+**❌ Don't:**
+- Use special characters or spaces in names
+- Change brand/app names frequently (breaks asset paths)
+
+### Directory Structure
+
+**✅ Do:**
+- Always create a complete `default` setup first
+- Keep consistent folder structure across all brands
+- Name assets consistently across brands
+- Use brand folders only for overrides, not complete sets
+
+**❌ Don't:**
+- Put all assets in brand folders (defeats the override system)
+- Create brand folders without corresponding default assets
+- Mix different asset types in wrong folders
+
+### Development Workflow
+
+**✅ Do:**
+- Use 78 builds during development for faster iteration
+- Build selectively: `pnpm assets --brand chassis --platform web`
+- Add more platforms without rebuilding: `pnpm assets --platform ios`
+- Test with single brand/platform first before full build
+- Use `--clean` for fresh builds when needed
+
+**❌ Don't:**
+- Run full builds repeatedly during development (slow)
+- Commit `dist/` directory to version control
+- Build all platforms if you only need one
+
+## Development Tests
+
+The build system includes comprehensive test coverage to ensure reliability and correctness. These tests validate that the build system **works correctly** by rebuilding from scratch:
+
+```bash
+# Run all development tests (39 tests - rebuilds everything)
+pnpm assets:test
+
+# Individual test suites
+pnpm assets:test:build    # Build system functionality (13 tests)
+pnpm assets:test:analyze  # Asset analyzer logic (10 tests)
+pnpm assets:test:api      # Programmatic API (16 tests)
+```
+
+**What development tests do:**
+- ✅ Delete dist → Build → Validate → Clean up
+- ✅ Test that build system can create correct output
+- ✅ Test analyzer detects duplicates accurately
+- ✅ Test API methods return correct data
+
+### Test Comparison
+
+<CxTable>
+| Command | Rebuilds Dist? | Purpose |
+|---------|----------------|---------|
+| `pnpm assets:test` | ✅ Yes | Validate build system works correctly |
+| `pnpm assets:test:build` | ✅ Yes | Test build functionality |
+| `pnpm assets:test:analyze` | ✅ Yes | Test analyzer logic |
+| `pnpm assets:test:api` | ❌ No | Test API methods |
+</CxTable>
+
+## Related Resources
+
+- [Quick Start]([[docsref:/getting-started/quick-start]]) - Get started quickly
+- [Design Guidelines]([[docsref:/getting-started/design-guidelines]]) - Best practices for assets
+- [Icon Guidelines]([[docsref:/asset-types/icons]]) - Working with icons
+- [Image Guidelines]([[docsref:/asset-types/images]]) - Working with images
+

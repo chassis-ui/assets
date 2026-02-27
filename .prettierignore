@@ -1,0 +1,4 @@
+*.css
+*.scss
+site/config.yml
+source/

@@ -1,0 +1,44 @@
+---
+import Card from '@components/Card.astro'
+---
+
+<section class="py-6xlarge">
+  <div class="container">
+    <div class="row justify-content-center mb-5xlarge">
+      <div class="col-large-8 text-center">
+        <h2 class="font-hero mb-medium lh-small">
+          <span class="font-normal">Why Leading Teams Choose</span>
+          <span class="text-nowrap">Chassis Assets</span>
+        </h2>
+        <p class="font-lead">
+          Chassis Assets gives your team a repeatable way to distribute design assets across brands
+          and platforms, eliminating manual management and coordination overhead.
+        </p>
+      </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-medium-3">
+      <div class="col">
+        <Card
+          title="Eliminate Manual Work"
+          body="Stop copying and renaming files manually. Automated processing transforms and distributes assets with platform-native conventions."
+          icon="sparkles-outline"
+        />
+      </div>
+      <div class="col">
+        <Card
+          title="Scale Across Brands"
+          body="Build for multiple brands from a single source. Override specific assets per brand without maintaining separate asset libraries."
+          icon="history-cards-outline"
+        />
+      </div>
+      <div class="col">
+        <Card
+          title="Deploy to All Platforms"
+          body="One asset source, multiple platform outputs. Automatic transformation and validation for web, iOS, and Android distributions."
+          icon="rocket-outline"
+        />
+      </div>
+    </div>
+  </div>
+</section>

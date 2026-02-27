@@ -1,0 +1,888 @@
+---
+title: Android Applications
+description: Integrate Chassis design assets into Android applications using Kotlin and Java.
+toc: true
+---
+
+<Callout type="warning" name="created-by-ai" />
+
+## Overview
+
+Chassis Assets is a **multi-brand build system** that generates platform-specific assets from a single source. Define your assets once, then automatically build variants for multiple brands and applications.
+
+### Key Benefits
+
+Chassis Assets enables efficient multi-brand Android development:
+
+- **Single Source, Multiple Brands**: Maintain one asset repository, build for unlimited brands/apps
+- **Automated Builds**: Generate brand-specific assets with simple CLI commands
+- **Native Android Formats**: Vector Drawable (XML), PNG density variants
+- **Automatic Naming**: Converted to Android conventions (lowercase, underscores)
+- **Density Support**: mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi
+- **CI/CD Ready**: Integrate seamlessly into automated build pipelines
+
+## Installation
+
+Chassis Assets is a build system that generates platform-specific assets from your source files.
+
+### Clone or Add as Submodule
+
+Clone the repository or add it as a Git submodule to your project:
+
+```bash
+# Clone standalone
+git clone https://github.com/chassis-ui/assets.git chassis-assets
+cd chassis-assets
+
+# Or add as Git submodule
+git submodule add https://github.com/chassis-ui/assets.git assets
+cd assets
+```
+
+### Install Dependencies
+
+```bash
+pnpm install
+```
+
+### Build Assets
+
+Generate platform-specific distributions:
+
+```bash
+# Build all assets for all platforms
+pnpm assets
+
+# Build Android assets for all brands/apps
+pnpm assets --platform android
+
+# Build Android assets for specific brand-app combination
+pnpm assets --platform android --brand chassis --app demo
+```
+
+<Callout type="info">
+Apps are configured per platform in `package.json`. Check your `chassis.build.apps` configuration to see which apps support which platforms.
+</Callout>
+
+## Package Structure
+
+Chassis Assets uses a **source → build → distribute** workflow. Source assets support multiple brands, and the build system generates platform-specific distributions for each brand/app combination.
+
+```
+chassis-assets/
+├── source/                     -> Source assets (multi-brand)
+│   ├── default/               -> Default/fallback brand
+│   │   ├── docs/
+│   │   └── demo/              -> Demo app assets
+│   ├── chassis/               -> Chassis brand overrides
+│   └── example/               -> Example brand overrides
+└── dist/                       -> Generated distributions
+    └── android/
+        ├── chassis-demo/      -> Built: chassis brand + demo app
+        │   ├── fonts/
+        │   │   ├── text_normal.otf
+        │   │   └── display_elegant.otf
+        │   ├── images/
+        │   │   ├── hero_background.png
+        │   │   └── icon.png
+        │   └── icons/
+        │       ├── ic_menu.xml
+        │       └── ic_search.xml
+        ├── example-demo/      -> Built: example brand + demo app
+        │   ├── fonts/
+        │   ├── images/
+        │   └── icons/
+        └── brand-mobile-app/  -> Built: custom brand + custom app
+            ├── fonts/
+            ├── images/
+            └── icons/
+```
+
+<Callout type="info">
+Each brand inherits from `default/` and can selectively override specific assets. The build system automatically merges, converts filenames to lowercase with underscores, and generates platform-optimized distributions.
+</Callout>
+
+## Using Fonts
+
+### Add Fonts to Project
+
+1. Create `res/font/` directory
+2. Copy font files:
+```bash
+# From your Android project directory
+# Replace 'chassis-demo' with your brand-app combination
+cp ../chassis-assets/dist/android/chassis-demo/fonts/*.{ttf,otf} \
+   app/src/main/res/font/
+```
+
+<Callout type="info">
+Font filenames use semantic naming (text_normal, display_elegant) that aligns with Chassis Tokens. Different brands use different actual fonts but the same filenames for consistency.
+</Callout>
+
+### Create Font Family with Tokens
+
+Your token build process should generate font family XML from design tokens:
+
+```xml
+<!-- res/font/text.xml -->
+<!-- AUTO-GENERATED from Chassis Tokens - Do not edit manually -->
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"  <!-- Injected from token: typography.fontWeight.text.normal -->
+        android:font="@font/text_normal" />
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="600"  <!-- Injected from token: typography.fontWeight.text.strong -->
+        android:font="@font/text_strong" />
+</font-family>
+```
+
+<Callout type="warning">
+The `android:fontWeight` values must be **literal integers** in the XML (no `@integer` references allowed). Your token build should generate this file with the correct values from `typography.fontWeight.text.*` tokens. Each brand gets a separate generated XML with different weight values.
+</Callout>
+
+### Generate Token Constants
+
+Your token build should also generate Kotlin constants:
+
+```kotlin
+// ChassisTokens.kt - AUTO-GENERATED from Chassis Tokens
+object ChassisTokens {
+    // From token: typography.fontFamily.text
+    val FONT_FAMILY_TEXT = R.font.text
+
+    // From tokens: typography.fontWeight.text.* (example values)
+    const val FONT_WEIGHT_TEXT_NORMAL = 400
+    const val FONT_WEIGHT_TEXT_STRONG = 600
+}
+```
+
+### Use Fonts in Layouts
+
+**XML:**
+```xml
+<!-- The font family XML includes all weights -->
+<TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Hello World"
+    android:fontFamily="@font/text" />
+```
+
+### Use Fonts in Code
+
+**Kotlin:**
+```kotlin
+// Using resource with token values
+val typeface = ResourcesCompat.getFont(context, ChassisTokens.FONT_FAMILY_TEXT)
+textView.typeface = typeface
+
+// For API 28+ set weight programmatically with token values
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+    textView.typeface = Typeface.create(
+        typeface,
+        ChassisTokens.FONT_WEIGHT_TEXT_STRONG,
+        false
+    )
+}
+```
+
+**Java:**
+```java
+// Using resource with token values
+Typeface typeface = ResourcesCompat.getFont(context, ChassisTokens.FONT_FAMILY_TEXT);
+textView.setTypeface(typeface);
+```
+Typeface typeface = ResourcesCompat.getFont(context, R.font.inter);
+textView.setTypeface(typeface);
+
+// From assets
+Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/inter_regular.ttf");
+textView.setTypeface(typeface);
+```
+
+## Using Images
+
+### Add to Drawable Resources
+
+Android organizes images by density. The build system automatically:
+- Places images **without** resolution indicators in `drawable/` (density-independent)
+- Places images **with** resolution indicators (@2x, @3x) in density-specific folders with stripped filenames
+
+**Copy from Chassis Assets distribution:**
+
+```bash
+# From your Android project directory
+# Replace 'chassis-demo' with your brand-app combination
+
+# Copy density-independent images (SVGs, PNGs without @2x)
+cp -r ../chassis-assets/dist/android/chassis-demo/images/drawable \
+   app/src/main/res/
+
+# Copy density-specific images (@2x → xhdpi, @3x → xxhdpi)
+cp -r ../chassis-assets/dist/android/chassis-demo/images/drawable-xhdpi \
+   app/src/main/res/
+
+cp -r ../chassis-assets/dist/android/chassis-demo/images/drawable-xxhdpi \
+   app/src/main/res/
+```
+
+### Density Folders Structure
+
+After building, your distribution contains:
+
+```
+dist/android/chassis-demo/images/
+├── drawable/              # Density-independent (SVG, or no @2x variant)
+│   ├── chassis_logo.svg
+│   └── hero_background.png
+├── drawable-xhdpi/       # @2x images (320 dpi) - resolution stripped
+│   └── hero_background.png
+└── drawable-xxhdpi/      # @3x images (480 dpi) - resolution stripped
+    └── hero_background.png
+```
+
+**In your Android project:**
+```
+app/src/main/res/
+├── drawable/              # Vector drawables, density-independent images
+├── drawable-mdpi/        # 160 dpi (1x)
+├── drawable-hdpi/        # 240 dpi (1.5x)
+├── drawable-xhdpi/       # 320 dpi (2x)
+├── drawable-xxhdpi/      # 480 dpi (3x)
+└── drawable-xxxhdpi/     # 640 dpi (4x)
+```
+
+<Callout type="info">
+Resolution indicators (@2x, @3x) are **automatically stripped** from filenames and the images are placed in appropriate density folders. Reference them in code without the resolution indicator: `R.drawable.hero_background`
+</Callout>
+
+### Use Images in Layouts
+
+**XML:**
+```xml
+<ImageView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:src="@drawable/hero_background"
+    android:contentDescription="@string/hero_description"
+    android:scaleType="centerCrop" />
+```
+
+### Use Images in Code
+
+**Kotlin:**
+```kotlin
+// Load drawable
+val drawable = ContextCompat.getDrawable(context, R.drawable.hero_background)
+imageView.setImageDrawable(drawable)
+
+// With tint
+val icon = ContextCompat.getDrawable(context, R.drawable.icon)
+icon?.setTint(ContextCompat.getColor(context, R.color.primary))
+imageView.setImageDrawable(icon)
+
+// Using Glide for async loading
+Glide.with(context)
+    .load(R.drawable.hero_background)
+    .into(imageView)
+
+// Using Coil
+imageView.load(R.drawable.hero_background) {
+    crossfade(true)
+    placeholder(R.drawable.placeholder)
+}
+```
+
+**Java:**
+```java
+// Load drawable
+Drawable drawable = ContextCompat.getDrawable(context, R.drawable.hero_background);
+imageView.setImageDrawable(drawable);
+
+// With tint
+Drawable icon = ContextCompat.getDrawable(context, R.drawable.icon);
+DrawableCompat.setTint(icon, ContextCompat.getColor(context, R.color.primary));
+imageView.setImageDrawable(icon);
+```
+
+## Using Icons
+
+### Vector Drawables (Recommended)
+
+For scalable icons, use Vector Drawable XML:
+
+**res/drawable/ic_menu.xml:**
+```xml
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M3,6h18v2H3V6zM3,11h18v2H3V11zM3,16h18v2H3V16z"/>
+</vector>
+```
+
+### Use Icons in Layouts
+
+**XML:**
+```xml
+<!-- ImageView -->
+<ImageView
+    android:layout_width="24dp"
+    android:layout_height="24dp"
+    android:src="@drawable/ic_menu"
+    android:contentDescription="@string/menu"
+    app:tint="?attr/colorPrimary" />
+
+<!-- ImageButton -->
+<ImageButton
+    android:id="@+id/menuButton"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:src="@drawable/ic_menu"
+    android:contentDescription="@string/menu"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    app:tint="?attr/colorOnSurface" />
+```
+
+### Use Icons in Code
+
+**Kotlin:**
+```kotlin
+// Set icon
+val icon = ContextCompat.getDrawable(context, R.drawable.ic_menu)
+imageView.setImageDrawable(icon)
+
+// With tint
+imageView.setImageResource(R.drawable.ic_menu)
+ImageViewCompat.setImageTintList(
+    imageView,
+    ColorStateList.valueOf(ContextCompat.getColor(context, R.color.primary))
+)
+
+// In menu
+override fun onCreateOptionsMenu(menu: Menu): Boolean {
+    menuInflater.inflate(R.menu.main_menu, menu)
+    menu.findItem(R.id.action_search)?.setIcon(R.drawable.ic_search)
+    return true
+}
+```
+
+### Icon Button Component
+
+**Kotlin:**
+```kotlin
+// Custom IconButton
+class IconButton @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null
+) : AppCompatImageButton(context, attrs) {
+
+    init {
+        background = ContextCompat.getDrawable(
+            context,
+            R.drawable.selectable_item_background
+        )
+        val padding = resources.getDimensionPixelSize(R.dimen.icon_button_padding)
+        setPadding(padding, padding, padding, padding)
+    }
+
+    fun setIcon(@DrawableRes iconRes: Int, @ColorRes tintRes: Int? = null) {
+        setImageResource(iconRes)
+        tintRes?.let {
+            ImageViewCompat.setImageTintList(
+                this,
+                ColorStateList.valueOf(ContextCompat.getColor(context, it))
+            )
+        }
+    }
+}
+
+// Usage
+val iconButton = IconButton(context)
+iconButton.setIcon(R.drawable.ic_menu, R.color.primary)
+```
+
+## Dark Mode Support
+
+### Using Night Resources
+
+Create dark mode variants:
+
+```
+res/
+├── drawable/             # Light mode
+│   └── logo_main.xml
+└── drawable-night/      # Dark mode
+    └── logo_main.xml
+```
+
+### Dynamic Color Selection
+
+**colors.xml (light):**
+```xml
+<resources>
+    <color name="logo_color">#000000</color>
+</resources>
+```
+
+**colors.xml (dark):**
+```xml
+<!-- res/values-night/colors.xml -->
+<resources>
+    <color name="logo_color">#FFFFFF</color>
+</resources>
+```
+
+### Check Theme in Code
+
+**Kotlin:**
+```kotlin
+fun isDarkMode(context: Context): Boolean {
+    val mode = context.resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK
+    return mode == Configuration.UI_MODE_NIGHT_YES
+}
+
+// Use appropriate logo
+val logoRes = if (isDarkMode(context)) {
+    R.drawable.logo_light
+} else {
+    R.drawable.logo_dark
+}
+imageView.setImageResource(logoRes)
+```
+
+## Multi-Brand Automation
+
+Chassis Assets is built for **automated multi-brand workflows**. This section covers build automation, CI/CD integration, and runtime brand management—the core functionality that makes managing multiple brands from a single source possible.
+
+### Build Assets for Multiple Brands
+
+The core workflow: build brand-specific assets, then copy them to your Android project.
+
+**Build assets for a specific brand:**
+```bash
+cd chassis-assets
+pnpm assets --platform android --brand chassis --app demo
+```
+
+**Create a sync script for automation:**
+
+```bash
+#!/bin/bash
+# scripts/sync-assets.sh
+
+BRAND="${1:-chassis}"
+APP="${2:-demo}"
+CHASSIS_ASSETS_PATH="../chassis-assets"
+PROJECT_PATH="./app/src/main"
+
+echo "Building and syncing assets for $BRAND-$APP..."
+
+# Build assets
+echo "Building Chassis Assets..."
+(
+    cd "$CHASSIS_ASSETS_PATH" && \
+    pnpm assets --platform android --brand "$BRAND" --app "$APP"
+)
+
+# Copy fonts
+echo "Copying fonts..."
+mkdir -p "$PROJECT_PATH/res/font"
+cp -r "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/fonts/"* \
+   "$PROJECT_PATH/res/font/"
+
+# Copy images from density folders
+echo "Copying images..."
+# Copy density-independent images (drawable/)
+if [ -d "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/images/drawable" ]; then
+    mkdir -p "$PROJECT_PATH/res/drawable"
+    cp -r "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/images/drawable/"* \
+       "$PROJECT_PATH/res/drawable/" 2>/dev/null || true
+fi
+
+# Copy density-specific images (drawable-xhdpi/, drawable-xxhdpi/, etc.)
+for density_folder in "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/images"/drawable-*/; do
+    if [ -d "$density_folder" ]; then
+        folder_name=$(basename "$density_folder")
+        mkdir -p "$PROJECT_PATH/res/$folder_name"
+        cp -r "$density_folder"* "$PROJECT_PATH/res/$folder_name/" 2>/dev/null || true
+    fi
+done
+
+# Copy icons (Vector Drawables)
+echo "Copying icons..."
+mkdir -p "$PROJECT_PATH/res/drawable"
+cp -r "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/icons/"*.xml \
+   "$PROJECT_PATH/res/drawable/" 2>/dev/null || true
+
+echo "✓ Assets synced for $BRAND-$APP"
+```
+
+**Make script executable and use:**
+```bash
+chmod +x scripts/sync-assets.sh
+
+# Sync specific brand
+./scripts/sync-assets.sh chassis demo
+
+# Sync multiple brands (for multi-brand projects)
+./scripts/sync-assets.sh chassis demo
+./scripts/sync-assets.sh example demo
+```
+
+### Gradle Build Integration
+
+Add asset syncing to your Gradle build process:
+
+**app/build.gradle.kts:**
+```kotlin
+tasks.register<Exec>("syncChassisAssets") {
+    description = "Sync Chassis Assets to Android resources"
+    group = "build"
+    
+    val brand = project.findProperty("chassisBrand") ?: "chassis"
+    val app = project.findProperty("chassisApp") ?: "demo"
+    
+    workingDir = File("../")
+    commandLine = listOf("./scripts/sync-assets.sh", brand.toString(), app.toString())
+}
+
+// Run before processing resources
+tasks.named("preBuild") {
+    dependsOn("syncChassisAssets")
+}
+```
+
+**Usage:**
+```bash
+# Build with specific brand
+./gradlew build -PchassisBrand=chassis -PchassisApp=demo
+
+# Or use default values
+./gradlew build
+```
+
+### CI/CD Integration
+
+**This is where Chassis Assets shines**: Automate building all brand variants in your CI/CD pipeline.
+
+**GitHub Actions Example:**
+
+```yaml
+# .github/workflows/build-android.yml
+name: Build Android App
+
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        brand: [chassis, example]
+        app: [demo]
+    
+    steps:
+      - name: Checkout app repository
+        uses: actions/checkout@v3
+      
+      - name: Checkout Chassis Assets
+        uses: actions/checkout@v3
+        with:
+          repository: chassis-ui/assets
+          path: chassis-assets
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Build Chassis Assets
+        working-directory: chassis-assets
+        run: |
+          pnpm install
+          pnpm assets --platform android --brand ${{ matrix.brand }} --app ${{ matrix.app }}
+      
+      - name: Sync Assets to Android Project
+        run: |
+          ./scripts/sync-assets.sh ${{ matrix.brand }} ${{ matrix.app }}
+      
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Build Android App
+        run: |
+          ./gradlew build \
+            -PchassisBrand=${{ matrix.brand }} \
+            -PchassisApp=${{ matrix.app }}
+```
+
+**GitLab CI Example:**
+
+```yaml
+# .gitlab-ci.yml
+variables:
+  BRAND: chassis
+  APP: demo
+
+stages:
+  - assets
+  - build
+
+build-assets:
+  stage: assets
+  image: node:18
+  script:
+    - git clone https://github.com/chassis-ui/assets.git chassis-assets
+    - cd chassis-assets
+    - npm install -g pnpm
+    - pnpm install
+    - pnpm assets --platform android --brand $BRAND --app $APP
+  artifacts:
+    paths:
+      - chassis-assets/dist/android/
+    expire_in: 1 hour
+
+build-android:
+  stage: build
+  image: gradle:8.5-jdk17
+  dependencies:
+    - build-assets
+  script:
+    - ./scripts/sync-assets.sh $BRAND $APP
+    - ./gradlew build -PchassisBrand=$BRAND -PchassisApp=$APP
+  parallel:
+    matrix:
+      - BRAND: [chassis, example]
+```
+
+### Development Workflow
+
+**Watch Mode for Development:**
+
+Create a watch script to automatically rebuild and sync assets during development:
+
+```bash
+#!/bin/bash
+# scripts/watch-assets.sh
+
+BRAND="${1:-chassis}"
+APP="${2:-demo}"
+CHASSIS_PATH="../chassis-assets"
+
+echo "Watching Chassis Assets for changes..."
+echo "Brand: $BRAND, App: $APP"
+
+# Install fswatch if not available
+# brew install fswatch (macOS)
+# apt install inotify-tools (Linux - use inotifywait instead)
+
+fswatch -o "$CHASSIS_PATH/source/" | while read change
+do
+    echo "Changes detected, rebuilding assets..."
+    (
+        cd "$CHASSIS_PATH" && \
+        pnpm assets --platform android --brand "$BRAND" --app "$APP"
+    )
+    ./scripts/sync-assets.sh "$BRAND" "$APP"
+    echo "Assets synced at $(date)"
+done
+```
+
+### Gradle Product Flavors for Multi-Brand
+
+Configure Android product flavors for build-time brand selection:
+
+**app/build.gradle.kts:**
+```kotlin
+android {
+    flavorDimensions += "brand"
+    
+    productFlavors {
+        create("chassis") {
+            dimension = "brand"
+            applicationIdSuffix = ".chassis"
+            versionNameSuffix = "-chassis"
+        }
+        
+        create("example") {
+            dimension = "brand"
+            applicationIdSuffix = ".example"
+            versionNameSuffix = "-example"
+        }
+    }
+}
+
+// Sync assets per flavor
+android.applicationVariants.all {
+    val brand = flavorName
+    val syncTask = tasks.register<Exec>("sync${name.capitalize()}Assets") {
+        workingDir = File("../")
+        commandLine = listOf("./scripts/sync-assets.sh", brand, "demo")
+    }
+    
+    preBuildProvider.configure {
+        dependsOn(syncTask)
+    }
+}
+```
+
+**Build commands:**
+```bash
+# Build specific brand flavor
+./gradlew assembleChassis
+./gradlew assembleExample
+
+# Build all flavors
+./gradlew assemble
+```
+
+### Runtime Brand Switching
+
+For apps that need to switch brands at runtime (e.g., white-label apps), implement a brand manager:
+
+```kotlin
+object BrandManager {
+    private var currentBrand = "chassis"
+
+    fun setBrand(brand: String) {
+        currentBrand = brand
+        // Notify observers
+    }
+
+    fun getDrawableRes(context: Context, name: String): Int {
+        val resourceName = "${currentBrand}_${name}"
+        return context.resources.getIdentifier(
+            resourceName,
+            "drawable",
+            context.packageName
+        )
+    }
+}
+
+// Usage
+val logoRes = BrandManager.getDrawableRes(context, "logo_main")
+imageView.setImageResource(logoRes)
+```
+
+**Resource Organization for Runtime Switching:**
+```
+res/
+├── drawable/
+│   ├── chassis_logo_main.png
+│   ├── chassis_hero_image.png
+│   ├── example_logo_main.png
+│   └── example_hero_image.png
+```
+
+<Callout type="info">
+**Build-time vs Runtime**: Most apps use **build-time brand selection** (separate APKs per brand using product flavors). Use runtime switching only if you need one APK that can switch between brands dynamically.
+</Callout>
+
+## Best Practices
+
+Follow these recommendations for optimal multi-brand Android asset integration.
+
+**Multi-Brand Workflows:**
+- ✅ **Automate everything**: Use CI/CD matrix builds for all brand variants
+- ✅ **Single source of truth**: Maintain assets in Chassis Assets, not in app repos
+- ✅ **Build-time over runtime**: Prefer product flavors per brand (simpler, faster)
+- ✅ **Use Gradle integration**: Automate asset syncing in your build process
+- ✅ **Test all brands**: CI/CD should build and test every brand variant
+- ✅ **Organize resources**: Use brand prefixes for runtime switching (`chassis_logo`, `example_logo`)
+
+**Asset Management:**
+- ✅ Use Vector Drawables for icons and simple graphics
+- ✅ Provide density-specific PNG variants for photos
+- ✅ Use `contentDescription` for accessibility
+- ✅ Support dark mode with night resources
+- ✅ Use image loading libraries (Glide/Coil) for large images
+- ✅ Test on multiple device densities
+
+**Don't:**
+- ❌ Manually copy assets for each build
+- ❌ Commit generated `dist/` assets to version control
+- ❌ Hardcode brand-specific asset names (use Brand Manager or product flavors)
+- ❌ Skip automation—multi-brand without automation is unsustainable
+- ❌ Duplicate assets across brand repos—use Chassis Assets inheritance
+- ❌ Put launcher icons in drawable folders (use mipmap)
+- ❌ Load large bitmaps on UI thread
+- ❌ Use PNG for simple icons (use Vector Drawables instead)
+- ❌ Ignore content descriptions for accessibility
+
+## Troubleshooting
+
+### Fonts not appearing
+
+**Check:**
+1. Font files are in `res/font/` directory
+2. Filenames are lowercase with underscores
+3. Font family XML references correct font files
+4. Font resource is referenced correctly in layouts
+
+### Images pixelated or blurry
+
+**Solutions:**
+1. Provide appropriate density variants
+2. Ensure images are in correct density folders
+3. Use `scaleType="fitCenter"` or `centerCrop`
+4. Check image dimensions match expected size × density
+
+### Vector Drawable not displaying
+
+**Check:**
+1. XML is valid and well-formed
+2. `viewportWidth` and `viewportHeight` are set
+3. Paths use correct attributes (`pathData`, `fillColor`)
+4. Compatible with target Android version (API 21+)
+5. Use AppCompat for backward compatibility
+
+### App icon not showing
+
+**Check:**
+1. Icons are in `mipmap-*` folders (not `drawable-*`)
+2. All required densities are provided
+3. `AndroidManifest.xml` references correct icon
+4. For adaptive icons, both foreground and background are defined
+
+### Large APK size
+
+**Solutions:**
+1. Use WebP format instead of PNG
+2. Remove unused density variants
+3. Use Vector Drawables instead of PNG for icons
+4. Enable resource shrinking in build.gradle:
+
+```gradle
+android {
+    buildTypes {
+        release {
+            shrinkResources true
+            minifyEnabled true
+        }
+    }
+}
+```
+
+## Related Resources
+
+- [Font Assets]([[docsref:/asset-types/fonts]]) - Font management
+- [Image Assets]([[docsref:/asset-types/images]]) - Image optimization
+- [Icon Assets]([[docsref:/asset-types/icons]]) - Icon guidelines
+- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration
+- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration

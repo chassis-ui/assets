@@ -5,7 +5,7 @@ All notable changes to the Chassis Assets project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.1] - 2026-02-27
 
 ### Added
 - Comprehensive CI/CD pipeline with GitHub Actions
@@ -14,16 +14,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced error handling and logging in build scripts
 - Asset guidelines documentation
 - Platform-specific processing improvements
+- **Modular processor architecture**: Platform-specific processors in dedicated modules (build/processors/)
+  - `web.js` - Web platform processor (kebab-case transformation)
+  - `ios.js` - iOS platform processor (snake_case transformation)
+  - `android.js` - Android platform processor (snake_case, ic_ prefix, density mapping)
+  - `shared.js` - Common utilities (resolution indicator extraction)
+  - `index.js` - Processor registry with `getProcessor()` and `platformProcessors` exports
+- **Asset types module**: Canonical asset type definitions in build/asset-types.js
+  - Single source of truth for asset types (fonts, icons, images, logo)
+  - Centralized extension validation with `getValidExtensions()` and `getAllValidExtensions()`
+  - Metadata file detection with `isMetadataFile()`
+- **Quiet mode**: Suppress verbose output for automated testing and CI/CD pipelines
+  - `generateAssets({ quiet: true })` - Silent build mode
+  - `new AssetAnalyzer({ quiet: true })` - Silent analysis mode
+  - Errors always visible even in quiet mode
 
 ### Changed
 - Improved build script with validation and detailed reporting
 - Enhanced package.json configuration for asset-focused distribution
 - Updated README with clearer project scope and usage instructions
+- **Refactored build system**: Eliminated ~250+ lines of duplicated processor logic
+- **Single source of truth**: Platform filters, transformations, and rules now imported from dedicated modules
+- **Variable naming**: Clarified `buildConfig` (package.json config) vs `cliOptions` (command-line args)
+- **API signatures**: Added optional `options` parameter to `generateAssets()` and `AssetAnalyzer` constructor
 
 ### Fixed
 - Package files configuration to properly include distributed assets
 - Build script error handling and user feedback
 - Android file naming conventions and icon prefixing
+- Variable naming collision (buildOptions used for two purposes)
+- Infinite recursion in logger implementation
 
 ## [0.1.0] - 2025-08-24
 

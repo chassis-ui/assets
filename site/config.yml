@@ -1,0 +1,32 @@
+title:                  "Chassis Assets"
+baseURL:                "https://chassis-ui.com/assets"
+
+docsDir:                "site"
+docsPath:                "/assets/docs"
+
+subtitle:               "A comprehensive SVG icon library with 478+ optimized icons for web and mobile applications."
+description:            "Chassis Icons provides a complete set of SVG icons with font generation, sprite optimization, and distribution packages for multiple platforms."
+authors:                "Ozgur Gunes"
+
+current_version:        "0.1.1"
+docs_version:           "0.1"
+github_org:             "https://github.com/chassis-ui"
+repo:                   "https://github.com/chassis-ui/assets"
+blog:                   "https://chassis-ui.com/blog/"
+x:                      "chassis_ui"
+
+analytics:
+  google_id:            "G-QGR8C28VYN"
+
+algolia:
+  app_id:               "MEJ97SH293"
+  api_key:              "df6a517a37c3973122cfc40042055f9c"
+  index_name:           "chassis-docs"
+
+anchors:
+  min:                  2
+  max:                  5
+
+toc:
+  min:                  2
+  max:                  3

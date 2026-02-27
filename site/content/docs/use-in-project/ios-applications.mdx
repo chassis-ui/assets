@@ -1,0 +1,860 @@
+---
+title: iOS Applications
+description: Integrate Chassis design assets into iOS applications using UIKit and SwiftUI.
+toc: true
+---
+
+<Callout type="warning" name="created-by-ai" />
+
+## Overview
+
+Chassis Assets is a **multi-brand build system** that generates platform-specific assets from a single source. Define your assets once, then automatically build variants for multiple brands and applications.
+
+### Key Benefits
+
+Chassis Assets enables efficient multi-brand iOS development:
+
+- **Single Source, Multiple Brands**: Maintain one asset repository, build for unlimited brands/apps
+- **Automated Builds**: Generate brand-specific assets with simple CLI commands
+- **Native iOS Formats**: PDF for vectors, PNG for rasters (@2x, @3x)
+- **CI/CD Ready**: Integrate seamlessly into automated build pipelines
+- **Asset Catalog Ready**: Organized for Xcode Asset Catalogs
+- **Framework Support**: Works with UIKit and SwiftUI
+
+## Installation
+
+Chassis Assets is a build system that generates platform-specific assets from your source files.
+
+### Clone or Add as Submodule
+
+Clone the repository or add it as a Git submodule to your project:
+
+```bash
+# Clone standalone
+git clone https://github.com/chassis-ui/assets.git chassis-assets
+cd chassis-assets
+
+# Or add as Git submodule
+git submodule add https://github.com/chassis-ui/assets.git assets
+cd assets
+```
+
+### Install Dependencies
+
+```bash
+pnpm install
+```
+
+### Build Assets
+
+Generate platform-specific distributions:
+
+```bash
+# Build all assets for all platforms
+pnpm assets
+
+# Build iOS assets for all brands/apps
+pnpm assets --platform ios
+
+# Build iOS assets for specific brand-app combination
+pnpm assets --platform ios --brand chassis --app demo
+```
+
+<Callout type="info">
+Apps are configured per platform in `package.json`. Check your `chassis.build.apps` configuration to see which apps support which platforms.
+</Callout>
+
+## Package Structure
+
+Chassis Assets uses a **source → build → distribute** workflow. Source assets support multiple brands, and the build system generates platform-specific distributions for each brand/app combination.
+
+```
+chassis-assets/
+├── source/                     -> Source assets (multi-brand)
+│   ├── default/               -> Default/fallback brand
+│   │   ├── docs/              -> App-specific assets
+│   │   └── test-app/
+│   ├── brand-a/               -> Brand A overrides
+│   │   └── mobile-app/
+│   └── brand-b/               -> Brand B overrides
+│       └── mobile-app/
+└── dist/                       -> Generated distributions
+    └── ios/
+        ├── chassis-demo/      -> Built: chassis brand + demo app
+        │   ├── fonts/
+        │   ├── images/
+        │   └── icons/
+        ├── example-demo/      -> Built: example brand + demo app
+        │   ├── fonts/
+        │   ├── images/
+        │   └── icons/
+        └── brand-mobile-app/  -> Built: custom brand + custom app
+            ├── fonts/
+            ├── images/
+            └── icons/
+```
+
+<Callout type="info">
+Each brand inherits from `default/` and can selectively override specific assets. The build system automatically merges and generates platform-optimized distributions.
+</Callout>
+
+## Using Fonts
+
+iOS fonts use TTF format and require registration in Info.plist.
+
+### Add Fonts to Xcode Project
+
+Copy font files from the built distribution to your Xcode project:
+
+1. Copy font files to your project:
+```bash
+# From your iOS project directory
+# Replace 'chassis-demo' with your brand-app combination
+# Copy both TTF and OTF files (use * or specify formats)
+cp ../chassis-assets/dist/ios/chassis-demo/fonts/*.{ttf,otf} \
+   YourProject/Resources/Fonts/
+```
+
+2. Add to Xcode:
+   - Drag fonts into Project Navigator
+   - Ensure "Copy items if needed" is checked
+   - Add to target membership
+
+3. Update `Info.plist`:
+```xml
+<key>UIAppFonts</key>
+<array>
+    <string>text_normal.otf</string>
+    <string>text_strong.otf</string>
+    <string>display_normal.otf</string>
+    <!-- Add all font files you copied -->
+</array>
+```
+
+<Callout type="info">
+Font filenames use snake_case naming (e.g., text_normal.otf, display_elegant.otf) with semantic names that align with Chassis Tokens. The actual font formats (TTF/OTF) and filenames depend on your source assets. List all copied fonts in Info.plist.
+</Callout>
+
+### Use with Chassis Tokens
+
+Generate Swift constants from your design tokens for consistent typography:
+
+Your token build process should generate Swift constants from your design tokens:
+
+```swift
+// ChassisTokens.swift - AUTO-GENERATED from Chassis Tokens
+public struct ChassisTokens {
+    // From token: typography.fontFamily.text
+    public static let fontFamilyText = "Inter"  // Value from token (varies by brand)
+
+    // From tokens: typography.fontWeight.text.*
+    public static let fontWeightTextNormal = 400  // From typography.fontWeight.text.normal
+    public static let fontWeightTextStrong = 600  // From typography.fontWeight.text.strong
+
+    // PostScript names - extracted from font files during build
+    public static let fontPostScriptTextNormal = "Inter-Regular"
+    public static let fontPostScriptTextStrong = "Inter-SemiBold"
+}
+
+// Extension to convert numeric weight to UIFont.Weight
+extension UIFont {
+    static func weight(from numeric: Int) -> UIFont.Weight {
+        switch numeric {
+        case 100: return .ultraLight
+        case 200: return .thin
+        case 300: return .light
+        case 400: return .regular
+        case 500: return .medium
+        case 600: return .semibold
+        case 700: return .bold
+        case 800: return .heavy
+        case 900: return .black
+        default: return .regular
+        }
+    }
+}
+```
+
+### Use Fonts in Code
+
+Reference fonts by their PostScript names in UIKit and SwiftUI.
+
+**UIKit:**
+```swift
+// Using custom fonts with token values
+let normalFont = UIFont(
+    name: ChassisTokens.fontPostScriptTextNormal,  // From tokens
+    size: 16
+)
+
+let strongFont = UIFont(
+    name: ChassisTokens.fontPostScriptTextStrong,  // From tokens
+    size: 20
+)
+
+label.font = normalFont
+
+// With dynamic type and token weights
+let textStyle = UIFont.TextStyle.body
+let customFont = UIFont(name: ChassisTokens.fontPostScriptTextNormal, size: 16)!
+let scaledFont = UIFontMetrics(forTextStyle: textStyle)
+    .scaledFont(for: customFont)
+label.font = scaledFont
+label.adjustsFontForContentSizeCategory = true
+
+// Or use system font with token weight
+let bodyFont = UIFont.systemFont(
+    ofSize: 16,
+    weight: .weight(from: ChassisTokens.fontWeightTextNormal)
+)
+```
+
+**SwiftUI:**
+```swift
+// Using custom fonts with token values
+Text("Hello World")
+    .font(.custom(ChassisTokens.fontPostScriptTextNormal, size: 16))
+
+Text("Strong Text")
+    .font(.custom(ChassisTokens.fontPostScriptTextStrong, size: 20))
+
+// With text style
+Text("Scalable Text")
+    .font(.custom(
+        ChassisTokens.fontPostScriptTextNormal,
+        size: 16,
+        relativeTo: .body
+    ))
+```
+
+### Font Name Reference
+
+Get the actual PostScript font name (not filename) for use in code:
+
+```swift
+// List all available fonts
+UIFont.familyNames.sorted().forEach { family in
+    let names = UIFont.fontNames(forFamilyName: family)
+    print("Family: \(family) - Names: \(names)")
+}
+```
+
+## Using Images
+
+iOS images support @2x and @3x resolution variants for different screen densities.
+
+### Add to Asset Catalog
+
+Organize images in Xcode Asset Catalogs for automatic resolution selection:
+
+1. Open `Assets.xcassets` in Xcode
+2. Create New Image Set (name it using snake_case, e.g., `hero_background`)
+3. Drag images from distribution:
+   - `hero_background.png` → 1x slot
+   - `hero_background@2x.png` → 2x slot
+   - `hero_background@3x.png` → 3x slot
+
+<Callout type="info">
+iOS assets use snake_case naming. When you reference them in code, use the same snake_case name: `UIImage(named: "hero_background")`
+</Callout>
+
+### Use Images in Code
+
+Load images from Asset Catalogs using their names.
+
+**UIKit:**
+```swift
+// Load image (use snake_case names)
+let image = UIImage(named: "hero_background")
+imageView.image = image
+
+// With rendering mode
+let templateImage = UIImage(named: "icon")?
+    .withRenderingMode(.alwaysTemplate)
+imageView.image = templateImage
+imageView.tintColor = .systemBlue
+
+// Async loading for large images
+DispatchQueue.global(qos: .userInitiated).async {
+    if let image = UIImage(named: "large-photo") {
+        DispatchQueue.main.async {
+            imageView.image = image
+        }
+    }
+}
+```
+
+**SwiftUI:**
+```swift
+// Simple image (use snake_case names)
+Image("hero_background")
+    .resizable()
+    .aspectRatio(contentMode: .fit)
+
+// With modifiers
+Image("icon")
+    .resizable()
+    .renderingMode(.template)
+    .foregroundColor(.blue)
+    .frame(width: 24, height: 24)
+
+// Async loading
+AsyncImage(url: URL(string: "https://...")) { image in
+    image
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+} placeholder: {
+    ProgressView()
+}
+```
+
+### Image Configuration
+
+Configure images for different appearances and device capabilities:
+
+```swift
+// UIKit - Image with symbol configuration
+let config = UIImage.SymbolConfiguration(
+    pointSize: 24,
+    weight: .regular,
+    scale: .medium
+)
+let image = UIImage(named: "icon", with: config)
+
+// Dynamic image for dark mode
+let lightImage = UIImage(named: "brand_image_dark")
+let darkImage = UIImage(named: "brand_image_light")
+let adaptiveImage = UIImage { traitCollection in
+    return traitCollection.userInterfaceStyle == .dark ? darkImage! : lightImage!
+}
+```
+
+## Using Icons
+
+iOS icons work best as PDF vectors or PNG rasters with @2x/@3x variants.
+
+### PDF Icons (Recommended)
+
+PDF icons scale automatically and preserve vector quality:
+
+```swift
+// UIKit
+let iconImage = UIImage(named: "menu")?
+    .withRenderingMode(.alwaysTemplate)
+iconButton.setImage(iconImage, for: .normal)
+iconButton.tintColor = .systemBlue
+
+// SwiftUI
+Image("menu")
+    .resizable()
+    .renderingMode(.template)
+    .foregroundColor(.blue)
+    .frame(width: 24, height: 24)
+```
+
+### PNG Icons
+
+For raster icons, Xcode automatically selects the appropriate resolution:
+
+```swift
+// Xcode automatically selects @2x or @3x
+let icon = UIImage(named: "icon")
+imageView.image = icon
+```
+
+### Icon Button Component
+
+Create reusable icon button components for consistent UI.
+
+**UIKit:**
+```swift
+class IconButton: UIButton {
+    func setIcon(_ named: String, size: CGFloat = 24) {
+        let config = UIImage.SymbolConfiguration(pointSize: size)
+        let image = UIImage(named: named, with: config)?
+            .withRenderingMode(.alwaysTemplate)
+        setImage(image, for: .normal)
+    }
+}
+
+// Usage
+let button = IconButton()
+button.setIcon("menu", size: 24)
+button.tintColor = .systemBlue
+```
+
+**SwiftUI:**
+```swift
+struct IconButton: View {
+    let icon: String
+    let size: CGFloat
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(icon)
+                .resizable()
+                .renderingMode(.template)
+                .frame(width: size, height: size)
+        }
+    }
+}
+
+// Usage
+IconButton(icon: "menu", size: 24) {
+    print("Menu tapped")
+}
+```
+
+## Asset Catalog Organization
+
+### Recommended Structure
+
+Organize assets into logical groups within your Asset Catalog:
+
+```
+Assets.xcassets/
+├── AppIcon.appiconset/
+├── Colors/
+│   ├── BrandPrimary.colorset
+│   └── BrandSecondary.colorset
+├── Fonts/
+│   └── (Font files in project, referenced in Info.plist)
+├── Images/
+│   ├── hero_background.imageset
+│   └── photo_team.imageset
+├── Icons/
+│   ├── menu.imageset
+│   ├── search.imageset
+│   └── settings.imageset
+```
+
+### Dark Mode Support
+
+Support light and dark appearances in Asset Catalogs.
+
+**In Asset Catalog:**
+1. Select image set
+2. Attributes Inspector → Appearances → Any, Dark
+3. Add dark mode variant
+
+**In Code:**
+```swift
+// UIKit - Automatic based on trait collection
+let image = UIImage(named: "header_image") // Adapts automatically
+
+// SwiftUI - Manual control
+@Environment(\.colorScheme) var colorScheme
+
+var body: some View {
+    Image(colorScheme == .dark ? "header_image_light" : "header_image_dark")
+}
+```
+
+## Multi-Brand Automation
+
+Chassis Assets is built for **automated multi-brand workflows**. This section covers build automation, CI/CD integration, and runtime brand management—the core functionality that makes managing multiple brands from a single source possible.
+
+### Build Assets for Multiple Brands
+
+The core workflow: build brand-specific assets, then copy them to your Xcode project.
+
+**Build assets for a specific brand:**
+```bash
+cd chassis-assets
+pnpm assets --platform ios --brand brand-a --app mobile-app
+```
+
+**Create a sync script for automation:**
+
+```bash
+#!/bin/bash
+# scripts/sync-assets.sh
+
+BRAND="${1:-chassis}"
+APP="${2:-demo}"
+CHASSIS_ASSETS_PATH="../chassis-assets"
+PROJECT_PATH="./YourProject"
+
+echo "Building and syncing assets for $BRAND-$APP..."
+
+# Build assets
+echo "Building Chassis Assets..."
+(
+    cd "$CHASSIS_ASSETS_PATH" && \
+    pnpm assets --platform ios --brand "$BRAND" --app "$APP"
+)
+
+# Copy fonts
+echo "Copying fonts..."
+mkdir -p "$PROJECT_PATH/Resources/Fonts"
+cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$BRAND-$APP/fonts/" \
+   "$PROJECT_PATH/Resources/Fonts/"
+
+# Copy images to brand-specific Asset Catalog folder
+echo "Copying images..."
+mkdir -p "$PROJECT_PATH/Assets.xcassets/$BRAND/Images"
+cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$BRAND-$APP/images/" \
+   "$PROJECT_PATH/Assets.xcassets/$BRAND/Images/"
+
+# Copy icons
+echo "Copying icons..."
+mkdir -p "$PROJECT_PATH/Assets.xcassets/$BRAND/Icons"
+cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$BRAND-$APP/icons/" \
+   "$PROJECT_PATH/Assets.xcassets/$BRAND/Icons/"
+
+echo "✓ Assets synced for $BRAND-$APP"
+```
+
+**Make script executable and use:**
+```bash
+chmod +x scripts/sync-assets.sh
+
+# Sync specific brand
+./scripts/sync-assets.sh chassis demo
+
+# Sync multiple brands (for multi-brand projects)
+./scripts/sync-assets.sh chassis demo
+./scripts/sync-assets.sh example demo
+./scripts/sync-assets.sh brand-a mobile-app
+```
+
+### Xcode Build Phase
+
+Add a build phase to automatically sync assets before building:
+
+1. Open Xcode → Target → Build Phases
+2. Click "+" → New Run Script Phase
+3. Add script:
+
+```bash
+# Sync assets from Chassis Assets repository
+if [ -d "$SRCROOT/../chassis-assets" ]; then
+    echo "Syncing Chassis Assets..."
+    cd "$SRCROOT/../chassis-assets"
+    
+    # Note: Ensure pnpm is available in build environment
+    # You may need to add: export PATH="$HOME/.local/share/pnpm:$PATH"
+    
+    # Build assets if needed
+    if command -v pnpm &> /dev/null; then
+        pnpm assets --platform ios --brand ${BRAND:-chassis} --app ${APP:-demo}
+    else
+        echo "Warning: pnpm not found. Using pre-built assets."
+    fi
+    
+    # Copy to project
+    cp -r "dist/ios/${BRAND:-chassis}-${APP:-demo}/fonts/"* \
+       "$SRCROOT/Resources/Fonts/" 2>/dev/null || true
+fi
+```
+
+<Callout type="warning">
+Running build commands in Xcode Build Phases can slow down builds. For production, consider pre-building assets and committing them, or only enabling this for development builds.
+</Callout>
+
+### CI/CD Integration
+
+**This is where Chassis Assets shines**: Automate building all brand variants in your CI/CD pipeline.
+
+**GitHub Actions Example:**
+
+```yaml
+# .github/workflows/build-ios.yml
+name: Build iOS App
+
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        brand: [chassis, example]
+        app: [demo]
+    
+    steps:
+      - name: Checkout app repository
+        uses: actions/checkout@v3
+      
+      - name: Checkout Chassis Assets
+        uses: actions/checkout@v3
+        with:
+          repository: chassis-ui/assets
+          path: chassis-assets
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Build Chassis Assets
+        working-directory: chassis-assets
+        run: |
+          pnpm install
+          pnpm assets --platform ios --brand ${{ matrix.brand }} --app ${{ matrix.app }}
+      
+      - name: Sync Assets to Xcode Project
+        run: |
+          ./scripts/sync-assets.sh ${{ matrix.brand }} ${{ matrix.app }}
+      
+      - name: Build iOS App
+        run: |
+          xcodebuild -workspace YourApp.xcworkspace \
+                     -scheme YourApp \
+                     -configuration Release \
+                     -destination 'generic/platform=iOS' \
+                     build
+```
+
+**GitLab CI Example:**
+
+```yaml
+# .gitlab-ci.yml
+variables:
+  BRAND: chassis
+  APP: demo
+
+stages:
+  - assets
+  - build
+
+build-assets:
+  stage: assets
+  image: node:18
+  script:
+    - git clone https://github.com/chassis-ui/assets.git chassis-assets
+    - cd chassis-assets
+    - npm install -g pnpm
+    - pnpm install
+    - pnpm assets --platform ios --brand $BRAND --app $APP
+  artifacts:
+    paths:
+      - chassis-assets/dist/ios/
+    expire_in: 1 hour
+
+build-ios:
+  stage: build
+  image: macos-builder
+  dependencies:
+    - build-assets
+  script:
+    - ./scripts/sync-assets.sh $BRAND $APP
+    - xcodebuild -workspace YourApp.xcworkspace -scheme YourApp build
+  parallel:
+    matrix:
+      - BRAND: [chassis, example]
+```
+
+### Development Workflow
+
+**Watch Mode for Development:**
+
+Create a watch script to automatically rebuild and sync assets during development:
+
+```bash
+#!/bin/bash
+# scripts/watch-assets.sh
+
+BRAND="${1:-chassis}"
+APP="${2:-demo}"
+CHASSIS_PATH="../chassis-assets"
+
+echo "Watching Chassis Assets for changes..."
+echo "Brand: $BRAND, App: $APP"
+
+# Install fswatch if not available
+# brew install fswatch (macOS)
+
+fswatch -o "$CHASSIS_PATH/source/" | while read change
+do
+    echo "Changes detected, rebuilding assets..."
+    (
+        cd "$CHASSIS_PATH" && \
+        pnpm assets --platform ios --brand "$BRAND" --app "$APP"
+    )
+    ./scripts/sync-assets.sh "$BRAND" "$APP"
+    echo "Assets synced at $(date)"
+done
+```
+
+### Fastlane Multi-Brand Automation
+
+Fastlane provides powerful multi-brand build automation:
+
+```ruby
+# Fastfile
+default_platform(:ios)
+
+platform :ios do
+  desc "Build app for specific brand"
+  lane :build_brand do |options|
+    brand = options[:brand] || "chassis"
+    app = options[:app] || "demo"
+    
+    # Sync assets (assuming fastlane runs from project root)
+    sh("./scripts/sync-assets.sh", brand, app)
+    
+    # Build app
+    build_app(
+      scheme: "YourApp-#{brand}",
+      export_method: "app-store"
+    )
+  end
+  
+  desc "Build all brands in parallel"
+  lane :build_all_brands do
+    brands = ["chassis", "example"]
+    
+    brands.each do |brand|
+      build_brand(brand: brand, app: "demo")
+    end
+    
+    UI.success("✓ Built #{brands.count} brand variants")
+  end
+end
+```
+
+**Usage:**
+```bash
+# Build single brand with specific app
+fastlane build_brand brand:chassis app:demo
+
+# Build all configured brands
+fastlane build_all_brands
+```
+
+### Runtime Brand Switching
+
+For apps that need to switch brands at runtime (e.g., white-label apps), implement a brand manager:
+
+```swift
+// Brand manager for runtime switching
+class BrandManager {
+    static let shared = BrandManager()
+    private(set) var currentBrand: String = "chassis"
+
+    func setBrand(_ brand: String) {
+        currentBrand = brand
+        NotificationCenter.default.post(
+            name: .brandDidChange,
+            object: nil
+        )
+    }
+
+    func assetName(_ name: String) -> String {
+        return "\(currentBrand)/\(name)"
+    }
+}
+
+// Usage
+let imageName = BrandManager.shared.assetName("hero_image")
+let image = UIImage(named: imageName)  // Loads from chassis/hero_image
+```
+
+**Asset Catalog Structure for Runtime Switching:**
+```
+Assets.xcassets/
+├── chassis/
+│   ├── Images/
+│   └── Icons/
+├── brand-a/
+│   ├── Images/
+│   └── Icons/
+└── brand-b/
+    ├── Images/
+    └── Icons/
+```
+
+<Callout type="info">
+**Build-time vs Runtime**: Most apps use **build-time brand selection** (separate app builds per brand). Use runtime switching only if you need one app binary that can switch between brands dynamically.
+</Callout>
+
+## Best Practices
+
+Follow these recommendations for optimal multi-brand iOS asset integration.
+
+**Multi-Brand Workflows:**
+- ✅ **Automate everything**: Use CI/CD matrix builds for all brand variants
+- ✅ **Single source of truth**: Maintain assets in Chassis Assets, not in app repos
+- ✅ **Build-time over runtime**: Prefer separate builds per brand (simpler, faster)
+- ✅ **Use Fastlane**: Automate multi-brand builds with Fastlane lanes
+- ✅ **Organize Asset Catalogs**: Use brand-specific folders (`chassis/`, `brand-a/`)
+- ✅ **Test all brands**: CI/CD should build and test every brand variant
+
+**Asset Management:**
+- ✅ Use Asset Catalogs for automatic resolution selection
+- ✅ Provide @2x and @3x variants for all raster images
+- ✅ Use PDF for scalable icons with "Preserve Vector Data" enabled
+- ✅ Support dark mode with appropriate variants
+- ✅ Use template rendering mode for tintable icons
+- ✅ Add fonts to Info.plist with correct names
+
+**Don't:**
+- ❌ Manually copy assets for each build
+- ❌ Commit generated `dist/` assets to version control
+- ❌ Hardcode brand-specific asset names (use Brand Manager or build configs)
+- ❌ Skip automation—multi-brand without automation is unsustainable
+- ❌ Duplicate assets across brand repos—use Chassis Assets inheritance
+- ❌ Use raster images for scalable content
+
+## Troubleshooting
+
+Common issues and solutions when integrating iOS assets.
+
+### Fonts not appearing
+
+**Check:**
+1. Font files are added to Xcode project
+2. Files are in target membership
+3. `Info.plist` includes font filenames (not font names)
+4. Font name (PostScript name) is correct in code
+
+**Get font name:**
+```swift
+// Print available fonts
+for family in UIFont.familyNames {
+    print(family)
+    for name in UIFont.fontNames(forFamilyName: family) {
+        print("  - \(name)")
+    }
+}
+```
+
+### Images not displaying
+
+**Check:**
+1. Images are in Asset Catalog or project bundle
+2. Image name matches exactly (case-sensitive)
+3. Image is included in target
+4. @2x/@3x variants are in correct slots
+5. Asset Catalog is included in build
+
+### Wrong resolution showing
+
+**Solutions:**
+1. Ensure @2x and @3x variants are provided
+2. Check Asset Catalog slots are correct
+3. Verify image dimensions match naming (@2x = 2× base size)
+4. Clear derived data: Xcode → Product → Clean Build Folder
+
+### App icon not showing
+
+**Check:**
+1. All required sizes are provided in AppIcon set
+2. Images are PNG format
+3. No transparency (iOS requirement)
+4. 1024×1024 size for App Store is included
+
+## Related Resources
+
+- [Font Assets]([[docsref:/asset-types/fonts]]) - Font management
+- [Image Assets]([[docsref:/asset-types/images]]) - Image optimization
+- [Icon Assets]([[docsref:/asset-types/icons]]) - Icon guidelines
+- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration
+- [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration

@@ -1,0 +1,36 @@
+# ninja log v5
+1	62225	1677495059053392397	qa/Diffenator/Thin-ExtraLight-Light-Regular/Thin	efd55b9b37942fe3
+1	62556	1677495059430531992	qa/Diffenator/Thin-ExtraLight-Light-Regular/Regular	f086e794eb7ca704
+1	63081	1677495059952605339	qa/Diffenator/Thin-ExtraLight-Light-Regular/Light	b5d66e0e3e64350a
+1	63453	1677495060379053134	qa/Diffenator/Thin-ExtraLight-Light-Regular/ExtraLight	560d58fbfb42af56
+0	64136	1677495124385106444	qa/Diffenator/Medium-SemiBold-Bold-ExtraBold/Bold	75dc74f78b4edd24
+0	64481	1677495124737098485	qa/Diffenator/Medium-SemiBold-Bold-ExtraBold/Medium	3003aed46c7fe135
+1	64516	1677495124778240346	qa/Diffenator/Medium-SemiBold-Bold-ExtraBold/SemiBold	3f6f26932d9850d4
+0	64778	1677495125165984340	qa/Diffenator/Medium-SemiBold-Bold-ExtraBold/ExtraBold	65f0fe45df6262c6
+1	96676	1677495221638466854	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/Thin	e5da9ee915193b13
+0	98534	1677495223398270606	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/Black	a6def5c3d2099935
+0	98920	1677495223836939993	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/ExtraLight	edfc3e881a493f1e
+1	99028	1677495224008923281	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/Light	eb4a743b4853b119
+0	108677	1677495233645620394	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/Italic	a966e935b24b9ee7
+2	108909	1677495233857199057	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/Thin-Italic	df58ca0b874170d5
+0	110068	1677495235081542129	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/ExtraLight-Italic	92f838fd3cadb9f
+1	110217	1677495235231515876	qa/Diffenator/Black-Thin Italic-ExtraLight Italic-Light Italic/Light-Italic	e46ae62117828ad7
+1	88170	1677495323387447652	qa/Diffenator/Italic-Medium Italic-SemiBold Italic-Bold Italic/SemiBold	11df467ca9e41f5c
+1	88912	1677495324123807637	qa/Diffenator/Italic-Medium Italic-SemiBold Italic-Bold Italic/Medium	78f45b8373bc5cf8
+0	89204	1677495324455215748	qa/Diffenator/Italic-Medium Italic-SemiBold Italic-Bold Italic/Bold	f072e0c09ea02d1
+1	97914	1677495333128753860	qa/Diffenator/Italic-Medium Italic-SemiBold Italic-Bold Italic/Italic	7949f055a0b26e34
+2	99991	1677495335171880385	qa/Diffenator/Italic-Medium Italic-SemiBold Italic-Bold Italic/SemiBold-Italic	c49771df66ade385
+1	100203	1677495335418229302	qa/Diffenator/Italic-Medium Italic-SemiBold Italic-Bold Italic/Medium-Italic	2689d6ba45e8e6ed
+0	100248	1677495335454262002	qa/Diffenator/Italic-Medium Italic-SemiBold Italic-Bold Italic/Bold-Italic	b9f887b650a82083
+0	86767	1677495422268112441	qa/Diffenator/ExtraBold Italic-Black Italic/Black	f59dcdf60d20aaeb
+1	88367	1677495423870700973	qa/Diffenator/ExtraBold Italic-Black Italic/ExtraBold	b0a124d839a96cb9
+0	88636	1677495424176672534	qa/Diffenator/ExtraBold Italic-Black Italic/Bold	474e879e11cc7672
+1	97441	1677495432883954412	qa/Diffenator/ExtraBold Italic-Black Italic/Italic	89254dc0b741149b
+0	97753	1677495433241402319	qa/Diffenator/ExtraBold Italic-Black Italic/Black-Italic	5e95013d35c15b55
+0	99437	1677495434922433733	qa/Diffenator/ExtraBold Italic-Black Italic/Bold-Italic	f4f899e3f7d98c49
+1	99471	1677495434965719989	qa/Diffenator/ExtraBold Italic-Black Italic/ExtraBold-Italic	60e912b8284e8eb2
+0	1566	1677495436959676982	qa/Diffbrowsers/Thin-ExtraLight-Light-Regular/diffbrowsers	45a5dfdbad4fb54
+0	1271	1677495438222188444	qa/Diffbrowsers/Medium-SemiBold-Bold-ExtraBold/diffbrowsers	b925410625f9e716
+0	1414	1677495439642486161	qa/Diffbrowsers/Black-Thin Italic-ExtraLight Italic-Light Italic/diffbrowsers	8ce2dbfd0da8cb63
+0	1346	1677495440988048835	qa/Diffbrowsers/Italic-Medium Italic-SemiBold Italic-Bold Italic/diffbrowsers	4a36de5f4959822
+1	1327	1677495442325741543	qa/Diffbrowsers/ExtraBold Italic-Black Italic/diffbrowsers	f5e423ea0bee5735

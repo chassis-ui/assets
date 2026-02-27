@@ -1,0 +1,676 @@
+---
+title: Web Applications
+description: Complete guide to integrating Chassis design assets into web applications using optimized fonts, images, and icons.
+toc: true
+---
+
+<Callout type="warning" name="created-by-ai" />
+
+## Overview
+
+Chassis Assets provides optimized design assets for web applications with proper formats, naming conventions, and distribution structures. Assets are ready to use with any modern web framework or bundler.
+
+### Key Benefits
+
+Chassis Assets provides optimized design assets ready for modern web development:
+
+- **Optimized Formats**: WebP images, WOFF2 fonts, SVG vectors
+- **Modern Standards**: Responsive images, font-display, lazy loading
+- **Framework Agnostic**: Works with React, Vue, Angular, vanilla JS
+- **Build Tool Compatible**: Vite, Webpack, Parcel, Rollup support
+
+## Installation
+
+Chassis Assets is a build system that generates platform-specific assets from your source files.
+
+### Clone or Add as Submodule
+
+Clone the repository or add it as a Git submodule to your project:
+
+```bash
+# Clone standalone
+git clone https://github.com/chassis-ui/assets.git chassis-assets
+cd chassis-assets
+
+# Or add as Git submodule
+git submodule add https://github.com/chassis-ui/assets.git assets
+cd assets
+```
+
+### Install Dependencies
+
+```bash
+pnpm install
+```
+
+### Build Assets
+
+Generate platform-specific distributions:
+
+```bash
+# Build all assets
+pnpm assets
+
+# Build for specific platform
+pnpm assets --platform web
+
+# Build for specific brand-app
+pnpm assets --brand chassis --app docs
+```
+
+## Package Structure
+
+After building, generated assets are available in the `dist/` directory:
+
+```
+chassis-assets/
+├── source/                     -> Your source assets
+│   ├── default/
+│   └── [brand]/
+└── dist/                       -> Generated platform assets
+    └── web/
+        └── [brand]-[app]/
+            ├── fonts/
+            │   ├── inter-regular.woff2
+            │   ├── inter-bold.woff2
+            │   └── ...
+            ├── images/
+            │   ├── hero-background.webp
+            │   ├── illustration-feature.svg
+            │   └── ...
+            └── icons/
+                ├── arrow-right.svg
+                ├── menu.svg
+                └── ...
+```
+
+### Copy Assets to Your Project
+
+Copy the generated web assets to your application's public directory:
+
+```bash
+# Copy all web assets for a brand-app
+cp -r dist/web/chassis-docs/* /path/to/your-project/public/assets/
+
+# Or copy specific asset types
+cp -r dist/web/chassis-docs/fonts /path/to/your-project/public/assets/
+cp -r dist/web/chassis-docs/images /path/to/your-project/public/assets/
+```
+
+<Callout type="info">
+For automated workflows, consider creating a build script (e.g., `sync-assets.sh`) that copies assets after each build, or use symlinks during development to automatically reflect changes. For production, copy assets as part of your CI/CD pipeline.
+</Callout>
+
+## Using Fonts
+
+Web fonts use WOFF2 format for optimal performance and broad browser support.
+
+### Import Font Files
+
+Copy fonts to your public directory or import them through your bundler:
+
+**Manual copy (public folder):**
+```bash
+cp -r dist/web/chassis-docs/fonts public/assets/
+```
+
+**Vite/Webpack import:**
+```javascript
+// Import fonts in your main CSS/JS file
+import '/path/to/chassis-assets/dist/web/chassis-docs/fonts/text-normal.woff2';
+import '/path/to/chassis-assets/dist/web/chassis-docs/fonts/text-strong.woff2';
+```
+
+### Define @font-face Rules
+
+Define font-face declarations to load custom fonts in your application.
+
+<Callout type="info" title="Token-Aligned Naming">
+If your fonts use semantic names (text-normal, text-strong, etc.), they align with [Chassis Tokens typography system](https://tokens.chassis-ui.com/docs/design-tokens/typography-tokens). This enables brand switching without code changes.
+</Callout>
+
+**Using Chassis Tokens (recommended):**
+
+```scss
+// fonts.scss - Token integration
+@import '@chassis-ui/tokens/dist/scss/tokens';
+
+/* Text Family - Normal Weight */
+@font-face {
+  font-family: $cx-typography-font-family-text;  // From token: typography.fontFamily.text
+  src: url('/assets/fonts/text-normal.woff2') format('woff2'),
+       url('/assets/fonts/text-normal.woff') format('woff');
+  font-weight: $cx-typography-font-weight-text-normal-weight;  // From token
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Text Family - Strong Weight */
+@font-face {
+  font-family: $cx-typography-font-family-text;
+  src: url('/assets/fonts/text-strong.woff2') format('woff2'),
+       url('/assets/fonts/text-strong.woff') format('woff');
+  font-weight: $cx-typography-font-weight-text-strong-weight;  // From token
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Display Family - Normal Weight */
+@font-face {
+  font-family: $cx-typography-font-family-display;  // From token: typography.fontFamily.display
+  src: url('/assets/fonts/display-normal.woff2') format('woff2'),
+       url('/assets/fonts/display-normal.woff') format('woff');
+  font-weight: $cx-typography-font-weight-display-normal-weight;  // From token
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Apply to elements using token variables */
+body {
+  font-family: $font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: $font-weight-text-normal;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-family-display, Georgia, serif;
+  font-weight: $font-weight-display-strong;
+}
+```
+
+<Callout type="info">
+**Even Better:** Use Chassis CSS which automatically generates `@font-face` declarations from tokens:
+`@import '@chassis-ui/css/scss/chassis';`
+</Callout>
+
+### Integration with Chassis Tokens
+
+Integrate with Chassis Tokens for consistent typography across your application:
+
+```scss
+// app.scss - Using token variables
+@import '@chassis-ui/tokens/dist/scss/tokens';
+
+body {
+  font-family: $font-family-text;  // Token-based font family
+  font-weight: $font-weight-text-normal;  // Token-based weight
+  font-size: $font-size-text-medium;  // Token-based size
+}
+
+.heading {
+  font-family: $font-family-display;
+  font-weight: $font-weight-display-strong;
+  font-size: $font-size-display-large;
+}
+
+// Or with CSS custom properties
+.button {
+  font-family: var(--cx-typography-font-family-text);
+  font-weight: var(--cx-typography-font-weight-text-strong-weight);
+}
+```
+
+### Preload Critical Fonts
+
+Preload fonts used above the fold to improve initial render performance:
+
+```html
+<!-- In <head> -->
+<link rel="preload"
+      href="/assets/fonts/text-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin>
+```
+
+### Framework Examples
+
+Import font styles in your framework's entry point.
+
+**React:**
+```jsx
+// App.jsx
+import './styles/fonts.css';
+
+function App() {
+  return <div className="font-brand">Content</div>;
+}
+```
+
+**Vue:**
+```jsx
+<script setup>
+import './styles/fonts.css';
+</script>
+
+<template>
+  <div class="font-brand">Content</div>
+</template>
+```
+
+**Next.js:**
+```jsx
+// pages/_app.js
+import '../styles/fonts.css';
+
+export default function App({ Component, pageProps }) {
+  return <Component {...pageProps} />;
+}
+```
+
+<Callout type="tip">
+Use `font-display: swap` to show fallback text immediately while custom fonts load, improving perceived performance.
+</Callout>
+
+## Using Images
+
+Web images support all standard formats including WebP for modern browsers.
+
+### Copy Images to Public Directory
+
+Copy image assets to your public directory for static hosting:
+
+```bash
+cp -r dist/web/chassis-docs/images public/assets/
+```
+
+### Reference in HTML
+
+Use standard HTML image elements with modern features:
+
+```html
+<!-- Standard image -->
+<img src="/assets/images/hero-background.jpg"
+     alt="Hero background">
+
+<!-- High-DPI support -->
+<img src="/assets/images/icon.png"
+     srcset="/assets/images/icon.png 1x,
+             /assets/images/icon@2x.png 2x,
+             /assets/images/icon@3x.png 3x"
+     alt="Icon">
+
+<!-- Modern format with fallback -->
+<picture>
+  <source srcset="/assets/images/hero.webp" type="image/webp">
+  <source srcset="/assets/images/hero.jpg" type="image/jpeg">
+  <img src="/assets/images/hero.jpg" alt="Hero">
+</picture>
+
+<!-- Responsive images -->
+<img src="/assets/images/photo-small.jpg"
+     srcset="/assets/images/photo-small.jpg 400w,
+             /assets/images/photo-medium.jpg 800w,
+             /assets/images/photo-large.jpg 1200w"
+     sizes="(max-width: 600px) 400px,
+            (max-width: 1000px) 800px,
+            1200px"
+     alt="Responsive photo">
+```
+
+### Framework Examples
+
+Import images as modules for automatic optimization and cache-busting.
+
+**React:**
+```jsx
+// Import images as modules (Vite/Webpack)
+import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
+
+function Hero() {
+  return <img src={heroImage} alt="Hero" />;
+}
+```
+
+**Vue:**
+```jsx
+<script setup>
+import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
+</script>
+
+<template>
+  <img :src="heroImage" alt="Hero">
+</template>
+```
+
+**Next.js (Image component):**
+```jsx
+import Image from 'next/image';
+import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
+
+export default function Hero() {
+  return (
+    <Image
+      src={heroImage}
+      alt="Hero"
+      width={1200}
+      height={600}
+      priority
+    />
+  );
+}
+```
+
+### Lazy Loading
+
+Defer loading of offscreen images until they're needed:
+
+```html
+<img src="/assets/images/below-fold.jpg"
+     loading="lazy"
+     alt="Content below fold">
+```
+
+## Using Icons
+
+Icons are provided as individual SVG files for maximum flexibility.
+
+### Inline SVG (Recommended)
+
+Inline SVG allows dynamic styling and interactions:
+
+```javascript
+// utils/loadIcon.js
+export async function loadIcon(name) {
+  const icon = await import(
+    `/path/to/chassis-assets/dist/web/chassis-docs/icons/${name}.svg?raw`
+  );
+  return icon.default;
+}
+
+// Component
+const iconSvg = await loadIcon('arrow-right');
+element.innerHTML = iconSvg;
+```
+
+**React component:**
+```jsx
+// components/Icon.jsx
+import { ReactComponent as ArrowRight } from '/path/to/chassis-assets/dist/web/chassis-docs/icons/arrow-right.svg';
+
+export function Icon() {
+  return <ArrowRight className="w-6 h-6 text-primary" />;
+}
+```
+
+**Vue component:**
+```jsx
+<script setup>
+import IconArrow from '/path/to/chassis-assets/dist/web/chassis-docs/icons/arrow-right.svg';
+</script>
+
+<template>
+  <IconArrow class="w-6 h-6 text-primary" />
+</template>
+```
+
+### Image Tag Reference
+
+Use image tags for static icons that don't require styling:
+
+```html
+<img src="/assets/icons/menu.svg"
+     alt="Menu"
+     width="24"
+     height="24">
+```
+
+### Icon Sprite (Advanced)
+
+For applications with many icons, create a sprite sheet to reduce HTTP requests:
+
+```html
+<!-- sprite.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <defs>
+    <symbol id="icon-arrow" viewBox="0 0 24 24">
+      <!-- SVG path -->
+    </symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24">
+      <!-- SVG path -->
+    </symbol>
+  </defs>
+</svg>
+
+<!-- Usage -->
+<svg class="icon">
+  <use href="#icon-arrow"></use>
+</svg>
+```
+
+## Build Tool Configuration
+
+Configure your build tool to handle asset imports efficiently.
+
+### Vite
+
+Create path aliases for cleaner imports:
+
+```javascript
+// vite.config.js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@assets': '/path/to/chassis-assets/dist/web/chassis-docs'
+    }
+  },
+  build: {
+    assetsInlineLimit: 4096, // Inline small assets
+  }
+});
+```
+
+**Usage:**
+```javascript
+import heroImage from '@assets/images/hero.jpg';
+import '@assets/fonts/inter-regular.woff2';
+```
+
+### Webpack
+
+Configure aliases and asset loaders:
+
+```javascript
+// webpack.config.js
+module.exports = {
+  resolve: {
+    alias: {
+      '@assets': path.resolve(__dirname, '../chassis-assets/dist/web/chassis-docs')
+    }
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(woff2?|ttf|otf|eot)$/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'fonts/[name][ext]'
+        }
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg|webp)$/,
+        type: 'asset',
+        parser: {
+          dataUrlCondition: {
+            maxSize: 4 * 1024 // 4kb
+          }
+        }
+      }
+    ]
+  }
+};
+```
+
+### Parcel
+
+Parcel handles assets automatically with zero configuration:
+
+```javascript
+import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
+import '/path/to/chassis-assets/dist/web/chassis-docs/fonts/inter-regular.woff2';
+```
+
+## Brand Switching
+
+Support multiple brands by loading assets dynamically based on brand configuration:
+
+```javascript
+// utils/assets.js
+const BRAND = process.env.VITE_BRAND || 'chassis';
+const APP = 'docs';
+
+export function getAssetPath(type, filename) {
+  return `/assets/${BRAND}-${APP}/${type}/${filename}`;
+}
+
+// Usage
+const heroPath = getAssetPath('images', 'hero.jpg');
+const fontPath = getAssetPath('fonts', 'brand-regular.woff2');
+```
+
+**React Context:**
+```jsx
+// BrandContext.jsx
+import { createContext, useContext } from 'react';
+
+const BrandContext = createContext('chassis');
+
+export function BrandProvider({ brand, children }) {
+  return (
+    <BrandContext.Provider value={brand}>
+      {children}
+    </BrandContext.Provider>
+  );
+}
+
+export function useBrand() {
+  return useContext(BrandContext);
+}
+
+export function useAsset(type, filename) {
+  const brand = useBrand();
+  return `/assets/${brand}-docs/${type}/${filename}`;
+}
+
+// Usage in components
+function Hero() {
+  const heroSrc = useAsset('images', 'hero.jpg');
+  return <img src={heroSrc} alt="Hero" />;
+}
+```
+
+## Performance Optimization
+
+Optimize asset loading for better user experience and Core Web Vitals.
+
+### Asset Loading Strategies
+
+Use preload, lazy loading, and prefetch strategies:
+
+```html
+<!-- Preload critical assets -->
+<link rel="preload" href="/assets/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/images/hero.webp" as="image">
+
+<!-- Lazy load below-fold images -->
+<img src="/assets/images/content.jpg" loading="lazy" alt="Content">
+
+<!-- Async image decoding -->
+<img src="/assets/images/large.jpg" decoding="async" alt="Large image">
+
+<!-- Prefetch assets for next page -->
+<link rel="prefetch" href="/assets/images/next-page.webp">
+```
+
+### Image Optimization
+
+Leverage framework-specific image optimization features:
+
+```javascript
+// Next.js automatic optimization
+import Image from 'next/image';
+
+<Image
+  src="/assets/images/photo.jpg"
+  alt="Photo"
+  width={800}
+  height={600}
+  quality={85}
+  placeholder="blur"
+/>
+```
+
+### Code Splitting
+
+Load assets on demand to reduce initial bundle size:
+
+```javascript
+// Lazy load assets on demand
+const loadLogo = () => import('@assets/logo/logo-main.svg');
+
+button.addEventListener('click', async () => {
+  const { default: image } = await loadLogo();
+  img.src = image;
+});
+```
+
+## Best Practices
+
+Follow these recommendations for optimal asset integration and performance.
+
+**Do:**
+- ✅ Use WebP with JPG/PNG fallbacks
+- ✅ Implement lazy loading for below-fold images
+- ✅ Preload critical fonts and hero images
+- ✅ Use `font-display: swap` for better performance
+- ✅ Optimize all images before deployment
+- ✅ Use SVG for icons when possible
+
+**Don't:**
+- ❌ Load all assets upfront
+- ❌ Use unoptimized source images
+- ❌ Forget responsive image syntax
+- ❌ Ignore CORS for font files
+- ❌ Inline large images as base64
+
+## Troubleshooting
+
+Common issues and solutions when integrating Chassis Assets.
+
+### Fonts Not Loading
+
+**Check:**
+1. Font files are in correct public directory
+2. `@font-face` src paths are correct
+3. CORS headers allow font loading (`crossorigin` attribute)
+4. Font MIME types are configured on server
+
+### Images Not Displaying
+
+**Check:**
+1. Image paths match actual file locations
+2. File extensions are correct
+3. Images are in public/static directory
+4. Build tool is copying assets correctly
+
+### Large Bundle Size
+
+**Solutions:**
+1. Enable tree-shaking in bundler
+2. Use code splitting for assets
+3. Optimize images (WebP, proper compression)
+4. Load assets on demand, not upfront
+5. Use CDN for asset delivery
+
+<Callout type="tip">
+Use browser DevTools Network tab to identify slow-loading assets and optimize them for better performance.
+</Callout>
+
+## Related Resources
+
+- [Font Assets]([[docsref:/asset-types/fonts]]) - Font management guide
+- [Image Assets]([[docsref:/asset-types/images]]) - Image optimization guide
+- [Icon Assets]([[docsref:/asset-types/icons]]) - Icon management guide
+- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration
+- [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration

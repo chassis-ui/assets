@@ -1,10 +1,17 @@
 {
-  "extends": "astro/tsconfigs/base",
+  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "strict": true,
-    "moduleResolution": "node",
-    "target": "ES2022",
-    "module": "ES2022",
-    "skipLibCheck": true
+    "baseUrl": ".",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@css/*": ["../node_modules/@chassis-ui/css/dist/*"],
+      "@icons/*": ["../node_modules/@chassis-ui/icons/*"],
+      "@assets/*": ["src/assets/*"],
+      "@components/*": ["src/components/*"],
+      "@layouts/*": ["src/layouts/*"],
+      "@libs/*": ["src/libs/*"],
+      "@scss/*": ["src/scss/*"],
+      "@shortcodes/*": ["src/components/shortcodes/*"]
+    }
   }
 }

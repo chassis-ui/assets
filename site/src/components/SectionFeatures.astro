@@ -1,0 +1,62 @@
+---
+import Card from '@components/Card.astro'
+---
+
+<section class="py-6xlarge">
+  <div class="container">
+    <div class="row justify-content-center mb-5xlarge">
+      <div class="col-large-8 text-center">
+        <h2 class="font-hero mb-medium">Enterprise-Grade Asset Management</h2>
+        <p class="font-lead">
+          A multi-brand, multi-app, multi-platform asset distribution system that keeps fonts,
+          images, icons, and illustrations organized and optimized for every platform.
+        </p>
+      </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-medium-2 g-xlarge">
+      <div class="col">
+        <Card
+          title="Multi-Brand Architecture"
+          body="Manage multiple brand identities from a single repository. Brand-specific assets override defaults automatically while maintaining consistent structure."
+          icon="swatchbook-outline"
+        />
+      </div>
+      <div class="col">
+        <Card
+          title="Cross-Platform Distribution"
+          body="One source generates optimized assets for web, iOS, and Android. Platform-native naming conventions and file organization applied automatically."
+          icon="phone-outline"
+        />
+      </div>
+      <div class="col">
+        <Card
+          title="Smart File Processing"
+          body="Automatic renaming (kebab-case, snake_case), resolution handling (@2x, @3x), and density folder organization for Android drawables."
+          icon="layers-outline"
+        />
+      </div>
+      <div class="col">
+        <Card
+          title="Asset Type Filtering"
+          body="Platform-specific file type filtering ensures only the right formats reach each platform. WOFF2 for web, TTF/OTF for mobile."
+          icon="filter-outline"
+        />
+      </div>
+      <div class="col">
+        <Card
+          title="Selective Builds"
+          body="Build only what you need with command-line filters. Target specific brands, apps, or platforms for faster development and CI/CD optimization."
+          icon="zap-outline"
+        />
+      </div>
+      <div class="col">
+        <Card
+          title="Validation & Analysis"
+          body="Built-in validation ensures distribution integrity. Analyze asset usage, detect duplicates, and get optimization recommendations."
+          icon="shield-checkmark-outline"
+        />
+      </div>
+    </div>
+  </div>
+</section>
