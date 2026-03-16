@@ -502,7 +502,7 @@ export async function generateAsssets(options = {}) {
             return
           }
 
-          const destPath = `dist/${platform}/${brand}-${app}`
+          const destPath = `dist/${platform}/${app}/${brand}`
 
           logger.log(`\n🔨 Processing: ${brand} - ${app} - ${platform}`)
           logger.log(`📁 Output: ${destPath}`)

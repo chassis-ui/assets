@@ -8,7 +8,7 @@ subtitle:               "A comprehensive SVG icon library with 478+ optimized ic
 description:            "Chassis Icons provides a complete set of SVG icons with font generation, sprite optimization, and distribution packages for multiple platforms."
 authors:                "Ozgur Gunes"
 
-current_version:        "0.1.2"
+current_version:        "0.1.3"
 docs_version:           "0.1"
 github_org:             "https://github.com/chassis-ui"
 repo:                   "https://github.com/chassis-ui/assets"
