@@ -5,6 +5,21 @@ All notable changes to the Chassis Assets project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-04-11
+
+### Added
+- SVG sprite for icon library (cx-sprite.svg)
+- New SVG icon library visualization assets (icon-library-dark.svg, icon-library-light.svg)
+
+### Changed
+- Enhanced change-version.js script with improved functionality
+- Updated and optimized documentation images for better performance
+- Improved home page images (component gallery, Figma screenshots, platforms, tokens)
+- Refined token visualization SVGs (tokens-scheme.svg, tokens-visual.svg)
+
+### Fixed
+- Image file sizes reduced across multiple documentation assets
+
 ## [0.1.3] - 2026-03-16
 
 ### Changed
