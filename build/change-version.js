@@ -28,7 +28,7 @@ import { promisify } from 'node:util'
 
 // Configuration: Files that contain version references to be updated
 // These files contain hardcoded version numbers that need to be kept in sync
-const FILES = ['site/config.yml']
+const FILES = ['README.md', 'site/config.yml']
 
 const SEMVER_RE = /^\d+\.\d+\.\d+$/
 const KNOWN_FLAGS = new Set(['--dry', '--dry-run', '--patch', '--minor', '--major', '--help', '-h'])
