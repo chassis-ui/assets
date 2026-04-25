@@ -1,5 +1,5 @@
 {
-  "buildCommand": "git lfs install && git remote set-url origin https://github.com/$VERCEL_GIT_REPO_OWNER/$VERCEL_GIT_REPO_SLUG.git && git lfs pull && pnpm site:build",
+  "buildCommand": "git lfs install && git remote add origin https://github.com/$VERCEL_GIT_REPO_OWNER/$VERCEL_GIT_REPO_SLUG.git && git lfs pull && pnpm site:build",
   "outputDirectory": "_site",
   "public": true
 }
