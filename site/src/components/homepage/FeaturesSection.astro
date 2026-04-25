@@ -1,0 +1,79 @@
+---
+import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
+---
+
+<section class="home-section py-3xlarge py-medium-6xlarge">
+  <div class="container-2xlarge section-content py-3xlarge py-medium-6xlarge">
+    <div class="row mb-3xlarge mb-medium-6xlarge">
+      <div class="section-header col col-large-10 col-xlarge-8 text-center mx-auto">
+        <h2
+          class="section-title font-3xlarge font-medium-4xlarge font-large-5xlarge mb-xsmall mb-medium-small mb-large-medium"
+        >
+          <span class="font-normal d-block">Built for</span> Production at Scale
+        </h2>
+        <p class="section-body font-medium-large font-large-xlarge m-0">
+          Asset processing automation for multi-brand products. Handles the transformation pipeline
+          from design tools to platform-ready code.
+        </p>
+      </div>
+    </div>
+
+    <div class="section-features row row-cols-1 row-cols-medium-2 g-medium g-medium-xlarge">
+      <div class="col">
+        <FeatureCard icon="cx-swatchbook">
+          <Fragment slot="title">Multi-Brand Architecture</Fragment>
+          <Fragment slot="body">
+            Source folder structure defines brand hierarchy: default/ for shared assets, brand-name/
+            for overrides. Build script merges layers automatically based on CLI flags.
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <div class="col">
+        <FeatureCard icon="cx-laptop-mobile">
+          <Fragment slot="title">Platform-Specific Transforms</Fragment>
+          <Fragment slot="body">
+            Applies naming conventions per platform: kebab-case with hyphens for web, snake_case
+            with underscores for mobile. iOS outputs flat structure, Android uses drawable-density
+            folders.
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <div class="col">
+        <FeatureCard icon="cx-layer-group">
+          <Fragment slot="title">Resolution Variant Handling</Fragment>
+          <Fragment slot="body">
+            Detects @2x and @3x suffixes in source files. Maps to iOS @2x/@3x conventions and
+            Android density folders (hdpi, xhdpi, xxhdpi, xxxhdpi) automatically.
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <div class="col">
+        <FeatureCard icon="cx-filter">
+          <Fragment slot="title">Format Filtering by Platform</Fragment>
+          <Fragment slot="body">
+            Web build: WOFF2 fonts only. Mobile builds: TTF/OTF fonts only. Configurable extension
+            filters prevent unsupported formats from reaching wrong platforms.
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <div class="col">
+        <FeatureCard icon="cx-zap">
+          <Fragment slot="title">CLI Build Filters</Fragment>
+          <Fragment slot="body">
+            Command-line flags filter builds by brand, app, or platform. Useful for development
+            iteration and CI/CD pipelines that deploy one app at a time.
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <div class="col">
+        <FeatureCard icon="cx-shield-check">
+          <Fragment slot="title">Build Validation</Fragment>
+          <Fragment slot="body">
+            Validates output structure after builds. Detects missing files, duplicate filenames
+            after transformation, and unsupported file types. Provides file size analysis.
+          </Fragment>
+        </FeatureCard>
+      </div>
+    </div>
+  </div>
+</section>

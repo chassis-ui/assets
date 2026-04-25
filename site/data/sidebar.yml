@@ -1,0 +1,27 @@
+# This file holds all sidebar menu's entries for Chassis Assets.
+
+- title: Getting Started
+  icon: rocket-solid
+  icon_color: yellow
+  pages:
+    - title: Introduction
+    - title: Quick Start
+    - title: Design Guidelines
+    - title: Build System
+
+- title: Asset Types
+  icon: file-solid
+  icon_color: blue
+  pages:
+    - title: Fonts
+    - title: Images
+    - title: Icons
+    - title: Other
+
+- title: Use in Project
+  icon: code-solid
+  icon_color: green
+  pages:
+    - title: Web Applications
+    - title: iOS Applications
+    - title: Android Applications

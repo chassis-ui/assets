@@ -1,0 +1,138 @@
+---
+title: Welcome to Chassis Assets
+description: A multi-brand, multi-product asset management system for distributing fonts, images, icons, and other design files across web, iOS, and Android platforms.
+toc: true
+sections:
+  - title: Quick Start
+    description: Get started with Chassis Assets by cloning the repository and adding design assets for your project.
+  - title: Design Guidelines
+    slug: test-slug
+    description: Best practices and guidelines for designers exporting and managing assets in the Chassis Assets system.
+aliases:
+ - "/getting-started"
+ - "[[docsref:getting-started]]"
+
+---
+
+<Callout type="warning" name="work-in-progress" />
+
+## What is Chassis Assets?
+
+Chassis Assets is a comprehensive design asset management and distribution system that bridges design workflows with production applications. It provides a scalable, multi-brand, multi-platform approach to managing design assets —including fonts, images, and icons— from source files in design tools to optimized outputs in production code.
+
+Built to work seamlessly with the Chassis Design System ecosystem, Chassis Assets helps design systems maintain consistency across multiple brands, applications, and platforms while keeping asset management simple and efficient.
+
+### Multi-Brand Support
+
+Create and manage assets for multiple brand identities from a single source repository. Each brand can have its own fonts, logos, icons, and imagery while sharing common asset architecture.
+
+- Independent brand definitions with override capabilities
+- Automatic propagation of brand-specific assets
+- Default fallback assets for shared resources
+
+
+### Multi-Product Support
+
+Organize assets by application or product within each brand. This provides clear separation of assets used in different contexts while maintaining a unified source of truth.
+
+- Define multiple applications or products per brand
+- Organize assets by application for better clarity
+- Flexible build options for selective distribution
+
+### Multi-Platform Distribution
+
+Generate platform-specific asset outputs for web, iOS, and Android from a single source. Each platform receives optimized asset formats that follow native conventions and naming requirements.
+
+- **Web:** Lowercase filenames with hyphens and web-compatible file formats
+- **iOS:** Lowercase filenames with underscores and iOS-compatible file formats
+- **Android:** Lowercase filenames with underscores, Android-compatible file formats, density-based folders, and `ic_` prefix for icons
+
+
+### Scalable Architecture
+
+The brand-app-platform architecture delivers maximum flexibility with minimal duplication. Add new brands, apps, or platforms without exponential file growth.
+
+- Separation of concerns between brands and applications
+- Clear asset hierarchy with defaults and overrides
+- Asset-specific distribution per platform
+- Selective build options for efficient CI/CD pipelines
+
+## How It Works
+
+Chassis Assets follows a streamlined workflow that separates asset sourcing from platform-specific distribution.
+
+### Asset Organization
+
+Assets are organized in the `source` directory with a clear hierarchy:
+
+1. **Define Defaults**: Place shared assets in `source/default/[app]/`
+2. **Brand Overrides**: Create brand-specific versions in `source/[brand]/[app]/`
+3. **Asset Types**: Organize by type (fonts, images, icons) within each app folder
+4. **Version Control**: Track all assets in Git for collaboration
+
+The system automatically uses brand-specific assets when available and falls back to defaults when they don't exist. This reduces duplication while maintaining brand flexibility.
+
+### Distribution Generation
+
+The build system transforms source assets into platform-specific outputs:
+
+1. **Read Configuration**: Load brand, app, and platform definitions from `package.json`
+2. **Copy Assets**: Merge default and brand-specific assets (platform compatible formats only)
+3. **Apply Transforms**: Convert filenames and structures for platform requirements
+4. **Generate Output**: Create organized distributions in the `dist/` directory
+
+The build process runs as a command-line script and generates production-ready asset files that developers can reference directly in their applications.
+
+### Asset Types
+
+While Chassis Assets supports any file type, it provides specific distribution rules and best practices for common categories to ensure optimal performance and compatibility across platforms.
+
+- **[Fonts]([[docsref:asset-types/fonts]])**: Typography files (TTF, OTF, WOFF, WOFF2) for brand text styles
+- **[Images]([[docsref:asset-types/images]])**: Visual content including photos, illustrations, and graphics
+- **[Icons]([[docsref:asset-types/icons]])**: UI iconography for navigation, actions, and status indicators
+
+See the [Asset Types]([[docsref:asset-types/fonts]]) section for detailed guides.
+
+## Who Uses Chassis Assets?
+
+Chassis Assets streamlines collaboration between designers, developers, and design system maintainers. Each role benefits from specific features:
+
+### Designers
+
+Start with the [Asset Guidelines]([[docsref:getting-started/design-guidelines]]) to understand asset organization, export requirements, and naming conventions.
+
+- Export assets to standardized source locations
+- Maintain brand-specific variations alongside defaults
+- Update assets without touching code or build scripts
+- Preview assets across brands and applications
+
+### Developers
+
+Start with the [Build System]([[docsref:getting-started/build-system]]) documentation to manage the asset distribution pipeline.
+
+- Build platform-specific asset distributions with a single command
+- Import optimized assets for specific platforms
+- Reference assets using consistent naming patterns
+- Implement platform-native asset loading
+- Build applications with brand-switching support
+
+Get details on integrating assets into specific platforms:
+
+- [Web Applications]([[docsref:use-in-project/web-applications]]) - CSS/SCSS integration
+- [iOS Applications]([[docsref:use-in-project/ios-applications]]) - Swift and UIKit
+- [Android Applications]([[docsref:use-in-project/android-applications]]) - Kotlin/Java
+
+
+### Design System Maintainers
+
+- Manage asset definitions in Git
+- Review and approve asset changes via pull requests
+- Run builds to generate platform-specific distributions
+- Document asset usage guidelines and conventions
+
+## Related Projects
+
+- [Chassis Tokens](https://chassis-ui.com/tokens/) - Design token management
+- [Chassis Icons](https://chassis-ui.com/icons/) - Icon generation system
+- [Chassis CSS](https://chassis-ui.com/css/) - Component styling system
+

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@chassis-ui/docs/layouts/BaseLayout.astro'
+import HeroSection from '@components/homepage/HeroSection.astro'
+import IntroSection from '@components/homepage/IntroSection.astro'
+import FeaturesSection from '@components/homepage/FeaturesSection.astro'
+import HowSection from '@components/homepage/HowSection.astro'
+import HomeIcons from '/static/icons/cx-sprite.svg?raw'
+---
+
+<BaseLayout title="Chassis Assets - Enterprise Asset Distribution System">
+  <!-- Hero Section -->
+  <HeroSection />
+  <hr class="hr container" />
+  <!-- Value Proposition -->
+  <IntroSection />
+  <!-- Key Features -->
+  <FeaturesSection />
+  <!-- How It Works -->
+  <HowSection />
+  <div class="d-none">
+    <Fragment set:html={HomeIcons} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,220 @@
+---
+title: Image Assets
+description: Managing photos, illustrations, graphics, and visual content across multiple brands and platforms.
+toc: true
+---
+
+## Overview
+
+Image assets include all visual content used in applications: photographs, illustrations, graphics, backgrounds, and decorative elements. Chassis Assets organizes, optimizes, and distributes images to all target platforms.
+
+### Key Benefits
+
+Chassis Assets provides streamlined image management across platforms with features like:
+
+- **Format Support**: JPG, PNG, SVG, WebP, and GIF
+- **Multi-Resolution**: Automatic handling of @2x, @3x variants for mobile
+- **Brand Flexibility**: Different imagery for different brands
+- **Platform Optimization**: Web-optimized, iOS @2x/@3x, Android density folders
+
+## File Organization
+
+Image files are organized by brand, application, and optionally by resolution:
+
+```
+source/
+├── default/
+│   └── [app]/
+│       └── images/
+│           ├── brand-logo.svg
+│           ├── hero-background.jpg
+│           ├── illustration-onboarding.svg
+│           ├── icon-feature.png
+│           ├── icon-feature@2x.png
+│           ├── icon-feature@3x.png
+│           └── photo-team.webp
+└── [brand]/
+    └── [app]/
+        └── images/
+            └── brand-logo.svg  # Brand override
+```
+### File Formats
+
+Chassis Assets distributes every file from the `source` directory with platform-appropriate naming, regardless of format or extension.
+
+For example, `hero-background@2x.jpg` in the source will be distributed as:
+
+- **Web**: `hero-background@2x.jpg` (kebab-case preserved)
+- **iOS**: `hero_background@2x.jpg` (snake_case)
+- **Android**: `hero_background.jpg` in `drawable-xhdpi/` (snake_case, resolution handled by density folder)
+
+### Naming Conventions
+
+Use descriptive, hyphenated names that indicate content and purpose:
+
+**Good examples:**
+- `hero-homepage-light.jpg`
+- `hero-homepage-dark.jpg`
+- `illustration-empty-state.svg`
+- `background-pattern.png`
+- `photo-team-office.webp`
+- `graphic-feature-comparison.png`
+
+**For resolution variants:**
+- `icon-arrow.png` (1x)
+- `icon-arrow@2x.png` (2x)
+- `icon-arrow@3x.png` (3x)
+
+<Callout type="info" title="Android Density Folders">
+Android uses density-specific folders instead of filename suffixes. `icon-arrow@2x.png` becomes `icon_arrow.png` in `drawable-xhdpi/`, and `icon-arrow@3x.png` becomes `icon_arrow.png` in `drawable-xxhdpi/`.
+</Callout>
+
+**Avoid:**
+- Generic names: `image1.jpg`, `photo.png`
+- Spaces: `Team Photo.jpg` (use hyphens)
+- Special characters: `image#1.jpg`
+- Uppercase: `HERO.jpg` (use lowercase)
+
+## Exporting from Design Tools
+
+Follow these guidelines when exporting images from design tools:
+
+### Figma Export
+
+Export images from Figma with the correct naming and folder structure:
+
+1. Rename the image layer in Figma to match the desired filename (e.g., `hero-background.jpg`)
+2. Add an export setting to the layer with the appropriate format (PNG, JPG, SVG, WebP) and resolution variants if needed
+3. Export to the correct `source/[brand]/[app]/images/` directory in your Chassis Assets repository
+
+### Sketch Export
+
+Export images from Sketch with the correct naming and folder structure:
+
+1. Name the layer in Sketch according to the desired filename (e.g., `hero-background.jpg`)
+2. Use Sketch's export options to set the format and resolution variants
+3. Export to the correct `source/[brand]/[app]/images/` directory in your Chassis Assets repository
+
+## Distribution Structure
+
+After running the build, images are distributed to platform-specific directories with appropriate naming conventions.
+
+### Web Distribution
+
+Web images preserve original kebab-case filenames and support all format types:
+
+```
+dist/web/[brand]-[app]/images/
+├── hero-background.jpg
+├── hero-background.webp
+├── illustration-feature.svg
+├── photo-team.jpg
+└── icon-arrow@2x.png
+```
+
+See [Web Applications]([[docsref:/use-in-project/web-applications#using-images]]) for how to use these images in your web project.
+
+### iOS Distribution
+
+iOS images use snake_case naming with resolution indicators preserved in filenames:
+
+```
+dist/ios/[brand]-[app]/images/
+├── hero_background.jpg
+├── icon_arrow.png
+├── icon_arrow@2x.png
+└── icon_arrow@3x.png
+```
+
+See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-images]]) for how to use these images in your iOS project.
+
+### Android Distribution
+
+Android images use snake_case naming with resolution variants organized into density-specific folders:
+
+```
+dist/android/[brand]-[app]/images/
+├── drawable-mdpi/
+│   └── icon_arrow.png      # @1x variant
+├── drawable-xhdpi/
+│   └── icon_arrow.png      # @2x variant
+├── drawable-xxhdpi/
+│   └── icon_arrow.png      # @3x variant
+└── hero_background.jpg     # Non-density-specific images
+```
+
+Android uses density-specific folders for resolution variants:
+- `drawable-mdpi` - @1x (mdpi)
+- `drawable-hdpi` - @1.5x (hdpi)
+- `drawable-xhdpi` - @2x (xhdpi)
+- `drawable-xxhdpi` - @3x (xxhdpi)
+- `drawable-xxxhdpi` - @4x (xxxhdpi)
+
+Resolution indicators are removed from filenames and handled by folder placement.
+
+See [Android Applications]([[docsref:/use-in-project/android-applications#using-images]]) for how to use these images in your Android project.
+
+## Best Practices
+
+Follow these recommendations to maintain organized and maintainable image assets across brands and platforms.
+
+### Multiple Brands
+
+Organize image assets for all brands in a dedicated page or section in your design tool:
+
+```
+Mobile-App          -> Figma file
+├── Design          -> Figma page
+│   ├── Home        -> Frame or section with unified design for all brands using variable modes
+│   ├── Profile     
+│   └── Settings    
+└── Assets          -> Figma page
+    ├── Logo        -> Frame or section with logo images
+    │   └── default/[app]/images/brand-logo
+    │   └── brand-a/[app]/images/brand-logo
+    └── Hero        -> Frame or section with hero images
+        └── default/[app]/images/hero-background
+        └── brand-a/[app]/images/hero-background
+```
+
+This maintains a single source of truth for all image assets with brand-specific variations.
+
+### Color Modes
+
+Use separate files for light and dark mode variants, including the mode in the filename:
+
+```
+source/default/[app]/images/
+├── hero-homepage-light.jpg
+└── hero-homepage-dark.jpg
+```
+
+This simplifies referencing the correct image based on the user's color scheme preference.
+
+### Folder Structure
+
+Organize images into subfolders by type or purpose for better maintainability:
+
+```
+source/default/[app]/images/
+├── backgrounds/
+│   ├── hero-homepage-light.jpg
+│   └── hero-homepage-dark.jpg
+├── illustrations/
+│   └── illustration-empty-state.svg
+├── photos/
+│   └── photo-team.webp
+└── icons/
+    ├── icon-feature.png
+    └── icon-arrow@2x.png 
+```
+
+This structure is preserved in the distribution, making it easier to find and reference assets in your codebase.
+
+## Related Resources
+
+- [Font Assets]([[docsref:/asset-types/fonts]]) - Typography management
+- [Icon Assets]([[docsref:/asset-types/icons]]) - UI icon management
+- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration
+- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration
+- [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration

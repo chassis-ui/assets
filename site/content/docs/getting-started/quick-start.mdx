@@ -1,0 +1,308 @@
+---
+title: Quick Start
+description: Get started with Chassis Assets by cloning the repository and managing design assets for your project.
+toc: true
+---
+
+## Overview
+
+Chassis Assets is a centralized repository for managing and distributing design assets across multiple brands and platforms. This guide walks you through setting up the repository, adding assets, building platform-specific distributions, and integrating them into your applications.
+
+### Prerequisites
+
+Before working with Chassis Assets, ensure you have the following installed and configured:
+
+- **Node.js**: Version 18 or higher required for running the build scripts
+- **pnpm**: Package manager used by Chassis Assets (install with `npm install -g pnpm`)
+- **Git**: For cloning the repository and version control
+- **Git LFS**: Required for font and image assets — install from [git-lfs.com](https://git-lfs.com) then run `git lfs install` once on your machine before cloning
+- **Repository Access**: Appropriate permissions to clone or fork the Chassis Assets repository
+
+## Installation
+
+To get started with Chassis Assets, you can either clone the repository directly or add it as a Git submodule to your existing project. Choose the approach that best fits your workflow and project structure.
+
+### Clone the Repository
+
+Cloning the repository creates a standalone copy that you can use to manage and distribute assets:
+
+```bash
+# Clone the repository
+git clone https://github.com/chassis-ui/assets.git chassis-assets
+cd chassis-assets
+```
+
+Alternatively, for existing projects, you can add it as a Git submodule to keep it synchronized with your main project:
+
+```bash
+# Add as Git submodule to your project
+git submodule add https://github.com/chassis-ui/assets.git assets
+cd assets
+```
+
+### Install Dependencies
+
+Once the repository is cloned, install the required dependencies for building and distributing assets:
+
+```bash
+# Install using pnpm
+pnpm install
+```
+
+## Add Assets to the Repository
+
+After installation, you can begin adding your design assets to the repository. Chassis Assets uses a hierarchical structure that supports multiple brands and applications while minimizing duplication through shared defaults.
+
+```
+source/
+├── default/              -> Shared assets (used by all brands)
+│   ├── docs/             -> Documentation application
+│   │   ├── fonts/        
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── ...
+│   └── demo/             -> Demo application
+│       ├── fonts/
+│       ├── images/
+│       ├── icons/
+│       └── ...
+└── [brand]/              -> Brand-specific overrides
+    ├── docs/
+    └── demo/
+```
+
+**Key principles when adding assets:**
+- Place shared assets in `source/default/` to serve as fallbacks for all brands
+- Create brand-specific overrides only when assets differ from defaults
+- Follow consistent naming conventions (lowercase letters, hyphens for word separation)
+- Organize assets by application context (docs, demo, etc.) and type (fonts, images, icons, etc.)
+
+### Asset Types
+
+Chassis Assets supports multiple asset types, each with specific requirements and best practices. Refer to the detailed documentation for guidelines on exporting, optimizing, and organizing each type:
+
+For detailed guidelines on adding specific asset types, see:
+
+- **[Fonts]([[docsref:/asset-types/fonts]])** - Font files (WOFF2, TTF, OTF)
+- **[Images]([[docsref:/asset-types/images]])** - Photos, illustrations, graphics
+- **[Icons]([[docsref:/asset-types/icons]])** - Icon assets from Chassis Icons
+- **[Other Assets]([[docsref:/asset-types/other]])** - Videos, audio, documents, data files
+
+For general best practices and design principles, see [Design Guidelines]([[docsref:/getting-started/design-guidelines]]).
+
+## Build and Distribute
+
+Once your assets are added to the source directories, use the build system to generate platform-specific distributions. The build process automatically transforms assets to match each platform's naming conventions, file formats, and directory structures.
+
+```bash
+# Build assets for all brands, applications and platforms
+pnpm assets
+
+# Build for a specific brand
+pnpm assets --brand chassis
+
+# Build for a specific application
+pnpm assets --app docs
+
+# Build for a specific platform
+pnpm assets --platform web
+```
+
+The build system generates organized output directories for each platform with appropriate naming conventions and formats:
+
+**Build output structure:**
+
+```
+dist/
+├── web/
+│   └── [brand]-[app]/
+│       ├── fonts/
+│       ├── images/
+│       ├── icons/
+│       └── ...
+├── ios/
+│   └── [brand]-[app]/    -> snake_case filenames with underscores
+│       └── ...
+└── android/
+    └── [brand]-[app]/    -> snake_case filenames, density-based folders, ic_ prefix for icons
+        └── ...
+```
+
+The build system uses a modular processor architecture to transform assets for each platform. See the [Build System]([[docsref:/getting-started/build-system]]) documentation for details on how the build system works and how to customize it.
+
+## Use Assets in Your Project
+
+After building assets, you can integrate them into your applications. The simplest approach is to copy the built assets from the `dist/` directory into your project's asset directories.
+
+### Copy Built Assets
+
+Manually copy built assets to your project, or create automation scripts to keep them synchronized:
+
+```bash
+# Copy web assets to your project
+cp -r dist/web/[brand]-[app]/* /path/to/project/public/assets/
+
+# Create a sync script in your project's package.json
+{
+  "scripts": {
+    "sync-assets": "cp -r ../chassis-assets/dist/web/chassis-docs/* public/assets/"
+  }
+}
+```
+
+### Platform Integrations
+
+Each platform has specific requirements for consuming assets. Refer to the platform-specific integration guides for detailed instructions, code examples, and best practices:
+
+- **[Web Applications]([[docsref:/use-in-project/web-applications]])** - Using assets in web projects (React, Vue, Next.js, etc.)
+- **[iOS Applications]([[docsref:/use-in-project/ios-applications]])** - Using asset catalogs and generated code in iOS
+- **[Android Applications]([[docsref:/use-in-project/android-applications]])** - Using drawable resources in Android
+
+## Package Customization
+
+When adopting Chassis Assets for your organization, customize the package metadata and configuration to match your project structure and requirements.
+
+### Update Package Metadata
+
+Modify the package metadata in `package.json` to reflect your organization's details:
+
+```json
+{
+  "name": "@your-org/chassis-assets",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/chassis-assets.git"
+  },
+  ...
+}
+```
+
+### Configure Brands & Apps
+
+Define your specific brands and applications in the `chassis` configuration object within `package.json`. This determines which outputs the build system generates:
+
+```json
+{
+  "chassis": {
+    "defaults": {
+      "brandFolder": "default"
+    },
+    "build": {
+      "brands": ["chassis", "example"],
+      "apps": {
+        "docs": ["web"],
+        "demo": ["ios", "android"]
+      }
+    }
+  }
+}
+```
+
+See the [Configuration]([[docsref:/getting-started/build-system#configuration]]) documentation for detailed information on configuring brands, apps, and build options.
+
+### Update Git Remote URL
+
+If you've moved the repository to a different organization or renamed it, update the Git remote URL:
+
+```bash
+git remote set-url origin https://github.com/your-org/chassis-assets.git
+```
+
+## Common Workflows
+
+These workflows demonstrate typical tasks you'll perform when managing assets in Chassis Assets.
+
+### Adding a New Asset
+
+Follow this workflow when adding new assets to the repository:
+
+1. Export asset from design tool (Figma, Sketch, etc.)
+2. Add to appropriate `source/` directory with proper naming
+3. Run build command to generate platform-specific outputs
+4. Commit both source and built assets
+5. Copy built assets to your application project
+
+### Creating Brand Variations
+
+When you need to create brand-specific versions of assets, follow this workflow to maintain the override hierarchy:
+
+1. Start with assets in `source/default/`
+2. Create brand-specific directory: `source/[brand]/`
+3. Add only assets that differ from defaults
+4. Build to generate brand-specific distributions
+5. Deploy to brand-specific applications
+
+### Updating Existing Assets
+
+When modifying existing assets, ensure changes are properly built and distributed:
+
+1. Update source files in appropriate directory
+2. Rebuild assets: `pnpm assets`
+3. Review changes in `dist/` directory
+4. Update version number if needed
+5. Distribute updated assets to projects
+
+## Quick Reference
+
+Use this reference for quick access to common information about Chassis Assets structure and commands.
+
+### Directory Structure
+
+Key directories in the Chassis Assets repository:
+
+<CxTable>
+| Directory | Purpose |
+|-----------|---------|
+| `source/` | Source asset files organized by brand and app |
+| `dist/` | Built assets for each platform |
+| `build/` | Build scripts and configuration |
+| `site/` | Documentation website |
+</CxTable>
+
+### Common Commands
+
+Frequently used commands for managing and building assets:
+
+```bash
+pnpm install                        # Install dependencies
+pnpm assets                         # Build all assets
+pnpm assets --brand chassis         # Build specific brand
+pnpm assets --platform web          # Build web assets only
+pnpm dev                            # Start documentation site
+```
+
+### Key Concepts
+
+Fundamental concepts that drive the Chassis Assets architecture:
+
+- **Multi-brand structure**: Shared defaults with brand-specific overrides
+- **Platform-specific builds**: Automatic transformation for Web, iOS, Android
+- **Token integration**: Assets reference Chassis Tokens for consistency
+- **Override hierarchy**: Brand > App > Default
+
+## Next Steps
+
+Continue your journey with Chassis Assets by exploring these related topics.
+
+### Learn the System
+
+Deepen your understanding of Chassis Assets architecture and principles:
+
+- **[Introduction]([[docsref:/getting-started/introduction]])** - Understand Chassis Assets architecture
+- **[Design Guidelines]([[docsref:/getting-started/design-guidelines]])** - Core principles and best practices
+
+### Manage Assets
+
+Learn how to work with specific asset types:
+
+- **[Fonts]([[docsref:/asset-types/fonts]])** - Add and manage font assets
+- **[Images]([[docsref:/asset-types/images]])** - Add and manage image assets
+- **[Icons]([[docsref:/asset-types/icons]])** - Integrate icon assets from Chassis Icons
+
+### Use in Projects
+
+Integrate distributed assets into your platform-specific applications:
+
+- **[Web Applications]([[docsref:/use-in-project/web-applications]])** - Integrate into web projects
+- **[iOS Applications]([[docsref:/use-in-project/ios-applications]])** - Integrate into iOS projects
+- **[Android Applications]([[docsref:/use-in-project/android-applications]])** - Integrate into Android projects
