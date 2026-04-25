@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm site:build",
+  "buildCommand": "git lfs install && git lfs pull && pnpm site:build",
   "outputDirectory": "_site",
   "public": true
 }
