@@ -15,6 +15,9 @@ Chassis Assets provides tools to copy, rename, and distribute design assets (fon
 > [!WARNING]
 > This project uses `pnpm` for package management. Install it globally with `npm install -g pnpm` before running the commands below.
 
+> [!WARNING]
+> This project uses [Git LFS](https://git-lfs.com) to store binary assets (fonts, images). Run `git lfs install` once on your machine before cloning or pulling.
+
 ## Quick Start
 
 ### Clone Repository
