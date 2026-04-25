@@ -9,7 +9,6 @@ description:            "Chassis Icons provides a complete set of SVG icons with
 authors:                "Ozgur Gunes"
 
 current_version:        "0.1.5"
-docs_version:           "0.1"
 github_org:             "https://github.com/chassis-ui"
 repo:                   "https://github.com/chassis-ui/assets"
 blog:                   "https://chassis-ui.com/blog/"
@@ -19,8 +18,8 @@ analytics:
   google_id:            "G-QGR8C28VYN"
 
 algolia:
-  app_id:               "MEJ97SH293"
-  api_key:              "df6a517a37c3973122cfc40042055f9c"
+  app_id:               "TMI5N9J6TZ"
+  api_key:              "e318e0636b0a951e4f82c8283345df13"
   index_name:           "chassis-docs"
 
 anchors:

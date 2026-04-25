@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import yaml from 'js-yaml'
 import { z } from 'zod'
-import { zVersionMajorMinor, zVersionSemver } from './validation'
+import { zVersionSemver } from './validation'
 
 // The config schema used to validate the config file content and ensure all values required by the site are valid.
 const configSchema = z.object({
@@ -22,7 +22,6 @@ const configSchema = z.object({
   blog: z.string().url(),
   current_version: zVersionSemver,
   description: z.string(),
-  docs_version: zVersionMajorMinor,
   docsDir: z.string(),
   docsPath: z.string(),
   github_org: z.string().url(),
