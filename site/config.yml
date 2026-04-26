@@ -4,8 +4,8 @@ baseURL:                "https://chassis-ui.com/assets"
 docsDir:                "site"
 docsPath:                "/assets/docs"
 
-subtitle:               "A comprehensive SVG icon library with 478+ optimized icons for web and mobile applications."
-description:            "Chassis Icons provides a complete set of SVG icons with font generation, sprite optimization, and distribution packages for multiple platforms."
+subtitle:               "Multi-Brand, Multi-Platform Design Asset Distribution"
+description:            "Multi-platform design asset management for Chassis UI. Copy, rename, and distribute fonts, images, icons, and illustrations across brands and apps."
 authors:                "Ozgur Gunes"
 
 current_version:        "0.1.5"
