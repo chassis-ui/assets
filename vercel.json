@@ -1,5 +1,16 @@
 {
   "buildCommand": "git lfs install && (git remote add origin https://github.com/$VERCEL_GIT_REPO_OWNER/$VERCEL_GIT_REPO_SLUG.git || git remote set-url origin https://github.com/$VERCEL_GIT_REPO_OWNER/$VERCEL_GIT_REPO_SLUG.git) && git lfs pull && pnpm site:build",
   "outputDirectory": "_site",
-  "public": true
+  "public": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "has": [
+        { "type": "header", "key": "host", "value": ".*-staging\\.vercel\\.app" }
+      ],
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ]
 }
