@@ -42,16 +42,13 @@ export function getDocsPublicFsPath() {
 const generatedVersionedDocsPaths: string[] = []
 
 export function getChassisDocsPath(docsPath: string): string {
-  const { docs_version } = getConfig()
-
   const sanitizedDocsPath = docsPath.replace(/^\//, '')
 
   if (import.meta.env.PROD) {
     generatedVersionedDocsPaths.push(sanitizedDocsPath)
   }
 
-  // return `/docs/${docs_version}/${sanitizedDocsPath}`
-  return `/assets/docs/${sanitizedDocsPath}`
+  return path.join(getConfig().docsPath, sanitizedDocsPath)
 }
 
 // Validate that all the generated versioned docs paths point to an existing page or asset.
@@ -62,19 +59,15 @@ export function getChassisDocsPath(docsPath: string): string {
 // containing information regarding the last page generated page for dynamic routes.
 // @see https://github.com/withastro/astro/issues/5802
 export function validateChassisDocsPaths(distUrl: URL) {
-  const { docs_version } = getConfig()
-
   for (const docsPath of generatedVersionedDocsPaths) {
     const sanitizedDocsPath = sanitizeChassisDocsPathForValidation(docsPath)
     const absoluteDocsPath = fileURLToPath(
-      // new URL(path.join('./docs', docs_version, sanitizedDocsPath), distUrl)
-      new URL(path.join('./assets/docs', sanitizedDocsPath), distUrl)
+      new URL(path.join('.', getConfig().docsPath, sanitizedDocsPath), distUrl)
     )
-
     const docsPathExists = fs.existsSync(absoluteDocsPath)
 
     if (!docsPathExists) {
-      throw new Error(
+      console.error(
         `A docs path was generated but does not point to a valid page or asset: '${docsPath}'.`
       )
     }

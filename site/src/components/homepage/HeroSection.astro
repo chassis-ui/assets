@@ -1,6 +1,7 @@
 ---
 import { getConfig } from '@libs/config'
 import { getChassisDocsPath } from '@libs/path'
+import Code from '@shortcodes/Code.astro'
 ---
 
 <div class="home-section py-3xlarge py-medium-6xlarge">
@@ -26,18 +27,19 @@ import { getChassisDocsPath } from '@libs/path'
     <div
       class="section-features d-flex flex-column gap-medium mb-medium mb-medium-large col col-large-6 offset-large-3"
     >
+      <!-- Code snippet -->
+      <Code
+        lang="bash"
+        code="git clone git@github.com:chassis-ui/tokens.git"
+        containerClass="mx-auto mw-100"
+      />
       <!-- Buttons -->
       <div class="d-grid d-medium-flex gap-medium justify-content-medium-center flex-wrap">
-        <a href="/getting-started" class="button primary large">
-          <svg class="icon" aria-hidden="true"><use href="#book-open-solid"></use></svg>
+        <a href={getChassisDocsPath('')} class="button primary large">
+          <svg class="icon" aria-hidden="true"><use href="#book-open-outline"></use></svg>
           <span>Get Started</span>
         </a>
-        <a
-          href="https://github.com/chassis-ui/assets"
-          class="button default large"
-          target="_blank"
-          rel="noopener"
-        >
+        <a href={getConfig().repo} class="button default large" target="_blank" rel="noopener">
           <svg class="icon" aria-hidden="true"><use href="#github-brand"></use></svg>
           <span>View on GitHub</span>
         </a>
@@ -47,11 +49,8 @@ import { getChassisDocsPath } from '@libs/path'
       <p class="fg-subtle mb-0 text-center font-medium">
         Currently <strong>v{getConfig().current_version}</strong>
         <span class="px-2xsmall">&middot;</span>
-        <a href={getChassisDocsPath('getting-started/download')} class="link-secondary">Download</a>
-        <span class="px-2xsmall">&middot;</span>
-        <a
-          href="https://github.com/chassis-ui/assets/blob/main/CHANGELOG.md"
-          class="link-secondary text-nowrap">All releases</a
+        <a href={getConfig().repo + '/blob/main/CHANGELOG.md'} class="link-secondary text-nowrap"
+          >Changes</a
         >
       </p>
     </div>

@@ -1,15 +1,11 @@
 import type { APIRoute } from 'astro'
 
-export const GET: APIRoute = function GET({ site }) {
-  const isProduction = import.meta.env.PROD
-  const isNetlify = import.meta.env.NETLIFY === 'true'
-
-  const allowCrawling = !isNetlify && isProduction
-
-  const robotsTxt = `# www.robotstxt.org${allowCrawling ? '\n# Allow crawling of all content' : ''}
+export const GET: APIRoute = function GET() {
+  // This project is served only as a proxy target behind chassis-ui.com.
+  // Direct access via *.vercel.app should never be indexed by search engines.
+  const robotsTxt = `# www.robotstxt.org
 User-agent: *
-Disallow: ${allowCrawling ? '' : '/'}
-Sitemap: ${new URL('sitemap-index.xml', site)}
+Disallow: /
 `
 
   return new Response(robotsTxt, {
