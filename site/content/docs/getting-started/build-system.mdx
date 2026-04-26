@@ -517,6 +517,8 @@ jobs:
     
     steps:
       - uses: actions/checkout@v3
+        with:
+          lfs: true
       
       - uses: pnpm/action-setup@v2
         with:

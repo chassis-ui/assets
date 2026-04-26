@@ -1,14 +1,24 @@
 # Chassis Assets
 
-A design asset manager for Chassis UI, providing a robust foundation for enterprise-grade, multi-brand, multi-app, and multi-platform design systems.
+> Multi-platform design asset management for the Chassis Design System.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Version: 0.1.5](https://img.shields.io/badge/Version-0.1.5-blue.svg)](https://github.com/chassis-ui/assets)
+
+## Overview
+
+Chassis Assets provides tools to copy, rename, and distribute design assets (fonts, images, icons, illustrations) across different brands, applications, and platforms.
 
 > [!NOTE]
-> This project is part of the Chassis UI ecosystem and handles asset management and distribution. It provides tools to copy, rename, and distribute design assets (fonts, images, icons, illustrations) across different brands, applications, and platforms.
+> This project is part of the multi-repository Chassis Design System. It focuses exclusively on asset management, while design tokens and icon generation are handled by separate repositories.
 
 > [!WARNING]
-> This project uses `pnpm` for package management. Ensure you have `pnpm` installed globally before running the commands below.
+> This project uses `pnpm` for package management. Install it globally with `npm install -g pnpm` before running the commands below.
 
-## 🚀 Quick Start
+> [!WARNING]
+> This project uses [Git LFS](https://git-lfs.com) to store binary assets (fonts, images). Run `git lfs install` once on your machine before cloning or pulling.
+
+## Quick Start
 
 ### Clone Repository
 
@@ -215,36 +225,32 @@ For each brand-app-platform combination:
 3. Apply platform-specific processing (naming conventions, file transformations)
 4. Output to `dist/[platform]/[brand]-[app]/`
 
-## Chassis UI Ecosystem
+## Chassis Ecosystem
 
 This project is part of the Chassis Design System's multi-repository architecture:
 
-- **`chassis-tokens`**: Design token generation and management
-- **`chassis-assets`**: Asset management and distribution (this repository)
-- **`chassis-icons`**: Icon generation and sprite creation
-- **`chassis-css`**: Production CSS framework
-- **`chassis-figma`**: Figma plugins and design tools
+| Project | Description |
+|---------|-------------|
+| [chassis-website](https://github.com/chassis-ui/website) | Main website and shared documentation package |
+| [chassis-css](https://github.com/chassis-ui/css) | CSS framework and component library |
+| [chassis-tokens](https://github.com/chassis-ui/tokens) | Design token generation and management |
+| [chassis-icons](https://github.com/chassis-ui/icons) | Icon library and build toolkit |
+| **chassis-assets** | **Multi-platform asset management (this repository)** |
+| [chassis-figma](https://github.com/chassis-ui/figma) | Figma component documentation |
 
-### Integration with Other Repositories
-
-The asset manager works alongside other Chassis repositories:
-
-1. **Design tokens** define font names and asset references
-2. **Assets** provide the actual font files, images, and illustrations
-3. **Icons** are managed separately for scalability and performance
-4. **CSS framework** references the distributed assets
+All documentation sites share the `@chassis-ui/docs` package for consistent layouts, components, and styling.
 
 ## Contributing
 
-This project follows the Chassis Design System contribution guidelines. For asset-related contributions:
-
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/asset-update`)
-3. Add or update assets in the appropriate `source` directories
-4. Test distribution with `pnpm assets`
-5. Commit changes and create a pull request
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes
+4. Test the build: `pnpm dist && pnpm test`
+5. Commit your changes: `git commit -m "feat: add my feature"`
+6. Push to the branch: `git push origin feature/my-feature`
+7. Open a Pull Request
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License — see [LICENSE](LICENSE) file for details.
 

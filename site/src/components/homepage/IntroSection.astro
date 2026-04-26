@@ -1,0 +1,51 @@
+---
+import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
+---
+
+<section class="home-section py-3xlarge py-medium-6xlarge">
+  <div class="container-2xlarge section-content">
+    <div class="row mb-3xlarge mb-medium-6xlarge">
+      <header class="section-header col col-large-10 col-xlarge-8 text-center mx-auto">
+        <h2
+          class="section-title font-3xlarge font-medium-4xlarge font-large-5xlarge mb-xsmall mb-medium-small mb-large-medium"
+        >
+          <span class="font-normal d-block">What</span> Chassis Assets Does
+        </h2>
+        <p class="section-body font-medium-large font-large-xlarge m-0">
+          Processes source assets into platform-specific distributions using a build script.
+          Supports multiple brands and apps from one repository with override-based architecture.
+        </p>
+      </header>
+    </div>
+
+    <div class="section-features row row-cols-1 row-cols-medium-3 g-medium g-medium-xlarge">
+      <div class="col">
+        <FeatureCard icon="cx-sparkles">
+          <Fragment slot="title">Automated File Processing</Fragment>
+          <Fragment slot="body">
+            Transforms filenames to kebab-case for web, snake_case for mobile. Handles @2x/@3x
+            resolution variants. Organizes Android drawables by density automatically.
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <div class="col">
+        <FeatureCard icon="cx-rectangle-history">
+          <Fragment slot="title">Brand Override System</Fragment>
+          <Fragment slot="body">
+            Define default assets once. Override specific files per brand using folder structure.
+            Build system merges defaults with brand-specific assets automatically.
+          </Fragment>
+        </FeatureCard>
+      </div>
+      <div class="col">
+        <FeatureCard icon="cx-rocket">
+          <Fragment slot="title">Multi-Platform Output</Fragment>
+          <Fragment slot="body">
+            Single source generates three platform-specific distributions. WOFF2 fonts for web,
+            TTF/OTF for mobile. SVG preserved, raster images processed per platform conventions.
+          </Fragment>
+        </FeatureCard>
+      </div>
+    </div>
+  </div>
+</section>

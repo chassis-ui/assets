@@ -4,23 +4,20 @@ import { rehypeHeadingIds } from '@astrojs/markdown-remark'
 import mdx from '@astrojs/mdx'
 import sitemap from '@astrojs/sitemap'
 import type { AstroIntegration } from 'astro'
-import autoImport from 'astro-auto-import'
 import type { Element } from 'hast'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import { getConfig } from './config'
-// import { rehypeCxTable } from './rehype'
 import { remarkCxConfig, remarkCxDocsref } from './remark'
 import { configurePrism } from './prism'
 import { rehypeCxTable } from '@chassis-ui/docs'
 import {
-  docsDirectory,
-  getChassisDocsPath,
   getChassisAssetsFsPath,
   getChassisCSSFsPath,
   getChassisIconsFsPath,
   getDocsFsPath,
   getDocsPublicFsPath,
-  getDocsStaticFsPath
+  getDocsStaticFsPath,
+  validateChassisDocsPaths
 } from './path'
 import chassisAutoImport from './shortcode'
 
@@ -31,7 +28,7 @@ const staticFileAliases = {
 }
 
 // A list of pages that will be excluded from the sitemap.
-const sitemapExcludes = ['/404', '/docs', `/docs/${getConfig().docs_version}`]
+const sitemapExcludes = ['/404', '/docs']
 
 const headingsRangeRegex = new RegExp(`^h[${getConfig().anchors.min}-${getConfig().anchors.max}]$`)
 
@@ -75,6 +72,9 @@ export function chassis(): AstroIntegration[] {
           copyChassisCSS()
           copyChassisIcons()
           aliasStatic()
+        },
+        'astro:build:done': ({ dir }) => {
+          validateChassisDocsPaths(dir)
         }
       }
     },
@@ -94,8 +94,6 @@ function copyChassisAssets() {
   const source = getChassisAssetsFsPath()
   const destination = path.join(getDocsPublicFsPath(), 'static')
 
-  // fs.mkdirSync(destination, { recursive: true })
-  // copyStaticRecursively(source, destination)
   fs.mkdirSync(destination, { recursive: true })
   fs.cpSync(source, destination, { recursive: true })
 }
@@ -110,12 +108,10 @@ function copyChassisCSS() {
 
 // Copy the `icons` folder from the chassis-tokens repo to make it available from the `/icons` URL.
 function copyChassisIcons() {
-  // const svgs_source = path.join(getChassisIconsFsPath(), 'svgs')
   const font_source = path.join(getChassisIconsFsPath(), 'font')
   const destination = path.join(getDocsPublicFsPath(), 'static', 'icons')
 
   fs.mkdirSync(destination, { recursive: true })
-  // fs.cpSync(svgs_source, destination, { recursive: true })
   fs.cpSync(font_source, destination, { recursive: true })
 }
 
