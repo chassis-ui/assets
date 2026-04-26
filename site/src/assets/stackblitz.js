@@ -12,18 +12,18 @@
  */
 
 import sdk from '@stackblitz/sdk'
-import snippetsContent from './partials/snippets.js?raw'
+
+import snippetsContent from './snippets.js?raw'
 
 // These values will be replaced by Astro's Vite plugin
 const CONFIG = {
   cssCdn: '__CSS_CDN__',
-  jsBundleCdn: '__JS_BUNDLE_CDN__',
-  docsVersion: '__DOCS_VERSION__'
+  jsBundleCdn: '__JS_BUNDLE_CDN__'
 }
 
 // Open in StackBlitz logic
-document.querySelectorAll('.button-edit').forEach((button) => {
-  button.addEventListener('click', (event) => {
+document.querySelectorAll('.button-edit').forEach(button => {
+  button.addEventListener('click', event => {
     const codeSnippet = event.target.closest('.cxd-code-snippet')
     const exampleEl = codeSnippet.querySelector('.cxd-example')
 
@@ -43,44 +43,20 @@ const openChassisSnippet = (htmlSnippet, jsSnippet, classes) => {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="${CONFIG.cssCdn}" rel="stylesheet">
-    <link href="https://chassis-ui.com/docs/${CONFIG.docsVersion}/assets/css/docs.css" rel="stylesheet">
     <title>Chassis Example</title>
     <script defer src="${CONFIG.jsBundleCdn}"></script>
   </head>
   <body class="p-medium m-0 border-0 ${classes}">
     <!-- Example Code Start-->
-${htmlSnippet
-  .trimStart()
-  .replace(/^/gm, '    ')
-  .replace(/^ {4}$/gm, '')
-  .trimEnd()}
+${htmlSnippet.trimStart().replace(/^/gm, '    ').replace(/^ {4}$/gm, '').trimEnd()}
     <!-- Example Code End -->
   </body>
 </html>`
 
-  // Modify the snippets content to convert export default to a variable and invoke it
-  let modifiedSnippetsContent = ''
-
-  if (jsSnippet) {
-    // Replace export default with a variable assignment
-    modifiedSnippetsContent = snippetsContent.replace(
-      'export default () => {',
-      'const snippets_default = () => {'
-    )
-
-    // Add IIFE wrapper and execution
-    modifiedSnippetsContent = `(() => {
-  ${modifiedSnippetsContent}
-
-  // <stdin>
-  snippets_default();
-})();`
-  }
-
   const project = {
     files: {
       'index.html': indexHtml,
-      ...(jsSnippet && { 'index.js': modifiedSnippetsContent })
+      ...(jsSnippet && { 'index.js': snippetsContent })
     },
     title: 'Chassis Example',
     description: `Official example from ${window.location.href}`,
