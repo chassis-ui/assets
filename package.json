@@ -87,7 +87,7 @@
     "@astrojs/prism": "^3.3.0",
     "@astrojs/sitemap": "^3.7.2",
     "@chassis-ui/css": "github:chassis-ui/css#app/docs",
-    "@chassis-ui/docs": "^0.1.9",
+    "@chassis-ui/docs": "^0.1.10",
     "@chassis-ui/icons": "github:chassis-ui/icons#app/docs",
     "@chassis-ui/tokens": "github:chassis-ui/tokens#app/docs",
     "@docsearch/css": "^3.9.0",
