@@ -7,7 +7,7 @@ import { getChassisDocsPath } from '@libs/path'
 
 <div class="text-center mx-auto container-fluid py-6xlarge cxd-masthead">
   <div class="row">
-    <div class="col-large-6 mx-auto">
+    <div class="large:col-6 mx-auto">
       <ResponsiveImage
         imgPath="/static/logo/chassis-logo-brand.png"
         alt="Chassis UI"
@@ -23,7 +23,7 @@ import { getChassisDocsPath } from '@libs/path'
       </p>
       <div class="py-4xlarge">
         <div
-          class="d-flex flex-column flex-large-row align-items-medium-stretch justify-content-medium-center gap-medium mb-xlarge"
+          class="d-flex flex-column large:flex-row medium:align-items-stretch medium:justify-content-center gap-medium mb-xlarge"
         >
           <div class="d-inline-block v-align-middle fs-5">
             <Code code={`npm i @chassis-ui/tokens@${getConfig().current_version}`} lang="sh" />

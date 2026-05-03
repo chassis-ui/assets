@@ -11,6 +11,9 @@ const site = getSiteUrl(getConfig())
 // https://astro.build/config
 export default defineConfig({
   outDir: '../_site',
+  build: {
+    assets: `static`
+  },
   integrations: [chassis()],
   markdown: {
     smartypants: false,
@@ -21,8 +24,7 @@ export default defineConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          quietDeps: true,
-          silenceDeprecations: ['import', 'global-builtin', 'color-functions']
+          silenceDeprecations: ['import', 'global-builtin', 'color-functions', 'if-function']
         }
       }
     },

@@ -7,9 +7,12 @@
  */
 export declare global {
   export const AddedIn: typeof import('@chassis-ui/docs/shortcodes/AddedIn.astro').default
+  export const Blockquote: typeof import('@chassis-ui/docs/shortcodes/Blockquote.astro').default
+  export const CSSOnly: typeof import('@chassis-ui/docs/shortcodes/CSSOnly.astro').default
   export const Callout: typeof import('@chassis-ui/docs/shortcodes/Callout.astro').default
   export const CxTable: typeof import('@chassis-ui/docs/shortcodes/CxTable.astro').default
-  export const Blockquote: typeof import('@shortcodes/Blockquote.astro').default
+  export const DeprecatedIn: typeof import('@chassis-ui/docs/shortcodes/DeprecatedIn.astro').default
+  export const InFigma: typeof import('@chassis-ui/docs/shortcodes/InFigma.astro').default
   export const Code: typeof import('@shortcodes/Code.astro').default
   export const Example: typeof import('@shortcodes/Example.astro').default
   export const ResponsiveImage: typeof import('@shortcodes/ResponsiveImage.astro').default

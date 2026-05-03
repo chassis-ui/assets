@@ -87,7 +87,12 @@ export function chassis(): AstroIntegration[] {
 }
 
 function cleanPublicDirectory() {
-  fs.rmSync(getDocsPublicFsPath(), { force: true, recursive: true })
+  const dir = getDocsPublicFsPath()
+  if (!fs.existsSync(dir)) return
+  // Delete contents rather than the directory itself to avoid ENOTEMPTY on the root public dir.
+  for (const entry of fs.readdirSync(dir)) {
+    fs.rmSync(path.join(dir, entry), { force: true, recursive: true })
+  }
 }
 
 function copyChassisAssets() {
