@@ -62,7 +62,7 @@
     "assets:site": "pnpm assets --clean --brand chassis --app docs",
     "assets:validate": "node build/validate-assets.js",
     "site": "pnpm site:build && pnpm site:lint",
-    "site:build": "node build/build-site.js",
+    "site:build": "pnpm assets:site && pnpm astro:build",
     "site:clean": "node build/build-site.js clean",
     "site:format": "prettier --write --cache site",
     "site:lint": "pnpm site:lint:eslint && pnpm site:lint:fusv && pnpm site:lint:stylelint && pnpm site:lint:prettier && pnpm site:lint:vnu",
