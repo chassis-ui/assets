@@ -19,7 +19,6 @@ Chassis Assets is built on the principle that design systems must serve multiple
 
 This approach allows teams to scale from a single brand to dozens without exponentially increasing complexity.
 
-
 ## File Organization
 
 Assets are organized in a hierarchical structure:
@@ -36,6 +35,7 @@ source/
 ```
 
 **Key concepts:**
+
 - **Default folder**: Contains assets shared across all brands
 - **Brand folders**: Override defaults with brand-specific versions
 - **App folders**: Separate assets by application context
@@ -55,6 +55,7 @@ Only add brand-specific versions when they actually differ from defaults. For ex
 Consistent naming conventions are crucial for the build system to correctly process and distribute assets across platforms. Use these conventions in your **source files**—the build system automatically applies platform-specific naming (such as snake_case for iOS/Android) during distribution.
 
 **Do:**
+
 - ✅ Use lowercase letters
 - ✅ Use hyphens to separate words: `hero-background.jpg`
 - ✅ Be descriptive: `illustration-onboarding-step-1.svg`
@@ -62,6 +63,7 @@ Consistent naming conventions are crucial for the build system to correctly proc
 - ✅ Include resolution variants: `hero-image.png`, `hero-image@2x.png`, `hero-image@3x.png`
 
 **Don't:**
+
 - ❌ Use spaces: `Hero Background.jpg`
 - ❌ Use underscores: `hero_background.jpg`
 - ❌ Use special characters: `hero@background.jpg`
@@ -125,7 +127,6 @@ Additional asset types including videos, audio files, documents, and data files 
 
 Go to [Other Asset Guidelines]([[docsref:/asset-types/other]]) for detailed management practices.
 
-
 ## Git Workflow
 
 Maintain a clean history and facilitate collaboration through pull requests with clear and descriptive commit messages.
@@ -136,7 +137,6 @@ This repository uses [Git LFS](https://git-lfs.com) to store binary assets (font
 - Create branches for new features or asset additions (e.g., `feature/onboarding-assets`)
 - Stage only relevant asset files to avoid committing unrelated changes
 - Write descriptive commit messages that explain the purpose of the asset changes (e.g., "Add onboarding illustration for web")
-
 
 ### Adding New Assets
 
@@ -184,11 +184,13 @@ Follow these common patterns for asset organization and naming to maintain consi
 The directory structure provides context; filenames should be descriptive but not redundant.
 
 ✅ **Correct:**
+
 ```
 source/brand-a/docs/images/hero.jpg   -> Full context in path
 ```
 
 ❌ **Wrong:**
+
 ```
 source/images/hero.jpg                -> Missing brand and app context
 source/brand-a/hero.jpg               -> Missing app folder
@@ -200,6 +202,7 @@ source/default/brand-a-hero.jpg       -> Incorrect: brand name in filename
 Names should describe what the asset represents, not its visual appearance.
 
 ✅ **Correct:**
+
 ```
 hero-background.jpg                   -> Describes purpose
 illustration-onboarding.png           -> Clear context
@@ -207,6 +210,7 @@ button-primary.svg                    -> Semantic meaning
 ```
 
 ❌ **Wrong:**
+
 ```
 image1.jpg                            -> Not descriptive
 My Image.png                          -> Contains spaces
@@ -218,11 +222,13 @@ red_button.svg                        -> Describes appearance, not purpose
 Only create brand-specific versions when the asset actually differs.
 
 ✅ **Correct:**
+
 ```
 source/default/docs/images/logo.svg   -> Single shared version
 ```
 
 ❌ **Wrong:**
+
 ```
 source/default/docs/images/some-logo.svg
 source/brand-a/docs/images/some-logo.svg   -> Identical copy
@@ -233,14 +239,14 @@ source/brand-b/docs/images/some-logo.svg   -> Identical copy
 
 Before committing assets to the repository:
 
-- [ ] Files follow naming conventions (lowercase, hyphens, descriptive)
-- [ ] Assets are placed in correct directory structure
-- [ ] Files are optimized for size and performance
-- [ ] Resolution variants are provided where appropriate
-- [ ] Assets work in both light and dark modes (if applicable)
-- [ ] Licenses verified for distribution (if applicable)
-- [ ] No unnecessary files or design sources are included
-- [ ] Git commit message clearly describes the changes
+- Files follow naming conventions (lowercase, hyphens, descriptive)
+- Assets are placed in correct directory structure
+- Files are optimized for size and performance
+- Resolution variants are provided where appropriate
+- Assets work in both light and dark modes (if applicable)
+- Licenses verified for distribution (if applicable)
+- No unnecessary files or design sources are included
+- Git commit message clearly describes the changes
 
 ## Related Resources
 

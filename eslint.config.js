@@ -20,7 +20,7 @@ export default defineConfig([
   {
     plugins: { import: importPlugin, unicorn: unicornPlugin },
     rules: {
-      'no-unused-vars': 'warn',
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-useless-escape': 'warn',
       'prettier/prettier': 'warn'
     }

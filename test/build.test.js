@@ -87,12 +87,12 @@ class AssetBuildTester {
       // Verify dist structure exists for actual configuration
       // Config: brands: [chassis, example], apps: {docs: [web], demo: [ios, android]}
       const expectedPaths = [
-        'dist/web/chassis-docs',
-        'dist/web/example-docs',
-        'dist/ios/chassis-demo',
-        'dist/ios/example-demo',
-        'dist/android/chassis-demo',
-        'dist/android/example-demo'
+        'dist/web/docs/chassis',
+        'dist/web/docs/example',
+        'dist/ios/demo/chassis',
+        'dist/ios/demo/example',
+        'dist/android/demo/chassis',
+        'dist/android/demo/example'
       ]
 
       let allPathsExist = true
@@ -135,15 +135,15 @@ class AssetBuildTester {
       await generateAsssets({ quiet: true })
 
       const expectedBrandPaths = [
-        'dist/web/chassis-docs',
-        'dist/ios/chassis-demo',
-        'dist/android/chassis-demo'
+        'dist/web/docs/chassis',
+        'dist/ios/demo/chassis',
+        'dist/android/demo/chassis'
       ]
 
       const unexpectedBrandPaths = [
-        'dist/web/example-docs',
-        'dist/ios/example-demo',
-        'dist/android/example-demo'
+        'dist/web/docs/example',
+        'dist/ios/demo/example',
+        'dist/android/demo/example'
       ]
 
       let brandFilterWorks = true
@@ -171,13 +171,13 @@ class AssetBuildTester {
       process.argv = ['node', 'build/build-assets.js', '--clean', '--app', 'docs']
       await generateAsssets({ quiet: true })
 
-      const expectedAppPaths = ['dist/web/chassis-docs', 'dist/web/example-docs']
+      const expectedAppPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
 
       const unexpectedAppPaths = [
-        'dist/ios/chassis-demo',
-        'dist/android/chassis-demo',
-        'dist/ios/example-demo',
-        'dist/android/example-demo'
+        'dist/ios/demo/chassis',
+        'dist/android/demo/chassis',
+        'dist/ios/demo/example',
+        'dist/android/demo/example'
       ]
 
       let appFilterWorks = true
@@ -205,13 +205,13 @@ class AssetBuildTester {
       process.argv = ['node', 'build/build-assets.js', '--clean', '--platform', 'web']
       await generateAsssets({ quiet: true })
 
-      const expectedPlatformPaths = ['dist/web/chassis-docs', 'dist/web/example-docs']
+      const expectedPlatformPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
 
       const unexpectedPlatformPaths = [
-        'dist/ios/chassis-demo',
-        'dist/ios/example-demo',
-        'dist/android/chassis-demo',
-        'dist/android/example-demo'
+        'dist/ios/demo/chassis',
+        'dist/ios/demo/example',
+        'dist/android/demo/chassis',
+        'dist/android/demo/example'
       ]
 
       let platformFilterWorks = true
@@ -247,14 +247,14 @@ class AssetBuildTester {
       ]
       await generateAsssets({ quiet: true })
 
-      const expectedCombinedPaths = ['dist/ios/example-demo']
+      const expectedCombinedPaths = ['dist/ios/demo/example']
 
       const unexpectedCombinedPaths = [
-        'dist/web/chassis-docs',
-        'dist/web/example-docs',
-        'dist/ios/chassis-demo',
-        'dist/android/chassis-demo',
-        'dist/android/example-demo'
+        'dist/web/docs/chassis',
+        'dist/web/docs/example',
+        'dist/ios/demo/chassis',
+        'dist/android/demo/chassis',
+        'dist/android/demo/example'
       ]
 
       let combinedFilterWorks = true
@@ -306,7 +306,7 @@ class AssetBuildTester {
       ]
       await generateAsssets({ quiet: true })
 
-      const firstBuildPath = 'dist/web/chassis-docs'
+      const firstBuildPath = 'dist/web/docs/chassis'
       if (!fs.existsSync(firstBuildPath)) {
         this.addTestResult('Incremental Builds', false, 'First build failed')
         return
@@ -316,7 +316,7 @@ class AssetBuildTester {
       process.argv = ['node', 'build/build-assets.js', '--brand', 'example', '--platform', 'ios']
       await generateAsssets({ quiet: true })
 
-      const secondBuildPath = 'dist/ios/example-demo'
+      const secondBuildPath = 'dist/ios/demo/example'
       const firstBuildStillExists = fs.existsSync(firstBuildPath)
       const secondBuildExists = fs.existsSync(secondBuildPath)
 
@@ -351,8 +351,8 @@ class AssetBuildTester {
       ]
       await generateAsssets({ quiet: true })
 
-      const afterCleanBuild = fs.existsSync('dist/web/chassis-docs')
-      const otherPlatformGone = !fs.existsSync('dist/ios/example-demo')
+      const afterCleanBuild = fs.existsSync('dist/web/docs/chassis')
+      const otherPlatformGone = !fs.existsSync('dist/ios/demo/example')
 
       const cleanFlagWorks = afterCleanBuild && otherPlatformGone
 
@@ -384,7 +384,7 @@ class AssetBuildTester {
       process.argv = this.originalArgv
 
       // Check Android file naming (should use underscores, not dashes)
-      const androidPath = 'dist/android/chassis-demo'
+      const androidPath = 'dist/android/demo/chassis'
       if (fs.existsSync(androidPath)) {
         const hasCorrectNaming = this.checkAndroidNaming(androidPath)
         this.addTestResult(
@@ -399,7 +399,7 @@ class AssetBuildTester {
       }
 
       // Check iOS file naming (should use underscores, not dashes)
-      const iosPath = 'dist/ios/chassis-demo'
+      const iosPath = 'dist/ios/demo/chassis'
       if (fs.existsSync(iosPath)) {
         const hasCorrectNaming = this.checkIOSNaming(iosPath)
         this.addTestResult(
@@ -414,7 +414,7 @@ class AssetBuildTester {
       }
 
       // Check Web file naming (should use kebab-case)
-      const webPath = 'dist/web/chassis-docs'
+      const webPath = 'dist/web/docs/chassis'
       if (fs.existsSync(webPath)) {
         const hasCorrectNaming = this.checkWebNaming(webPath)
         this.addTestResult(
@@ -429,7 +429,7 @@ class AssetBuildTester {
       }
 
       // Check Android icon prefixing
-      const androidIconsPath = 'dist/android/chassis-demo/icons'
+      const androidIconsPath = 'dist/android/demo/chassis/icons'
       if (fs.existsSync(androidIconsPath)) {
         const files = fs.readdirSync(androidIconsPath).filter((f) => {
           const stat = fs.statSync(path.join(androidIconsPath, f))
@@ -468,8 +468,8 @@ class AssetBuildTester {
       process.argv = this.originalArgv
 
       // Check that both brands have their assets
-      const chassisDocs = 'dist/web/chassis-docs'
-      const exampleDocs = 'dist/web/example-docs'
+      const chassisDocs = 'dist/web/docs/chassis'
+      const exampleDocs = 'dist/web/docs/example'
 
       const chassisExists = fs.existsSync(chassisDocs)
       const exampleExists = fs.existsSync(exampleDocs)

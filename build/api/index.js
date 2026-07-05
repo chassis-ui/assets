@@ -106,7 +106,7 @@ export class ChassisAssets {
       // Check dist for specific platform
       const platforms = this.getPlatforms(app)
       return platforms.some((platform) => {
-        const distPath = path.join(basePath, platform.split('-')[0], `${brand}-${app}`)
+        const distPath = path.join(basePath, platform.split('-')[0], app, brand)
         return fs.existsSync(distPath)
       })
     }
@@ -134,7 +134,7 @@ export class ChassisAssets {
 
     if (platform) {
       // Look in dist
-      const distPath = path.join('dist', platform.split('-')[0], `${brand}-${app}`)
+      const distPath = path.join('dist', platform.split('-')[0], app, brand)
       if (fs.existsSync(distPath)) {
         searchPaths.push(distPath)
       }

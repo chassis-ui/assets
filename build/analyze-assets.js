@@ -117,7 +117,7 @@ class AssetAnalyzer {
       return true // No filters, include everything
     }
 
-    // Parse dist path: dist/[platform]/[brand]-[app]/...
+    // Parse dist path: dist/[platform]/[app]/[brand]/...
     const relativePath = path.relative('dist', filePath)
     const pathParts = relativePath.split(path.sep)
 
@@ -131,23 +131,19 @@ class AssetAnalyzer {
       return false
     }
 
-    // Check brand and app filters (need at least 2 path parts)
+    // Check app filter
     if (pathParts.length >= 2) {
-      const brandAppPart = pathParts[1]
-      const brandAppMatch = brandAppPart.match(/^([^-]+)-(.+)$/)
+      const app = pathParts[1]
+      if (this.options.apps.length > 0 && !this.options.apps.includes(app)) {
+        return false
+      }
+    }
 
-      if (brandAppMatch) {
-        const [, brand, app] = brandAppMatch
-
-        // Check brand filter
-        if (this.options.brand && brand !== this.options.brand) {
-          return false
-        }
-
-        // Check app filter
-        if (this.options.apps.length > 0 && !this.options.apps.includes(app)) {
-          return false
-        }
+    // Check brand filter
+    if (pathParts.length >= 3) {
+      const brand = pathParts[2]
+      if (this.options.brand && brand !== this.options.brand) {
+        return false
       }
     }
 
@@ -228,16 +224,15 @@ class AssetAnalyzer {
         const platform = pathParts[0]
         this.stats.platforms[platform] = (this.stats.platforms[platform] || 0) + 1
 
-        // Second level contains brand-app combinations
+        // Second level is app, third level is brand
         if (pathParts.length >= 2) {
-          const brandAppPart = pathParts[1]
-          // Parse brand-app format (e.g., "chassis-docs", "test-test")
-          const brandAppMatch = brandAppPart.match(/^([^-]+)-(.+)$/)
-          if (brandAppMatch) {
-            const [, brand, app] = brandAppMatch
-            this.stats.brands[brand] = (this.stats.brands[brand] || 0) + 1
-            this.stats.apps[app] = (this.stats.apps[app] || 0) + 1
-          }
+          const app = pathParts[1]
+          this.stats.apps[app] = (this.stats.apps[app] || 0) + 1
+        }
+
+        if (pathParts.length >= 3) {
+          const brand = pathParts[2]
+          this.stats.brands[brand] = (this.stats.brands[brand] || 0) + 1
         }
       }
     }

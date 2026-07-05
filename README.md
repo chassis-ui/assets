@@ -223,7 +223,7 @@ For each brand-app-platform combination:
 1. Copy assets from `source/default/[app]/` as the base
 2. Override with brand-specific assets from `source/[brand]/[app]/` if they exist
 3. Apply platform-specific processing (naming conventions, file transformations)
-4. Output to `dist/[platform]/[brand]-[app]/`
+4. Output to `dist/[platform]/[app]/[brand]/`
 
 ## Chassis Ecosystem
 

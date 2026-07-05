@@ -1,7 +1,8 @@
 ---
 import { getConfig } from '@libs/config'
 import { getChassisDocsPath } from '@libs/path'
-import Code from '@shortcodes/Code.astro'
+import Code from '@chassis-ui/docs/shortcodes/Code.astro'
+import Icon from '@chassis-ui/docs/shortcodes/Icon.astro'
 ---
 
 <div class="home-section py-3xlarge medium:py-6xlarge">
@@ -29,18 +30,19 @@ import Code from '@shortcodes/Code.astro'
     >
       <!-- Code snippet -->
       <Code
+        noToolbar
         lang="bash"
         code="git clone git@github.com:chassis-ui/tokens.git"
-        containerClass="mx-auto mw-100"
+        containerClass="medium:mx-auto"
       />
       <!-- Buttons -->
       <div class="d-grid medium:d-flex gap-medium medium:justify-content-center flex-wrap">
         <a href={getChassisDocsPath('')} class="button primary large">
-          <svg class="icon" aria-hidden="true"><use href="#book-open-outline"></use></svg>
+          <Icon name="book-open-outline" />
           <span>Get Started</span>
         </a>
         <a href={getConfig().repo} class="button default large" target="_blank" rel="noopener">
-          <svg class="icon" aria-hidden="true"><use href="#github-brand"></use></svg>
+          <Icon name="github-brand" />
           <span>View on GitHub</span>
         </a>
       </div>
