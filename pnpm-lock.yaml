@@ -24,8 +24,8 @@ importers:
         specifier: ^0.3.2
         version: 0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)
       '@chassis-ui/docs':
-        specifier: ^0.3.4
-        version: 0.3.4(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)
+        specifier: ^0.3.5
+        version: 0.3.5(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)
       '@chassis-ui/icons':
         specifier: ^0.3.0
         version: 0.3.0
@@ -370,8 +370,8 @@ packages:
       postcss-prefix-custom-properties: ^0.1.0
       vanilla-calendar-pro: ^3.1.0
 
-  '@chassis-ui/docs@0.3.4':
-    resolution: {integrity: sha512-09AM1st1AWVN3SyY4Lb2MIFKUTqWqAwcqI74aYzlCICcIwgcs+P+72BBc4r6QJwaSOEsq+3g3yTZb67FAE1c4Q==}
+  '@chassis-ui/docs@0.3.5':
+    resolution: {integrity: sha512-D8fFniwKnIZXEvNvEQkRBsj/Yq/nXLxlNRrlnRLTTidEi/KCZTot4HswhPuerCyXzJtW478z89lfIrbYiUhyAw==}
     peerDependencies:
       '@astrojs/markdown-remark': ^7.0.0
       '@chassis-ui/css': '>=0.3.2'
@@ -4633,7 +4633,7 @@ snapshots:
       postcss-prefix-custom-properties: 0.1.0(postcss@8.5.16)
       vanilla-calendar-pro: 3.1.0
 
-  '@chassis-ui/docs@0.3.4(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)':
+  '@chassis-ui/docs@0.3.5(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)':
     dependencies:
       '@astrojs/markdown-remark': 7.2.1
       '@chassis-ui/css': 0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)
