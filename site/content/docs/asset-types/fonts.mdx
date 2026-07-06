@@ -22,7 +22,6 @@ Chassis Assets provides a robust system for handling font assets with features l
 
 Font files are organized in the source directory by brand and application:
 
-
 ```
 source/
 ├── default/
@@ -102,6 +101,7 @@ source/default/docs/fonts/
 ```
 
 **Benefits:**
+
 - ✅ All brands use identical filenames
 - ✅ Switch fonts by changing source directory only
 - ✅ Direct mapping to typography tokens
@@ -112,19 +112,19 @@ source/default/docs/fonts/
 Font asset naming in Chassis Assets is designed to integrate seamlessly with [Chassis Tokens typography system](https://tokens.chassis-ui.com/docs/design-tokens/typography-tokens). Font files use semantic weight names (normal, strong, mass, elegant) that correspond to typography tokens, enabling consistent naming across the entire design system. See [Chassis Tokens](/tokens) documentation for more about typography tokens and semantic weight names.
 </Callout>
 
-
-
 ### Traditional Naming
 
 If not using Chassis Tokens, use descriptive names with font family and numeric/standard weight names:
 
 **Good examples:**
+
 - `inter-regular.woff2` or `inter-400.woff2`
 - `inter-bold.ttf` or `inter-700.ttf`
 - `roboto-light.otf` or `roboto-300.otf`
 - `playfair-display-black.woff` or `playfair-display-900.woff`
 
 **Avoid:**
+
 - Generic names: `font1.ttf`, `myFont.woff2`
 - Spaces: `Inter Regular.ttf` (use hyphens)
 - Special characters: `font@bold.ttf`
@@ -196,6 +196,7 @@ Prepare your font files following the naming conventions, then run the build to 
 ### Obtain Font Files
 
 Ensure you have proper licensing before using fonts. Verify licenses allow:
+
 - Embedding in applications
 - Web font serving
 - Modification/subsetting (if needed)
@@ -334,4 +335,3 @@ See [Android Applications]([[docsref:/use-in-project/android-applications#using-
 - [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration guide
 - [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration guide
 - [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration guide
-

@@ -1,6 +1,6 @@
 ---
 import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
-import Code from '@shortcodes/Code.astro'
+import Code from '@chassis-ui/docs/shortcodes/Code.astro'
 ---
 
 <section class="home-section py-3xlarge medium:py-6xlarge">
@@ -29,6 +29,7 @@ import Code from '@shortcodes/Code.astro'
             apply to all brands. Brand-specific folders override defaults when building.
           </Fragment>
           <Code
+            noToolbar
             lang="text"
             containerClass="border-top border-subtle pt-medium mt-auto"
             code={`source/
@@ -54,6 +55,7 @@ import Code from '@shortcodes/Code.astro'
             filter output. Build script copies, renames, and organizes files per platform.
           </Fragment>
           <Code
+            noToolbar
             lang="bash"
             containerClass="border-top border-subtle pt-medium mt-auto"
             code={`# Build all platforms
@@ -79,6 +81,7 @@ pnpm assets --brand chassis --app demo`}
             folders into your web, iOS, or Android projects, or sync via CI/CD.
           </Fragment>
           <Code
+            noToolbar
             lang="text"
             containerClass="border-top border-subtle pt-medium mt-auto"
             code={`dist/

@@ -110,11 +110,13 @@ Web fonts use WOFF2 format for optimal performance and broad browser support.
 Copy fonts to your public directory or import them through your bundler:
 
 **Manual copy (public folder):**
+
 ```bash
 cp -r dist/web/chassis-docs/fonts public/assets/
 ```
 
 **Vite/Webpack import:**
+
 ```javascript
 // Import fonts in your main CSS/JS file
 import '/path/to/chassis-assets/dist/web/chassis-docs/fonts/text-normal.woff2';
@@ -227,6 +229,7 @@ Preload fonts used above the fold to improve initial render performance:
 Import font styles in your framework's entry point.
 
 **React:**
+
 ```jsx
 // App.jsx
 import './styles/fonts.css';
@@ -237,6 +240,7 @@ function App() {
 ```
 
 **Vue:**
+
 ```jsx
 <script setup>
 import './styles/fonts.css';
@@ -248,6 +252,7 @@ import './styles/fonts.css';
 ```
 
 **Next.js:**
+
 ```jsx
 // pages/_app.js
 import '../styles/fonts.css';
@@ -312,6 +317,7 @@ Use standard HTML image elements with modern features:
 Import images as modules for automatic optimization and cache-busting.
 
 **React:**
+
 ```jsx
 // Import images as modules (Vite/Webpack)
 import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
@@ -322,6 +328,7 @@ function Hero() {
 ```
 
 **Vue:**
+
 ```jsx
 <script setup>
 import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
@@ -333,6 +340,7 @@ import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero
 ```
 
 **Next.js (Image component):**
+
 ```jsx
 import Image from 'next/image';
 import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
@@ -383,6 +391,7 @@ element.innerHTML = iconSvg;
 ```
 
 **React component:**
+
 ```jsx
 // components/Icon.jsx
 import { ReactComponent as ArrowRight } from '/path/to/chassis-assets/dist/web/chassis-docs/icons/arrow-right.svg';
@@ -393,6 +402,7 @@ export function Icon() {
 ```
 
 **Vue component:**
+
 ```jsx
 <script setup>
 import IconArrow from '/path/to/chassis-assets/dist/web/chassis-docs/icons/arrow-right.svg';
@@ -462,6 +472,7 @@ export default defineConfig({
 ```
 
 **Usage:**
+
 ```javascript
 import heroImage from '@assets/images/hero.jpg';
 import '@assets/fonts/inter-regular.woff2';
@@ -530,6 +541,7 @@ const fontPath = getAssetPath('fonts', 'brand-regular.woff2');
 ```
 
 **React Context:**
+
 ```jsx
 // BrandContext.jsx
 import { createContext, useContext } from 'react';
@@ -620,6 +632,7 @@ button.addEventListener('click', async () => {
 Follow these recommendations for optimal asset integration and performance.
 
 **Do:**
+
 - ✅ Use WebP with JPG/PNG fallbacks
 - ✅ Implement lazy loading for below-fold images
 - ✅ Preload critical fonts and hero images
@@ -628,6 +641,7 @@ Follow these recommendations for optimal asset integration and performance.
 - ✅ Use SVG for icons when possible
 
 **Don't:**
+
 - ❌ Load all assets upfront
 - ❌ Use unoptimized source images
 - ❌ Forget responsive image syntax
@@ -641,6 +655,7 @@ Common issues and solutions when integrating Chassis Assets.
 ### Fonts Not Loading
 
 **Check:**
+
 1. Font files are in correct public directory
 2. `@font-face` src paths are correct
 3. CORS headers allow font loading (`crossorigin` attribute)
@@ -649,6 +664,7 @@ Common issues and solutions when integrating Chassis Assets.
 ### Images Not Displaying
 
 **Check:**
+
 1. Image paths match actual file locations
 2. File extensions are correct
 3. Images are in public/static directory
@@ -657,6 +673,7 @@ Common issues and solutions when integrating Chassis Assets.
 ### Large Bundle Size
 
 **Solutions:**
+
 1. Enable tree-shaking in bundler
 2. Use code splitting for assets
 3. Optimize images (WebP, proper compression)

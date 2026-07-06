@@ -5,6 +5,17 @@ All notable changes to the Chassis Assets project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-07-06
+
+### Updated
+- Default docs social image (`source/default/docs/images/social-image.png`) with new design and size (1600 x 630 pixels)
+
+## [0.1.5] - 2026-04-25
+
+### Added
+- Figma component screenshots (light & dark)
+- Example brand font style (`source/example/docs/fonts/fonts.scss`) with Figtree and Lora Google Fonts import
+
 ## [0.1.4] - 2026-04-11
 
 ### Added

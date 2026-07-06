@@ -3,7 +3,7 @@
 > Multi-platform design asset management for the Chassis Design System.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Version: 0.1.5](https://img.shields.io/badge/Version-0.1.5-blue.svg)](https://github.com/chassis-ui/assets)
+[![Version: 0.1.6](https://img.shields.io/badge/Version-0.1.6-blue.svg)](https://github.com/chassis-ui/assets)
 
 ## Overview
 
@@ -223,7 +223,7 @@ For each brand-app-platform combination:
 1. Copy assets from `source/default/[app]/` as the base
 2. Override with brand-specific assets from `source/[brand]/[app]/` if they exist
 3. Apply platform-specific processing (naming conventions, file transformations)
-4. Output to `dist/[platform]/[brand]-[app]/`
+4. Output to `dist/[platform]/[app]/[brand]/`
 
 ## Chassis Ecosystem
 

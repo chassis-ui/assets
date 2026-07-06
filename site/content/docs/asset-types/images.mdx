@@ -38,6 +38,7 @@ source/
         └── images/
             └── brand-logo.svg  # Brand override
 ```
+
 ### File Formats
 
 Chassis Assets distributes every file from the `source` directory with platform-appropriate naming, regardless of format or extension.
@@ -53,6 +54,7 @@ For example, `hero-background@2x.jpg` in the source will be distributed as:
 Use descriptive, hyphenated names that indicate content and purpose:
 
 **Good examples:**
+
 - `hero-homepage-light.jpg`
 - `hero-homepage-dark.jpg`
 - `illustration-empty-state.svg`
@@ -61,6 +63,7 @@ Use descriptive, hyphenated names that indicate content and purpose:
 - `graphic-feature-comparison.png`
 
 **For resolution variants:**
+
 - `icon-arrow.png` (1x)
 - `icon-arrow@2x.png` (2x)
 - `icon-arrow@3x.png` (3x)
@@ -70,6 +73,7 @@ Android uses density-specific folders instead of filename suffixes. `icon-arrow@
 </Callout>
 
 **Avoid:**
+
 - Generic names: `image1.jpg`, `photo.png`
 - Spaces: `Team Photo.jpg` (use hyphens)
 - Special characters: `image#1.jpg`
@@ -144,6 +148,7 @@ dist/android/[brand]-[app]/images/
 ```
 
 Android uses density-specific folders for resolution variants:
+
 - `drawable-mdpi` - @1x (mdpi)
 - `drawable-hdpi` - @1.5x (hdpi)
 - `drawable-xhdpi` - @2x (xhdpi)
@@ -166,8 +171,8 @@ Organize image assets for all brands in a dedicated page or section in your desi
 Mobile-App          -> Figma file
 ├── Design          -> Figma page
 │   ├── Home        -> Frame or section with unified design for all brands using variable modes
-│   ├── Profile     
-│   └── Settings    
+│   ├── Profile
+│   └── Settings
 └── Assets          -> Figma page
     ├── Logo        -> Frame or section with logo images
     │   └── default/[app]/images/brand-logo
@@ -206,7 +211,7 @@ source/default/[app]/images/
 │   └── photo-team.webp
 └── icons/
     ├── icon-feature.png
-    └── icon-arrow@2x.png 
+    └── icon-arrow@2x.png
 ```
 
 This structure is preserved in the distribution, making it easier to find and reference assets in your codebase.

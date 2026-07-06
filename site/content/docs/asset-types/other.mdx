@@ -55,12 +55,14 @@ Brand-specific assets will override defaults when building for that brand. If an
 Chassis Assets supports any file format and extension for maximum flexibility.
 
 **Video Files:**
+
 - **MP4**: Widely supported video format (recommended for web and mobile)
 - **WebM**: Open format with good compression
 - **MOV**: QuickTime format commonly used in iOS
 - **OGV**: Ogg video format
 
 **Audio Files:**
+
 - **MP3**: Widely supported audio format (recommended)
 - **WAV**: Uncompressed audio for highest quality
 - **OGG**: Open format with good compression
@@ -68,11 +70,13 @@ Chassis Assets supports any file format and extension for maximum flexibility.
 - **AAC**: Advanced Audio Coding format
 
 **Document Files:**
+
 - **PDF**: Portable Document Format for manuals, guides, terms
 - **DOC/DOCX**: Microsoft Word documents
 - **TXT**: Plain text files
 
 **Data Files:**
+
 - **JSON**: Structured data for configuration or content
 - **CSV**: Comma-separated values for tabular data
 - **XML**: Extensible Markup Language for structured data
@@ -83,6 +87,7 @@ Chassis Assets supports any file format and extension for maximum flexibility.
 Use descriptive, hyphenated names that indicate content and purpose:
 
 **Good examples:**
+
 - `onboarding-intro.mp4`
 - `tutorial-step-1.webm`
 - `notification-sound.mp3`
@@ -93,6 +98,7 @@ Use descriptive, hyphenated names that indicate content and purpose:
 - `sample-data.csv`
 
 **Avoid:**
+
 - Generic names: `video1.mp4`, `sound.mp3`, `file.pdf`
 - Spaces: `User Guide.pdf` (use hyphens)
 - Special characters: `video#1.mp4`
@@ -256,21 +262,25 @@ Follow these recommendations to maintain organized and optimized assets across b
 Optimize asset files before adding them to the source directory:
 
 **Videos:**
+
 - Use MP4 with H.264 codec for best compatibility
 - Compress videos to reduce file size while maintaining quality
 - Consider multiple resolutions for different devices
 
 **Audio:**
+
 - Use MP3 at 128-192kbps for good quality-to-size ratio
 - Consider OGG format as a smaller alternative
 - Keep sound effects short and optimized
 
 **Documents:**
+
 - Compress PDFs to reduce file size
 - Remove unnecessary metadata
 - Use web-optimized PDF settings
 
 **Data Files:**
+
 - Minify JSON files by removing whitespace
 - Use CSV instead of JSON for large tabular data
 - Consider compression for large files
@@ -319,11 +329,13 @@ This prevents your repository from becoming too large while still maintaining ve
 Consider whether assets should be bundled with your app or loaded from a CDN:
 
 **Bundled (in source directory):**
+
 - Small files needed immediately at launch
 - Critical UI sounds and short animations
 - Essential documents and terms
 
 **Streamed (external hosting):**
+
 - Large video files
 - Optional tutorial videos
 - Downloadable content

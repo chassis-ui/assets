@@ -11,7 +11,7 @@ The Chassis Assets build system transforms source assets into platform-specific 
 ### Key Features
 
 - **Multi-Brand Support**: Build assets for multiple brands from single source
-- **Multi-Platform Support**: Generate web, iOS, and Android distributions  
+- **Multi-Platform Support**: Generate web, iOS, and Android distributions
 - **Selective Building**: Filter by brand, app, or platform
 - **Smart Build Mode**: Full builds clean dist/, filtered builds preserve existing files
 - **Smart Overrides**: Brand-specific assets override defaults automatically
@@ -49,6 +49,7 @@ pnpm assets:analyze
 Use command-line filters to build specific combinations. Filters can be combined for precise control.
 
 **By Brand:**
+
 ```bash
 # Single brand
 pnpm assets --brand chassis
@@ -58,6 +59,7 @@ pnpm assets --brand chassis example
 ```
 
 **By App:**
+
 ```bash
 # Single app
 pnpm assets --app docs
@@ -67,6 +69,7 @@ pnpm assets --app docs demo
 ```
 
 **By Platform:**
+
 ```bash
 # Web only
 pnpm assets --platform web
@@ -76,6 +79,7 @@ pnpm assets --platform ios android
 ```
 
 **Combined Filters:**
+
 ```bash
 # Specific brand + platform (preserves existing dist files)
 pnpm assets --brand chassis --platform web
@@ -142,13 +146,15 @@ pnpm assets:validate
 ```
 
 **What validation does:**
+
 - ✅ Check if dist/ exists and has content
 - ✅ Verify all brand-app-platform combinations are present
 - ✅ Check asset counts (dist should have > source due to expansion)
 - ✅ Detect empty directories
-- ✅ Validate platform naming conventions (kebab-case, snake_case, ic_ prefix)
+- ✅ Validate platform naming conventions (`kebab-case`, `snake_case`, `ic_` prefix)
 
 **Use validation:**
+
 - Before deployment to production
 - In CI/CD pipelines
 - After manual dist/ modifications
@@ -219,6 +225,7 @@ Build-specific configuration.
 The build system generates every combination of **brand × app × platform**.
 
 #### One Brand, One Platform
+
 ```json
 {
   "chassis": {
@@ -239,6 +246,7 @@ dist/web/acme-website/
 ```
 
 #### Multi-Brand, One App
+
 ```json
 {
   "chassis": {
@@ -276,6 +284,7 @@ dist/web/duff-website/
 ```
 
 **Output:** 2 combinations
+
 ```
 dist/ios/acme-mobile/
 dist/android/acme-mobile/
@@ -327,7 +336,7 @@ Each platform has specific rules for naming, structure, and supported formats:
 #### iOS Platform
 
 - **Naming**: Lowercase with underscores (snake_case)
-- **Resolution**: @2x/@3x preserved in filenames  
+- **Resolution**: @2x/@3x preserved in filenames
 - **Fonts**: Only TTF/OTF formats copied (WOFF/WOFF2 excluded)
 - **Images**: WebP format excluded for compatibility
 - **Icons**: SVG and PDF vector formats supported
@@ -367,12 +376,12 @@ The build system uses modular processor architecture. To add a new platform:
 const desktopProcessor = {
   name: 'desktop',
   icon: '🖥️',
-  
+
   // Define allowed formats
   allowedFontFormats: ['.ttf', '.otf'],
   allowedIconFormats: ['.svg'],
   excludedImageFormats: [],
-  
+
   // Define filename transformation
   renameFile(fileName) {
     // Implement platform-specific naming convention
@@ -459,8 +468,9 @@ console.log('Total size:', analyzer.formatBytes(analyzer.stats.totalSize))
 ### API Methods
 
 **ChassisAssets Class:**
+
 - `getBrands()` - Get list of configured brands
-- `getApps()` - Get list of configured app names  
+- `getApps()` - Get list of configured app names
 - `getPlatforms()` - Get list of all platforms used across apps
 - `getCombinations()` - Get all brand+app+platform combinations
 - `assetsExist(brand, app)` - Check if source assets exist
@@ -470,6 +480,7 @@ console.log('Total size:', analyzer.formatBytes(analyzer.stats.totalSize))
 - `validate()` - Validate configuration and source files
 
 **AssetAnalyzer Class:**
+
 - `analyze()` - Run full analysis (synchronous)
 - `analyzeDirectory(path, type)` - Analyze specific directory
 - `analyzeFile(path, stat, type)` - Analyze single file
@@ -514,22 +525,22 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
         with:
           lfs: true
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 9
-      
+
       - name: Install dependencies
         run: pnpm install
-      
+
       - name: Build assets
         run: pnpm assets --platform web
-      
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -640,28 +651,28 @@ case $BRANCH_NAME in
     echo "Production: Full build"
     pnpm assets
     ;;
-    
+
   develop)
     echo "Development: Build dev brand only"
     pnpm assets --brand dev
     ;;
-    
+
   feature/web-*)
     echo "Feature: Web only"
     pnpm assets --platform web
     ;;
-    
+
   feature/mobile-*)
     echo "Feature: Mobile platforms only"
     pnpm assets --platform ios android
     ;;
-    
+
   hotfix/*)
     echo "Hotfix: Build affected brand"
     BRAND=$(echo $BRANCH_NAME | cut -d'/' -f2)
     pnpm assets --brand $BRAND
     ;;
-    
+
   *)
     echo "Other: Quick web build"
     pnpm assets --brand chassis --platform web
@@ -718,26 +729,26 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2
-      
+
       - id: changed-files
         uses: tj-actions/changed-files@v40
         with:
           files: |
             source/**
-      
+
       - name: Determine build scope
         id: scope
         run: |
           BRANDS=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | \
             grep -o 'source/[^/]*' | cut -d'/' -f2 | sort -u | tr '\n' ' ')
           echo "brands=$BRANDS" >> $GITHUB_OUTPUT
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 9
-      
+
       - run: pnpm install
-      
+
       - name: Build changed brands
         run: |
           for brand in ${{ steps.scope.outputs.brands }}; do
@@ -755,23 +766,27 @@ Follow these best practices when configuring and using the build system:
 ### Project Configuration
 
 **✅ Do:**
+
 - Use clear, descriptive names for brands and apps
 - Keep names lowercase with hyphens (e.g., `my-brand`)
 - Match app names to their actual purpose (e.g., `docs`, `mobile-app`)
 
 **❌ Don't:**
+
 - Use special characters or spaces in names
 - Change brand/app names frequently (breaks asset paths)
 
 ### Directory Structure
 
 **✅ Do:**
+
 - Always create a complete `default` setup first
 - Keep consistent folder structure across all brands
 - Name assets consistently across brands
 - Use brand folders only for overrides, not complete sets
 
 **❌ Don't:**
+
 - Put all assets in brand folders (defeats the override system)
 - Create brand folders without corresponding default assets
 - Mix different asset types in wrong folders
@@ -779,6 +794,7 @@ Follow these best practices when configuring and using the build system:
 ### Development Workflow
 
 **✅ Do:**
+
 - Use 78 builds during development for faster iteration
 - Build selectively: `pnpm assets --brand chassis --platform web`
 - Add more platforms without rebuilding: `pnpm assets --platform ios`
@@ -786,6 +802,7 @@ Follow these best practices when configuring and using the build system:
 - Use `--clean` for fresh builds when needed
 
 **❌ Don't:**
+
 - Run full builds repeatedly during development (slow)
 - Commit `dist/` directory to version control
 - Build all platforms if you only need one
@@ -805,6 +822,7 @@ pnpm assets:test:api      # Programmatic API (16 tests)
 ```
 
 **What development tests do:**
+
 - ✅ Delete dist → Build → Validate → Clean up
 - ✅ Test that build system can create correct output
 - ✅ Test analyzer detects duplicates accurately
@@ -827,4 +845,3 @@ pnpm assets:test:api      # Programmatic API (16 tests)
 - [Design Guidelines]([[docsref:/getting-started/design-guidelines]]) - Best practices for assets
 - [Icon Guidelines]([[docsref:/asset-types/icons]]) - Working with icons
 - [Image Guidelines]([[docsref:/asset-types/images]]) - Working with images
-

@@ -115,17 +115,17 @@ class DistValidator {
     let incompleteCombos = 0
 
     for (const combo of combinations) {
-      const distPath = path.join('dist', combo.platform, `${combo.brand}-${combo.app}`)
+      const distPath = path.join('dist', combo.platform, combo.app, combo.brand)
 
       if (!fs.existsSync(distPath)) {
         missingCombos++
-        this.addError(`Missing: ${combo.platform}/${combo.brand}-${combo.app}`)
+        this.addError(`Missing: ${combo.platform}/${combo.app}/${combo.brand}`)
       } else {
         // Check if directory has content
         const hasFiles = this.hasFilesRecursive(distPath)
         if (!hasFiles) {
           incompleteCombos++
-          this.addWarning(`Empty: ${combo.platform}/${combo.brand}-${combo.app}`)
+          this.addWarning(`Empty: ${combo.platform}/${combo.app}/${combo.brand}`)
         }
       }
     }
@@ -183,7 +183,7 @@ class DistValidator {
         // Check each platform for this brand-app
         const platformsForApp = this.api.getPlatforms(app)
         for (const platform of platformsForApp) {
-          const distPath = path.join('dist', platform, `${brand}-${app}`)
+          const distPath = path.join('dist', platform, app, brand)
 
           if (!fs.existsSync(distPath)) {
             continue // Already reported as missing combination
@@ -195,7 +195,7 @@ class DistValidator {
           for (const assetType of sourceAssetTypes) {
             if (!distAssetTypes.includes(assetType)) {
               missingAssetTypes++
-              const detail = `${platform}/${brand}-${app} missing ${assetType}/`
+              const detail = `${platform}/${app}/${brand} missing ${assetType}/`
               missingDetails.push(detail)
               this.addError(detail)
             }
@@ -313,7 +313,7 @@ class DistValidator {
 
         // For each platform, check if files exist in dist
         for (const platform of platforms) {
-          const distPath = path.join('dist', platform, `${brand}-${app}`)
+          const distPath = path.join('dist', platform, app, brand)
 
           if (!fs.existsSync(distPath)) {
             continue // Already reported as missing combination
@@ -366,7 +366,7 @@ class DistValidator {
                 const densityOrDrawable = sourceFile.hasResolution
                   ? this.getAndroidDensityFolder(sourceFile.filename)
                   : 'drawable'
-                const detail = `${platform}/${brand}-${app}: ${sourceFile.assetType}/${sourceFile.subFolder ? sourceFile.subFolder + '/' : ''}${densityOrDrawable}/${transformedName}`
+                const detail = `${platform}/${app}/${brand}: ${sourceFile.assetType}/${sourceFile.subFolder ? sourceFile.subFolder + '/' : ''}${densityOrDrawable}/${transformedName}`
                 if (missingDetails.length < 20) {
                   missingDetails.push(detail)
                   this.addError(detail)
@@ -380,7 +380,7 @@ class DistValidator {
 
               if (!fs.existsSync(fullDistPath)) {
                 missingFiles++
-                const detail = `${platform}/${brand}-${app}: ${sourceFile.assetType}/${sourceFile.subFolder ? sourceFile.subFolder + '/' : ''}${transformedName}`
+                const detail = `${platform}/${app}/${brand}: ${sourceFile.assetType}/${sourceFile.subFolder ? sourceFile.subFolder + '/' : ''}${transformedName}`
                 if (missingDetails.length < 20) {
                   missingDetails.push(detail)
                   this.addError(detail)

@@ -8,7 +8,7 @@ subtitle:               "Multi-Brand, Multi-Platform Design Asset Distribution"
 description:            "Multi-platform design asset management for Chassis UI. Copy, rename, and distribute fonts, images, icons, and illustrations across brands and apps."
 authors:                "Ozgur Gunes"
 
-current_version:        "0.1.5"
+current_version:        "0.1.6"
 github_org:             "https://github.com/chassis-ui"
 repo:                   "https://github.com/chassis-ui/assets"
 blog:                   "https://chassis-ui.com/blog/"
@@ -16,11 +16,6 @@ x:                      "chassis_ui"
 
 analytics:
   google_id:            "G-QGR8C28VYN"
-
-algolia:
-  app_id:               "TMI5N9J6TZ"
-  api_key:              "e318e0636b0a951e4f82c8283345df13"
-  index_name:           "chassis-docs"
 
 anchors:
   min:                  2
