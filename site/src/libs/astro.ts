@@ -74,14 +74,15 @@ export function chassis(): AstroIntegration[] {
 }
 
 /**
- * Copies the previously-generated Pagefind search index from `_site/pagefind/`
- * into `public/pagefind/` so `astro dev` can serve search at `/pagefind/`.
+ * Copies the previously-generated Pagefind search index from `_site/assets/pagefind/`
+ * into `public/assets/pagefind/` so `astro dev` can serve search at `/assets/pagefind/`,
+ * matching the path prefix this site is proxied under in production.
  * No-op if no production build has been run yet — dev simply returns no results.
  */
 function copyPagefindIndex() {
-  const source = path.join(process.cwd(), '_site', 'pagefind')
+  const source = path.join(process.cwd(), '_site', 'assets', 'pagefind')
   if (!fs.existsSync(source)) return
-  const destination = path.join(getDocsPublicFsPath(), 'pagefind')
+  const destination = path.join(getDocsPublicFsPath(), 'assets', 'pagefind')
 
   fs.mkdirSync(destination, { recursive: true })
   fs.cpSync(source, destination, { recursive: true })

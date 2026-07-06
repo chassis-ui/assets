@@ -70,7 +70,7 @@
     "site:lint:prettier": "prettier site -c --cache",
     "site:lint:html": "node build/html-validate.js",
     "site:lint:vnu": "node build/vnu-jar.js",
-    "site:pagefind": "pagefind --site _site",
+    "site:pagefind": "pagefind --site _site --output-subdir assets/pagefind",
     "astro:dev": "astro dev --root site --port 4325",
     "astro:build": "astro build --root site",
     "astro:preview": "astro preview --root site",
