@@ -49,9 +49,6 @@ export function chassis(): AstroIntegration[] {
           command = cmd
           // Reload the config when the integration is modified.
           addWatchFile(path.join(getDocsFsPath(), 'src/libs/astro.ts'))
-
-          const { plugin, define } = chassisBundlePlugin(getChassisCSSFsPath)
-          updateConfig({ vite: { plugins: [plugin], define } })
         },
         'astro:config:done': () => {
           if (command === 'sync') return
