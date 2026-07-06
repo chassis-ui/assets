@@ -86,7 +86,7 @@
     "@astrojs/mdx": "^7.0.2",
     "@astrojs/sitemap": "^3.7.3",
     "@chassis-ui/css": "^0.3.2",
-    "@chassis-ui/docs": "^0.3.5",
+    "@chassis-ui/docs": "^0.3.6",
     "@chassis-ui/icons": "^0.3.0",
     "@chassis-ui/tokens": "^0.3.0",
     "@eslint/js": "^10.0.1",
