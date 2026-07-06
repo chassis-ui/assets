@@ -3,7 +3,7 @@
 > Multi-platform design asset management for the Chassis Design System.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Version: 0.1.5](https://img.shields.io/badge/Version-0.1.5-blue.svg)](https://github.com/chassis-ui/assets)
+[![Version: 0.1.6](https://img.shields.io/badge/Version-0.1.6-blue.svg)](https://github.com/chassis-ui/assets)
 
 ## Overview
 
