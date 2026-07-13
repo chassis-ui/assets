@@ -32,7 +32,9 @@ export class ChassisAssets {
         version: packageJson.version
       }
     } catch (error) {
-      throw new Error(`Failed to load configuration from ${this.configPath}: ${error.message}`)
+      throw new Error(`Failed to load configuration from ${this.configPath}: ${error.message}`, {
+        cause: error
+      })
     }
   }
 

@@ -21,14 +21,14 @@ importers:
         specifier: ^3.7.3
         version: 3.7.3
       '@chassis-ui/css':
-        specifier: ^0.3.2
-        version: 0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)
+        specifier: ^0.3.3
+        version: 0.3.3(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)
       '@chassis-ui/docs':
-        specifier: ^0.3.6
-        version: 0.3.6(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)
+        specifier: ^0.3.7
+        version: 0.3.7(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.3(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)
       '@chassis-ui/icons':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.3.1
+        version: 0.3.1
       '@chassis-ui/tokens':
         specifier: ^0.3.0
         version: 0.3.0
@@ -363,18 +363,18 @@ packages:
     resolution: {integrity: sha512-CuNiSqg7+e1cO/GjffyMOm5Tt2jUF9CWHHnvQ/UkqvtkGfHdgwEC0wpmq7fkN3gxwpRnrAN0WzO3vREKmNolMQ==}
     engines: {node: '>=18'}
 
-  '@chassis-ui/css@0.3.2':
-    resolution: {integrity: sha512-srajYTzdceT12+ki9O1g1CPrAZV6h9yD5v55EXD6ydK7cW2Isi676AwuS7UmpaMVibbM9n/DI+ZJUpOKGpWeLw==}
+  '@chassis-ui/css@0.3.3':
+    resolution: {integrity: sha512-ET4eSdBfKjFQZJCVBX+0XeSEpmPIYemLK2q2ftO1IZ9SUakdcJEviBJJA3HSTdTmLvJA5wwdhqOTHLm1AjdK1A==}
     peerDependencies:
       '@floating-ui/dom': ^1.7.6
       postcss-prefix-custom-properties: ^0.1.0
       vanilla-calendar-pro: ^3.1.0
 
-  '@chassis-ui/docs@0.3.6':
-    resolution: {integrity: sha512-zVBneRYFnw7hm6vGfSpYUtK4jVt94Xo0U2tLYSEQ9pUK7cPCpX+1wMcdYW1vRgLM5BxpR/1oq/ox7v2sb9wZqQ==}
+  '@chassis-ui/docs@0.3.7':
+    resolution: {integrity: sha512-VcGqpn1e6GV/mZWO/SXyqsBVwb/sDCxDlsC6/l+ENOZGvbXnS/ueTuCOR5JWz2o1T3AUaBgsH4clBTz+Y4lFzg==}
     peerDependencies:
       '@astrojs/markdown-remark': ^7.0.0
-      '@chassis-ui/css': '>=0.3.2'
+      '@chassis-ui/css': '>=0.3.3'
       '@pagefind/component-ui': ^1.0.0
       '@shikijs/transformers': ^4.3.1
       astro: ^7.0.0
@@ -383,8 +383,8 @@ packages:
       sass: ^1.101.0
       shiki: ^4.3.1
 
-  '@chassis-ui/icons@0.3.0':
-    resolution: {integrity: sha512-pb8NXd6XO7oHyk/ndxZudeFi069CEC5AbwQ+50HP6Tzfc9PZff4QTjcOI0cxc4Ff1vNHIm+FfJ65AB7B7Fiwog==}
+  '@chassis-ui/icons@0.3.1':
+    resolution: {integrity: sha512-u940omGLvaDqQWzkLDiXXACs3UiEGgZeESbDM+7mB9Dd/L2QKkCk0XQE6sVRv3Tb4+eXDmJOLNd63scZgAKS+Q==}
     engines: {node: '>=18.0.0', pnpm: '>=9.0.0'}
 
   '@chassis-ui/tokens@0.3.0':
@@ -4624,16 +4624,16 @@ snapshots:
     dependencies:
       fontkitten: 1.0.3
 
-  '@chassis-ui/css@0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)':
+  '@chassis-ui/css@0.3.3(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)':
     dependencies:
       '@floating-ui/dom': 1.7.6
       postcss-prefix-custom-properties: 0.1.0(postcss@8.5.16)
       vanilla-calendar-pro: 3.1.0
 
-  '@chassis-ui/docs@0.3.6(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)':
+  '@chassis-ui/docs@0.3.7(@astrojs/markdown-remark@7.2.1)(@chassis-ui/css@0.3.3(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.3.1)(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0))(htmlparser2@12.0.0)(rehype-autolink-headings@7.1.0)(sass@1.101.0)(shiki@4.3.1)':
     dependencies:
       '@astrojs/markdown-remark': 7.2.1
-      '@chassis-ui/css': 0.3.2(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)
+      '@chassis-ui/css': 0.3.3(@floating-ui/dom@1.7.6)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.16))(vanilla-calendar-pro@3.1.0)
       '@pagefind/component-ui': 1.5.2
       '@shikijs/transformers': 4.3.1
       astro: 7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.2)(sass@1.101.0)(yaml@2.9.0)
@@ -4651,7 +4651,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@chassis-ui/icons@0.3.0': {}
+  '@chassis-ui/icons@0.3.1': {}
 
   '@chassis-ui/tokens@0.3.0': {}
 
@@ -6267,7 +6267,7 @@ snapshots:
     dependencies:
       eslint: 10.6.0
 
-  eslint-config-standard-jsx@11.0.0(eslint-plugin-react@7.37.5(eslint@10.6.0))(eslint@8.57.1):
+  eslint-config-standard-jsx@11.0.0(eslint-plugin-react@7.37.5(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
@@ -8699,7 +8699,7 @@ snapshots:
     dependencies:
       eslint: 8.57.1
       eslint-config-standard: 17.1.0(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.62.1(eslint@10.6.0)(typescript@6.0.3))(eslint@10.6.0))(eslint-plugin-n@15.7.0(eslint@10.6.0))(eslint-plugin-promise@6.6.0(eslint@10.6.0))(eslint@8.57.1)
-      eslint-config-standard-jsx: 11.0.0(eslint-plugin-react@7.37.5(eslint@10.6.0))(eslint@8.57.1)
+      eslint-config-standard-jsx: 11.0.0(eslint-plugin-react@7.37.5(eslint@8.57.1))(eslint@8.57.1)
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.62.1(eslint@10.6.0)(typescript@6.0.3))(eslint@8.57.1)
       eslint-plugin-n: 15.7.0(eslint@8.57.1)
       eslint-plugin-promise: 6.6.0(eslint@8.57.1)

@@ -9,10 +9,12 @@ description:            "Multi-platform design asset management for Chassis UI. 
 authors:                "Ozgur Gunes"
 
 current_version:        "0.1.6"
-github_org:             "https://github.com/chassis-ui"
 repo:                   "https://github.com/chassis-ui/assets"
 blog:                   "https://chassis-ui.com/blog/"
-x:                      "chassis_ui"
+
+github_org:             "chassis-ui"
+figma_handle:           "chassis_ui"
+x_username:             "chassis_ui"
 
 analytics:
   google_id:            "G-QGR8C28VYN"

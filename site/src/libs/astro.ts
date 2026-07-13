@@ -3,7 +3,6 @@ import path from 'node:path'
 import mdx from '@astrojs/mdx'
 import sitemap from '@astrojs/sitemap'
 import type { AstroIntegration } from 'astro'
-import { chassisBundlePlugin } from '@chassis-ui/docs'
 import { getConfig } from './config'
 import {
   getChassisAssetsFsPath,
@@ -38,20 +37,45 @@ export function chassis(): AstroIntegration[] {
 
   // `astro check` / `astro sync` doesn't need static assets copied into _site.
   // Track the command so the config:done hook can skip expensive file copies.
-  let command = 'dev'
+  let cmd = 'dev'
 
   return [
     chassisAutoImportIntegration(),
     {
       name: 'chassis-integration',
       hooks: {
-        'astro:config:setup': ({ addWatchFile, command: cmd, updateConfig }) => {
-          command = cmd
+        'astro:config:setup': ({ addWatchFile, command, updateConfig }) => {
+          cmd = command
           // Reload the config when the integration is modified.
           addWatchFile(path.join(getDocsFsPath(), 'src/libs/astro.ts'))
+          // Dev-only: multiple entry points import `@chassis-ui/css`, and Vite's dep
+          // optimizer can load separate instances of it, multiplying any module-scope
+          // state and event listeners it registers.
+          if (cmd === 'dev') {
+            updateConfig({
+              vite: {
+                resolve: {
+                  alias: [
+                    // Regex, not a string key — a string alias prefix-matches subpaths too,
+                    // breaking `@chassis-ui/css/scss/*` imports.
+                    {
+                      find: /^@chassis-ui\/css$/,
+                      replacement: path.join(
+                        process.cwd(),
+                        'node_modules/@chassis-ui/css/js/index.js'
+                      )
+                    }
+                  ]
+                },
+                optimizeDeps: {
+                  exclude: ['@chassis-ui/docs']
+                }
+              }
+            })
+          }
         },
         'astro:config:done': () => {
-          if (command === 'sync') return
+          if (cmd === 'sync') return
           cleanPublicDirectory()
           copyStatic()
           copyChassisAssets()

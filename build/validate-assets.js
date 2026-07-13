@@ -109,7 +109,6 @@ class DistValidator {
     console.log('🔗 Validating brand-app-platform combinations...')
 
     const combinations = this.api.getCombinations()
-    const platforms = this.api.getAllPlatforms()
 
     let missingCombos = 0
     let incompleteCombos = 0
@@ -164,7 +163,6 @@ class DistValidator {
   async validateAssetTypes() {
     console.log('📂 Validating asset types per combination...')
 
-    const combinations = this.api.getCombinations()
     const brands = this.api.getBrands()
     const apps = this.api.getApps()
 

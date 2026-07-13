@@ -173,7 +173,7 @@ class ChassisBuilder {
       this.log('Assets built successfully', 'success')
     } catch (error) {
       this.log(`Asset build failed: ${error.message}`, 'error')
-      throw new Error(`Asset build failed: ${error.message}`)
+      throw new Error(`Asset build failed: ${error.message}`, { cause: error })
     }
   }
 
