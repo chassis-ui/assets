@@ -2,9 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [app/docs]
   pull_request:
-    branches: [ main, develop ]
+    branches: [app/docs]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -12,50 +13,49 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [22.x, 24.x]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          lfs: true
 
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 9
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
 
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-    - name: Lint code
-      run: pnpm run validate
+      - name: Lint build scripts
+        run: pnpm run assets:lint
 
-    - name: Build assets
-      run: pnpm run build
+      - name: Run build system tests
+        run: pnpm run assets:test
 
-    - name: Verify distribution
-      run: |
-        if [ ! -d "dist" ]; then
-          echo "Error: dist directory not created"
-          exit 1
-        fi
+      - name: Build all assets
+        run: pnpm run assets
 
-        # Check that expected platforms exist
-        for platform in web ios android; do
-          if [ ! -d "dist/$platform" ]; then
-            echo "Error: Platform $platform not found in dist"
+      - name: Validate asset distribution
+        run: pnpm run assets:validate
+
+      - name: Verify distribution
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory not created"
             exit 1
           fi
-        done
 
-        echo "✅ Distribution verification passed"
+          # Check that expected platforms exist
+          for platform in web ios android; do
+            if [ ! -d "dist/$platform" ]; then
+              echo "Error: Platform $platform not found in dist"
+              exit 1
+            fi
+          done
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: chassis-assets-${{ matrix.node-version }}
-        path: dist/
-        retention-days: 7
+          echo "✅ Distribution verification passed"

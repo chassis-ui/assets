@@ -1,0 +1,121 @@
+name: Tag Release
+
+on:
+  push:
+    branches: [app/docs]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tag-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.changes.outputs.version-changed }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Need full history to diff against github.event.before
+
+      - name: Check for version change
+        id: changes
+        run: |
+          BEFORE_SHA="${{ github.event.before }}"
+
+          # On workflow_dispatch, or a push with no known previous commit
+          # (e.g. first push to the branch), fall back to comparing against
+          # the immediate parent commit.
+          if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE_SHA="HEAD~1"
+          fi
+
+          # Check if package.json version changed
+          if git diff "$BEFORE_SHA" HEAD --name-only | grep -q "^package.json$"; then
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            PREVIOUS_VERSION=$(git show "$BEFORE_SHA":package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")
+
+            echo "Current version: $CURRENT_VERSION"
+            echo "Previous version: $PREVIOUS_VERSION"
+
+            if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+              echo "version-changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "version-changed=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "version-changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get current version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  tag-release:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Check if tag already exists
+        id: tag-check
+        run: |
+          VERSION="${{ needs.detect-changes.outputs.version }}"
+          if git ls-remote --tags origin "refs/tags/v$VERSION" | grep -q "refs/tags/v$VERSION"; then
+            echo "already-tagged=true" >> $GITHUB_OUTPUT
+            echo "Tag v$VERSION already exists, skipping"
+          else
+            echo "already-tagged=false" >> $GITHUB_OUTPUT
+            echo "Tag v$VERSION does not exist, will create"
+          fi
+
+      - name: Extract changelog entry
+        if: steps.tag-check.outputs.already-tagged == 'false'
+        id: changelog
+        run: |
+          VERSION="${{ needs.detect-changes.outputs.version }}"
+          NOTES=$(awk -v ver="## [$VERSION]" '
+            $0 ~ /^## \[/ { if (found) exit; if (index($0, ver) == 1) { found=1 }; next }
+            found { print }
+          ' CHANGELOG.md)
+
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.tag-check.outputs.already-tagged == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "v${{ needs.detect-changes.outputs.version }}"
+          name: "v${{ needs.detect-changes.outputs.version }}"
+          body: |
+            ${{ steps.changelog.outputs.notes }}
+
+            ## Using this release
+
+            This package is distributed as a git submodule, not published to npm. Pin your submodule to this tag:
+
+            ```shell
+            cd assets
+            git fetch --tags
+            git checkout v${{ needs.detect-changes.outputs.version }}
+            cd ..
+            git add assets
+            git commit -m "chore: bump chassis-assets to v${{ needs.detect-changes.outputs.version }}"
+            ```
+          draft: false
+          prerelease: false
