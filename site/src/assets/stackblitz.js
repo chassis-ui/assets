@@ -46,7 +46,7 @@ const openChassisSnippet = (htmlSnippet, jsSnippet, classes) => {
     <title>Chassis Example</title>
     <script defer src="${CONFIG.jsBundleCdn}"></script>
   </head>
-  <body class="p-medium m-0 border-0 ${classes}">
+  <body class="p-md m-0 border-0 ${classes}">
     <!-- Example Code Start-->
 ${htmlSnippet.trimStart().replace(/^/gm, '    ').replace(/^ {4}$/gm, '').trimEnd()}
     <!-- Example Code End -->
