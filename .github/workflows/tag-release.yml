@@ -100,8 +100,8 @@ jobs:
         if: steps.tag-check.outputs.already-tagged == 'false'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: "v${{ needs.detect-changes.outputs.version }}"
-          name: "v${{ needs.detect-changes.outputs.version }}"
+          tag_name: 'v${{ needs.detect-changes.outputs.version }}'
+          name: 'v${{ needs.detect-changes.outputs.version }}'
           body: |
             ${{ steps.changelog.outputs.notes }}
 

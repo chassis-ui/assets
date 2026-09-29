@@ -10,12 +10,8 @@
   "headers": [
     {
       "source": "/(.*)",
-      "has": [
-        { "type": "header", "key": "host", "value": ".*-staging\\.vercel\\.app" }
-      ],
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-      ]
+      "has": [{ "type": "header", "key": "host", "value": ".*-staging\\.vercel\\.app" }],
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     }
   ]
 }

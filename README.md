@@ -79,6 +79,7 @@ pnpm assets --brand chassis --app docs --platform web
 ```
 
 **Benefits:**
+
 - Faster builds during development
 - Reduced output size
 - Optimized CI/CD pipelines
@@ -149,19 +150,22 @@ dist/
 The build system applies intelligent transformations for each platform:
 
 #### Web
+
 - Files renamed to **kebab-case** (lowercase with hyphens)
 - Resolution indicators (@2x, @3x) preserved in filenames
 - Font formats: WOFF/WOFF2 only (TTF/OTF excluded)
 - Image formats: All formats supported
-  
+
 #### iOS
+
 - Files renamed to **snake_case** (lowercase with underscores)
 - Resolution indicators (@2x, @3x) preserved in filenames
 - Font formats: TTF/OTF only (WOFF/WOFF2 excluded)
 - Image formats: WebP excluded
 - Icon formats: SVG and PDF supported
-  
+
 #### Android
+
 - Files renamed to **snake_case**
 - Icons prefixed with `ic_`
 - Font formats: TTF/OTF only (WOFF/WOFF2 excluded)
@@ -173,6 +177,7 @@ The build system applies intelligent transformations for each platform:
   - Resolution indicators stripped from filenames in density folders
 
 **Additional Features:**
+
 - Case-insensitive filesystem handling (macOS compatibility)
 - Collision detection with warnings for duplicate target filenames
 - Automatic filtering of system files (.DS_Store, Thumbs.db, hidden files)
@@ -229,14 +234,14 @@ For each brand-app-platform combination:
 
 This project is part of the Chassis Design System's multi-repository architecture:
 
-| Project | Description |
-|---------|-------------|
-| [chassis-website](https://github.com/chassis-ui/website) | Main website and shared documentation package |
-| [chassis-css](https://github.com/chassis-ui/css) | CSS framework and component library |
-| [chassis-tokens](https://github.com/chassis-ui/tokens) | Design token generation and management |
-| [chassis-icons](https://github.com/chassis-ui/icons) | Icon library and build toolkit |
-| **chassis-assets** | **Multi-platform asset management (this repository)** |
-| [chassis-figma](https://github.com/chassis-ui/figma) | Figma component documentation |
+| Project                                                  | Description                                           |
+| -------------------------------------------------------- | ----------------------------------------------------- |
+| [chassis-website](https://github.com/chassis-ui/website) | Main website and shared documentation package         |
+| [chassis-css](https://github.com/chassis-ui/css)         | CSS framework and component library                   |
+| [chassis-tokens](https://github.com/chassis-ui/tokens)   | Design token generation and management                |
+| [chassis-icons](https://github.com/chassis-ui/icons)     | Icon library and build toolkit                        |
+| **chassis-assets**                                       | **Multi-platform asset management (this repository)** |
+| [chassis-figma](https://github.com/chassis-ui/figma)     | Figma component documentation                         |
 
 All documentation sites share the `@chassis-ui/docs` package for consistent layouts, components, and styling.
 
@@ -253,4 +258,3 @@ All documentation sites share the `@chassis-ui/docs` package for consistent layo
 ## License
 
 MIT License — see [LICENSE](LICENSE) file for details.
-

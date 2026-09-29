@@ -3,3 +3,4 @@
 site/config.yml
 site/src/assets
 /source
+pnpm-lock.yaml

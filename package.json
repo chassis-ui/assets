@@ -77,7 +77,8 @@
     "check": "pnpm check:astro && pnpm check:pnpm",
     "check:astro": "astro check --root site",
     "check:pnpm": "pnpm audit --audit-level moderate",
-    "change-version": "node build/change-version.js"
+    "change-version": "node build/change-version.js",
+    "lint:prettier": "prettier -c --cache ."
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

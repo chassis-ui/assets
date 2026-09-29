@@ -8,45 +8,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.8] - 2026-07-14
 
 ### Added
+
 - Webp formats of home page images
 
 ## [0.1.7] - 2026-07-14
 
 ### Added
+
 - Small size variants of home page component gallery images (`comp-gallery-dark-small.png`, `comp-gallery-light-small.png`, and `@2x` versions)
 
 ### Updated
+
 - Home page images (component gallery, Figma docs, Figma library, Figma tokens) with new designs
 
 ## [0.1.6] - 2026-07-06
 
 ### Updated
+
 - Default docs social image (`source/default/docs/images/social-image.png`) with new design and size (1600 x 630 pixels)
 
 ## [0.1.5] - 2026-04-25
 
 ### Added
+
 - Figma component screenshots (light & dark)
 - Example brand font style (`source/example/docs/fonts/fonts.scss`) with Figtree and Lora Google Fonts import
 
 ## [0.1.4] - 2026-04-11
 
 ### Added
+
 - SVG sprite for icon library (cx-sprite.svg)
 - New SVG icon library visualization assets (icon-library-dark.svg, icon-library-light.svg)
 
 ### Changed
+
 - Enhanced change-version.js script with improved functionality
 - Updated and optimized documentation images for better performance
 - Improved home page images (component gallery, Figma screenshots, platforms, tokens)
 - Refined token visualization SVGs (tokens-scheme.svg, tokens-visual.svg)
 
 ### Fixed
+
 - Image file sizes reduced across multiple documentation assets
 
 ## [0.1.3] - 2026-03-16
 
 ### Changed
+
 - Updated build path configuration
 - Modified asset build paths in build script and site configuration
 - Updated path utilities and SCSS settings for improved asset management
@@ -54,17 +63,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.2] - 2026-03-12
 
 ### Changed
+
 - Reorganized documentation images
 - Renamed `chassis-social.png` to `social-image.png`
 - Replaced multiple chassis logo variants with unified `site-logo.svg`
 
 ### Removed
+
 - Removed deprecated logo files: `chassis-logo-black.svg`, `chassis-logo-white.svg`, `chassis-logo.svg`
 - Removed logo shadow image variants
 
 ## [0.1.1] - 2026-02-27
 
 ### Added
+
 - Comprehensive CI/CD pipeline with GitHub Actions
 - Asset analysis tool for statistics and optimization recommendations
 - Testing framework for build process validation
@@ -87,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Errors always visible even in quiet mode
 
 ### Changed
+
 - Improved build script with validation and detailed reporting
 - Enhanced package.json configuration for asset-focused distribution
 - Updated README with clearer project scope and usage instructions
@@ -96,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API signatures**: Added optional `options` parameter to `generateAssets()` and `AssetAnalyzer` constructor
 
 ### Fixed
+
 - Package files configuration to properly include distributed assets
 - Build script error handling and user feedback
 - Android file naming conventions and icon prefixing
@@ -105,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-08-24
 
 ### Added
+
 - Initial asset management system
 - Multi-brand, multi-platform asset distribution
 - Basic build script for copying and processing assets
@@ -113,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Android-specific file naming and icon prefixing
 
 ### Infrastructure
+
 - Project setup with pnpm package management
 - ESLint configuration for code quality
 - Basic documentation and README
