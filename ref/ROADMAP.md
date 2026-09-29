@@ -133,6 +133,8 @@ the presets of `chassis-tokens`, and Phase 2 gives them a shape an app can use.
 | F22 | The build is a single package that carries the site's toolchain.                                     | One `package.json` with 51 `devDependencies`, most of them Astro and its lint tools. A consumer installs all of them to run `assets:site`. Several appear unused here: `@floating-ui/dom`, `vanilla-calendar-pro`, `standard`.                                                                                          | 3     |
 | F23 | The two apps duplicate each other.                                                                   | `source/default/demo/fonts` and `docs/fonts` are the same 37 files; the icon folders are identical. There is no layer for assets shared by every app.                                                                                                                                                                   | 1, 2  |
 | F24 | The site copies scripts that `@chassis-ui/docs` ships.                                               | `site/static/static/js/example-mode.js` and `validate-forms.js`. The package has `js/example-mode.js`. Task A4 of the website's sibling tasks removes the library copies; these two go with them.                                                                                                                       | 5     |
+| F25 | Astro 7.3 logs a Vite warning for every MDX page. Found in session 0.1.                              | `[MODULE_LEVEL_DIRECTIVE]` for `"use astro:head-inject"`, which `astro/dist/content/vite-plugin-content-assets.js` itself emits, 11 times per build. The newer Rolldown bundler reports it. The built pages are not affected. Leave it for Astro to fix.                                                                | none  |
+| F26 | A checkout without Git LFS builds nothing. Found in session 0.1.                                     | The cloud container had no `git-lfs`, so every PNG was a pointer file and the site build failed in `imageSize()` of `BaseLayout`. The README says to install it; the build does not say what is wrong. Session 2.2's source lint catches pointer files.                                                                 | 2     |
 
 ### How the ecosystem consumes this repository
 
@@ -151,16 +153,26 @@ problem, and the repository is safe to change.
 
 ### Session 0.1: make CI run and pass
 
-- [ ] Change `ci.yml` to run on `pull_request`, `workflow_dispatch` and `workflow_call`, as
+- [x] Change `ci.yml` to run on `pull_request`, `workflow_dispatch` and `workflow_call`, as
       `chassis-tokens` does, and on pushes to `main` and `app/docs` until Phase 3 replaces
-      the release flow. Fixes F1.
-- [ ] Run Prettier with `--write` over `site/`. Commit the four files as a formatting-only
+      the release flow. Fixes F1. Only a pull request cancels a superseded run.
+- [x] Run Prettier with `--write` over `site/`. Commit the four files as a formatting-only
       change. Fixes F2.
-- [ ] Upgrade dependencies within their ranges, Astro to 7.2.4 or later. Aim for
+- [x] Upgrade dependencies within their ranges, Astro to 7.2.4 or later. Aim for
       `pnpm audit --audit-level moderate` exiting 0 without overrides. Build the site before
-      and after and compare the HTML. Fixes F3. Website task A8.
+      and after and compare the HTML. Fixes F3. Website task A8. `pnpm update` took Astro to
+      7.3.5 and the audit to none, with no overrides. The site moved off the 0.5.0-0
+      prereleases: `@chassis-ui/css` 0.5.2, `@chassis-ui/tokens` 0.5.3, `@chassis-ui/docs`
+      0.5.1. The HTML is the same apart from whitespace and the "View on GitHub" link. The
+      compiled Chassis CSS changes some colours, two border radii and dark-mode backgrounds,
+      as it did for the website. See F25 and F26.
+- [x] Set `sitePath` in `config.yml`, which `@chassis-ui/docs` 0.5.1 reads for the "View on
+      GitHub" link, and add `sitePath` and `siteBranch` to the site's schema. Website task
+      A1. Added in session 0.1, since the upgrade brought 0.5.1.
 - [ ] Bring `app/docs` level with `main`, and say in the commit which is which. Website task
-      AST1.
+      AST1. Left for the maintainer: it is a push to the branch the sites vendor. It is a
+      fast-forward from `04fd3a7` to `cbb861d`, and the sites pin commits, so no build
+      changes.
 
 ### Session 0.2: make CI mean something
 
@@ -530,6 +542,7 @@ here and, when a session gets to it, in `ref/SIBLING_TASKS.md` of `chassis-websi
 
 ## Session log
 
-| Date       | Session | What was done                                                                                                                                                                                                               |
-| ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-29 | Review  | Reviewed the repository, ran the lint, the tests, a full build and the validator, and read `chassis-ui/tokens` and `chassis-ui/website` for the conventions and the consumer contract. Wrote this roadmap. No code changed. |
+| Date       | Session | What was done                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-29 | Review  | Reviewed the repository, ran the lint, the tests, a full build and the validator, and read `chassis-ui/tokens` and `chassis-ui/website` for the conventions and the consumer contract. Wrote this roadmap. No code changed.                                                                                                                                                                                                                                                                                                                                       |
+| 2026-09-29 | 0.1     | CI runs on pull requests and on pushes to `main` and `app/docs`. Prettier fixed on four site files. Dependencies upgraded within their ranges: audit from 37 advisories to none, Astro 7.3.5, the Chassis packages off their prereleases. `sitePath` set for the "View on GitHub" link of `@chassis-ui/docs` 0.5.1 (website task A1). Site built before and after: HTML identical apart from whitespace and that link. Lint, `astro check`, the 39 build tests, the asset build and the validator pass. Added F25 and F26. `app/docs` is left for the maintainer. |
