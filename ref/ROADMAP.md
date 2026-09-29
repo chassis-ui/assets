@@ -285,8 +285,9 @@ problem, and the repository is safe to change.
       `Assets`, `Site` and `Audit` of GitHub Actions. A commit reaches `main` when it has
       passed them, so through a pull request.
 - [ ] Turn on secret scanning, push protection and Dependabot alerts. Left for the
-      maintainer. Read from the API on 2026-09-30: the three are off. The steps are under
-      "Left for you" below.
+      maintainer. Read from the API on 2026-09-30: secret scanning and push protection are
+      on, with no alert. Dependabot alerts are off, and the dependency graph, which they
+      need, answers as if it were off too. The steps are under "Left for you" below.
 - [x] Fix the README drift that does not wait for the rewrite: the output layout, the
       contributing commands and the clone directory. Fixes F6 for now; Phase 4 rewrites it.
       Also the Node.js version, the new scripts and chassis-react.
@@ -299,6 +300,8 @@ problem, and the repository is safe to change.
 
 - [ ] CI is green on `main`, `app/docs` and a pull request against `main`. Green on this
       session's branch, started by hand; `main` and `app/docs` follow when it is merged.
+      The maintainer works alone and merges locally, so a run started by hand on the
+      branch takes the place of the pull request.
 - [x] A deliberate Prettier violation, a deliberate type error and a deliberate test failure
       each fail CI. Checked locally with the commands CI runs: `pnpm lint:prettier`,
       `pnpm check:astro` and `pnpm test` each exit 1.
@@ -309,15 +312,21 @@ problem, and the repository is safe to change.
 
 ### Left for you
 
-The security settings need an administrator of the repository. The ruleset is in place.
+The security settings need an administrator of the repository. The ruleset, secret
+scanning and push protection are in place.
 
-1. **Settings → Advanced Security.** Turn on secret scanning, push protection and
-   Dependabot alerts. Leave Dependabot security updates off until session 4.2 adds
-   Dependabot.
-2. **Push `dev/rewrite` and open a pull request against `main`.** `main` and `app/docs` run
-   the CI of 0.1.8, with the one job `test`. The four checks that the ruleset requires
-   come with this branch, and the pull request runs them. When it is merged and CI is
-   green on `main`, move `app/docs` forward. That closes the first exit criterion.
+1. **Settings → Advanced Security.** Turn on the dependency graph, then Dependabot
+   alerts. Leave Dependabot security updates off until session 4.2 adds Dependabot.
+2. **Bring `main` to `dev/rewrite`, without a pull request.** The ruleset takes a commit on
+   `main` when that commit has passed `Lint`, `Assets`, `Site` and `Audit`. The checks
+   belong to the commit, not to the branch:
+   1. Push `dev/rewrite`. No rule protects it.
+   2. Start CI on it by hand: `gh workflow run CI --ref dev/rewrite`.
+   3. When the four checks are green, push the same commit to `main` and to `app/docs`:
+      `git push origin dev/rewrite:main dev/rewrite:app/docs`.
+
+   It has to be a fast-forward. A merge commit is a new commit, which has passed nothing,
+   and the push is rejected. `main` is an ancestor of `dev/rewrite`, so it is one today.
 
 ## Phase 1: Scope and contract
 
@@ -708,3 +717,4 @@ here and, when a session gets to it, in `ref/SIBLING_TASKS.md` of `chassis-websi
 | 2026-09-30 | 1.1           | Read the build, `source/`, a full build of 0.1.8 and the sources of the six sites. Corrected the consumer contract: the sites also read `icons/cx-sprite.svg`, four logos and the Figma screenshots, and `images/manifest.json` is their own (F27). Decided D2, D4, D5, D6, D7, D8, D9, D10 and D12. Wrote the scope, the consumer contract, the source contract and the output contract in `docs/architecture.md`, with the image and font manifests, the rules of the source lint, the native names and what 0.2.0 changes. Differences from the recommendations: `cx-sprite.svg` stays, the demo app gets the `web` platform, deriving always runs, the iOS output is a Swift package per job and its catalog is `ChassisAssets.xcassets`. Added F27 to F33 and W6 to W8, and changed the tasks of sessions 2.2 to 2.5 to match. No code changed. |
 | 2026-09-30 | 1.2           | Completed `docs/architecture.md`: the build in one picture, ten design decisions, the modules with their responsibility and the data between them, the configuration and the command line, the checks, the known oddities and the history. Read the build of `chassis-tokens` for the conventions. Decided D11 and D13. Recorded what 0.2.0 changes for each consumer, and drafted its changelog entry. Corrected the contract of session 1.1: 323 groups of files with the same content share a folder under `images/figma/`, and the pages read each by name, so the lint leaves out the images of a `committed` rule (F34, D12). Added F35. Changed the tasks of sessions 2.1, 2.2 and 2.6 to match. Phase 1 is done. No code changed.                                                                                                            |
 | 2026-09-30 | 0.2, settings | The maintainer brought `app/docs` level with `main` and added the ruleset. Read back from the API: `main`, `app/docs` and `staging` are at `cbb861d`; the ruleset "Protect main and app/docs" is active, without a bypass, with no deletion, no force push and the four required checks. Secret scanning, push protection and Dependabot alerts are still off. Ticked AST1, the ruleset and the force push criterion. Open in Phase 0: the security settings, and CI green on `main`, `app/docs` and a pull request, which waits for the pull request of `dev/rewrite`.                                                                                                                                                                                                                                                                              |
+| 2026-09-30 | 0.2, settings | Read the settings again: secret scanning and push protection are on, with no alert. Dependabot alerts are still off. The maintainer merges locally, without pull requests: recorded how a commit passes the ruleset that way, by a run started by hand on the branch and a fast-forward push.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
