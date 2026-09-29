@@ -300,11 +300,13 @@ problem, and the repository is safe to change.
 
 ### Exit criteria
 
-- [ ] CI is green on `main`, `app/docs` and a pull request against `main`. Green on this
+- [x] CI is green on `main`, `app/docs` and a pull request against `main`. Green on this
       session's branch, started by hand; `main` and `app/docs` follow when it is merged.
       The maintainer works alone and merges locally, and D1 makes `develop` the branch
       that CI runs on. So the criterion is: CI is green on `develop`, and `main` and
-      `app/docs` are at that commit.
+      `app/docs` are at that commit. Met on 2026-09-30 at `5da1168`: `Lint`, `Assets`,
+      `Site` and `Audit` passed on `develop`, and the ruleset took the commit on `main`
+      and `app/docs`.
 - [x] A deliberate Prettier violation, a deliberate type error and a deliberate test failure
       each fail CI. Checked locally with the commands CI runs: `pnpm lint:prettier`,
       `pnpm check:astro` and `pnpm test` each exit 1.
@@ -320,16 +322,7 @@ scanning and push protection are in place.
 
 1. **Settings → Advanced Security.** Turn on the dependency graph, then Dependabot
    alerts. Leave Dependabot security updates off until session 4.2 adds Dependabot.
-2. **Bring the work to `main` through `develop`**, as D1 says and as `ref/DEPLOYMENT.md` of
-   `chassis-website` describes. The ruleset takes a commit when it has passed `Lint`,
-   `Assets`, `Site` and `Audit`, and the checks belong to the commit, not to the branch:
-   1. Merge `dev/rewrite` into `develop`, and push `develop`. CI runs on it.
-   2. When CI is green, push the same commit to `staging`, and check the site there.
-   3. Push the same commit to `main`, then to `app/docs`.
-
-   A push is rejected when CI failed, is still running, or has not run on that commit.
-
-3. **Two settings to bring in line with the website**, if you agree. Add `staging` to the
+2. **Two settings to bring in line with the website**, if you agree. Add `staging` to the
    branches of the ruleset: Vercel deploys it. Take `Audit` out of the required checks:
    an advisory that is published tomorrow would block every push until a fix exists. It
    still runs and shows red.
@@ -725,3 +718,4 @@ here and, when a session gets to it, in `ref/SIBLING_TASKS.md` of `chassis-websi
 | 2026-09-30 | 0.2, settings | The maintainer brought `app/docs` level with `main` and added the ruleset. Read back from the API: `main`, `app/docs` and `staging` are at `cbb861d`; the ruleset "Protect main and app/docs" is active, without a bypass, with no deletion, no force push and the four required checks. Secret scanning, push protection and Dependabot alerts are still off. Ticked AST1, the ruleset and the force push criterion. Open in Phase 0: the security settings, and CI green on `main`, `app/docs` and a pull request, which waits for the pull request of `dev/rewrite`.                                                                                                                                                                                                                                                                              |
 | 2026-09-30 | 0.2, settings | Read the settings again: secret scanning and push protection are on, with no alert. Dependabot alerts are still off. The maintainer merges locally, without pull requests: recorded how a commit passes the ruleset that way, by a run started by hand on the branch and a fast-forward push.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 2026-09-30 | 0.2, settings | Decided D1 with the maintainer: `develop` is the integration branch, as in the website, css and react. CI now runs on pushes to `develop` and on pull requests, and no longer on pushes to `main` and `app/docs`, where the ruleset needs the checks before the push. Added F36. "Left for you" has the steps, and two settings to bring in line with the website: `staging` in the ruleset, and `Audit` not required.                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2026-09-30 | 0.2, settings | Merged `dev/rewrite` into `develop` as a fast-forward and pushed it. CI passed on `develop` at `5da1168`, with the four checks. Pushed the same commit to `staging`, where the site and the files of the consumer contract answered, then to `main` and `app/docs`. The ruleset took each push. Vercel deployed production, and `chassis-ui.com/assets/` answers. Tag Release ran on `app/docs` and made no tag, since the version is 0.1.8. Phase 0 has one task open: Dependabot alerts.                                                                                                                                                                                                                                                                                                                                                           |
