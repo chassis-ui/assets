@@ -286,10 +286,10 @@ problem, and the repository is safe to change.
       active on the default branch and on `app/docs`, with no bypass, and requires `Lint`,
       `Assets`, `Site` and `Audit` of GitHub Actions. A commit reaches `main` when it has
       passed them, so through a pull request.
-- [ ] Turn on secret scanning, push protection and Dependabot alerts. Left for the
-      maintainer. Read from the API on 2026-09-30: secret scanning and push protection are
-      on, with no alert. Dependabot alerts are off, and the dependency graph, which they
-      need, answers as if it were off too. The steps are under "Left for you" below.
+- [x] Turn on secret scanning, push protection and Dependabot alerts. Done by the
+      maintainer on 2026-09-30, and read back from the API: the three are on, with the
+      dependency graph, which lists 998 packages. No secret and no vulnerable dependency
+      is reported. Dependabot security updates stay off until session 4.2.
 - [x] Fix the README drift that does not wait for the rewrite: the output layout, the
       contributing commands and the clone directory. Fixes F6 for now; Phase 4 rewrites it.
       Also the Node.js version, the new scripts and chassis-react.
@@ -317,12 +317,10 @@ problem, and the repository is safe to change.
 
 ### Left for you
 
-The security settings need an administrator of the repository. The ruleset, secret
-scanning and push protection are in place.
+Every task of Phase 0 is done. One thing is left to decide, and it needs an administrator
+of the repository.
 
-1. **Settings → Advanced Security.** Turn on the dependency graph, then Dependabot
-   alerts. Leave Dependabot security updates off until session 4.2 adds Dependabot.
-2. **Two settings to bring in line with the website**, if you agree. Add `staging` to the
+1. **Two settings to bring in line with the website**, if you agree. Add `staging` to the
    branches of the ruleset: Vercel deploys it. Take `Audit` out of the required checks:
    an advisory that is published tomorrow would block every push until a fix exists. It
    still runs and shows red.
@@ -607,6 +605,9 @@ without asking.
 - [ ] Add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CODEOWNERS`, a pull
       request template and issue forms for a bug, an asset request and a brand request, in
       `.github/`, copied from `chassis-tokens` and adjusted. Fixes F18. Website task A11.
+- [ ] Turn on Dependabot security updates in the settings, which Phase 0 left off, and set
+      `target-branch: develop` in `dependabot.yml`, as the website does: D1 makes `develop`
+      the branch that a pull request targets.
 - [ ] Add Dependabot: npm weekly with the `@chassis-ui/*` packages and `sharp`, `svgo` and
       `svg2vectordrawable` each in their own pull request since they change the output;
       github-actions weekly; gradle for the native check. Website task A12.
@@ -719,3 +720,4 @@ here and, when a session gets to it, in `ref/SIBLING_TASKS.md` of `chassis-websi
 | 2026-09-30 | 0.2, settings | Read the settings again: secret scanning and push protection are on, with no alert. Dependabot alerts are still off. The maintainer merges locally, without pull requests: recorded how a commit passes the ruleset that way, by a run started by hand on the branch and a fast-forward push.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 2026-09-30 | 0.2, settings | Decided D1 with the maintainer: `develop` is the integration branch, as in the website, css and react. CI now runs on pushes to `develop` and on pull requests, and no longer on pushes to `main` and `app/docs`, where the ruleset needs the checks before the push. Added F36. "Left for you" has the steps, and two settings to bring in line with the website: `staging` in the ruleset, and `Audit` not required.                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 2026-09-30 | 0.2, settings | Merged `dev/rewrite` into `develop` as a fast-forward and pushed it. CI passed on `develop` at `5da1168`, with the four checks. Pushed the same commit to `staging`, where the site and the files of the consumer contract answered, then to `main` and `app/docs`. The ruleset took each push. Vercel deployed production, and `chassis-ui.com/assets/` answers. Tag Release ran on `app/docs` and made no tag, since the version is 0.1.8. Phase 0 has one task open: Dependabot alerts.                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-09-30 | 0.2, settings | The maintainer turned on the dependency graph and Dependabot alerts. Read back from the API: on, 998 packages, no open alert. Every task and every exit criterion of Phase 0 is ticked. Open for the maintainer to decide: `staging` in the ruleset, and `Audit` as a required check.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
