@@ -13,7 +13,7 @@ Chassis Assets provides tools to copy, rename, and distribute design assets (fon
 > This project is part of the multi-repository Chassis Design System. It focuses exclusively on asset management, while design tokens and icon generation are handled by separate repositories.
 
 > [!WARNING]
-> This project uses `pnpm` for package management. Install it globally with `npm install -g pnpm` before running the commands below.
+> This project uses `pnpm` for package management and Node.js 24, as `.nvmrc` says. Node.js 22.12 or later works too. Run `corepack enable` once to get the pnpm version that `package.json` pins.
 
 > [!WARNING]
 > This project uses [Git LFS](https://git-lfs.com) to store binary assets (fonts, images). Run `git lfs install` once on your machine before cloning or pulling.
@@ -26,14 +26,14 @@ Clone the repository from GitHub:
 
 ```shell
 git clone git@github.com:chassis-ui/assets.git
-cd chassis-assets
+cd assets
 ```
 
 Or add it to your project as a Git submodule:
 
 ```shell
 git submodule add https://github.com/chassis-ui/assets.git assets
-cd chassis-assets
+cd assets
 ```
 
 ### Install Dependencies
@@ -68,6 +68,9 @@ Build only the assets you need using command-line filters:
 # Build only chassis brand assets
 pnpm assets --brand chassis
 
+# Build two brands; --brand, --app and --platform each take one or more values
+pnpm assets --brand chassis example
+
 # Build only web platform assets
 pnpm assets --platform web
 
@@ -90,9 +93,12 @@ Manage, analyze, and validate your asset distribution:
 
 ```shell
 # Development workflow
+pnpm test                   # Run the test suites
 pnpm assets:analyze         # Analyze asset distribution (supports filtering)
 pnpm assets:validate        # Validate distribution integrity
-pnpm assets:test            # Run test suite
+pnpm assets:lint            # Lint the build scripts
+pnpm lint:prettier          # Check formatting across the repository
+pnpm check                  # Type-check the site, then audit the dependencies
 
 # Update version
 pnpm change-version [old_version] [new_version]
@@ -137,13 +143,20 @@ Output structure:
 ```
 dist/
 ├── web/                  -> Web platform assets
-│   ├── chassis-docs/     -> Chassis brand, docs app
-│   └── example-docs/     -> Example brand, docs app
+│   └── docs/             -> Docs app
+│       ├── chassis/      -> Chassis brand
+│       └── example/      -> Example brand
 ├── ios/                  -> iOS platform assets
-│   └── example-demo/     -> Example brand, demo app
+│   └── demo/             -> Demo app
+│       ├── chassis/
+│       └── example/
 └── android/              -> Android platform assets
-    └── example-demo/     -> Example brand, demo app
+    └── demo/             -> Demo app
+        ├── chassis/
+        └── example/
 ```
+
+The Chassis documentation sites read `dist/web/docs/chassis`, which `pnpm assets:site` builds.
 
 ### Platform-Specific Processing
 
@@ -242,18 +255,19 @@ This project is part of the Chassis Design System's multi-repository architectur
 | [chassis-icons](https://github.com/chassis-ui/icons)     | Icon library and build toolkit                        |
 | **chassis-assets**                                       | **Multi-platform asset management (this repository)** |
 | [chassis-figma](https://github.com/chassis-ui/figma)     | Figma component documentation                         |
+| [chassis-react](https://github.com/chassis-ui/react)     | React components                                      |
 
 All documentation sites share the `@chassis-ui/docs` package for consistent layouts, components, and styling.
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
+2. Create a feature branch from `main`: `git checkout -b feature/my-feature`
 3. Make your changes
-4. Test the build: `pnpm dist && pnpm test`
+4. Build and test: `pnpm assets && pnpm test`
 5. Commit your changes: `git commit -m "feat: add my feature"`
 6. Push to the branch: `git push origin feature/my-feature`
-7. Open a Pull Request
+7. Open a pull request against `main`. CI runs on it.
 
 ## License
 
