@@ -1,10 +1,13 @@
 name: CI
 
-# Runs on every pull request, and on pushes to main, the default branch, and app/docs, the
-# branch that the Chassis sites vendor. workflow_call lets a release workflow run it first.
+# workflow_call lets a release workflow run it first.
 on:
   push:
-    branches: [main, app/docs]
+    # A commit reaches `staging`, `main` and `app/docs` only after these checks passed on
+    # it, so they run on `develop` first, as in chassis-website. Their results belong to the
+    # commit, and the ruleset reads them there, so pushing the same commit to the other
+    # branches does not run them again.
+    branches: [develop]
   pull_request:
   workflow_dispatch:
   workflow_call:
