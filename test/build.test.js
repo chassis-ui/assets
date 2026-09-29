@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { generateAsssets } from '../build/build-assets.js'
+import { generateAssets } from '../build/build-assets.js'
 
 /**
  * Test suite for chassis-assets build system.
@@ -82,7 +82,7 @@ class AssetBuildTester {
     try {
       // Full build with no filters (should clean automatically)
       process.argv = ['node', 'build/build-assets.js']
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       // Verify dist structure exists for actual configuration
       // Config: brands: [chassis, example], apps: {docs: [web], demo: [ios, android]}
@@ -132,7 +132,7 @@ class AssetBuildTester {
     try {
       // Test brand filtering
       process.argv = ['node', 'build/build-assets.js', '--clean', '--brand', 'chassis']
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       const expectedBrandPaths = [
         'dist/web/docs/chassis',
@@ -169,7 +169,7 @@ class AssetBuildTester {
 
       // Test app filtering
       process.argv = ['node', 'build/build-assets.js', '--clean', '--app', 'docs']
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       const expectedAppPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
 
@@ -203,7 +203,7 @@ class AssetBuildTester {
 
       // Test platform filtering
       process.argv = ['node', 'build/build-assets.js', '--clean', '--platform', 'web']
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       const expectedPlatformPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
 
@@ -245,7 +245,7 @@ class AssetBuildTester {
         '--platform',
         'ios'
       ]
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       const expectedCombinedPaths = ['dist/ios/demo/example']
 
@@ -304,7 +304,7 @@ class AssetBuildTester {
         '--platform',
         'web'
       ]
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       const firstBuildPath = 'dist/web/docs/chassis'
       if (!fs.existsSync(firstBuildPath)) {
@@ -314,7 +314,7 @@ class AssetBuildTester {
 
       // Step 2: Build example/ios without clean (should be incremental)
       process.argv = ['node', 'build/build-assets.js', '--brand', 'example', '--platform', 'ios']
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       const secondBuildPath = 'dist/ios/demo/example'
       const firstBuildStillExists = fs.existsSync(firstBuildPath)
@@ -349,7 +349,7 @@ class AssetBuildTester {
         '--platform',
         'web'
       ]
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
 
       const afterCleanBuild = fs.existsSync('dist/web/docs/chassis')
       const otherPlatformGone = !fs.existsSync('dist/ios/demo/example')
@@ -380,7 +380,7 @@ class AssetBuildTester {
     try {
       // Ensure we have a full build
       process.argv = ['node', 'build/build-assets.js', '--clean']
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
       process.argv = this.originalArgv
 
       // Check Android file naming (should use underscores, not dashes)
@@ -464,7 +464,7 @@ class AssetBuildTester {
     try {
       // Ensure we have a full build
       process.argv = ['node', 'build/build-assets.js', '--clean']
-      await generateAsssets({ quiet: true })
+      await generateAssets({ quiet: true })
       process.argv = this.originalArgv
 
       // Check that both brands have their assets

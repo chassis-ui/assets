@@ -51,8 +51,8 @@ class AnalyzeTestSuite {
     if (!fs.existsSync('dist')) {
       console.log('📦 Building assets for test data...')
       try {
-        const { generateAsssets } = await import('../build/build-assets.js')
-        await generateAsssets({ quiet: true })
+        const { generateAssets } = await import('../build/build-assets.js')
+        await generateAssets({ quiet: true })
         console.log('✅ Assets built successfully')
       } catch (error) {
         console.error('❌ Failed to build assets:', error.message)

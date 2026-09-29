@@ -427,7 +427,7 @@ export { platformProcessors }
  * @param {boolean} options.quiet - Suppress verbose output (for tests)
  * @returns {Promise<void>}
  */
-export async function generateAsssets(options = {}) {
+export async function generateAssets(options = {}) {
   quietMode = options.quiet || false
   logger.log('🚀 Starting Chassis Assets build process...')
 
@@ -558,5 +558,5 @@ export async function generateAsssets(options = {}) {
 
 // Only run if this file is executed directly (not imported)
 if (import.meta.url === `file://${process.argv[1]}`) {
-  generateAsssets()
+  generateAssets()
 }

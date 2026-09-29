@@ -3,7 +3,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { generateAsssets, shouldIgnoreFile } from '../build-assets.js'
+import { generateAssets, shouldIgnoreFile } from '../build-assets.js'
 
 /**
  * ChassisAssets class provides programmatic API for asset management.
@@ -236,9 +236,9 @@ export class ChassisAssets {
   async build(options = {}) {
     const { clean = true } = options
 
-    // Note: The generateAsssets function currently uses config from package.json
+    // Note: The generateAssets function currently uses config from package.json
     // and doesn't accept filtering parameters. This is a known limitation.
-    // TODO: Update generateAsssets to accept brand/app/platform filters
+    // TODO: Update generateAssets to accept brand/app/platform filters
 
     if (clean && fs.existsSync('dist')) {
       try {
@@ -255,7 +255,7 @@ export class ChassisAssets {
       }
     }
 
-    await generateAsssets()
+    await generateAssets()
   }
 
   /**
