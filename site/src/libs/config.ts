@@ -22,6 +22,10 @@ const configSchema = z.object({
   figma_handle: z.string(),
   github_org: z.string(),
   repo: z.url(),
+  // Read by `@chassis-ui/docs` 0.5.1 for the "View on GitHub" link of each docs page:
+  // the site's folder from the repository root, and the branch the link points to.
+  siteBranch: z.string().optional(),
+  sitePath: z.string().optional(),
   subtitle: z.string(),
   title: z.string(),
   toc: z.object({
