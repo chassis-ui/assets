@@ -1,0 +1,535 @@
+# Chassis Assets Roadmap
+
+> **Scope:** what it takes to make `chassis-assets` a professional, production-ready and
+> easy-to-contribute-to package, with a build system rewritten from the ground up: optional
+> image and font optimization, native output that apps can drop in, and output that the
+> Chassis ecosystem can rely on. Written to be worked through over several sessions.
+>
+> **This roadmap changes this repository only.** Work that belongs in a sibling repository
+> is recorded in [Tasks for the siblings](#tasks-for-the-siblings) and in
+> `ref/SIBLING_TASKS.md` of `chassis-website`. No task below edits a sibling.
+>
+> **Baseline:** reviewed 2026-09-29 at `main` `cbb861d`, version 0.1.8. Every finding was
+> checked against the code, a fresh install, a full build and the sibling repositories
+> `chassis-ui/tokens` and `chassis-ui/website` on that date. Re-check a finding before
+> acting on it if the baseline has moved.
+
+## How to use this document
+
+1. Pick the lowest-numbered phase that still has unchecked tasks. Phase 0 and Phase 1 come
+   first, in that order. Phase 2 is the rewrite and depends on Phase 1. Phases 3 to 5 can
+   be interleaved once Phase 2 has a working pipeline.
+2. Each phase lists its tasks as checkboxes, grouped into session-sized blocks. Tick a task
+   when it is merged, not when it is started.
+3. Each phase has exit criteria. A phase is done when all of them hold.
+4. Add a line to the [session log](#session-log) at the end of every session.
+5. Open decisions are collected in [Decisions](#decisions). A task that depends on one
+   names it. Decide before starting the session, or start the session by deciding.
+6. When a session finds work for a sibling, add it to
+   [Tasks for the siblings](#tasks-for-the-siblings) and do not do it.
+7. The [consumer contract](#the-consumer-contract) holds in every session. A change to it
+   is a breaking change and follows the rules under [Breaking changes](#breaking-changes).
+
+## Summary
+
+| Phase                                | Goal                                                              | Sessions | Depends on | Model            |
+| ------------------------------------ | ----------------------------------------------------------------- | -------- | ---------- | ---------------- |
+| [0](#phase-0-green-baseline)         | CI runs where the work is and means something                     | 2        | none       | Opus             |
+| [1](#phase-1-scope-and-contract)     | What this repository holds, and what each consumer can rely on    | 1 to 2   | 0          | Fable            |
+| [2](#phase-2-build-system-rewrite)   | A new build: pure, tested, optimizing, native, reproducible       | 5 to 6   | 1          | Fable, then Opus |
+| [3](#phase-3-package-and-release)    | One layout, one version, one release pipeline                     | 2 to 3   | 2          | Opus             |
+| [4](#phase-4-contributor-experience) | A new contributor gets from clone to pull request unaided         | 2        | 2          | Opus             |
+| [5](#phase-5-ecosystem-alignment)    | The docs site and the consumers take the new build without a hack | 2        | 3          | Opus             |
+
+### Which model for which session
+
+Fable is the more capable model. Use it where the design is still open, or where a mistake
+reaches every consumer. Use Opus where the task is already specified and a check tells you
+whether it worked.
+
+| Session                        | Model | Why                                                                                                                                       |
+| ------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1 Make CI run and pass       | Opus  | Workflow triggers, formatting, dependency upgrades. CI confirms the result.                                                               |
+| 0.2 Make CI mean something     | Opus  | Small, specified changes to scripts and workflows.                                                                                        |
+| 1.1 Scope and contract         | Fable | Decides what the repository is for, what stays in `source/`, and the output contract of every platform. Every later session builds on it. |
+| 1.2 Architecture document      | Fable | Writes the design of the new build before code exists. Reads the tokens build to match its conventions.                                   |
+| 2.1 Core pipeline              | Fable | The main design of the roadmap. Plan, rules and pipeline as pure modules, with a golden check against the current output.                 |
+| 2.2 Source rules and manifests | Opus  | Rules written against the contract of session 1.1.                                                                                        |
+| 2.3 Image optimization         | Opus  | Specified transforms with measurable output. Take it to Fable if determinism across platforms turns out hard.                             |
+| 2.4 Font optimization          | Opus  | Specified transforms. Subsetting decisions are in D8.                                                                                     |
+| 2.5 Native output              | Fable | Asset catalogs, density folders and vector drawables have to compile in Xcode and Gradle. A wrong layout fails silently for an app.       |
+| 2.6 Tests, verify and diff     | Opus  | Tests written against code that exists, in the pattern of `chassis-tokens`.                                                               |
+| 3.1 Layout and package         | Opus  | Mirrors `chassis-tokens`. D3 decides the layout first.                                                                                    |
+| 3.2 Release pipeline           | Opus  | `chassis-tokens` has a working pipeline to read and copy from.                                                                            |
+| 4.1 Accurate docs              | Opus  | Rewriting docs from `package.json` and the CLI's own help.                                                                                |
+| 4.2 Repository hygiene         | Opus  | Standard files and settings.                                                                                                              |
+| 5.1 The docs site              | Opus  | Follows `UPGRADING.md` of `@chassis-ui/docs` and the sibling tasks written for this repository.                                           |
+| 5.2 Consumers                  | Opus  | A lighter vendor step, measured. Use Fable if the website's build has to change.                                                          |
+
+Switch to Fable in any session when a task turns out to be less specified than it looked.
+
+## Breaking changes
+
+Backward compatibility with the current build code is not a goal. Compatibility with the
+consumers is.
+
+- The [consumer contract](#the-consumer-contract) holds on `app/docs` at every commit. A
+  consumer's build must not break because this repository moved.
+- The rewrite ships as **0.2.0**. Everything under `dist/` may change in it, except what the
+  contract names. The changelog lists every path that moved, and the sibling tasks say what
+  each consumer has to change, if anything.
+- After 0.2.0, while the version is `0.x`, a change to a documented output path, file name or
+  layout is a minor bump whose changelog entry says that it breaks. Everything else is a patch.
+- **1.0 requires:** the contract is documented and tested by a fixture consumer, every
+  platform output compiles in a native check, releases are automated, and the docs site of
+  this repository uses `@chassis-ui/docs` 0.6 or later.
+
+## The consumer contract
+
+What the rest of the ecosystem reads from this repository today. Found in
+`packages/docs/src/cli/assets.js` and `packages/docs/src/layouts/` of `chassis-website`,
+and in `packages/docs/README.md` of `@chassis-ui/docs` 0.6.1.
+
+| Consumers rely on                                                                                                                                                                                                                                                                                       | Where                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| The `app/docs` branch. Every Chassis site vendors this repository as the submodule `vendor/assets`, pinned to a commit of that branch.                                                                                                                                                                  | `DEFAULT_BRANCH` in the `chassis-docs` command; `.gitmodules` of website, tokens, css, react, icons, figma |
+| `git lfs pull` gives the real files. Fonts and raster images are stored with Git LFS.                                                                                                                                                                                                                   | `.gitattributes`; `buildCheckout()` in the command                                                         |
+| `pnpm install --ignore-workspace` at the root, then `pnpm assets:site`, writes `dist/web/docs/chassis`.                                                                                                                                                                                                 | `ASSETS_OUTPUT` in the command; `getChassisAssetsFsPath()` of the package                                  |
+| That folder is copied to `/static/` of every site. The layouts read `images/site-logo.svg`, `images/favicon.png`, `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `images/manifest.json` and `images/social-image.png`. The build of a site fails when `social-image.png` is missing. | `Head.astro`, `Favicons.astro`, `BaseLayout.astro` of the package; F51 of the website roadmap              |
+| The home page images under `images/home/`, including the `-small` and `@2x` variants and the `.webp` copies, by name.                                                                                                                                                                                   | `GalleryImage.astro` and the home page components of each site; F59 of the website roadmap                 |
+| Icons come from `@chassis-ui/icons` on npm, not from this repository.                                                                                                                                                                                                                                   | `getChassisIconsFsPath()`; `/static/icons/chassis-icons.svg` in the package                                |
+| Fonts come from Google Fonts, not from this repository.                                                                                                                                                                                                                                                 | `Head.astro` and `scss/fonts.scss` of the package; decision D15 of the website roadmap                     |
+
+Nothing consumes `dist/ios/` or `dist/android/` today. They are a feature for adopters, like
+the presets of `chassis-tokens`, and Phase 2 gives them a shape an app can use.
+
+## Findings
+
+### This repository
+
+| ID  | Finding                                                                                              | Evidence                                                                                                                                                                                                                                                                                                                | Phase |
+| --- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| F1  | CI never runs on `main`, the default branch, and never on pull requests against it.                  | `.github/workflows/ci.yml` and `tag-release.yml` trigger on `app/docs` only. `main` is one commit ahead of `origin/app/docs`. Releases are tagged from `app/docs`.                                                                                                                                                      | 0     |
+| F2  | Site lint fails, and nothing runs it.                                                                | `pnpm site:lint:prettier` flags the four components in `site/src/components/homepage/`. `pnpm site` and `pnpm site:lint` exit 1. CI runs `assets:lint` only.                                                                                                                                                            | 0     |
+| F3  | `pnpm audit` reports 37 advisories: 1 critical, 28 high, 8 moderate.                                 | The critical one is `astro` 7.0.6, below 7.2.4. `check:pnpm` exists and is not in CI.                                                                                                                                                                                                                                   | 0     |
+| F4  | Two checks cannot fail.                                                                              | `check:lockfile` lints `package-lock.json`, which does not exist, and exits 0. `check` runs its jobs with `&` and ends with `wait`, which always exits 0.                                                                                                                                                               | 0     |
+| F5  | The analyzer cannot find duplicates, and the test that says it finds none passes because of the bug. | `storeFileHash()` in `build/analyze-assets.js` keys the map by content hash, so a second identical file overwrites the first. `source/` holds 1078 groups of byte-identical files: `demo/icons/svgs` mirrors `docs/icons/svgs`, and 776 of the 3184 Figma screenshots have an identical light and dark copy.            | 2     |
+| F6  | The README describes an output layout the code does not produce, and commands that do not exist.     | `README.md:139` says `dist/web/chassis-docs/`; `build-assets.js:505` writes `dist/web/docs/chassis/`. Line 248 says `pnpm dist && pnpm test`; neither script exists. Lines 29 and 36 `cd chassis-assets` after cloning into `assets`. The site docs say Node 18, CI uses 24.                                            | 0, 4  |
+| F7  | The site docs promise CLI behaviour the CLI does not have.                                           | `build-system.mdx` shows `pnpm assets --brand chassis example`. `parseArgs()` takes one brand. It also names `pnpm test`, which does not exist.                                                                                                                                                                         | 0, 4  |
+| F8  | The programmatic API cannot be used as a library.                                                    | `generateAsssets` is misspelled at 19 call sites. It reads `process.argv`, reads `package.json` from the working directory at import time, ignores the options `ChassisAssets.build()` documents, and calls `process.exit()` in five places.                                                                            | 2     |
+| F9  | The package says it is published to npm and that it is not.                                          | `publishConfig` is public and `files` ships `source/**` and `build/**`. The release notes in `tag-release.yml` say "not published to npm". No `exports`, no `engines`, no `main`.                                                                                                                                       | 3     |
+| F10 | The font stylesheets reference files that do not exist.                                              | `source/default/docs/fonts/text.css` loads 18 `Inter-*.woff2` files and `code.css` five `woff/FiraCode-*.woff`. The folder holds `text-*`, `display-*` and `code-*` files. The demo app has the same two files. No consumer loads them, see the contract, so nobody noticed.                                            | 1, 2  |
+| F11 | `source/` holds copies of other repositories' output.                                                | `docs/icons/` and `demo/icons/` are `@chassis-ui/icons` 0.3.1 with `svgs/`, the icon font and `preview.html` of svg-sprite, and already stale: `css-brand.svg`, `cut-outline.svg` and `cut-solid.svg` are missing. `docs/other/default.tokens.json` is a Figma variables export that belongs to `chassis-tokens`.       | 1     |
+| F12 | Every variant of an image is made by hand and committed.                                             | `images/home/comp-gallery-light` exists as 8 files: PNG and WebP, at 1x and 2x, full and `-small`. Most home images exist as 4. The 3184 Figma screenshots exist at 1x and 2x. The build copies; it derives nothing and optimizes nothing.                                                                              | 2     |
+| F13 | The fonts are shipped unoptimized and unused.                                                        | 48 WOFF2, 24 OTF and 14 TTF files, 22 MB of `source/` with LFS. No subsetting, no generated `@font-face`. Every site loads Google Fonts instead (website decision D15).                                                                                                                                                 | 1, 2  |
+| F14 | The iOS and Android outputs do not match what an app or the tokens package expects.                  | Android writes `images/logo/drawable-xhdpi/*.png` under the source folder path; `chassis-tokens` writes under `res/`. WebP is excluded although Android supports it. iOS gets loose `snake_case` files; Xcode wants an asset catalog with `Contents.json` per image set, which the tokens package writes for its icons. | 2     |
+| F15 | The tests are slow, not hermetic, and cannot fail for the right reasons.                             | Hand-rolled runners. `build.test.js` runs seven full builds of the real 4537-file source and deletes `dist/` on exit. `api.test.js` needs the `dist/` that `build.test.js` just deleted. Every result prints twice. The pure functions in `build/processors/` have no unit test.                                        | 2     |
+| F16 | There is no type check, and half the build files have no license header.                             | No `tsconfig.json`. Ten files under `build/` lack the header that `change-version.js` and `build-site.js` carry.                                                                                                                                                                                                        | 2     |
+| F17 | Consumers build 61 MB to use about 2 MB, on every CI run.                                            | Website decision D9. `chassis-docs vendor` pulls every LFS file, installs 50 development dependencies of the docs site and runs the build, in each of six repositories.                                                                                                                                                 | 2, 5  |
+| F18 | Community health files, agent instructions and an architecture document are missing.                 | No `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CODEOWNERS`, issue or pull request templates, Dependabot, `AGENTS.md` or `docs/`. `chassis-tokens` has all of them.                                                                                                                                         | 4     |
+| F19 | The Node version is not pinned anywhere.                                                             | No `engines`, `.nvmrc` or `.node-version`. Website decision D7 settles it for the ecosystem: `.nvmrc` 24, `engines` `>=22.12.0`.                                                                                                                                                                                        | 0     |
+| F20 | The workflows are not hardened.                                                                      | Actions pinned by tag. No `persist-credentials: false`. `tag-release.yml` has no timeout. No branch ruleset. `chassis-tokens` pins by commit and sets least-privilege permissions per job.                                                                                                                              | 0     |
+| F21 | The branch flow is undocumented.                                                                     | `main`, `staging`, `app/docs`, `dev/build-test` and `migration` exist on the remote. Vercel deploys `main` and `staging`. Consumers follow `app/docs`. Nothing says which branch a contributor targets or how a commit reaches `app/docs`.                                                                              | 0, 4  |
+| F22 | The build is a single package that carries the site's toolchain.                                     | One `package.json` with 51 `devDependencies`, most of them Astro and its lint tools. A consumer installs all of them to run `assets:site`. Several appear unused here: `@floating-ui/dom`, `vanilla-calendar-pro`, `standard`.                                                                                          | 3     |
+| F23 | The two apps duplicate each other.                                                                   | `source/default/demo/fonts` and `docs/fonts` are the same 37 files; the icon folders are identical. There is no layer for assets shared by every app.                                                                                                                                                                   | 1, 2  |
+| F24 | The site copies scripts that `@chassis-ui/docs` ships.                                               | `site/static/static/js/example-mode.js` and `validate-forms.js`. The package has `js/example-mode.js`. Task A4 of the website's sibling tasks removes the library copies; these two go with them.                                                                                                                       | 5     |
+
+### How the ecosystem consumes this repository
+
+| ID  | Finding                                                                                        | Evidence                                                                                                                                                                                    | Here |
+| --- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| S1  | Six repositories vendor `app/docs`, pinned to `04fd3a7` or, in icons and figma, `a0bb3f8`.     | Website roadmap table "How the sibling repositories consume this one", and A10.                                                                                                             | 0    |
+| S2  | The vendor step is the same command everywhere since `@chassis-ui/docs` 0.6.1.                 | `chassis-docs vendor` and `chassis-docs sync-submodules`. Before 0.6.1 each site had a copy of `sync-submodules.js`; the react fork checked `dist/web/chassis-docs`, the wrong path (RCT4). | 5    |
+| S3  | The website's own tasks for this repository are open.                                          | `SIBLING_TASKS.md`: AST1 to AST5, and A1, A3, A4, A5, A7, A8, A9, A11, A12, A13, A16, A17, A22, A23 where they apply to assets.                                                             | 0, 5 |
+| S4  | The tokens package is the tooling reference, and its native conventions are the ones to match. | `chassis-tokens` writes `Icons.xcassets` image sets with `Contents.json`, `res/drawable/` vector drawables, a root `Package.swift`, and compiles both in CI.                                | 2    |
+| S5  | The tag `v0.1.8` exists. AST4 of the website is stale.                                         | `git ls-remote --tags` lists `v0.1.6`, `v0.1.7`, `v0.1.8`.                                                                                                                                  | none |
+
+## Phase 0: Green baseline
+
+**Goal:** CI runs on the default branch and on pull requests, a red check means a real
+problem, and the repository is safe to change.
+
+### Session 0.1: make CI run and pass
+
+- [ ] Change `ci.yml` to run on `pull_request`, `workflow_dispatch` and `workflow_call`, as
+      `chassis-tokens` does, and on pushes to `main` and `app/docs` until Phase 3 replaces
+      the release flow. Fixes F1.
+- [ ] Run Prettier with `--write` over `site/`. Commit the four files as a formatting-only
+      change. Fixes F2.
+- [ ] Upgrade dependencies within their ranges, Astro to 7.2.4 or later. Aim for
+      `pnpm audit --audit-level moderate` exiting 0 without overrides. Build the site before
+      and after and compare the HTML. Fixes F3. Website task A8.
+- [ ] Bring `app/docs` level with `main`, and say in the commit which is which. Website task
+      AST1.
+
+### Session 0.2: make CI mean something
+
+- [ ] Make `check` run its jobs in sequence so it can fail. Delete `check:lockfile` or point
+      it at `pnpm-lock.yaml` if the tool supports it. Fixes F4. Website task A13.
+- [ ] Add jobs to CI: Prettier, site lint, `astro check`, the audit, and the site build.
+      Keep the assets lint, tests, build and validation.
+- [ ] Add `.nvmrc` with `24` and `engines.node` `>=22.12.0`. CI reads `.nvmrc`. Fixes F19.
+      Website task A7.
+- [ ] Pin every action by commit, set `persist-credentials: false` on every checkout, a
+      `timeout-minutes` on every job, and `permissions: contents: read` at the top of both
+      workflows. Fixes F20.
+- [ ] Add the ruleset "Protect main and app/docs": no force push, no deletion, CI required.
+      Turn on secret scanning, push protection and Dependabot alerts. Decided, see D1.
+- [ ] Fix the README drift that does not wait for the rewrite: the output layout, the
+      contributing commands and the clone directory. Fixes F6 for now; Phase 4 rewrites it.
+- [ ] Fix the misspelled `generateAsssets`. Fixes the name in F8; the API itself is Phase 2.
+- [ ] Fix the site docs that claim multiple `--brand` values, or make the CLI accept them.
+      Fixes F7 for now.
+
+### Exit criteria
+
+- [ ] CI is green on `main`, `app/docs` and a pull request against `main`.
+- [ ] A deliberate Prettier violation, a deliberate type error and a deliberate test failure
+      each fail CI.
+- [ ] `pnpm audit --audit-level moderate` exits 0.
+- [ ] A force push to `main` is rejected.
+
+## Phase 1: Scope and contract
+
+**Goal:** it is written down what this repository holds, what it does not, and what each
+consumer of `dist/` can rely on. Phase 2 implements that document.
+
+### Session 1.1: scope and contract
+
+- [ ] Decide what stays in `source/`. Recommended: remove the copies of `@chassis-ui/icons`
+      and the Figma tokens export, since both come from their own repositories. See D4.
+      Fixes F11.
+- [ ] Decide what the fonts are for. If the sites stay on Google Fonts, the docs app has no
+      font consumer, and the demo app is the only reason to keep them. See D8. Fixes F13.
+- [ ] Decide the source layout: a layer shared by every app, then the app, then the brand.
+      Recommended: `source/<brand>/shared/`, `source/<brand>/<app>/`, with `default` as the
+      brand fallback, as today. See D5. Fixes F23.
+- [ ] Decide the image policy: one master per image, variants derived by the build from a
+      manifest, or committed variants as today. Recommended: derived, with the manifest
+      naming the sizes, densities and formats each image needs. See D6. Fixes F12.
+- [ ] Decide the distribution model, website task AST3. Recommended: not on npm, tagged
+      releases with one archive per platform and app attached, `app/docs` for the sites.
+      See D2. Fixes F9.
+- [ ] Write the **output contract** for each platform: folder layout, naming, which formats
+      go where, what a manifest holds. Web keeps `dist/web/docs/chassis` and the file names
+      in the [consumer contract](#the-consumer-contract). Android writes a `res/` tree with
+      density and drawable folders. iOS writes an asset catalog. See D9 and D10.
+- [ ] Write the **source contract**: what a contributor puts where, the naming rules, the
+      manifest format, and the rules the source lint enforces.
+
+### Session 1.2: architecture document
+
+- [ ] Write `docs/architecture.md` in the shape of the tokens one: the build in one picture,
+      design decisions, configuration, output contract, checks, known oddities, history.
+      The `chassis.build` configuration in `package.json` keeps `brands` and `apps`; it gains
+      per-platform `options` for the optimizations.
+- [ ] Write the module layout of the new build and the responsibility of each module, so
+      that session 2.1 starts from a plan and not from the old code.
+- [ ] Record what changes for consumers in 0.2.0 and what does not, in the
+      [Breaking changes](#breaking-changes) section and in a draft changelog entry.
+
+### Exit criteria
+
+- [ ] `docs/architecture.md` exists and names every output path of every platform.
+- [ ] D2, D4, D5, D6, D8, D9 and D10 are decided.
+- [ ] The consumer contract above is copied into the architecture document and marked as
+      the part that holds through the rewrite.
+
+## Phase 2: Build system rewrite
+
+**Goal:** a build that is small enough to read in one sitting, pure where it can be,
+tested where it is not, reproducible byte for byte, and able to optimize what it ships.
+
+The shape follows the tokens build: a **plan** computed by pure functions, **rules** per
+platform that are pure functions of a file's path and metadata, a **pipeline** that does
+the I/O, and a **verify** step that compares a fresh build with a committed reference.
+
+### Session 2.1: core pipeline
+
+- [ ] Create the new build beside the old one, under `build/`, with a `logger.js` in the
+      pattern of the tokens package, and move to it module by module. The old scripts are
+      deleted in session 2.6.
+- [ ] `config.js`: loads `chassis.build` from `package.json` or from `--config <file>`,
+      validates it, and fails with a message that names the key. No file reads at import
+      time. Fixes the working-directory dependence in F8.
+- [ ] `plan.js`: a pure function from configuration and filters to the list of jobs, one per
+      brand, app and platform, with the source layers each job reads in override order.
+      `--brand`, `--app` and `--platform` take one or more values. `--dry-run` prints the
+      plan. Fixes F7.
+- [ ] `inventory.js`: walks the source layers of a job and returns the files with their
+      layer, asset type, base name, resolution indicator and extension. Ignores system files.
+      Pure apart from the directory read, which is injected.
+- [ ] `rules/<platform>.js`: pure functions `include(file)`, `target(file)` and
+      `transform(file)` per platform. The web rules reproduce the current output. Collisions
+      are errors, not warnings, with both source paths named.
+- [ ] `pipeline.js`: runs a job, with async I/O, a bounded concurrency, and a content-hash
+      cache in `.cache/` so that an unchanged input is not processed again. A failure names
+      the file and the rule.
+- [ ] `cli.js` with `node:util` `parseArgs`: `build`, `verify`, `diff`, `lint`, `analyze`,
+      `--out`, `--config`, `--dry-run`, `--quiet`, `--help`, `--version`. The library API is
+      `build(options)` and returns a report; it never reads `process.argv` and never exits.
+      Fixes F8.
+- [ ] Acceptance: with optimizations off, the new build writes exactly the files of the old
+      build for `web`, compared by a manifest of paths and hashes. Differences are the
+      documented fixes only.
+
+### Session 2.2: source rules and manifests
+
+- [ ] Implement the source layout of D5 in the plan and the inventory, and move the files.
+      Remove the folders of D4. Fixes F11 and F23.
+- [ ] Add the **image manifest**: a JSON or YAML file per folder, or one per app, that names
+      the variants each image needs. A file without an entry is copied as it is.
+- [ ] Add the **font manifest**: family, style, weight and file per face, from which the
+      build writes the `@font-face` stylesheet. Fixes F10.
+- [ ] Add `lint`: the source lint. Rules: naming (lowercase, hyphens, a resolution indicator
+      only on rasters), a manifest entry for every image that has variants, no committed
+      variant that the build derives, no stylesheet that references a missing file, no two
+      files with the same content in one layer, an LFS pointer where a real file should be.
+      Every message names the file. Fixes F5.
+
+### Session 2.3: image optimization
+
+- [ ] Add `sharp` as the one raster dependency. Derive from a master: densities (`@1x` from
+      `@2x` or `@3x`), sizes (`-small` from the manifest), and formats (WebP, AVIF where the
+      manifest asks). Never upscale.
+- [ ] Optimize what is copied: PNG with palette quantization where the manifest allows,
+      JPEG with a stated quality, metadata stripped. Report the bytes saved.
+- [ ] Add `svgo` with a conservative preset: keep `viewBox`, ids and `currentcolor`; remove
+      editor metadata and comments. Sprites are left alone.
+- [ ] Make the output **deterministic**: no timestamps, fixed encoder settings, pinned
+      versions of `sharp` and `svgo`. Two builds of the same input give the same bytes.
+      Check it on Linux and macOS; record any difference as a known oddity.
+- [ ] Add size budgets to the manifest, checked by `lint`: a variant over its budget fails.
+- [ ] Optimizations are **opt-in per platform** in `chassis.build.options`, off by default,
+      so that a consumer's build stays fast and the golden check stays simple. The docs app
+      turns them on.
+
+### Session 2.4: font optimization
+
+- [ ] Convert TTF and OTF to WOFF2 for the web output, and keep TTF and OTF for the native
+      outputs, from one source file. Decided in D8.
+- [ ] Subset by a Unicode range from the font manifest, with `subset-font` or an equivalent
+      pure-JavaScript tool, opt-in.
+- [ ] Write the `@font-face` stylesheet from the manifest, with `font-display: swap` and
+      `unicode-range` where subsetting is on. Delete the hand-written `text.css` and
+      `code.css`. Fixes F10.
+- [ ] Write a font report: family, faces, bytes before and after.
+
+### Session 2.5: native output
+
+- [ ] **Android:** write a `res/` tree per job. Rasters go to `drawable-mdpi` to
+      `drawable-xxxhdpi` by density, density-independent images to `drawable`, SVG icons to
+      `drawable` as vector drawables with `svg2vectordrawable`, as the tokens package does.
+      Names are `snake_case`, icons prefixed `ic_`. WebP is allowed. Fonts go to `font/`.
+      See D9. Fixes F14.
+- [ ] **iOS:** write `Assets.xcassets` per job: an image set per image with `1x`, `2x` and
+      `3x` files and a `Contents.json`, template rendering for icons, vector preserved for
+      SVG and PDF. Fonts go beside the catalog with an `Info.plist` fragment listing them.
+      See D10. Fixes F14.
+- [ ] Write `Package.swift` at the root from the configuration, one library per app and
+      brand with an iOS platform, with the catalog as a resource, generated by a script and
+      checked by a test, as the tokens package does.
+- [ ] Add native compile checks under `test/native/`: `actool` and a sample package on
+      macOS, a Gradle library with `aapt2` on Linux, copied from the tokens package and
+      reduced to what assets need. Run them in CI only when native paths change.
+
+### Session 2.6: tests, verify and diff
+
+- [ ] Add Vitest. Unit-test the pure modules with a small fixture source tree under
+      `test/fixtures/`: the plan, the inventory, every rule of every platform, the manifests,
+      the lint rules and the CLI parser. No test reads the real `source/`. Fixes F15.
+- [ ] Add `verify`: builds into a scratch directory and compares a manifest of every output
+      path and content hash with the committed `test/golden/<platform>.json`. The golden
+      files are small; `dist/` is not committed. See D11.
+- [ ] Add `diff`: the report of what a change adds, removes, renames or changes in the output
+      of each platform, as Markdown for the pull request summary, in the pattern of the
+      tokens diff.
+- [ ] Add `tsconfig.json` with `checkJs` over `build/` and a `typecheck` script. Add the
+      license header to every build file. Fixes F16.
+- [ ] Replace `analyze-assets.js` and `validate-assets.js` with `analyze` and `verify` of
+      the new CLI, and delete `build/api/`, `build/build-site.js` and the old tests.
+- [ ] Update CI: lint, source lint, typecheck, test, build, verify, and the diff summary on
+      pull requests.
+
+### Exit criteria
+
+- [ ] `pnpm assets` on `app/docs` still writes `dist/web/docs/chassis` with every file the
+      consumer contract names, and `chassis-docs vendor` in a scratch clone of
+      `chassis-website` builds the site with it.
+- [ ] Two builds of the same commit give the same output manifest, on Linux and macOS.
+- [ ] `pnpm verify` fails when a rule changes and the golden files were not updated.
+- [ ] The native checks compile the iOS and Android output in CI.
+- [ ] The unit tests run in under ten seconds without the real `source/`.
+- [ ] The docs app's images are derived from masters; the committed variants are gone.
+
+## Phase 3: Package and release
+
+**Goal:** the repository has the layout of the ecosystem's tooling reference, one version,
+and a release that needs no manual step after the version commit.
+
+### Session 3.1: layout and package
+
+- [ ] Decide the layout. See D3. Recommended: a pnpm workspace with `packages/assets` (the
+      source, the build, the tests) and `packages/site`, as `chassis-tokens` and
+      `chassis-react`. It needs one change in `chassis-docs vendor` first; see the sibling
+      tasks. Until that ships, keep `pnpm assets:site` at the root working.
+- [ ] Give the assets package `engines`, `exports` for the build API and the CLI, a `bin`
+      named `chassis-assets`, a `files` list that ships the build only, and `private: true`
+      if D2 keeps it off npm. Fixes F9 and F22.
+- [ ] Move the site's dependencies to `packages/site`. The root keeps the lint tools. A
+      consumer installs the assets package only. Remove the dependencies nothing imports.
+- [ ] Add a root `LICENSE` and one in the package.
+
+### Session 3.2: release pipeline
+
+- [ ] Adopt Changesets, with `changedFilePatterns` for `source/`, `build/` and the golden
+      files, and a CI job that requires a changeset on such a pull request. Replace
+      `build/change-version.js` with `changeset version` and a `sync-version-refs.js` that
+      updates `config.yml` of the site.
+- [ ] Add `publish-release.yml`: on a push to `main`, run CI through `workflow_call`, then
+      version, then tag `v<version>` and create a GitHub release with the changelog entry as
+      the body and one archive per platform and app attached, with `fail_on_unmatched_files`.
+      If D2 chooses npm for the build tool, publish with trusted publishing and provenance.
+- [ ] Make `app/docs` follow `main` in the release workflow: after a release, fast-forward
+      `app/docs` to the released commit. Consumers then pin releases, not arbitrary commits.
+      Decided in D1.
+- [ ] Give the package its own `CHANGELOG.md`, and write the 0.2.0 entry from the draft of
+      session 1.2.
+
+### Exit criteria
+
+- [ ] A release needs no manual step after the version commit reaches `main`.
+- [ ] Each release has one archive per platform attached, built by CI from a verified build.
+- [ ] `app/docs` points at the released commit after every release.
+
+## Phase 4: Contributor experience
+
+**Goal:** a first-time contributor can clone, run, add an asset, check it and submit
+without asking.
+
+### Session 4.1: accurate docs and one way to run things
+
+- [ ] Add top-level scripts that match what people type: `build`, `lint`, `format`, `test`,
+      `typecheck`, `verify`, `check`, `dev`. Keep the `assets:*` and `site:*` scripts behind
+      them. `lint` runs what CI runs.
+- [ ] Rewrite `README.md` from `package.json` and the CLI's `--help`: what the repository
+      is, the contract, the commands and their options, the configuration, the manifests,
+      the ecosystem table, and a short contributing section that links to
+      `CONTRIBUTING.md`. Fixes F6.
+- [ ] Rewrite the site docs from the same sources: Quick Start, Build System, the asset type
+      pages and the three platform pages. Every command on a page runs. Fixes F7.
+- [ ] Write `AGENTS.md` in the shape of the tokens one, and a one-line `CLAUDE.md` that
+      imports it: layout, commands, the checks per changed area, the rules an agent breaks
+      without being told (never edit `dist/` or the golden files by hand, never commit a
+      derived variant, run the lint before adding an asset), and the cautions.
+- [ ] Write `test/README.md`: principles, the test files, the fixtures, the golden files,
+      the native checks.
+- [ ] Take `WRITING.md` from `chassis-tokens` for the site's pages, unchanged where it
+      applies.
+- [ ] Document the branch flow in `CONTRIBUTING.md`: which branch a contributor targets,
+      what `app/docs` is, how a release moves it. Fixes F21.
+
+### Session 4.2: repository hygiene
+
+- [ ] Add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CODEOWNERS`, a pull
+      request template and issue forms for a bug, an asset request and a brand request, in
+      `.github/`, copied from `chassis-tokens` and adjusted. Fixes F18. Website task A11.
+- [ ] Add Dependabot: npm weekly with the `@chassis-ui/*` packages and `sharp`, `svgo` and
+      `svg2vectordrawable` each in their own pull request since they change the output;
+      github-actions weekly; gradle for the native check. Website task A12.
+- [ ] Add a pre-commit hook with simple-git-hooks and lint-staged: ESLint and Prettier on
+      staged code, the source lint on staged files under `source/`.
+- [ ] Add a `spellcheck` script that runs cspell over Markdown and MDX, in the Lint job.
+- [ ] Add labels for area (`build`, `source`, `site`, `ci`, `native`) and triage.
+
+### Exit criteria
+
+- [ ] Every command in `README.md` and `CONTRIBUTING.md` runs on a fresh clone.
+- [ ] GitHub's community profile shows every item complete.
+- [ ] A dependency update arrives as a pull request without anyone asking for it.
+
+## Phase 5: Ecosystem alignment
+
+**Goal:** this repository's own docs site follows the ecosystem, and the consumers get the
+new build without a workaround.
+
+### Session 5.1: the docs site
+
+- [ ] Move the site to `@chassis-ui/docs` 0.6 or later, following `UPGRADING.md` of the
+      package. Website tasks A3, A4, A16, A17, A19, A20. Delete the copied libraries under
+      `site/src/libs/` and the copied scripts under `site/static/static/js/`. Fixes F24.
+- [ ] Replace the copied build scripts with the `chassis-docs` commands. Website task A5.
+- [ ] Take `@chassis-ui/tokens` 0.6 and the current `@chassis-ui/css`. Website task A9.
+- [ ] Fix the site's sitemap index and its broken links. Website tasks A22 and A23.
+- [ ] Call the reusable workflows of `chassis-ui/website` for lint, type check and site
+      build, if they fit. Website task A14.
+
+### Session 5.2: consumers
+
+- [ ] Make the vendor step cheap. Measure `chassis-docs vendor` on a clean checkout before
+      and after: pull only the LFS files of the docs app (`lfs.fetchinclude`), install only
+      the assets package, build only the docs job with optimizations off. Fixes F17.
+- [ ] Propose, and record for the website, the next step for D9 there: download the release
+      archive of the docs app instead of building, with a fallback to the build. Written up
+      in [Tasks for the siblings](#tasks-for-the-siblings), not done here.
+- [ ] Add a canary: a CI job that clones `chassis-website` at its default branch, points
+      `vendor/assets` at this commit and builds the site. Reports only.
+- [ ] Give the native outputs a consumer: extend the sample apps under `test/native/` to load
+      one image and one font, so that a change that breaks an app is seen here.
+
+### Exit criteria
+
+- [ ] The site builds with `@chassis-ui/docs` 0.6 or later and no copied library.
+- [ ] The vendor step on a consumer takes a fraction of what it took, with the number in the
+      session log.
+- [ ] A change that breaks the website's build is reported before it reaches `app/docs`.
+
+## Parked
+
+Considered and left out for now. Each needs a reason to come back.
+
+| Item                               | Why it is parked                                                                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Publishing the binaries to npm     | Website decision D9: too large to upload and download on every install. Release archives cover the non-Node consumers.                     |
+| A CDN for the built assets         | `ARCHITECTURE.md` of the website shows fonts loaded from `chassis-assets.vercel.app`, but no site does it, and D15 keeps fonts on Google.  |
+| Serving fonts from this repository | Website decision D15. Revisit if the privacy page or performance work of the website asks for it.                                          |
+| Flutter and other platforms        | The multi-platform notes of the website's deleted `build/README.md` mention them. No consumer asks. Website task AST5 keeps the notes.     |
+| Rewriting the build in TypeScript  | The ecosystem's build code is JavaScript with JSDoc checked by `tsc`. Keep it, so the same rules apply everywhere.                         |
+| A Figma export step                | The Figma screenshots are exported by hand. An export from the Figma API is a project of its own, and the manifest of session 2.2 fits it. |
+
+## Decisions
+
+| ID  | Decision                                                                                | Recommendation or outcome                                                                                                                                                                                                                                                                                                                            | Status |
+| --- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| D1  | What is the branch flow, and what is `app/docs`?                                        | `main` is the integration branch and the one a pull request targets. `app/docs` is a consumer branch that the release workflow fast-forwards to the released commit, so that a pin on it is always a release. `staging` deploys the site's staging. Delete `dev/build-test` and `migration` if merged.                                               | open   |
+| D2  | How is the output distributed?                                                          | Not on npm. Tagged releases with one archive per platform and app attached, built and verified by CI. The sites keep the submodule on `app/docs` until the website's D9 finds a better way. If the build tool itself should be installable, publish it alone as `@chassis-ui/assets` with `files: [build]`, with provenance.                         | open   |
+| D3  | Single package with `site/`, or a workspace with `packages/assets` and `packages/site`? | Workspace, as tokens, css and react. It lets a consumer install the assets package alone. It needs `chassis-docs vendor` to install with `--filter @chassis-ui/assets`, see the sibling tasks; until then `pnpm install --ignore-workspace` at the root must still make `pnpm assets:site` work.                                                     | open   |
+| D4  | What stays in `source/`?                                                                | Fonts, images and logos that this repository owns. Remove the copies of `@chassis-ui/icons` and `default.tokens.json`. A site takes icons from the icons package, as the docs package already does. If the demo app needs icons, the build copies them from `node_modules/@chassis-ui/icons` at build time, with the version recorded in the output. | open   |
+| D5  | What is the source layout?                                                              | `source/<brand>/shared/<type>/`, `source/<brand>/<app>/<type>/`. Override order for a job: `default/shared`, `default/<app>`, `<brand>/shared`, `<brand>/<app>`. Types are `fonts`, `images`, `icons` and `other`.                                                                                                                                   | open   |
+| D6  | Committed variants or derived variants?                                                 | Derived. One master per image at the highest density, a manifest entry per image that needs sizes, densities or formats, the build writes the rest. The Figma screenshots keep 1x and 2x as they are exported, with the manifest saying so.                                                                                                          | open   |
+| D7  | Are optimizations on by default?                                                        | Off by default, on per platform in `chassis.build.options`. The docs app of this repository turns them on. A consumer's build stays fast and its output equals the golden files.                                                                                                                                                                     | open   |
+| D8  | What happens to the fonts?                                                              | Keep the demo app's fonts as the example of a font pipeline: one OTF or TTF source per face, WOFF2 for web, subsetting opt-in. Remove the docs app's fonts unless the website reverses D15. The `@font-face` stylesheet is generated.                                                                                                                | open   |
+| D9  | What does the Android output look like?                                                 | A `res/` tree per job, as the tokens package writes: rasters by density in `drawable-*`, density-independent images in `drawable`, SVG icons as vector drawables in `drawable`, fonts in `font/`. WebP allowed. Names `snake_case`, icons `ic_`. The tokens package's Gradle sample proves it compiles.                                              | open   |
+| D10 | What does the iOS output look like?                                                     | `Assets.xcassets` per job with one image set per image and `Contents.json`, template rendering for icons, vector preserved. Fonts beside the catalog with an `Info.plist` fragment. `Package.swift` at the root, one library per app and brand, generated and tested, as the tokens package does.                                                    | open   |
+| D11 | What is the golden reference: a committed `dist/` or a manifest?                        | A manifest per platform in `test/golden/`: every output path with its content hash and size. `dist/` is not committed; it is large and mostly LFS. `verify` builds into a scratch directory and compares. The manifest is small enough to review in a pull request, and `diff` reads it.                                                             | open   |
+| D12 | What happens to the identical light and dark Figma screenshots?                         | Keep both files. They are exports, a component that looks the same in both modes is a fact of the design, and a manifest that aliases one to the other would have to be maintained by hand. The lint reports duplicates within one folder only.                                                                                                      | open   |
+| D13 | Which version does the rewrite ship as?                                                 | 0.2.0. A minor bump that the changelog marks as breaking, under the `0.x` rule of the tokens package. 1.0 waits for the requirements under Breaking changes.                                                                                                                                                                                         | open   |
+
+## Tasks for the siblings
+
+Work that belongs in another repository and was found while reviewing this one. Recorded
+here and, when a session gets to it, in `ref/SIBLING_TASKS.md` of `chassis-website`.
+
+| ID  | Repository      | Task                                                                                                                                                                                                                                         | Needs                   | Status |
+| --- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------ |
+| W1  | chassis-website | `chassis-docs vendor`: install with `pnpm install --frozen-lockfile --filter @chassis-ui/assets` when the submodule is a workspace, and fall back to the current command. Needed before this repository moves to the workspace layout of D3. | D3 decided              | open   |
+| W2  | chassis-website | `chassis-docs vendor`: pull only the LFS files the docs app needs, with `git lfs pull --include`, and skip the build when a release archive for the pinned commit exists. The next step of the website's D9.                                 | Phase 3 of this roadmap | open   |
+| W3  | chassis-website | Mark AST4 in `SIBLING_TASKS.md` as done: the tag `v0.1.8` exists.                                                                                                                                                                            | nothing                 | open   |
+| W4  | chassis-website | Update the "Assets submodule" column and A10 when `app/docs` moves to the first release of the new build, and record the paths that 0.2.0 changed for every site.                                                                            | 0.2.0 released          | open   |
+| W5  | chassis-tokens  | If the demo app's assets are meant for the same apps as the tokens, add the assets library of `Package.swift` and the Android `res/` tree to the native sample apps there, so that tokens and assets are proven together.                    | Phase 2 of this roadmap | open   |
+
+## Session log
+
+| Date       | Session | What was done                                                                                                                                                                                                               |
+| ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-29 | Review  | Reviewed the repository, ran the lint, the tests, a full build and the validator, and read `chassis-ui/tokens` and `chassis-ui/website` for the conventions and the consumer contract. Wrote this roadmap. No code changed. |
