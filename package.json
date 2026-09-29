@@ -74,9 +74,8 @@
     "astro:dev": "astro dev --root site --port 4325",
     "astro:build": "astro build --root site",
     "astro:preview": "astro preview --root site",
-    "check": "pnpm check:lockfile & pnpm check:pnpm & wait",
+    "check": "pnpm check:astro && pnpm check:pnpm",
     "check:astro": "astro check --root site",
-    "check:lockfile": "lockfile-lint --allowed-hosts npm --allowed-schemes https: --empty-hostname false --type npm --path package-lock.json",
     "check:pnpm": "pnpm audit --audit-level moderate",
     "change-version": "node build/change-version.js"
   },
@@ -111,7 +110,6 @@
     "html-validate": "^11.16.1",
     "htmlparser2": "^12.0.0",
     "js-yaml": "^5.4.2",
-    "lockfile-lint": "^5.0.1",
     "mdast-util-mdx-jsx": "^3.2.0",
     "pagefind": "^1.5.2",
     "picocolors": "^1.1.1",
