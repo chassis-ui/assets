@@ -1,16 +1,28 @@
 # Chassis Assets architecture
 
-What `chassis-assets` holds, what a contributor puts into `source/`, and what the build
-promises to write into `dist/`. It is for contributors who change the source or the build,
-and for the maintainers of the sites and apps that read the output.
+What `chassis-assets` holds, how its build works, what a contributor puts into `source/`,
+and what the build promises to write into `dist/`. It is for contributors who change the
+source or the build, and for the maintainers of the sites and apps that read the output.
 
 > **Status:** this document describes version 0.2.0, the rewrite of the build that
-> [the roadmap](../ref/ROADMAP.md) plans. The scope and the three contracts below were
-> decided in session 1.1 and are the specification that Phase 2 implements. Until 0.2.0 is
-> released, the build in `build/` writes the layout of 0.1.8, and
-> [What 0.2.0 changes](#what-020-changes) lists the differences. Session 1.2 adds how the
-> build works: the build in one picture, the design decisions, the configuration and the
-> checks.
+> [the roadmap](../ref/ROADMAP.md) plans. It was written before the code, in sessions 1.1
+> and 1.2, and it is the specification that Phase 2 implements. Until 0.2.0 is released,
+> the scripts in `build/` are those of 0.1.8, and
+> [What 0.2.0 changes](#what-020-changes) lists the differences. A session of Phase 2 that
+> finds a reason to build something another way changes this document in the same commit.
+
+| Section                                               | Answers                                         |
+| ----------------------------------------------------- | ----------------------------------------------- |
+| [Scope](#scope)                                       | What is in this repository, and what is not     |
+| [The build in one picture](#the-build-in-one-picture) | Which module does what, in which order          |
+| [Design decisions](#design-decisions)                 | Why the build has this shape                    |
+| [Modules](#modules)                                   | What each file of `build/` is responsible for   |
+| [Configuration](#configuration)                       | `chassis.build` and the command line            |
+| [Consumer contract](#consumer-contract)               | What the sites read. It holds through 0.2.0     |
+| [Source contract](#source-contract)                   | What a contributor puts where                   |
+| [Output contract](#output-contract)                   | Every path the build writes, for every platform |
+| [Checks](#checks)                                     | What tells you that a change is right           |
+| [Known oddities](#known-oddities)                     | What looks wrong and is kept on purpose         |
 
 ## Scope
 
@@ -48,6 +60,255 @@ The package is not published to npm. Two ways lead to the output:
   brand, app and platform, attached to the GitHub release of a version.
 
 `dist/` is not committed.
+
+## The build in one picture
+
+```
+package.json ───────────┐  chassis.build: brands, apps, options
+source/<brand>/<layer>/ ┘  the files, images.json and fonts.json
+        │
+        ▼
+config.js            loadConfig     the configuration, checked
+plan.js              planJobs       one job per brand, app and platform, with its layers
+        │
+        ▼ for each job
+inventory.js         readInventory  the assets of the job: for each, the file of the last
+                                    layer that has it, its size in pixels, and its rule
+rules/<platform>.js  files          the files the job writes: path, source and step
+plan.js              planFiles      every file once, and inside the folder of the job
+        │
+        ▼
+pipeline.js          runJob         copies a file, or runs its step, through the cache
+  steps/                            raster, svg, vector drawable, font
+  writers/                          the stylesheet, the catalog, the Swift package
+manifest.js          writeManifest  chassis-assets.json
+```
+
+`node build/cli.js build --dry-run` prints the jobs and the files each would write. It
+reads `source/`, loads no image or font tool and writes nothing.
+
+## Design decisions
+
+### A job is planned before it is written
+
+The build first computes the list of the files of a job: for each, its path in the output,
+the source file it comes from, and the step that makes it. Only then does it write. So:
+
+- `--dry-run` prints what a build would write, file by file.
+- Two assets that would get one path fail the job before a file is written, with both
+  source paths in the message. In 0.1.8 a collision was a warning after the second file had
+  replaced the first.
+- The size in pixels of every variant is known from the plan, so the output manifest does
+  not read the files again.
+- A test compares a plan with an expected list. It needs no image tool and writes no file.
+
+### The rules of a platform are pure functions
+
+`rules/web.js`, `rules/android.js` and `rules/ios.js` each export the same three functions.
+They take data and return data: no file system, no tool, no state between calls.
+
+| Function              | Returns                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `include(asset, job)` | Whether the platform takes the asset                                          |
+| `files(asset, job)`   | The files of one asset: the master, its variants, or its native form          |
+| `extras(assets, job)` | The files that come from all assets: the stylesheet, the catalog, the package |
+
+A rule that is wrong shows in a unit test of a few lines, with an asset written in the test.
+
+### Only the steps know the tools
+
+A step turns the bytes of one source file into the bytes of one output file. The modules
+in `steps/` are the only ones that import `sharp`, `svgo`, `svg2vectordrawable` and the
+font tools, and each imports its tool when it first runs. So:
+
+- A job without fonts does not load a font tool. `lint`, `--dry-run` and `--help` load none.
+- A tool is replaced in one module.
+- The version of the tool is part of the key of the cache, and it is read in one place.
+
+The inventory reads the size of an image with `image-size`, which is JavaScript only, so
+that the source lint runs where `sharp` has no binary.
+
+### Deriving always runs, optimizing is an option
+
+See [Derivation and optimization](#derivation-and-optimization) of the output contract.
+The configuration and the command line turn the optimization on. Nothing turns the
+derivation off.
+
+### A job owns its folder
+
+A job writes into `<out>/<platform>/<app>/<brand>/` and nowhere else. When it has written
+its files, it removes every other file of that folder. So the folder holds what the plan
+lists, after a full build and after a build of one job, and there is no `--clean`. In 0.1.8
+a build of one job kept the files of the build before it.
+
+### The cache is keyed by content
+
+A step that ran is not run again. The key of a cached file is the hash of three things: the
+bytes of the source file, the name and the parameters of the step, and the version of the
+tool. The cache is in `.cache/assets/`, which Git ignores. Deleting it changes nothing but
+the time of the next build. A copied file does not go through the cache.
+
+### The output manifest is the reference
+
+`dist/` is not committed: it is large, and most of it is stored with Git LFS. What is
+committed is one [output manifest](#the-output-manifest) per job, in
+`test/golden/<platform>/<app>-<brand>.json`. `verify` builds into a scratch folder and
+compares the manifests. A change to a rule that changes the output fails until the golden
+files are written again, and the pull request shows which paths and hashes changed.
+
+`diff` reads the golden files of two commits from Git. It needs no build.
+
+### The consumer contract is data
+
+`contract.js` lists the files of [the consumer contract](#consumer-contract) as patterns.
+`verify` fails when the manifest of `docs` and `chassis` on `web` lacks one of them. A
+change to the source or to a rule that takes a file from the sites fails here, before it
+reaches `app/docs`.
+
+### The library never exits
+
+`index.js` exports `build()`, `plan()`, `lint()`, `verify()`, `diff()` and `analyze()`.
+Each takes its options as an argument and returns a report. None reads `process.argv`,
+changes the working directory, reads a file when it is imported, or calls
+`process.exit()`. `cli.js` is the only module that does: it parses the arguments, calls the
+library, prints the report and sets the exit code.
+
+An error that a contributor can fix is a `BuildError`, with the `file` it is about and the
+`rule` or the step that found it. `cli.js` prints these without a stack trace.
+
+### JavaScript, checked as TypeScript
+
+The build is JavaScript with JSDoc types, as the build of `@chassis-ui/tokens`, and
+`tsc` checks it with `checkJs`. The types of the data that moves between the modules are in
+`types.js`. Every file has the license header of the tokens build.
+
+## Modules
+
+Every path is relative to `build/`.
+
+| Module                 | Responsible for                                                                                                                                                                                 | Pure |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| `cli.js`               | The commands and their options, the help, the exit code                                                                                                                                         | no   |
+| `index.js`             | The library: one function per command                                                                                                                                                           | no   |
+| `config.js`            | Reads `chassis.build` or the file of `--config`, checks it, names the key that is wrong                                                                                                         | no   |
+| `plan.js`              | `planJobs`: the jobs and their layers, from the configuration and the filters. `planFiles`: the files of a job, from its inventory and the rules of its platform, with the check for collisions | yes  |
+| `inventory.js`         | Walks the layers of a job, reads the manifests and the sizes, and returns the assets. The reading is passed in, so a test gives it a tree in memory                                             | no   |
+| `names.js`             | Takes a file name apart: name, size, density, extension. Builds the names of the variants and the native names                                                                                  | yes  |
+| `manifests/images.js`  | Checks `images.json`, and returns the rule of an image from the rules that match it                                                                                                             | yes  |
+| `manifests/fonts.js`   | Checks `fonts.json`, and returns the families with their faces                                                                                                                                  | yes  |
+| `rules/web.js`         | The files of the web output                                                                                                                                                                     | yes  |
+| `rules/android.js`     | The files of the `res/` tree                                                                                                                                                                    | yes  |
+| `rules/ios.js`         | The files of the Swift package                                                                                                                                                                  | yes  |
+| `writers/font-face.js` | The text of `fonts.css`                                                                                                                                                                         | yes  |
+| `writers/android.js`   | The text of `res/font/<id>.xml`                                                                                                                                                                 | yes  |
+| `writers/ios.js`       | The text of every `Contents.json`, of `Package.swift`, `ChassisAssets.swift` and `Fonts.plist`                                                                                                  | yes  |
+| `steps/raster.js`      | Resizes and encodes a raster image, and renders an SVG file, with `sharp`                                                                                                                       | no   |
+| `steps/svg.js`         | Cleans an SVG file with `svgo`                                                                                                                                                                  | no   |
+| `steps/drawable.js`    | Converts an SVG file to a vector drawable with `svg2vectordrawable`                                                                                                                             | no   |
+| `steps/font.js`        | Converts a font to WOFF2, and subsets it                                                                                                                                                        | no   |
+| `pipeline.js`          | Runs the files of a job, a bounded number at a time, and removes what the job did not write                                                                                                     | no   |
+| `cache.js`             | Computes the key of a step, reads and writes `.cache/assets/`                                                                                                                                   | no   |
+| `manifest.js`          | Builds the output manifest from the plan and the written files, reads one, compares two                                                                                                         | no   |
+| `contract.js`          | The files of the consumer contract, as patterns                                                                                                                                                 | yes  |
+| `lint.js`              | The rules of the source lint: each a function from the inventory to a list of problems                                                                                                          | yes  |
+| `verify.js`            | Builds into a scratch folder, and compares with the golden files and the contract                                                                                                               | no   |
+| `diff.js`              | Compares the golden files of two commits, and writes the report as Markdown                                                                                                                     | no   |
+| `analyze.js`           | Reports the sizes by type, the largest files, and the files with the same content                                                                                                               | no   |
+| `logger.js`            | The output of the command line, in the pattern of the tokens build, with `--quiet`                                                                                                              | no   |
+| `types.js`             | The JSDoc types of the data below                                                                                                                                                               | yes  |
+
+A pure module imports only pure modules. `plan.js`, `names.js`, the manifests, the rules, the
+writers, `contract.js` and `lint.js` import nothing from Node.js but `node:path`, whose
+`posix` functions they use, so that a plan is the same on every operating system.
+
+### The data between the modules
+
+| Type          | Holds                                                                                                            | Made by        |
+| ------------- | ---------------------------------------------------------------------------------------------------------------- | -------------- |
+| `Config`      | `brands`, `apps`, `options`                                                                                      | `config.js`    |
+| `Job`         | `brand`, `app`, `platform`, `layers` in override order, `out`, the folder of the job, and `optimize`             | `planJobs`     |
+| `SourceFile`  | `path`, `layer`, `type`, `folder`, `name`, `density`, `extension`, `bytes`, and `width` and `height` of an image | `inventory.js` |
+| `Asset`       | `type`, `id`, the `files` of the layer that won, and the `rule` of an image or the `family` of a font            | `inventory.js` |
+| `PlannedFile` | `path` in the folder of the job, `type`, `source`, `step` with its parameters or `text`, and the size in pixels  | the rules      |
+| `Report`      | Per job: the files written, taken from the cache and removed, the bytes, the time, and the errors                | `pipeline.js`  |
+
+A `PlannedFile` without a step and without text is a copy.
+
+### What stays from 0.1.8
+
+`html-validate.js` and `vnu-jar.js` check the documentation site, and `change-version.js`
+changes the version. They are not part of the asset build, and the rewrite leaves them
+alone: sessions 3.2 and 5.1 of the roadmap replace them.
+
+`build-assets.js`, `processors/`, `asset-types.js`, `api/`, `analyze-assets.js` and
+`validate-assets.js` stay next to the new modules until the new build writes what they
+write. They are deleted in session 2.6, with `build-site.js`, which no script calls.
+
+## Configuration
+
+`chassis.build` in `package.json`, or the JSON file of `--config`:
+
+| Key       | Value in 0.2.0                                 | Meaning                                                                |
+| --------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| `brands`  | `chassis`, `example`                           | The brands to build. `default` is the first layer of each, not a brand |
+| `apps`    | `docs`: `web`; `demo`: `web`, `ios`, `android` | The apps, each with its platforms                                      |
+| `options` | none                                           | Options by platform name                                               |
+
+```json
+"chassis": {
+  "build": {
+    "brands": ["chassis", "example"],
+    "apps": { "docs": ["web"], "demo": ["web", "ios", "android"] },
+    "options": { "web": { "optimize": ["images", "svg"] } }
+  }
+}
+```
+
+| Option     | Platforms | Value                                                     | Without it |
+| ---------- | --------- | --------------------------------------------------------- | ---------- |
+| `optimize` | all       | `true`, `false`, or a list of `images`, `svg` and `fonts` | `false`    |
+
+`loadConfig` fails, and names the key, when `brands` or `apps` is missing or empty, when an
+app is named `shared`, when a brand is named `default`, when a platform is not `web`, `ios`
+or `android`, when `options` names a platform that no app uses, and when
+`source/default/<app>/` does not exist for an app.
+
+`chassis.defaults.brandFolder` of 0.1.8 is gone. The first layer is `source/default/`.
+
+### The command line
+
+```
+node build/cli.js <command> [options]
+```
+
+| Command   | Does                                                                         |
+| --------- | ---------------------------------------------------------------------------- |
+| `build`   | Builds the jobs                                                              |
+| `lint`    | Checks `source/` against [the source contract](#what-the-source-lint-checks) |
+| `verify`  | Builds into a scratch folder and compares with the golden files              |
+| `diff`    | Reports what changed in the output between two commits                       |
+| `analyze` | Reports sizes, the largest files and the files with the same content         |
+
+| Option                           | Commands                     | Meaning                                                     |
+| -------------------------------- | ---------------------------- | ----------------------------------------------------------- |
+| `--brand`, `--app`, `--platform` | `build`, `verify`, `analyze` | The jobs to take. Without one, every job                    |
+| `--out <dir>`                    | `build`, `verify`            | The root of the output. `dist` for `build`                  |
+| `--config <file>`                | all                          | A JSON file to read the configuration from                  |
+| `--optimize`, `--no-optimize`    | `build`                      | Turns the optimization on or off for every job of the build |
+| `--dry-run`                      | `build`                      | Prints the jobs and their files, and writes nothing         |
+| `--update`                       | `verify`                     | Writes the golden files from the build                      |
+| `--base <ref>`, `--head <ref>`   | `diff`                       | The commits to compare. `main` and the working tree         |
+| `--quiet`                        | all                          | Prints errors only                                          |
+| `--help`, `--version`            | all                          | Prints the help or the version                              |
+
+A filter takes one or more values, in three spellings: `--brand chassis example`,
+`--brand chassis --brand example` and `--brand chassis,example`. A value that the
+configuration does not have fails, with the values it has. So do filters that select no
+job.
+
+The scripts of `package.json` call the command line. `pnpm assets:site` is
+`build --brand chassis --app docs`, with the optimization off: it is the build of the
+sites.
 
 ## Consumer contract
 
@@ -238,8 +499,9 @@ ones the components of the sites build, so they are part of
 The screenshots of the Figma components are exports: Figma renders each density by itself,
 and the 1x file is not the 2x file scaled down. For these images the rule
 `"committed": true` says that every variant is committed and that the build copies them. A
-light and a dark screenshot that are the same picture stay two files, because a component
-that looks the same in both modes is a fact of the design.
+light and a dark screenshot that are the same picture stay two files, and so do two
+screenshots of one folder that show the same state under two names: the pages of the Figma
+documentation read each by its name.
 
 ### The image manifest
 
@@ -343,11 +605,11 @@ file.
 | No scaling up      | A rule asks for a density above the master's, or a size wider than the master             |
 | Fonts              | A font file is not in `fonts.json`, a face names a missing file, or a license is missing  |
 | No generated file  | `fonts/` holds a WOFF2 file or a stylesheet                                               |
-| No duplicate       | Two files of one folder have the same content                                             |
+| No duplicate       | Two files of one folder have the same content, and no rule says `committed`               |
 | Reserved names     | A folder of `source/` is not `default` or a configured brand, or an app is named `shared` |
 
-Two files in different folders can have the same content: the light and dark screenshots
-of a component do.
+Two files in different folders can have the same content: the logos of two apps did in
+0.1.8. The exports under a `committed` rule can have it in one folder too.
 
 ## Output contract
 
@@ -406,7 +668,7 @@ from what.
 - There is no date and no absolute path in it: two builds of one commit write the same
   manifest.
 
-The golden files of the tests are these manifests, without `package`.
+The golden files in `test/golden/` are these manifests, without `package`.
 
 ### Derivation and optimization
 
@@ -557,3 +819,79 @@ Paths of 0.1.8 and what becomes of them. Nothing in
 | `dist/android/demo/<brand>/{fonts,icons,images}/`                          | `dist/android/demo/<brand>/res/`                                                 |
 | `dist/ios/demo/<brand>/{fonts,icons,images}/`, loose files                 | A Swift package with an asset catalog                                            |
 | No file                                                                    | `dist/web/demo/<brand>/`, and `chassis-assets.json` and `licenses/` in every job |
+
+## Checks
+
+The commands exist from sessions 2.5 and 2.6 of the roadmap on.
+
+| Command                      | Checks                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm assets:lint:source`    | `source/` and the manifests, against [the rules of the source contract](#what-the-source-lint-checks)                           |
+| `pnpm assets:lint`           | ESLint on `build/` and `test/`                                                                                                  |
+| `pnpm assets:typecheck`      | TypeScript `checkJs` on `build/`                                                                                                |
+| `pnpm assets:test`           | Vitest, on the source tree of `test/fixtures/`. No test reads `source/`, and the unit tests run in under ten seconds            |
+| `pnpm assets:verify`         | A fresh build gives the manifests of `test/golden/`, and the docs output holds every file of the consumer contract              |
+| `pnpm assets:diff`           | Not a check: the paths added, removed, renamed and changed in each job against another commit. CI writes it to the pull request |
+| `pnpm assets:analyze`        | Not a check: the sizes by type and job, the largest files, and the files with the same content                                  |
+| `pnpm assets:native:ios`     | The asset catalogs with `actool`, and a sample that uses a Swift package of the output (needs Xcode)                            |
+| `pnpm assets:native:android` | The `res/` trees with `aapt2`, in a Gradle library (needs a JDK and the Android SDK)                                            |
+
+### What `verify` compares
+
+| Of a file                           | Compared                                                 |
+| ----------------------------------- | -------------------------------------------------------- |
+| `path`, `type`, `source`            | Always                                                   |
+| `width`, `height`, `density`        | Always                                                   |
+| `bytes`, `sha256` of a copy         | Always                                                   |
+| `bytes`, `sha256` of a derived file | On the operating system of CI. Elsewhere with `--strict` |
+
+An encoder can write other bytes on another operating system. Session 2.3 of the roadmap
+measures it. If the bytes are the same on Linux and macOS, `verify` compares them
+everywhere and `--strict` goes.
+
+A renamed file is a removed and an added path with one hash. `diff` reports it as a rename.
+
+## Known oddities
+
+They are part of the contracts and kept on purpose. Don't fix one without saying in the
+changelog what breaks.
+
+- **The docs output holds the screenshots of one site.** `images/figma/` is about 45 of the 57 MB
+  of the docs output of 0.2.0, and only the site of `chassis-figma` reads it. The consumer
+  contract names the path, so it stays until the sites can build a job of their own. See W8
+  of the roadmap.
+- **The screenshots are committed at two densities.** Every other raster image has one
+  master. See [Committed variants](#committed-variants).
+- **Many screenshots are the same file.** 210 of the 1592 light and dark pairs are, and 323
+  groups of files in one folder: a component that looks the same in both modes, and a state
+  that is exported under two names. The pages read each file by its name, so every file
+  stays, and the lint does not report them.
+- **`chassis` has no folder.** The brand is `source/default/` alone. The folder `default` is
+  not a brand, and no job builds it under that name.
+- **A native name repeats its folder.** `images/logo/chassis-logo-brand.svg` is
+  `logo_chassis_logo_brand`. The name comes from the path, so that two images of one name
+  in two folders stay two resources. The rule `name` of the image manifest shortens one.
+- **A font file is named by its role.** `text-strong.otf` is Inter Semi Bold in the default
+  brand. The family name is in `fonts.json`, and the name in the font file is not changed.
+- **`icons/cx-sprite.svg` is served next to another package's files.** A site copies the
+  icons of `@chassis-ui/icons` to `/static/icons/` after the assets. A file of that package
+  with this name would replace it.
+- **The PNG files of the home images are written though the website reads WebP.** The site
+  of `chassis-tokens` reads the PNG files of the gallery. The others have no reader today,
+  and are written as 0.1.8 wrote them.
+- **The output manifest is served by the sites.** They copy the folder of the job as it is,
+  so `/static/chassis-assets.json` is public. It holds paths of this repository and
+  nothing else.
+- **The demo app builds for the web.** No site reads `dist/web/demo/`. It is there so that
+  the fonts have a web output. See D8 of the roadmap.
+
+## History
+
+The build of 0.1.8 copied `source/` to `dist/` and renamed the copies. It derived nothing,
+and every variant of an image was made by hand and committed. It was reviewed on
+2026-09-29, and the rewrite follows `ref/ROADMAP.md`: the scope and the contracts in
+session 1.1, this document in session 1.2, the build in Phase 2. The findings behind every
+decision are in the roadmap, as F1 to F35, and the decisions as D1 to D13.
+
+The shape of the build, a plan, pure rules, a pipeline and a check against a committed
+reference, is that of the build of `@chassis-ui/tokens`, rewritten in 2026.
