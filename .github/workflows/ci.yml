@@ -17,51 +17,157 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  test:
+  # Formatting, the build scripts, the site's code and its types. Needs no Git LFS files.
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          lfs: true
+          persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24.x
+          node-version-file: .nvmrc
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint build scripts
-        run: pnpm run assets:lint
+      - name: Prettier
+        run: pnpm lint:prettier
 
-      - name: Run build system tests
-        run: pnpm run assets:test
+      - name: Lint build scripts
+        run: pnpm assets:lint
+
+      - name: Lint site
+        run: pnpm site:lint
+
+      - name: Astro check
+        run: pnpm check:astro
+
+  # The tests, a full build of every brand, app and platform, and the validation of dist/
+  assets:
+    name: Assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Fonts and images are Git LFS files. The objects are cached by the list of their ids,
+      # so a run downloads only what changed, which keeps the LFS bandwidth quota low.
+      - name: List Git LFS objects
+        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
+
+      - name: Cache Git LFS objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-ids') }}
+          restore-keys: lfs-
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
 
       - name: Build all assets
-        run: pnpm run assets
+        run: pnpm assets
 
       - name: Validate asset distribution
-        run: pnpm run assets:validate
+        run: pnpm assets:validate
 
       - name: Verify distribution
         run: |
-          if [ ! -d "dist" ]; then
-            echo "Error: dist directory not created"
-            exit 1
-          fi
-
-          # Check that expected platforms exist
           for platform in web ios android; do
             if [ ! -d "dist/$platform" ]; then
-              echo "Error: Platform $platform not found in dist"
+              echo "Error: platform $platform not found in dist/"
               exit 1
             fi
           done
+          echo "Distribution verification passed"
 
-          echo "✅ Distribution verification passed"
+  # The same build as Vercel: the docs assets, then Astro and Pagefind
+  site:
+    name: Site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: List Git LFS objects
+        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
+
+      - name: Cache Git LFS objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-ids') }}
+          restore-keys: lfs-
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build site
+        run: pnpm site:build
+
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          # The audit installs nothing, so there is no pnpm store to cache. The cache's post
+          # step would fail the job.
+          package-manager-cache: false
+
+      - name: Audit dependencies
+        run: pnpm check:pnpm

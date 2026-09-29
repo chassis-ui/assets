@@ -51,3 +51,6 @@ lerna-debug.log*
 # deploy
 .vercel
 .netlify
+
+# CI: the list of Git LFS object ids that keys the LFS cache
+.lfs-ids

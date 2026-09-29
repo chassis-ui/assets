@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: tag-release-${{ github.ref }}
@@ -15,14 +15,16 @@ concurrency:
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       version-changed: ${{ steps.changes.outputs.version-changed }}
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # Need full history to diff against github.event.before
+          persist-credentials: false
 
       - name: Check for version change
         id: changes
@@ -63,10 +65,16 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.version-changed == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Creates the tag and the GitHub release
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Check if tag already exists
         id: tag-check
@@ -98,7 +106,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.tag-check.outputs.already-tagged == 'false'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: 'v${{ needs.detect-changes.outputs.version }}'
           name: 'v${{ needs.detect-changes.outputs.version }}'
