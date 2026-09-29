@@ -50,17 +50,14 @@ function resetStats() {
 }
 
 /**
- * Parse command line arguments for selective builds
- * @returns {Object} Parsed options with brand, apps, and platforms arrays
- */
-/**
- * Parse command line arguments for build options.
- * @returns {Object} Parsed options object
+ * Parse command line arguments for selective builds.
+ * `--brand`, `--app` and `--platform` each take one or more values.
+ * @returns {Object} Parsed options with brands, apps and platforms arrays, and clean
  */
 function parseArgs() {
   const args = process.argv.slice(2)
   const options = {
-    brand: null,
+    brands: [],
     apps: [],
     platforms: [],
     clean: null // null = auto-detect, true = force clean, false = no clean
@@ -69,7 +66,9 @@ function parseArgs() {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
     if (arg === '--brand') {
-      options.brand = args[++i]
+      while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+        options.brands.push(args[++i])
+      }
     } else if (arg === '--app') {
       while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
         options.apps.push(args[++i])
@@ -447,7 +446,7 @@ export async function generateAssets(options = {}) {
   // Determine if we should clean dist directory
   // Auto-detect: Clean only for full builds, keep for selective builds
   const isSelectiveBuild =
-    cliOptions.brand || cliOptions.apps.length > 0 || cliOptions.platforms.length > 0
+    cliOptions.brands.length > 0 || cliOptions.apps.length > 0 || cliOptions.platforms.length > 0
   const shouldClean = cliOptions.clean !== null ? cliOptions.clean : !isSelectiveBuild
 
   if (shouldClean) {
@@ -485,8 +484,8 @@ export async function generateAssets(options = {}) {
   try {
     logger.log('\n📦 Processing assets...')
     buildConfig.brands.forEach((brand) => {
-      // Filter brands if --brand option is provided
-      if (cliOptions.brand && brand !== cliOptions.brand) {
+      // Filter brands if --brand options are provided
+      if (cliOptions.brands.length > 0 && !cliOptions.brands.includes(brand)) {
         return
       }
 

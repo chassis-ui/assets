@@ -277,6 +277,34 @@ class AssetBuildTester {
         combinedFilterWorks,
         combinedFilterWorks ? 'Combined filtering works correctly' : 'Combined filtering failed'
       )
+
+      // Test several values for one filter: --brand takes one or more, as --app does
+      process.argv = [
+        'node',
+        'build/build-assets.js',
+        '--clean',
+        '--brand',
+        'chassis',
+        'example',
+        '--platform',
+        'web'
+      ]
+      await generateAssets({ quiet: true })
+
+      const expectedMultiPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
+      const unexpectedMultiPaths = ['dist/ios/demo/chassis', 'dist/android/demo/example']
+
+      const multiBrandWorks =
+        expectedMultiPaths.every((p) => fs.existsSync(p)) &&
+        unexpectedMultiPaths.every((p) => !fs.existsSync(p))
+
+      this.addTestResult(
+        'Multiple Brands',
+        multiBrandWorks,
+        multiBrandWorks
+          ? '--brand takes several values'
+          : `Expected ${expectedMultiPaths.join(', ')} only`
+      )
     } catch (error) {
       this.addTestResult('Command Line Filtering', false, error.message)
     } finally {

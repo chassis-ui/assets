@@ -189,7 +189,7 @@ class AnalyzeTestSuite {
     try {
       // Test brand filtering
       const brandAnalyzer = new AssetAnalyzer({ quiet: true })
-      brandAnalyzer.options = { brand: 'chassis', apps: [], platforms: [] }
+      brandAnalyzer.options = { brands: ['chassis'], apps: [], platforms: [] }
       brandAnalyzer.analyze()
 
       const brandFilterWorks = brandAnalyzer.stats.totalFiles > 0
@@ -204,7 +204,7 @@ class AnalyzeTestSuite {
 
       // Test platform filtering
       const platformAnalyzer = new AssetAnalyzer({ quiet: true })
-      platformAnalyzer.options = { brand: null, apps: [], platforms: ['web'] }
+      platformAnalyzer.options = { brands: [], apps: [], platforms: ['web'] }
       platformAnalyzer.analyze()
 
       const platformFilterWorks = platformAnalyzer.stats.totalFiles > 0
@@ -219,7 +219,7 @@ class AnalyzeTestSuite {
 
       // Test combined filtering
       const combinedAnalyzer = new AssetAnalyzer({ quiet: true })
-      combinedAnalyzer.options = { brand: 'chassis', apps: [], platforms: ['web'] }
+      combinedAnalyzer.options = { brands: ['chassis'], apps: [], platforms: ['web'] }
       combinedAnalyzer.analyze()
 
       const combinedFilterWorks =

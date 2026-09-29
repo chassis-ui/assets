@@ -51,6 +51,7 @@
     "build": "pnpm site:build",
     "clean": "pnpm site:clean && rm -rf dist || true",
     "dev": "pnpm assets:site && pnpm astro:dev",
+    "test": "pnpm assets:test",
     "assets": "node build/build-assets.js",
     "assets:analyze": "node build/analyze-assets.js",
     "assets:lint": "eslint build --cache --cache-location .cache/.eslintcache",

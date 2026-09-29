@@ -55,10 +55,12 @@ class AssetAnalyzer {
 
       // Show filtering options if any are specified
       const hasFilters =
-        this.options.brand || this.options.apps.length > 0 || this.options.platforms.length > 0
+        this.options.brands.length > 0 ||
+        this.options.apps.length > 0 ||
+        this.options.platforms.length > 0
       if (hasFilters) {
         this.log('🔍 Analysis Filters:')
-        if (this.options.brand) this.log(`   Brand: ${this.options.brand}`)
+        if (this.options.brands.length > 0) this.log(`   Brands: ${this.options.brands.join(', ')}`)
         if (this.options.apps.length > 0) this.log(`   Apps: ${this.options.apps.join(', ')}`)
         if (this.options.platforms.length > 0)
           this.log(`   Platforms: ${this.options.platforms.join(', ')}`)
@@ -111,7 +113,9 @@ class AssetAnalyzer {
 
     // Check if any filters are applied
     const hasFilters =
-      this.options.brand || this.options.apps.length > 0 || this.options.platforms.length > 0
+      this.options.brands.length > 0 ||
+      this.options.apps.length > 0 ||
+      this.options.platforms.length > 0
 
     if (!hasFilters) {
       return true // No filters, include everything
@@ -142,7 +146,7 @@ class AssetAnalyzer {
     // Check brand filter
     if (pathParts.length >= 3) {
       const brand = pathParts[2]
-      if (this.options.brand && brand !== this.options.brand) {
+      if (this.options.brands.length > 0 && !this.options.brands.includes(brand)) {
         return false
       }
     }
@@ -552,7 +556,7 @@ class AssetAnalyzer {
   parseArgs() {
     const args = process.argv.slice(2)
     const options = {
-      brand: null,
+      brands: [],
       apps: [],
       platforms: []
     }
@@ -560,7 +564,9 @@ class AssetAnalyzer {
     for (let i = 0; i < args.length; i++) {
       const arg = args[i]
       if (arg === '--brand') {
-        options.brand = args[++i]
+        while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+          options.brands.push(args[++i])
+        }
       } else if (arg === '--app') {
         while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
           options.apps.push(args[++i])
