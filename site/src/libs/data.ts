@@ -73,4 +73,4 @@ export function getData<TType extends DataType>(
 }
 
 type DataType = keyof typeof dataDefinitions
-type DataSchema = z.ZodTypeAny
+type DataSchema = z.ZodType
