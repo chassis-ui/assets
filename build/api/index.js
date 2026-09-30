@@ -106,7 +106,7 @@ export class ChassisAssets {
     const basePath = type === 'source' ? this.sourceDir : this.distDir
 
     if (type === 'source') {
-      const defaultPath = path.join(basePath, this.config.defaults.brandFolder, app)
+      const defaultPath = path.join(basePath, this.config.defaults?.brandFolder || 'default', app)
       const brandPath = path.join(basePath, brand, app)
 
       return fs.existsSync(defaultPath) || fs.existsSync(brandPath)
@@ -148,7 +148,11 @@ export class ChassisAssets {
       }
     } else {
       // Look in source
-      const defaultPath = path.join(this.sourceDir, this.config.defaults.brandFolder, app)
+      const defaultPath = path.join(
+        this.sourceDir,
+        this.config.defaults?.brandFolder || 'default',
+        app
+      )
       const brandPath = path.join(this.sourceDir, brand, app)
 
       if (fs.existsSync(defaultPath)) searchPaths.push(defaultPath)
@@ -166,8 +170,10 @@ export class ChassisAssets {
    * Recursively catalog assets in a directory.
    * @param {string} dirPath - Directory path to catalog
    * @param {Object} inventory - Inventory object to populate
+   * @param {string|null} [type] - The type folder `dirPath` is in, as the build decides it:
+   *   the first folder under the app. Null at the app's root
    */
-  catalogAssets(dirPath, inventory) {
+  catalogAssets(dirPath, inventory, type = null) {
     if (!fs.existsSync(dirPath)) return
 
     try {
@@ -183,10 +189,10 @@ export class ChassisAssets {
         const stat = fs.statSync(itemPath)
 
         if (stat.isDirectory()) {
-          this.catalogAssets(itemPath, inventory)
+          this.catalogAssets(itemPath, inventory, type || item)
         } else {
           const ext = path.extname(item).toLowerCase()
-          const category = this.categorizeAsset(ext, dirPath)
+          const category = this.categorizeAsset(ext, dirPath, type)
           const assetInfo = {
             name: item,
             path: itemPath,
@@ -204,12 +210,19 @@ export class ChassisAssets {
   }
 
   /**
-   * Categorize an asset by extension and directory name.
+   * Categorize an asset. A file under `fonts/`, `icons/` or `images/` of the app is of that
+   * type, and a file under any other folder is `other`, as the build treats them. Without a
+   * type folder, the directory name and then the extension decide.
    * @param {string} extension - File extension
    * @param {string} dirPath - Directory path containing the file
+   * @param {string|null} [type] - The type folder of the file, the first folder under the app
    * @returns {string} Category name: 'fonts', 'icons', 'images', or 'other'
    */
-  categorizeAsset(extension, dirPath) {
+  categorizeAsset(extension, dirPath, type = null) {
+    if (type) {
+      return ['fonts', 'icons', 'images'].includes(type) ? type : 'other'
+    }
+
     const fontExts = ['.ttf', '.otf', '.woff', '.woff2', '.eot']
     const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff']
     const iconExts = ['.svg', '.ico']
@@ -230,14 +243,14 @@ export class ChassisAssets {
   }
 
   /**
-   * Build assets programmatically.
-   * Note: Currently uses the full config - filtering options are not yet implemented.
+   * Build assets programmatically, into the `cwd` and `out` of this instance.
    * @param {Object} options - Build options
-   * @param {string[]} options.brands - Brands to build (not yet implemented)
-   * @param {string[]} options.apps - Apps to build (not yet implemented)
-   * @param {string[]|null} options.platforms - Platforms to build (not yet implemented)
-   * @param {boolean} options.clean - Whether to clean dist before build
-   * @returns {Promise<void>}
+   * @param {string[]} [options.brands] - Only these brands
+   * @param {string[]} [options.apps] - Only these apps
+   * @param {string[]} [options.platforms] - Only these platforms
+   * @param {boolean|null} [options.clean] - Whether to clean the output first; null decides by the filters
+   * @param {boolean} [options.quiet] - Print errors only
+   * @returns {Promise<import('../build-assets.js').BuildStats>} The statistics of the run
    */
   async build(options = {}) {
     const { brands = [], apps = [], platforms = [], clean = null, quiet = false } = options
@@ -258,12 +271,12 @@ export class ChassisAssets {
 
     // Add source statistics if available
     if (fs.existsSync(this.sourceDir)) {
-      stats.sourceAssets = this.countAssets('source')
+      stats.sourceAssets = this.countAssets(this.sourceDir)
     }
 
     // Add dist statistics if available
-    if (fs.existsSync('dist')) {
-      stats.distAssets = this.countAssets('dist')
+    if (fs.existsSync(this.distDir)) {
+      stats.distAssets = this.countAssets(this.distDir)
     }
 
     return stats
@@ -271,7 +284,7 @@ export class ChassisAssets {
 
   /**
    * Count all assets in a directory recursively.
-   * @param {string} dirPath - Directory path to count
+   * @param {string} dirPath - Directory path to count, relative to `cwd` or absolute
    * @returns {number} Count of assets
    */
   countAssets(dirPath) {
@@ -302,7 +315,7 @@ export class ChassisAssets {
       }
     }
 
-    countRecursive(dirPath)
+    countRecursive(path.resolve(this.cwd, dirPath))
     return count
   }
 
@@ -322,6 +335,7 @@ export class ChassisAssets {
 
     if (!this.config.build) {
       errors.push('No build configuration found')
+      return { valid: false, errors, warnings }
     }
 
     if (!this.config.build.brands || this.config.build.brands.length === 0) {
@@ -330,12 +344,13 @@ export class ChassisAssets {
 
     if (!this.config.build.apps || Object.keys(this.config.build.apps).length === 0) {
       errors.push('No apps defined')
+      return { valid: false, errors, warnings }
     }
 
     // Check source directory structure
-    const defaultPath = path.join('source', this.config.defaults?.brandFolder || 'default')
-    if (!fs.existsSync(defaultPath)) {
-      warnings.push(`Default brand directory not found: ${defaultPath}`)
+    const defaultFolder = path.join('source', this.config.defaults?.brandFolder || 'default')
+    if (!fs.existsSync(path.join(this.cwd, defaultFolder))) {
+      warnings.push(`Default brand directory not found: ${defaultFolder}`)
     }
 
     // Check for each brand

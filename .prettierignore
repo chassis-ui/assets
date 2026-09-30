@@ -4,3 +4,5 @@ site/config.yml
 site/src/assets
 /source
 pnpm-lock.yaml
+test/fixtures/source
+test/golden

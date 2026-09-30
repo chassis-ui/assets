@@ -180,6 +180,9 @@ goes to Phase 6 if it is wanted.
 | F22 | The Android page contradicts itself and its copy script copies nothing for icons.                                                                                                                      | Its "Package Structure" tree puts `hero_background.png` beside the density folders and shows `icons/ic_menu.xml`; its "Density Folders Structure" section has `drawable/`. `sync-assets.sh` copies `icons/*.xml`, and the icons are `icons/svgs/ic_*.svg`. Found in session 1.1.                                                                                                                             | Session 1.3.                                                                                                                                                                                          |
 | F23 | The build-system page says "Use 78 builds during development".                                                                                                                                         | A typo of "filtered builds". Found in session 1.1.                                                                                                                                                                                                                                                                                                                                                           | Session 1.3.                                                                                                                                                                                          |
 | F24 | The Programmatic API section names methods and options that differ from the code.                                                                                                                      | `getPlatforms()` is per app and `getAllPlatforms()` is the one described; `analyzer.options` reads `brands`, not `brand`; `getPlatforms(appName)`. Found in session 1.1.                                                                                                                                                                                                                                     | Session 1.3, after session 1.2 has settled the library.                                                                                                                                               |
+| F25 | `shouldIgnoreFile()` matches none of its wildcard patterns but `._*`.                                                                                                                                  | `*~`, `*.swp`, `*.tmp` and `*.temp` became `^\.*\.swp$`: the dot that `*` turns into was escaped with the others, so `a.swp` was copied. Found in session 2.1 by the unit tests. No such file is in `source/`.                                                                                                                                                                                               | Fixed in session 2.1: the dots are escaped before `*` is replaced. No output changes.                                                                                                                 |
+| F26 | `pnpm assets:analyze --platform <name>` counts nothing in `dist/`.                                                                                                                                     | `shouldIncludePath()` of the analyzer checked the output folder itself, whose relative path is `''`, against the platform filter. Found in session 2.1.                                                                                                                                                                                                                                                      | Fixed in session 2.1.                                                                                                                                                                                 |
+| F27 | `ChassisAssets` ignores its `cwd` in `getStats()` and `validate()`, and sorts an SVG under `images/logo/` as an icon.                                                                                  | `countAssets('source')` and `path.join('source', …)` resolve from the working directory; `categorizeAsset()` reads the name of the folder a file is in, not the type folder the build decides by. Found in session 2.1.                                                                                                                                                                                      | Fixed in session 2.1: paths from `cwd` and `out`, the category from the type folder.                                                                                                                  |
 
 ### Tooling, against `chassis-tokens` and the website's reference documents
 
@@ -316,8 +319,8 @@ behaviour that a page states is checked against a run. Style follows `WRITING.md
       that work from a script in another folder.
 - [ ] `pnpm site:build` and `pnpm site:lint` pass; the link check of the website
       (`pnpm site:lint:links` there, task A23) finds no broken link on `/assets/`. Lint and
-      `check:astro` pass locally; the build and the link check wait for CI and for the website's
-      crawl of the deployed site.
+      `check:astro` pass locally, and the Site job of CI built the site on `6c9c645`; the link
+      check waits for the website's crawl of the deployed site.
 - [x] Delete `docs/pages-vs-build.md`.
 
 **Acceptance:** every statement about the build in the pages is true, checked by running it.
@@ -337,25 +340,28 @@ and CI runs them in under two minutes. Pattern: `packages/tokens/test/README.md`
 
 ### Session 2.1: unit and build tests
 
-- [ ] Add Vitest. `pnpm test` runs `vitest run --dir test`. The three hand-rolled runners
+- [x] Add Vitest. `pnpm test` runs `vitest run --dir test`. The three hand-rolled runners
       are deleted when their checks are covered.
-- [ ] Unit tests for `processors/*.js`: `renameFile()` of each platform,
+- [x] Unit tests for `processors/*.js`: `renameFile()` of each platform,
       `extractResolutionIndicator()`, the density mapping, the `ic_` prefix, the format
-      filters. Table-driven, every rule of the pages as a row.
-- [ ] Unit tests for `shouldIgnoreFile()`, `isMetadataFile()`, `hasAllowedExtension()`,
-      `cleanupEmptyDirectories()` and the collision tracker.
-- [ ] A fixture source under `test/fixtures/source/`: two brands, two apps, every type, a
+      filters. Table-driven, every rule of the pages as a row. The filter of a type is
+      `keepsFile()` of `build-assets.js` now, so that it can be tested as a table.
+- [x] Unit tests for `shouldIgnoreFile()`, `isMetadataFile()`, `hasAllowedExtension()`,
+      `cleanupEmptyDirectories()` and the collision tracker (`createCollisionTracker()`).
+- [x] A fixture source under `test/fixtures/source/`: two brands, two apps, every type, a
       nested folder, a `@2x` and `@3x` set, a WebP, a font in four formats, a duplicate, a
-      name with capitals, an LFS pointer. Small enough to read.
-- [ ] A golden baseline under `test/golden/`: the output of the fixture for the six jobs,
+      name with capitals, an LFS pointer. Small enough to read. The pointer is written by
+      its test into a copy of the fixture, so that the golden output is a default build.
+- [x] A golden baseline under `test/golden/`: the output of the fixture for the six jobs,
       committed, and a test that builds the fixture into a temporary folder with `--out` and
-      compares file by file. The command that writes the baseline again is documented.
-- [ ] A test of the analyzer on the fixture: the duplicate is found, the counts are right.
-- [ ] A test of the validator on the golden output: passes; and on the golden output with a
+      compares file by file. The command that writes the baseline again is documented:
+      `pnpm test:golden`, in `test/README.md`.
+- [x] A test of the analyzer on the fixture: the duplicate is found, the counts are right.
+- [x] A test of the validator on the golden output: passes; and on the golden output with a
       file removed: fails and names it.
-- [ ] A test of the CLI: `--brand`, `--app`, `--platform`, `--clean`, `--no-clean`,
+- [x] A test of the CLI: `--brand`, `--app`, `--platform`, `--clean`, `--no-clean`,
       `--dry-run`, an unknown value, `--help`.
-- [ ] T13: hidden files are left out of every naming check.
+- [x] T13: hidden files are left out of every naming check.
 
 **Acceptance:** `pnpm test` runs in under 15 seconds and touches nothing outside `test/`
 and a temporary folder.
@@ -380,8 +386,9 @@ minutes including the LFS pull.
 
 ### Exit criteria
 
-- [ ] Every pure function of the build has a unit test.
-- [ ] The golden test fails when a processor changes a name.
+- [x] Every pure function of the build has a unit test.
+- [x] The golden test fails when a processor changes a name. Checked in session 2.1 by
+      changing the web processor: the golden test failed.
 - [ ] The contract check fails when a file of the consumer contract is missing.
 - [ ] A pull request runs all of it.
 
@@ -617,3 +624,4 @@ None is scheduled; the maintainer picks one when it is wanted.
 | 2026-09-30 | 1.1       | Read every page against the code and ran the build, the analyzer and the validator with the flags the pages describe. Wrote `docs/pages-vs-build.md`, one table per page, every statement with a verdict. Added F18 to F24 and D14 and D15; D14 is the one decision that goes to the maintainer, since it adds files to the default output. Wrote the first `docs/architecture.md`: the build in one picture, the modules, the configuration, the command line, the output contract per platform, the checks, the known oddities. No code changed. Next: session 1.2.                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 2026-09-30 | 1.2       | Fixed the build where the pages are right. The library takes options and throws; only the entry reads argv and exits (F6). Unknown filter values fail (F18). `--clean` with filters removes the selected jobs only (D6). `--out`, `--cwd`, `--dry-run`, `--allow-lfs-pointers`, `--quiet`, `--help`, `--version`. LFS pointers fail the build (T12). The analyzer finds duplicates (F8); the validator prints once and exits 1 on failure (F19). `.png` icons for iOS (D15). Stylesheets: `text.css` and `code.css` rewritten, `display.css` added, for the files in the folder (F3). Licenses of the five families beside the fonts, by role (F15, D8); the font filters keep `.txt`. 40 screenshots renamed to the output names (F14). Old tests adapted and green. Output diff against the baseline: the four stylesheets, `display.css`, and the license files in every `fonts/` folder, nothing else. F11 left: it needs Git LFS, steps in `docs/architecture.md`. |
 | 2026-09-30 | 1.3       | Corrected the eleven pages against the inventory: the `dist/<platform>/<app>/<brand>/` layout everywhere (F1), the distribution trees of every asset type and platform as the build writes them (F2, F4, F5, F22), Node 22.12, pnpm from `packageManager` and current action versions in the CI examples (F9), no test counts (F10), `other/` as a folder name (F12), no "commit built assets" (F13), the stylesheets and the licenses in the fonts page (F3, F15, F16), the broken slug (F17), WebP and PNG icons per platform in the guidelines tables (F21, D15), the API as session 1.2 left it (F6, F24), the options table and the `--clean` semantics (D6), the eight checks of the validator, "filtered builds" (F23). Android icons: the pages say SVG, converted in the app. The callouts stay until session 5.2 runs the platform samples. Deleted the inventory. `pnpm site:lint` and `pnpm check:astro` pass; the site build runs in CI.                   |
+| 2026-09-30 | 2.1       | Replaced the three runners with Vitest: 271 tests in about three seconds, no Git LFS files needed, nothing written outside temporary folders. A fixture in `test/fixtures/` (two brands, `alpha` and `beta`, two apps, `site` and `mobile`, six jobs, every type and case the roadmap names) and its golden output in `test/golden/`, written again with `pnpm test:golden`. Table tests for the processors and the filters, one row per rule of the pages; tests of the library, the analyzer, the validator, the API and the three command lines. The tests found three bugs, fixed: the wildcards of the ignore list (F25), the analyzer's platform filter (F26), and the API's paths and categories (F27). `keepsFile()` and `createCollisionTracker()` are exported for the tests. The real build's output is identical before and after. `test/README.md` describes the suite. Next: session 2.2.                                                                 |

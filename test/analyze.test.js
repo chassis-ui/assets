@@ -1,374 +1,135 @@
-import fs from 'fs'
-import AssetAnalyzer from '../build/analyze-assets.js'
+/**
+ * @file analyze.test.js
+ * @description `AssetAnalyzer` of `build/analyze-assets.js` on the fixture and on the golden
+ *              output: the counts per type, platform, app and brand, the filters, and the
+ *              duplicate the fixture holds on purpose (F8).
+ */
+
+import fs from 'node:fs'
+import path from 'node:path'
+import { afterAll, describe, expect, test } from 'vitest'
+import AssetAnalyzer, { parseAnalyzerArgs } from '../build/analyze-assets.js'
+import { FIXTURE, GOLDEN, listFiles, removeTempDirs, tempDir } from './helpers.js'
+
+afterAll(removeTempDirs)
+
+const SOURCE_FILES = listFiles(path.join(FIXTURE, 'source')).length
+const GOLDEN_FILES = listFiles(GOLDEN).length
 
 /**
- * Test suite for AssetAnalyzer.
- * Tests file analysis, duplicate detection, statistics, and filtering.
+ * @param {Object} [options]
  */
-class AnalyzeTestSuite {
-  constructor() {
-    this.testResults = []
-    this.analyzer = null
-  }
-
-  /**
-   * Run all test suites.
-   * @returns {Promise<void>}
-   */
-  async runTests() {
-    console.log('🧪 Starting Asset Analyzer Test Suite...\n')
-
-    try {
-      await this.setupTestEnvironment()
-      await this.testBasicAnalysis()
-      await this.testDuplicateDetection()
-      await this.testFileTypeCategorization()
-      await this.testFiltering()
-      await this.testStatistics()
-      await this.testFormattedOutput()
-
-      this.printResults()
-    } catch (error) {
-      console.error('💥 Test suite failed:', error.message)
-      console.error(error.stack)
-      process.exit(1)
-    }
-  }
-
-  /**
-   * Set up test environment.
-   * @returns {Promise<void>}
-   */
-  async setupTestEnvironment() {
-    console.log('📋 Setting up test environment...')
-
-    if (!fs.existsSync('source')) {
-      console.warn('⚠️  source/ not found. Cannot run analyzer tests.')
-      process.exit(1)
-    }
-
-    // Ensure dist exists for testing - build if needed
-    if (!fs.existsSync('dist')) {
-      console.log('📦 Building assets for test data...')
-      try {
-        const { generateAssets } = await import('../build/build-assets.js')
-        await generateAssets({ quiet: true })
-        console.log('✅ Assets built successfully')
-      } catch (error) {
-        console.error('❌ Failed to build assets:', error.message)
-        process.exit(1)
-      }
-    }
-
-    this.addTestResult('Setup', true, 'Test environment ready')
-  }
-
-  /**
-   * Test basic analysis functionality.
-   * @returns {Promise<void>}
-   */
-  async testBasicAnalysis() {
-    console.log('📊 Testing basic analysis...')
-
-    try {
-      this.analyzer = new AssetAnalyzer({ quiet: true })
-      this.analyzer.analyze()
-
-      // Verify basic stats exist
-      const hasStats = this.analyzer.stats && typeof this.analyzer.stats === 'object'
-      const hasTotalFiles = this.analyzer.stats.totalFiles > 0
-      const hasTotalSize = this.analyzer.stats.totalSize > 0
-
-      const basicAnalysisWorks = hasStats && hasTotalFiles && hasTotalSize
-
-      this.addTestResult(
-        'Basic Analysis',
-        basicAnalysisWorks,
-        basicAnalysisWorks
-          ? `Analyzed ${this.analyzer.stats.totalFiles} files (${this.analyzer.formatBytes(this.analyzer.stats.totalSize)})`
-          : 'Analysis failed to produce valid stats'
-      )
-    } catch (error) {
-      this.addTestResult('Basic Analysis', false, error.message)
-    }
-  }
-
-  /**
-   * Test duplicate detection accuracy.
-   * Should separate source duplicates from dist duplicates.
-   * Should NOT flag source→dist copies as duplicates.
-   * @returns {Promise<void>}
-   */
-  async testDuplicateDetection() {
-    console.log('🔍 Testing duplicate detection...')
-
-    try {
-      this.analyzer = new AssetAnalyzer({ quiet: true })
-      this.analyzer.analyze()
-
-      const stats = this.analyzer.stats
-
-      // Verify separate tracking
-      const hasSeparateTracking =
-        Array.isArray(stats.duplicatesInSource) && Array.isArray(stats.duplicatesInDist)
-
-      // Verify no cross-duplicates (source→dist should NOT be flagged)
-      const noCrossDuplicates = !stats.crossDuplicates || stats.crossDuplicates.length === 0
-
-      // Count total duplicates
-      const totalDuplicates = stats.duplicatesInSource.length + stats.duplicatesInDist.length
-
-      const duplicateDetectionWorks = hasSeparateTracking && noCrossDuplicates
-
-      this.addTestResult(
-        'Duplicate Detection',
-        duplicateDetectionWorks,
-        duplicateDetectionWorks
-          ? `Correctly separates duplicates (${stats.duplicatesInSource.length} in source, ${stats.duplicatesInDist.length} in dist, no cross-duplicates)`
-          : 'Duplicate detection not working correctly'
-      )
-
-      // A known pair: the demo app mirrors the icon set of the docs app
-      const known = stats.duplicatesInSource.find(
-        (group) =>
-          group.paths.some((p) => p.endsWith('docs/icons/svgs/alarm-clock-outline.svg')) &&
-          group.paths.some((p) => p.endsWith('demo/icons/svgs/alarm-clock-outline.svg'))
-      )
-
-      this.addTestResult(
-        'Known Duplicates',
-        Boolean(known),
-        known
-          ? `Finds the icon set copied into both apps (${totalDuplicates} groups in total)`
-          : 'Does not find alarm-clock-outline.svg in both apps'
-      )
-    } catch (error) {
-      this.addTestResult('Duplicate Detection', false, error.message)
-    }
-  }
-
-  /**
-   * Test file type categorization.
-   * @returns {Promise<void>}
-   */
-  async testFileTypeCategorization() {
-    console.log('📁 Testing file type categorization...')
-
-    try {
-      this.analyzer = new AssetAnalyzer({ quiet: true })
-      this.analyzer.analyze()
-
-      const fileTypes = this.analyzer.stats.fileTypes
-      const hasFileTypes = fileTypes && Object.keys(fileTypes).length > 0
-
-      // Check for expected asset types
-      const expectedTypes = ['.svg', '.woff2', '.png']
-      const hasExpectedTypes = expectedTypes.some((ext) => fileTypes[ext])
-
-      // Verify counts are numbers and sum matches total files
-      const totalCount = Object.values(fileTypes).reduce((sum, count) => sum + count, 0)
-      const countsValid = totalCount === this.analyzer.stats.totalFiles
-
-      const categorizationWorks = hasFileTypes && hasExpectedTypes && countsValid
-
-      this.addTestResult(
-        'File Type Categorization',
-        categorizationWorks,
-        categorizationWorks
-          ? `Detected ${Object.keys(fileTypes).length} file types with ${totalCount} total files`
-          : 'File type categorization failed'
-      )
-    } catch (error) {
-      this.addTestResult('File Type Categorization', false, error.message)
-    }
-  }
-
-  /**
-   * Test filtering by brand, app, and platform.
-   * @returns {Promise<void>}
-   */
-  async testFiltering() {
-    console.log('🎯 Testing filtering...')
-
-    try {
-      // Test brand filtering
-      const brandAnalyzer = new AssetAnalyzer({ quiet: true })
-      brandAnalyzer.options = { brands: ['chassis'], apps: [], platforms: [] }
-      brandAnalyzer.analyze()
-
-      const brandFilterWorks = brandAnalyzer.stats.totalFiles > 0
-
-      this.addTestResult(
-        'Brand Filtering',
-        brandFilterWorks,
-        brandFilterWorks
-          ? `Brand filter works (${brandAnalyzer.stats.totalFiles} files for chassis)`
-          : 'Brand filtering failed'
-      )
-
-      // Test platform filtering
-      const platformAnalyzer = new AssetAnalyzer({ quiet: true })
-      platformAnalyzer.options = { brands: [], apps: [], platforms: ['web'] }
-      platformAnalyzer.analyze()
-
-      const platformFilterWorks = platformAnalyzer.stats.totalFiles > 0
-
-      this.addTestResult(
-        'Platform Filtering',
-        platformFilterWorks,
-        platformFilterWorks
-          ? `Platform filter works (${platformAnalyzer.stats.totalFiles} files for web)`
-          : 'Platform filtering failed'
-      )
-
-      // Test combined filtering
-      const combinedAnalyzer = new AssetAnalyzer({ quiet: true })
-      combinedAnalyzer.options = { brands: ['chassis'], apps: [], platforms: ['web'] }
-      combinedAnalyzer.analyze()
-
-      const combinedFilterWorks =
-        combinedAnalyzer.stats.totalFiles > 0 &&
-        combinedAnalyzer.stats.totalFiles <= platformAnalyzer.stats.totalFiles
-
-      this.addTestResult(
-        'Combined Filtering',
-        combinedFilterWorks,
-        combinedFilterWorks
-          ? `Combined filters work (${combinedAnalyzer.stats.totalFiles} files)`
-          : 'Combined filtering failed'
-      )
-    } catch (error) {
-      this.addTestResult('Filtering', false, error.message)
-    }
-  }
-
-  /**
-   * Test statistics calculation.
-   * @returns {Promise<void>}
-   */
-  async testStatistics() {
-    console.log('📈 Testing statistics calculation...')
-
-    try {
-      this.analyzer = new AssetAnalyzer({ quiet: true })
-      this.analyzer.analyze()
-
-      const stats = this.analyzer.stats
-
-      // Check required stats exist
-      const hasRequiredStats =
-        typeof stats.totalFiles === 'number' &&
-        stats.totalFiles > 0 &&
-        typeof stats.totalSize === 'number' &&
-        stats.totalSize > 0 &&
-        Array.isArray(stats.largestFiles) &&
-        typeof stats.fileTypes === 'object'
-
-      // Verify largest files are sorted and have required properties
-      const largestFilesSorted =
-        stats.largestFiles.length === 0 ||
-        stats.largestFiles.every(
-          (file, i) =>
-            file.path &&
-            typeof file.size === 'number' &&
-            (i === 0 || file.size <= stats.largestFiles[i - 1].size)
-        )
-
-      const statisticsWork = hasRequiredStats && largestFilesSorted
-
-      this.addTestResult(
-        'Statistics Calculation',
-        statisticsWork,
-        statisticsWork
-          ? `All statistics calculated correctly (${stats.totalFiles} files, ${stats.largestFiles.length} largest tracked)`
-          : 'Statistics calculation has errors'
-      )
-    } catch (error) {
-      this.addTestResult('Statistics Calculation', false, error.message)
-    }
-  }
-
-  /**
-   * Test formatted output methods.
-   * @returns {Promise<void>}
-   */
-  async testFormattedOutput() {
-    console.log('📝 Testing formatted output...')
-
-    try {
-      this.analyzer = new AssetAnalyzer({ quiet: true })
-
-      // Test byte formatting
-      const testCases = [
-        { bytes: 0, expected: '0 Bytes' },
-        { bytes: 1023, expected: '1023 Bytes' },
-        { bytes: 1024, expected: '1 KB' },
-        { bytes: 1048576, expected: '1 MB' },
-        { bytes: 1073741824, expected: '1 GB' },
-        { bytes: 1536, expected: '1.5 KB' } // Test decimal formatting
-      ]
-
-      let formattingWorks = true
-      for (const test of testCases) {
-        const result = this.analyzer.formatBytes(test.bytes)
-        if (result !== test.expected) {
-          formattingWorks = false
-          console.error(
-            `❌ formatBytes(${test.bytes}) returned "${result}", expected "${test.expected}"`
-          )
-        }
-      }
-
-      this.addTestResult(
-        'Formatted Output',
-        formattingWorks,
-        formattingWorks ? 'Byte formatting works correctly' : 'Byte formatting has errors'
-      )
-    } catch (error) {
-      this.addTestResult('Formatted Output', false, error.message)
-    }
-  }
-
-  /**
-   * Add a test result to the results array.
-   * @param {string} testName - Name of the test
-   * @param {boolean} passed - Whether the test passed
-   * @param {string} message - Result message
-   */
-  addTestResult(testName, passed, message) {
-    this.testResults.push({ testName, passed, message })
-    const status = passed ? '✅' : '❌'
-    console.log(`${status} ${testName}: ${message}`)
-  }
-
-  /**
-   * Print test results summary and exit with appropriate code.
-   */
-  printResults() {
-    console.log('\n📊 Test Results Summary:')
-    console.log('='.repeat(50))
-
-    const passed = this.testResults.filter((r) => r.passed).length
-    const total = this.testResults.length
-
-    this.testResults.forEach((result) => {
-      const status = result.passed ? '✅' : '❌'
-      console.log(`${status} ${result.testName}: ${result.message}`)
-    })
-
-    console.log('='.repeat(50))
-    console.log(`Overall: ${passed}/${total} tests passed`)
-
-    if (passed !== total) {
-      process.exit(1)
-    }
-  }
+function analyze(options = {}) {
+  const analyzer = new AssetAnalyzer({ cwd: FIXTURE, out: '../golden', quiet: true, ...options })
+  analyzer.analyze()
+  return analyzer.stats
 }
 
-// Run tests if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const tester = new AnalyzeTestSuite()
-  tester.runTests()
-}
+describe('AssetAnalyzer', () => {
+  test('the fixture is what the counts below assume', () => {
+    expect(SOURCE_FILES).toBe(42)
+    expect(GOLDEN_FILES).toBe(95)
+  })
 
-export default AnalyzeTestSuite
+  test('counts source/ and the output together', () => {
+    const stats = analyze()
+    expect(stats.totalFiles).toBe(SOURCE_FILES + GOLDEN_FILES)
+    expect(stats.platforms).toEqual({ android: 29, ios: 33, web: 33 })
+    expect(stats.apps).toEqual({ mobile: 62, site: 33 })
+    expect(stats.brands).toEqual({ alpha: 49, beta: 46 })
+    expect(stats.fileTypes['.webp']).toBe(2 + 2)
+    expect(stats.fileTypes['.woff']).toBe(1 + 2)
+    expect(stats.filtered).toBe(false)
+  })
+
+  test('without an output, counts source/ only', () => {
+    const stats = analyze({ out: path.join(tempDir(), 'missing') })
+    expect(stats.totalFiles).toBe(SOURCE_FILES)
+    expect(stats.platforms).toEqual({})
+  })
+
+  test('finds the duplicate in source/', () => {
+    const stats = analyze({ out: path.join(tempDir(), 'missing') })
+    expect(stats.duplicatesInSource).toHaveLength(1)
+    const [group] = stats.duplicatesInSource
+    expect(group.count).toBe(2)
+    expect(
+      group.paths.map((p) => path.relative(FIXTURE, p).split(path.sep).join('/')).sort()
+    ).toEqual([
+      'source/default/mobile/images/logo/mark.svg',
+      'source/default/site/images/logo/mark.svg'
+    ])
+  })
+
+  test('finds a duplicate it did not know about', () => {
+    const root = tempDir()
+    fs.cpSync(FIXTURE, root, { recursive: true })
+    fs.copyFileSync(
+      path.join(root, 'source/default/site/images/photo.jpg'),
+      path.join(root, 'source/default/site/images/photo-copy.jpg')
+    )
+    const stats = analyze({ cwd: root, out: 'missing' })
+    expect(stats.duplicatesInSource).toHaveLength(2)
+  })
+
+  test('finds the copies between jobs in the output', () => {
+    const stats = analyze()
+    // Every file beta shares with alpha is a copy, and so is every file iOS and Android share
+    expect(stats.duplicatesInDist.length).toBeGreaterThan(0)
+    const tokens = stats.duplicatesInDist.find((group) => group.file === 'brand_tokens.json')
+    expect(tokens.count).toBe(4)
+  })
+
+  test.each([
+    [{ platforms: ['web'] }, { web: 33 }],
+    [{ platforms: ['ios', 'android'] }, { android: 29, ios: 33 }],
+    [{ brands: ['beta'] }, { android: 14, ios: 16, web: 16 }],
+    [
+      { apps: ['mobile'], brands: ['alpha'] },
+      { android: 15, ios: 17 }
+    ]
+  ])('filters %j', (filters, platforms) => {
+    const stats = analyze(filters)
+    expect(stats.platforms).toEqual(platforms)
+    expect(stats.filtered).toBe(true)
+    const outputFiles = Object.values(platforms).reduce((a, b) => a + b, 0)
+    expect(stats.totalFiles).toBe(SOURCE_FILES + outputFiles)
+  })
+
+  test.each([
+    [0, '0 Bytes'],
+    [512, '512 Bytes'],
+    [1024, '1 KB'],
+    [1536, '1.5 KB'],
+    [1048576, '1 MB'],
+    [1073741824, '1 GB']
+  ])('formatBytes(%d) is %s', (bytes, text) => {
+    expect(new AssetAnalyzer({ cwd: FIXTURE, quiet: true }).formatBytes(bytes)).toBe(text)
+  })
+})
+
+describe('parseAnalyzerArgs()', () => {
+  test('reads the filters, --out, --cwd and --quiet', () => {
+    expect(
+      parseAnalyzerArgs([
+        '--brand',
+        'a',
+        'b',
+        '--platform',
+        'web',
+        '--out',
+        'x',
+        '--cwd',
+        'y',
+        '--quiet'
+      ])
+    ).toEqual({ brands: ['a', 'b'], apps: [], platforms: ['web'], out: 'x', cwd: 'y', quiet: true })
+  })
+
+  test.each([
+    [['--out'], '--out needs a value'],
+    [['--nope'], 'Unknown option --nope']
+  ])('%j fails', (argv, message) => {
+    expect(() => parseAnalyzerArgs(argv)).toThrow(message)
+  })
+})

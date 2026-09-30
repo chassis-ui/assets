@@ -110,10 +110,11 @@ Manage, analyze, and validate your asset distribution:
 
 ```shell
 # Development workflow
-pnpm test                   # Run the test suites
+pnpm test                   # Run the tests on the fixture in test/fixtures/, in seconds
+pnpm test:golden            # Write test/golden/ again after an intended change to the build
 pnpm assets:analyze         # Analyze asset distribution (supports --brand, --app, --platform, --out)
 pnpm assets:validate        # Validate distribution integrity (supports --out)
-pnpm assets:lint            # Lint the build scripts
+pnpm assets:lint            # Lint the build scripts and the tests
 pnpm lint:prettier          # Check formatting across the repository
 pnpm check                  # Type-check the site, then audit the dependencies
 

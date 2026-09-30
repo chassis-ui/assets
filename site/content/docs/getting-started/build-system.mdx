@@ -879,37 +879,26 @@ Follow these best practices when configuring and using the build system:
 
 ## Development Tests
 
-The build system has three test scripts that check it against the real `source/`. They build into `dist/`, so they need the Git LFS files:
+The tests run with [Vitest](https://vitest.dev/) against a small fixture in `test/fixtures/`: two brands, `alpha` and `beta`, two apps, `site` for the web and `mobile` for iOS and Android, and every type of asset as a one-line text file. They need no Git LFS files and write only to temporary folders, never to `dist/`.
 
 ```bash
-# Run all three test scripts
+# Run every test
 pnpm test
 
-# Individual test scripts
-pnpm assets:test:build    # The build: filters, incremental builds, platform processing, overrides
-pnpm assets:test:analyze  # The analyzer, duplicates included
-pnpm assets:test:api      # The programmatic API
+# Write the golden output again after an intended change to the build
+pnpm test:golden
 ```
 
-**What the tests do:**
+**What the tests check:**
 
-- ✅ Build into dist/ with and without filters, and check what was written and what was not
-- ✅ Check the platform naming, the density folders and the brand overrides in the output
-- ✅ Check that the analyzer finds a known duplicate: the icon set copied into both apps
-- ✅ Check that the API methods return the configuration and the inventory
+- ✅ The renaming of each platform, the resolution indicators, the Android density folders and the `ic_` prefix, and the formats each platform keeps, one row per rule of these pages
+- ✅ A build of the fixture against `test/golden/`, its committed output, file by file
+- ✅ The brand override, cleaning with and without filters, dry runs, Git LFS pointers and rename collisions
+- ✅ The command line of the build, the analyzer and the validator: every flag and the exit codes
+- ✅ That the analyzer finds the duplicate the fixture holds, and that the validator fails on an output with a file missing and names it
+- ✅ The methods of the programmatic API
 
-Without Git LFS on the machine, `CHASSIS_ALLOW_LFS_POINTERS=1 pnpm test` runs them on the pointer files.
-
-### Test Comparison
-
-<CxTable>
-| Command | Rebuilds Dist? | Purpose |
-|---------|----------------|---------|
-| `pnpm test` | ✅ Yes | Run the three scripts |
-| `pnpm assets:test:build` | ✅ Yes, and removes it at the end | Test build functionality |
-| `pnpm assets:test:analyze` | ✅ Yes | Test analyzer logic |
-| `pnpm assets:test:api` | Only when it is missing | Test API methods |
-</CxTable>
+`pnpm test:golden` builds the fixture into `test/golden/`. Review its diff like any other change: every file that moves or changes name there moves or changes name in `dist/` too.
 
 ## Related Resources
 

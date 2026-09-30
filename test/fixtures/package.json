@@ -1,0 +1,26 @@
+{
+  "name": "chassis-assets-fixture",
+  "version": "0.0.0-fixture",
+  "private": true,
+  "description": "The fixture of the build tests: two brands, two apps, six jobs. See test/README.md.",
+  "chassis": {
+    "defaults": {
+      "brandFolder": "default"
+    },
+    "build": {
+      "brands": [
+        "alpha",
+        "beta"
+      ],
+      "apps": {
+        "site": [
+          "web"
+        ],
+        "mobile": [
+          "ios",
+          "android"
+        ]
+      }
+    }
+  }
+}

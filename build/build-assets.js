@@ -298,7 +298,7 @@ export function planJobs(config, filters = {}) {
  * @param {string[]} allowedExtensions - Array of allowed extensions (e.g., ['.woff', '.woff2'])
  * @returns {boolean} True if extension is allowed
  */
-function hasAllowedExtension(fileName, allowedExtensions) {
+export function hasAllowedExtension(fileName, allowedExtensions) {
   const ext = path.extname(fileName).toLowerCase()
   return allowedExtensions.includes(ext)
 }
@@ -309,9 +309,31 @@ function hasAllowedExtension(fileName, allowedExtensions) {
  * @param {string[]} excludedExtensions - Array of excluded extensions
  * @returns {boolean} True if file should be excluded
  */
-function isExcluded(fileName, excludedExtensions) {
+export function isExcluded(fileName, excludedExtensions) {
   const ext = path.extname(fileName).toLowerCase()
   return excludedExtensions.includes(ext)
+}
+
+/**
+ * Whether a platform keeps a file of a type. `fonts` and `icons` keep the formats the
+ * processor allows, `images` drop the formats it excludes, and any other type keeps every
+ * file.
+ * @param {Object} processor - The platform processor
+ * @param {string|null} type - The type folder the file is under: fonts, images, icons or another
+ * @param {string} fileName
+ * @returns {boolean}
+ */
+export function keepsFile(processor, type, fileName) {
+  if (type === 'fonts' && processor.allowedFontFormats) {
+    return hasAllowedExtension(fileName, processor.allowedFontFormats)
+  }
+  if (type === 'images' && processor.excludedImageFormats) {
+    return !isExcluded(fileName, processor.excludedImageFormats)
+  }
+  if (type === 'icons' && processor.allowedIconFormats) {
+    return hasAllowedExtension(fileName, processor.allowedIconFormats)
+  }
+  return true
 }
 
 /**
@@ -346,8 +368,8 @@ export function shouldIgnoreFile(fileName) {
       if (!pattern.includes('*')) {
         return fileName === pattern
       }
-      // Simple wildcard matching
-      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\./g, '\\.') + '$')
+      // Simple wildcard matching: escape the dots first, then turn * into .*
+      const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$')
       return regex.test(fileName)
     })
   ) {
@@ -382,10 +404,10 @@ export function isLfsPointer(filePath, stat = fs.statSync(filePath)) {
 }
 
 /**
- * Remove empty directories recursively
+ * Remove empty directories recursively, `dirPath` included when it ends up empty
  * @param {string} dirPath - The directory path to clean up
  */
-function cleanupEmptyDirectories(dirPath) {
+export function cleanupEmptyDirectories(dirPath) {
   if (!fs.existsSync(dirPath)) return
 
   const items = fs.readdirSync(dirPath)
@@ -440,9 +462,32 @@ function removeDirectory(dirPath) {
 // Platform Processors
 
 /**
+ * A tracker of the names the rename pass writes. Two files renamed to the same name in the
+ * same folder are a collision: the file renamed last wins, and the build warns.
+ * @returns {{ track: (destPath: string, oldName: string, newName: string) => string | null, clear: () => void }}
+ *   `track()` returns the warning of a collision, or null
+ */
+export function createCollisionTracker() {
+  const seen = new Map()
+  return {
+    track(destPath, oldName, newName) {
+      const key = path.join(destPath, newName)
+      if (seen.has(key)) {
+        return `Filename collision: "${oldName}" → "${newName}" (conflicts with "${seen.get(key)}")`
+      }
+      seen.set(key, oldName)
+      return null
+    },
+    clear() {
+      seen.clear()
+    }
+  }
+}
+
+/**
  * Collision detection tracker for renamed files
  */
-const collisionTracker = new Map()
+const collisionTracker = createCollisionTracker()
 
 /**
  * Track and detect file rename collisions
@@ -452,16 +497,9 @@ const collisionTracker = new Map()
  * @returns {boolean} True if collision detected
  */
 function trackRename(destPath, oldName, newName) {
-  const key = path.join(destPath, newName)
-  if (collisionTracker.has(key)) {
-    const original = collisionTracker.get(key)
-    stats.warnings.push(
-      `Filename collision: "${oldName}" → "${newName}" (conflicts with "${original}")`
-    )
-    return true
-  }
-  collisionTracker.set(key, oldName)
-  return false
+  const warning = collisionTracker.track(destPath, oldName, newName)
+  if (warning) stats.warnings.push(warning)
+  return warning !== null
 }
 
 /**
@@ -564,18 +602,8 @@ function copyFilesWithProcessor(processor, srcPath, destPath, dirName, rootDir =
     }
 
     // Apply platform-specific filtering
-    if (currentRoot === 'fonts' && processor.allowedFontFormats) {
-      if (!hasAllowedExtension(item, processor.allowedFontFormats)) {
-        return
-      }
-    } else if (currentRoot === 'images') {
-      if (processor.excludedImageFormats && isExcluded(item, processor.excludedImageFormats)) {
-        return
-      }
-    } else if (currentRoot === 'icons' && processor.allowedIconFormats) {
-      if (!hasAllowedExtension(item, processor.allowedIconFormats)) {
-        return
-      }
+    if (!keepsFile(processor, currentRoot, item)) {
+      return
     }
 
     // A Git LFS pointer is not the file. Fail, unless told to copy it.

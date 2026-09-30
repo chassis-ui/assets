@@ -129,11 +129,10 @@ class AssetAnalyzer {
 
     // Parse dist path: dist/[platform]/[app]/[brand]/...
     const relativePath = path.relative(this.distDir, filePath)
-    const pathParts = relativePath.split(path.sep)
-
-    if (pathParts.length < 1) {
-      return true // Root level, include
+    if (relativePath === '') {
+      return true // The output folder itself
     }
+    const pathParts = relativePath.split(path.sep)
 
     // Check platform filter
     const platform = pathParts[0]

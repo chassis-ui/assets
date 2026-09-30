@@ -40,6 +40,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The analyzer finds files with the same content. It kept one file per hash and found none.
 - The validator prints each result once, and exits with 1 when a check fails.
+- `*~`, `*.swp`, `*.tmp` and `*.temp` files in `source/` are left out of the build, as the
+  ignore list says. The wildcard escaped its own dot and matched none of them. No such file
+  is in `source/`, so the output does not change.
+- `pnpm assets:analyze --platform <name>` counts the files of that platform in `dist/`. It
+  left out the whole of `dist/`.
+- `ChassisAssets.getStats()` and `validate()` read `source/` and `dist/` from the `cwd` and
+  `out` of the instance, not from the working directory. `getAssetInventory()` sorts a file
+  by its type folder, as the build does, so an SVG under `images/logo/` is an image.
+
+### Tests
+
+- The tests run with Vitest on a fixture in `test/fixtures/` and compare a build of it with
+  `test/golden/`. They need no Git LFS files and never write to `dist/`. `pnpm test:golden`
+  writes the baseline again. The scripts `assets:test:build`, `assets:test:analyze` and
+  `assets:test:api` are gone; `assets:test` runs `pnpm test`.
 
 ## [0.1.8] - 2026-07-14
 
