@@ -28,13 +28,13 @@ The Chassis Assets build system transforms source assets into platform-specific 
 Run the following commands from your project root:
 
 ```bash
-# Build all distributions (cleans dist first)
+# Build all distributions
 pnpm assets
 
-# Build without cleaning (keeps existing dist files)
-pnpm assets --no-clean
+# Show what a build would write, without writing
+pnpm assets --dry-run
 
-# Clean build output manually
+# Remove the build output
 pnpm clean
 
 # Run validation tests
@@ -81,35 +81,30 @@ pnpm assets --platform ios android
 **Combined Filters:**
 
 ```bash
-# Specific brand + platform (preserves existing dist files)
+# Specific brand + platform
 pnpm assets --brand chassis --platform web
 
-# All three filters (preserves existing dist files)
+# All three filters
 pnpm assets --brand chassis --app docs --platform web
-
-# Force clean with filters
-pnpm assets --clean --brand chassis --platform web
 ```
 
-**Note:** Using `--brand`, `--app`, or `--platform` filters preserves existing dist/ files by default, allowing you to build different combinations without losing previous work.
+**Note:** A filter value that the configuration does not have fails the build, and so do filters that select no combination.
 
 ### Clean Build
 
-The build system automatically determines whether to clean the `dist` directory:
+A build writes one folder per brand, app and platform, such as `dist/web/docs/chassis`. It removes the files of that folder that it did not write, and leaves the other folders alone. So a filtered build keeps the output of the combinations it does not build, and no folder holds files of an earlier build.
+
+The options `--clean` and `--no-clean` of earlier versions are gone.
 
 ```bash
-# Clean dist before full build (default behavior)
+# Build everything
 pnpm assets
 
-# Keep existing dist for full build
-pnpm assets --no-clean
-
-# Filtered build (preserves existing dist files)
+# Build one combination, and keep the others as they are
 pnpm assets --brand chassis --platform web
 
-# Force clean even with filters
-pnpm assets --clean --brand chassis --platform web
-
+# Start from nothing
+pnpm clean && pnpm assets
 ```
 
 ### Analyze Assets
@@ -799,7 +794,7 @@ Follow these best practices when configuring and using the build system:
 - Build selectively: `pnpm assets --brand chassis --platform web`
 - Add more platforms without rebuilding: `pnpm assets --platform ios`
 - Test with single brand/platform first before full build
-- Use `--clean` for fresh builds when needed
+- Use `--dry-run` to see what a build would write
 
 **❌ Don't:**
 

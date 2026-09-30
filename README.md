@@ -53,7 +53,7 @@ Copies and processes design assets from the `source` directory to create platfor
 - **Multi-brand support**: Assets for different brands (chassis, example, etc.)
 - **Multi-platform distribution**: Web, iOS, and Android formats
 - **File naming conventions**: Automatic renaming for platform requirements (e.g., snake_case for Android)
-- **Collision detection**: Warns about filename conflicts during renaming
+- **Collision detection**: Fails when two files would get one name, before a file is written
 - **Asset overrides**: Brand-specific assets override default assets when available
 - **System file filtering**: Automatically excludes .DS_Store and other system files
 - **Empty directory cleanup**: Removes empty folders after filtering
@@ -94,9 +94,12 @@ Manage, analyze, and validate your asset distribution:
 ```shell
 # Development workflow
 pnpm test                   # Run the test suites
+pnpm assets:test:unit       # Run the unit tests of the build only
+pnpm assets --dry-run       # Show what a build would write, without writing
 pnpm assets:analyze         # Analyze asset distribution (supports filtering)
 pnpm assets:validate        # Validate distribution integrity
-pnpm assets:lint            # Lint the build scripts
+pnpm assets:lint            # Lint the build scripts and the tests
+pnpm assets:typecheck       # Type-check the build scripts
 pnpm lint:prettier          # Check formatting across the repository
 pnpm check                  # Type-check the site, then audit the dependencies
 

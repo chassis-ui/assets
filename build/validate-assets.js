@@ -731,6 +731,8 @@ class DistValidator {
 
     for (const item of items) {
       if (shouldIgnoreFile(item)) continue
+      // The output manifest of the new build has one name on every platform
+      if (item === 'chassis-assets.json') continue
 
       const itemPath = path.join(dirPath, item)
       const stat = fs.statSync(itemPath)
