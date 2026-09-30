@@ -1,31 +1,18 @@
 /**
  * @file rules/ios.js
  * @description The files of the iOS output. Until session 2.5 of the roadmap writes the
- *              Swift package, they are the loose files of 0.1.8.
+ *              Swift package, they are the loose files of 0.1.8, and the licenses of the
+ *              fonts.
  * @copyright Copyright (c) 2026 Ozgur Gunes
  * @license MIT
  */
 
 import { posix } from 'node:path'
-import { copyOf, hasExtension, legacyCase, legacyParts } from './legacy.js'
+import { copyOf, includeNative, isNative, legacyCase, legacyParts, licenses } from './legacy.js'
 
-/** @import { Asset, PlannedFile, SourceFile } from '../types.js' */
+/** @import { Asset, Job, PlannedFile, SourceFile } from '../types.js' */
 
-const FONT_FILES = ['.ttf', '.otf']
 const ICON_FILES = ['.svg', '.pdf']
-const NO_IMAGE_FILES = ['.webp']
-
-/**
- * Whether iOS takes a file.
- * @param {SourceFile} file
- * @returns {boolean}
- */
-function takes(file) {
-  if (file.type === 'fonts') return hasExtension(file, FONT_FILES)
-  if (file.type === 'icons') return hasExtension(file, ICON_FILES)
-  if (file.type === 'images') return !hasExtension(file, NO_IMAGE_FILES)
-  return false
-}
 
 /**
  * The name of a file on iOS: lowercase with underscores, the resolution indicator and the
@@ -35,15 +22,16 @@ function takes(file) {
  */
 function nameOf(file) {
   const { base, resolution, extension } = legacyParts(posix.basename(file.path))
-  return legacyCase(base, '_') + resolution + extension
+  return legacyCase(base) + resolution + extension
 }
 
 /**
  * @param {Asset} asset
+ * @param {Job} job
  * @returns {boolean}
  */
-export function include(asset) {
-  return asset.files.some(takes)
+export function include(asset, job) {
+  return includeNative(asset, job, ICON_FILES)
 }
 
 /**
@@ -51,12 +39,15 @@ export function include(asset) {
  * @returns {PlannedFile[]}
  */
 export function files(asset) {
-  return asset.files.filter(takes).map((file) => copyOf(file, nameOf(file)))
+  return asset.files
+    .filter((file) => isNative(file, ICON_FILES))
+    .map((file) => copyOf(file, nameOf(file)))
 }
 
 /**
+ * @param {Asset[]} assets
  * @returns {PlannedFile[]}
  */
-export function extras() {
-  return []
+export function extras(assets) {
+  return licenses(assets)
 }

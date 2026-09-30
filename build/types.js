@@ -58,16 +58,98 @@
  * @property {number} bytes
  * @property {number} [width] - The width of an image, in pixels.
  * @property {number} [height] - The height of an image, in pixels.
+ * @property {string} [sha256] - The hash of the content, when the lint asked for it.
  */
 
 /**
- * What a layer overrides: the files of one name in one folder of one type.
+ * What is wrong with the source, as the lint lists it.
+ * @typedef {Object} Problem
+ * @property {string} rule - The rule that found it: `names`, `one-master`.
+ * @property {string} file - The path of the file or the folder that it is about.
+ * @property {string} message - What is wrong, and what to do. It follows the path.
+ */
+
+/**
+ * A source layer, as it is read.
+ * @typedef {Object} Layer
+ * @property {string} path - The folder of the layer: `source/default/docs`.
+ * @property {SourceFile[]} files - The files of its type folders, without the manifests
+ *   and the files of the system, sorted by path.
+ * @property {ImageRuleEntry[]} rules - The rules of its image manifest.
+ * @property {FontFamily[]} families - The families of its font manifest.
+ * @property {Problem[]} problems - What is wrong with the layer.
+ */
+
+/**
+ * The layers of one brand and one app, as the jobs of that brand and app read them.
+ * @typedef {Object} Stack
+ * @property {string} brand
+ * @property {string} app
+ * @property {Layer[]} layers - The layers that exist, in override order.
+ * @property {Problem[]} problems - The layers that are missing and that every app needs.
+ */
+
+/**
+ * What was read of `source/`, for the lint.
+ * @typedef {Object} Source
+ * @property {Config} config
+ * @property {Record<string, SourceEntry[]>} folders - The entries of `source/` and of
+ *   every folder of a brand, by the path of the folder.
+ * @property {Stack[]} stacks - One per brand and app of the configuration.
+ */
+
+/**
+ * What the image manifest says of an image: the keys of every rule that matches it.
+ * @typedef {Object} ImageRule
+ * @property {number[]} [densities] - The densities to write. That of the master without.
+ * @property {Record<string, number>} [sizes] - Narrower renditions: a name, and a width
+ *   in pixels at 1x.
+ * @property {string[]} [formats] - The formats to write. That of the master without.
+ * @property {Record<string, number>} [quality] - The quality of a format, 1 to 100.
+ * @property {boolean} [palette] - Lets the optimization reduce a PNG file to a palette.
+ * @property {number} [budget] - The largest size in bytes of a file of the image.
+ * @property {boolean} [committed] - The variants are committed, and the build copies them.
+ * @property {Platform[]} [platforms] - The platforms that get the image.
+ * @property {string} [name] - The name of the image in the native outputs.
+ */
+
+/**
+ * A rule of an image manifest, as it is in the file.
+ * @typedef {ImageRule & { match: string, file: string }} ImageRuleEntry
+ */
+
+/**
+ * A face of a font family.
+ * @typedef {Object} FontFace
+ * @property {string} file - The file of the face, in `fonts/`: `text-normal.otf`.
+ * @property {number} weight - 100 to 900.
+ * @property {'normal' | 'italic'} style
+ */
+
+/**
+ * A family of the font manifest.
+ * @typedef {Object} FontFamily
+ * @property {string} id - The name in the native outputs, and what a layer overrides.
+ * @property {string} family - The family name in the stylesheet: `Inter`.
+ * @property {string} license - The license file, from `fonts/`: `licenses/inter.txt`.
+ * @property {string[]} [subset] - The Unicode ranges that a subset keeps.
+ * @property {FontFace[]} faces
+ * @property {string} manifest - The path of the manifest that has the family.
+ */
+
+/**
+ * What a layer overrides: the files of one name in one folder of one type, or the files
+ * of one font family.
  * @typedef {Object} Asset
  * @property {AssetType} type
- * @property {string} id - Type, folder and name: `images/home/lego-chassis`.
+ * @property {string} id - Type, folder and name: `images/home/lego-chassis`. For a font
+ *   family `fonts` and its id: `fonts/text`.
  * @property {string} folder
  * @property {string} name
- * @property {SourceFile[]} files - The files of the last layer that has the asset.
+ * @property {SourceFile[]} files - The files of the last layer that has the asset. For a
+ *   font family its faces in the order of the manifest, then its license.
+ * @property {ImageRule} [rule] - The rule of an image, when a rule matches it.
+ * @property {FontFamily} [family] - The family of the font manifest.
  */
 
 /**

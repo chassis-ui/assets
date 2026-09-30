@@ -2,19 +2,17 @@
  * @file rules/android.js
  * @description The files of the Android output. Until session 2.5 of the roadmap writes
  *              the `res/` tree, they are the files of 0.1.8, with the density folders
- *              below the folder of the image.
+ *              below the folder of the image, and the licenses of the fonts.
  * @copyright Copyright (c) 2026 Ozgur Gunes
  * @license MIT
  */
 
 import { posix } from 'node:path'
-import { copyOf, hasExtension, legacyCase, legacyParts } from './legacy.js'
+import { copyOf, includeNative, isNative, legacyCase, legacyParts, licenses } from './legacy.js'
 
-/** @import { Asset, PlannedFile, SourceFile } from '../types.js' */
+/** @import { Asset, Job, PlannedFile, SourceFile } from '../types.js' */
 
-const FONT_FILES = ['.ttf', '.otf']
 const ICON_FILES = ['.svg']
-const NO_IMAGE_FILES = ['.webp']
 
 /** @type {Record<string, string>} */
 const DENSITY_FOLDERS = {
@@ -23,18 +21,6 @@ const DENSITY_FOLDERS = {
   '@2x': 'drawable-xhdpi',
   '@3x': 'drawable-xxhdpi',
   '@4x': 'drawable-xxxhdpi'
-}
-
-/**
- * Whether Android takes a file.
- * @param {SourceFile} file
- * @returns {boolean}
- */
-function takes(file) {
-  if (file.type === 'fonts') return hasExtension(file, FONT_FILES)
-  if (file.type === 'icons') return hasExtension(file, ICON_FILES)
-  if (file.type === 'images') return !hasExtension(file, NO_IMAGE_FILES)
-  return false
 }
 
 /**
@@ -56,7 +42,7 @@ function isIcon(file) {
  */
 function planned(file) {
   const { base, resolution, extension } = legacyParts(posix.basename(file.path))
-  const name = legacyCase(base, '_')
+  const name = legacyCase(base)
   if (file.type === 'images') {
     const folder = resolution ? (DENSITY_FOLDERS[resolution] ?? 'drawable-mdpi') : 'drawable'
     return copyOf(file, name + extension, folder)
@@ -67,10 +53,11 @@ function planned(file) {
 
 /**
  * @param {Asset} asset
+ * @param {Job} job
  * @returns {boolean}
  */
-export function include(asset) {
-  return asset.files.some(takes)
+export function include(asset, job) {
+  return includeNative(asset, job, ICON_FILES)
 }
 
 /**
@@ -78,12 +65,13 @@ export function include(asset) {
  * @returns {PlannedFile[]}
  */
 export function files(asset) {
-  return asset.files.filter(takes).map(planned)
+  return asset.files.filter((file) => isNative(file, ICON_FILES)).map(planned)
 }
 
 /**
+ * @param {Asset[]} assets
  * @returns {PlannedFile[]}
  */
-export function extras() {
-  return []
+export function extras(assets) {
+  return licenses(assets)
 }

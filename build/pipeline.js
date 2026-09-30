@@ -11,8 +11,8 @@ import { mkdir, readdir, readFile, rm, rmdir, writeFile } from 'node:fs/promises
 import path from 'node:path'
 import { cacheKey, sha256 } from './cache.js'
 import { mapLimit } from './concurrency.js'
-import { BuildError } from './errors.js'
-import { isLfsPointer, lfsPointerError } from './inventory.js'
+import { BuildError, errorOf } from './errors.js'
+import { isLfsPointer, lfsPointerProblem } from './inventory.js'
 import { MANIFEST_FILE, byCodeUnit } from './names.js'
 import { jobName } from './plan.js'
 
@@ -121,7 +121,7 @@ export async function runJob(job, files, options = {}) {
    */
   const readSource = async (file) => {
     const content = await readFile(path.join(root, file.source))
-    if (isLfsPointer(content)) throw lfsPointerError(file.source)
+    if (isLfsPointer(content)) throw errorOf(lfsPointerProblem(file.source))
     return content
   }
 

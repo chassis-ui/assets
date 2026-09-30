@@ -100,11 +100,6 @@ jobs:
       - name: Test
         run: pnpm test
 
-      # Until the source moves in session 2.2 of the roadmap: the new build writes the
-      # files of the build of 0.1.8, byte for byte
-      - name: Compare with the build of 0.1.8
-        run: pnpm assets:compare
-
       - name: Build all assets
         run: pnpm assets
 

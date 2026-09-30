@@ -1,16 +1,21 @@
 /**
  * @file inventory.js
- * @description Walks the source layers of a job and returns its assets: for each, the
- *              files of the last layer that has it. The reading is passed in, so that a
- *              test gives it a tree in memory.
+ * @description Reads the source layers and returns the assets of a job: for each, the
+ *              files of the last layer that has it, with the rule of an image and the
+ *              family of a font. The reading is passed in, so that a test gives it a
+ *              tree in memory.
  * @copyright Copyright (c) 2026 Ozgur Gunes
  * @license MIT
  */
 
+import { createHash } from 'node:crypto'
 import { open, readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
+import { compose } from './assets.js'
 import { mapLimit } from './concurrency.js'
-import { BuildError } from './errors.js'
+import { BuildError, errorOf } from './errors.js'
+import { FONTS_MANIFEST, checkFontsManifest } from './manifests/fonts.js'
+import { IMAGES_MANIFEST, checkImagesManifest } from './manifests/images.js'
 import {
   ASSET_TYPES,
   DEFAULT_LAYER,
@@ -21,8 +26,12 @@ import {
   isSystemFile,
   parseFileName
 } from './names.js'
+import { layers as layersOf } from './plan.js'
 
-/** @import { Asset, AssetType, SourceFile, SourceReader } from './types.js' */
+/**
+ * @import { Asset, AssetType, Config, Layer, Problem, Source, SourceEntry, SourceFile,
+ *   SourceReader } from './types.js'
+ */
 
 /** How many files are open at a time. */
 const OPEN_FILES = 32
@@ -31,6 +40,12 @@ const OPEN_FILES = 32
 const HEADER_BYTES = 512 * 1024
 
 const LFS_POINTER = 'version https://git-lfs.github.com/spec/'
+
+/** The manifest of a type folder, and what checks it. */
+const MANIFESTS = {
+  images: { name: IMAGES_MANIFEST, check: checkImagesManifest, key: 'rules' },
+  fonts: { name: FONTS_MANIFEST, check: checkFontsManifest, key: 'families' }
+}
 
 /**
  * Whether the content of a file is a Git LFS pointer, and not the file it stands for.
@@ -43,15 +58,16 @@ export function isLfsPointer(content) {
 }
 
 /**
- * The error of a file that is a Git LFS pointer.
+ * What is wrong with a file that is a Git LFS pointer.
  * @param {string} file - The path of the file, from the root.
- * @returns {BuildError}
+ * @returns {Problem}
  */
-export function lfsPointerError(file) {
-  return new BuildError(
-    `${file}: is a Git LFS pointer, not the file. Install Git LFS and run \`git lfs pull\``,
-    { file, rule: 'real-files' }
-  )
+export function lfsPointerProblem(file) {
+  return {
+    rule: 'real-files',
+    file,
+    message: 'is a Git LFS pointer, not the file. Install Git LFS and run `git lfs pull`'
+  }
 }
 
 /**
@@ -98,7 +114,6 @@ export function fsReader(root = process.cwd()) {
 
     async size(file) {
       const header = await readHeader(path.join(root, file), HEADER_BYTES)
-      if (isLfsPointer(header)) throw lfsPointerError(file)
       const { imageSize } = await import('image-size')
       try {
         const { width, height } = imageSize(header)
@@ -120,14 +135,14 @@ export function fsReader(root = process.cwd()) {
  * @param {string} layer
  * @param {AssetType} type
  * @param {string} [folder] - The folders below the type folder.
- * @returns {Promise<SourceFile[]>}
+ * @returns {Promise<SourceFile[]>} Sorted by path.
  */
 async function walk(reader, layer, type, folder = '') {
   const here = [layer, type, folder].filter(Boolean).join('/')
   const entries = (await reader.list(here)) ?? []
   /** @type {SourceFile[]} */
   const files = []
-  for (const entry of entries) {
+  for (const entry of [...entries].sort((a, b) => byCodeUnit(a.name, b.name))) {
     if (isSystemFile(entry.name)) continue
     if (entry.directory) {
       const below = folder ? `${folder}/${entry.name}` : entry.name
@@ -147,55 +162,113 @@ async function walk(reader, layer, type, folder = '') {
 }
 
 /**
- * Reads a layer: the files of its type folders.
+ * Reads the manifest of a type folder of a layer, and takes it out of the files.
  * @param {SourceReader} reader
+ * @param {SourceFile[]} files - The files of the layer. The manifest is removed.
  * @param {string} layer
- * @returns {Promise<SourceFile[] | null>} `null` when the layer does not exist.
- * @throws {BuildError} When the layer holds something outside a type folder.
+ * @param {'images' | 'fonts'} type
+ * @returns {Promise<{ entries: any[], problems: Problem[] }>} The rules or the families
+ *   of the manifest. Empty without a manifest, and when it is wrong.
  */
-async function readLayer(reader, layer) {
+async function readManifest(reader, files, layer, type) {
+  const { name, check } = MANIFESTS[type]
+  const file = `${layer}/${type}/${name}`
+  const index = files.findIndex((entry) => entry.path === file)
+  if (index === -1) return { entries: [], problems: [] }
+  files.splice(index, 1)
+
+  try {
+    const text = Buffer.from(await reader.read(file)).toString('utf8')
+    let raw
+    try {
+      raw = JSON.parse(text)
+    } catch (error) {
+      throw new BuildError(`${file}: is not JSON (${error.message})`, { file, rule: 'manifest' })
+    }
+    return { entries: check(raw, file), problems: [] }
+  } catch (error) {
+    if (!(error instanceof BuildError)) throw error
+    const message = error.message.replace(`${file}: `, '')
+    return { entries: [], problems: [{ rule: 'manifest', file, message }] }
+  }
+}
+
+/**
+ * Reads a layer: the files of its type folders, the sizes of its images, and its
+ * manifests. What is wrong with the layer is returned, not thrown, so that the lint can
+ * list everything.
+ * @param {SourceReader} reader
+ * @param {string} layer - The folder of the layer: `source/default/docs`.
+ * @param {Object} [options]
+ * @param {boolean} [options.content] - Reads every file, for its hash and to see whether
+ *   it is a Git LFS pointer. The lint asks for it.
+ * @returns {Promise<Layer | null>} `null` when the layer does not exist.
+ */
+export async function readLayer(reader, layer, { content = false } = {}) {
   const entries = await reader.list(layer)
   if (entries === null) return null
 
   /** @type {SourceFile[]} */
   const files = []
-  for (const entry of entries) {
+  /** @type {Problem[]} */
+  const problems = []
+  for (const entry of [...entries].sort((a, b) => byCodeUnit(a.name, b.name))) {
     if (isSystemFile(entry.name)) continue
     const type = ASSET_TYPES.find((name) => name === entry.name)
-    if (!type || !entry.directory) {
-      throw new BuildError(
-        `${layer}/${entry.name}: is outside a type folder. ` +
-          `A layer holds the folders ${ASSET_TYPES.join(', ')}`,
-        { file: `${layer}/${entry.name}`, rule: 'known-types' }
-      )
+    if (type && entry.directory) {
+      files.push(...(await walk(reader, layer, type)))
+    } else {
+      problems.push({
+        rule: 'known-types',
+        file: `${layer}/${entry.name}`,
+        message: `is outside a type folder. A layer holds the folders ${ASSET_TYPES.join(', ')}`
+      })
     }
-    files.push(...(await walk(reader, layer, type)))
   }
-  return files
-}
 
-/**
- * Reads the size of every image of a list, into the files.
- * @param {SourceReader} reader
- * @param {SourceFile[]} files
- * @throws {BuildError} When a raster image does not say its size.
- */
-async function readSizes(reader, files) {
-  const images = files.filter(
+  const images = await readManifest(reader, files, layer, 'images')
+  const fonts = await readManifest(reader, files, layer, 'fonts')
+  problems.push(...images.problems, ...fonts.problems)
+
+  /** @type {Set<string>} */
+  const pointers = new Set()
+  if (content) {
+    await mapLimit(files, OPEN_FILES, async (file) => {
+      const bytes = await reader.read(file.path)
+      if (isLfsPointer(bytes)) pointers.add(file.path)
+      else file.sha256 = createHash('sha256').update(bytes).digest('hex')
+    })
+  }
+
+  const sized = files.filter(
     (file) => file.type === 'images' && IMAGE_EXTENSIONS.includes(file.extension.toLowerCase())
   )
-  await mapLimit(images, OPEN_FILES, async (file) => {
+  await mapLimit(sized, OPEN_FILES, async (file) => {
+    if (pointers.has(file.path)) return
     const size = await reader.size(file.path)
     if (size) {
       file.width = size.width
       file.height = size.height
     } else if (file.extension.toLowerCase() !== '.svg') {
-      throw new BuildError(`${file.path}: is not an image whose size can be read`, {
-        file: file.path,
-        rule: 'real-files'
-      })
+      if (file.bytes <= 1024 && isLfsPointer(await reader.read(file.path))) pointers.add(file.path)
+      else {
+        problems.push({
+          rule: 'real-files',
+          file: file.path,
+          message: 'is not an image whose size can be read'
+        })
+      }
     }
   })
+  problems.push(...[...pointers].map(lfsPointerProblem))
+
+  return {
+    path: layer,
+    files,
+    rules: images.entries,
+    families: fonts.entries,
+    problems: problems.sort((a, b) => byCodeUnit(a.file, b.file))
+  }
 }
 
 /**
@@ -209,44 +282,86 @@ function isRequired(layer) {
 }
 
 /**
- * Reads the assets of a job. A later layer overrides an asset of an earlier one, with
- * every file of it: the job takes the files of the last layer that has the asset.
+ * Reads the layers of a job that exist.
  * @param {string[]} layers - The source folders in override order, as a job has them.
- * @param {SourceReader} [reader] - The reader of the file system without it.
- * @returns {Promise<Asset[]>} Sorted by id, and the files of each by path.
- * @throws {BuildError} When the layer of the app in `default` is missing, when a layer
- *   holds something outside a type folder, or when an image cannot be read.
+ * @param {SourceReader} reader
+ * @param {Object} [options] - As `readLayer`.
+ * @param {(layer: string) => Promise<Layer | null>} [options.read] - What reads a layer.
+ *   A caller that reads many jobs passes one that remembers.
+ * @param {boolean} [options.content]
+ * @returns {Promise<{ layers: Layer[], problems: Problem[] }>} `problems` has the layers
+ *   that are missing and that every app needs.
  */
-export async function readInventory(layers, reader = fsReader()) {
-  /** @type {Map<string, Asset>} */
-  const assets = new Map()
+export async function readLayers(layers, reader, options = {}) {
+  const read = options.read ?? ((layer) => readLayer(reader, layer, options))
+  /** @type {Layer[]} */
+  const found = []
+  /** @type {Problem[]} */
+  const problems = []
   for (const layer of layers) {
-    const files = await readLayer(reader, layer)
-    if (files === null) {
-      if (!isRequired(layer)) continue
-      throw new BuildError(`${layer}/: is missing. Every app has a folder in the first layer`, {
-        file: layer,
-        rule: 'layers'
+    const data = await read(layer)
+    if (data) found.push(data)
+    else if (isRequired(layer)) {
+      problems.push({
+        rule: 'layers',
+        file: `${layer}/`,
+        message: 'is missing. Every app has a folder in the first layer'
       })
     }
+  }
+  return { layers: found, problems }
+}
 
-    /** @type {Map<string, Asset>} */
-    const ofLayer = new Map()
-    for (const file of files) {
-      const { type, folder, name } = file
-      const id = [type, folder, name].filter(Boolean).join('/')
-      if (!ofLayer.has(id)) ofLayer.set(id, { type, id, folder, name, files: [] })
-      ofLayer.get(id).files.push(file)
-    }
-    for (const [id, asset] of ofLayer) assets.set(id, asset)
+/**
+ * Reads the assets of a job.
+ * @param {string[]} layers - The source folders in override order, as a job has them.
+ * @param {SourceReader} [reader] - The reader of the file system without it.
+ * @returns {Promise<Asset[]>} Sorted by id.
+ * @throws {BuildError} The first thing that is wrong: a layer that every app needs is
+ *   missing, a layer holds something outside a type folder, a manifest is wrong or names
+ *   a file that does not exist, a file is a Git LFS pointer, or an image cannot be read.
+ */
+export async function readInventory(layers, reader = fsReader()) {
+  const read = await readLayers(layers, reader)
+  const { assets, problems } = compose(read.layers)
+  const [first] = [...read.problems, ...problems]
+  if (first) throw errorOf(first)
+  return assets
+}
+
+/**
+ * Reads the whole of `source/` for the lint: the layers of every brand and app of the
+ * configuration, each once and with the hash of every file, and the folders of `source/`.
+ * @param {Config} config
+ * @param {SourceReader} [reader] - The reader of the file system without it.
+ * @returns {Promise<Source>}
+ */
+export async function readSource(config, reader = fsReader()) {
+  /** @type {Map<string, Promise<Layer | null>>} */
+  const layers = new Map()
+  const read = (/** @type {string} */ layer) => {
+    if (!layers.has(layer)) layers.set(layer, readLayer(reader, layer, { content: true }))
+    return layers.get(layer)
   }
 
-  // Sorted here, so that the order does not depend on the order of the reader
-  const taken = [...assets.values()].sort((a, b) => byCodeUnit(a.id, b.id))
-  for (const asset of taken) asset.files.sort((a, b) => byCodeUnit(a.path, b.path))
-  await readSizes(
-    reader,
-    taken.flatMap((asset) => asset.files)
-  )
-  return taken
+  const stacks = []
+  for (const brand of config.brands) {
+    for (const app of Object.keys(config.apps)) {
+      const found = await readLayers(layersOf(brand, app), reader, { read })
+      stacks.push({ brand, app, ...found })
+    }
+  }
+
+  /** @type {Record<string, SourceEntry[]>} */
+  const folders = {}
+  const list = async (/** @type {string} */ folder) =>
+    ((await reader.list(folder)) ?? [])
+      .filter((entry) => !isSystemFile(entry.name))
+      .sort((a, b) => byCodeUnit(a.name, b.name))
+  folders[SOURCE] = await list(SOURCE)
+  for (const entry of folders[SOURCE]) {
+    if (!entry.directory || ![DEFAULT_LAYER, ...config.brands].includes(entry.name)) continue
+    folders[`${SOURCE}/${entry.name}`] = await list(`${SOURCE}/${entry.name}`)
+  }
+  return { config, folders, stacks }
 }

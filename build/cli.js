@@ -13,8 +13,9 @@ import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { readVersion } from './config.js'
 import { BuildError } from './errors.js'
-import { build, plan } from './index.js'
-import { createLogger } from './logger.js'
+import { build, lint, plan, verify } from './index.js'
+import { CONTRACT_JOB } from './contract.js'
+import { createLogger, formatDuration } from './logger.js'
 import { jobName } from './plan.js'
 
 /** @import { Logger } from './logger.js' */
@@ -26,16 +27,19 @@ Usage: node build/cli.js <command> [options]
 
 Commands:
   build                     Build the jobs: one per brand, app and platform
+  lint                      Check source/ against the source contract
+  verify                    Build into a scratch folder, and check that the docs output
+                            holds every file that the sites read
 
 Options:
-  --brand <brands...>       Take these brands only
-  --app <apps...>           Take these apps only
-  --platform <platforms...> Take these platforms only
-  --out <dir>               Root of the output (default: dist)
+  --brand <brands...>       Take these brands only (build, verify)
+  --app <apps...>           Take these apps only (build, verify)
+  --platform <platforms...> Take these platforms only (build, verify)
+  --out <dir>               Root of the output (build: dist, verify: a scratch folder)
   --config <file>           JSON file to read the build configuration from, instead of
                             chassis.build in package.json
-  --optimize, --no-optimize Turn the optimization on or off for every job
-  --dry-run                 Print the jobs and their files, and write nothing
+  --optimize, --no-optimize Turn the optimization on or off for every job (build, verify)
+  --dry-run                 Print the jobs and their files, and write nothing (build)
   --quiet                   Print errors only
   --help, -h                Show this help
   --version, -v             Show the version
@@ -47,9 +51,11 @@ Examples:
   node build/cli.js build
   node build/cli.js build --brand chassis --app docs
   node build/cli.js build --platform ios android --dry-run
+  node build/cli.js lint
+  node build/cli.js verify --app docs
 `
 
-const COMMANDS = ['build']
+const COMMANDS = ['build', 'lint', 'verify']
 const FILTERS = ['brand', 'app', 'platform']
 
 /** What 0.1.8 took and this build does not, with what to do. */
@@ -198,6 +204,58 @@ async function runBuild(options, logger, root) {
 }
 
 /**
+ * Runs the command `lint`.
+ * @param {CliOptions} options
+ * @param {Logger} logger
+ * @param {string} root
+ * @returns {Promise<boolean>} Whether the source has no problem.
+ */
+async function runLint(options, logger, root) {
+  const startTime = Date.now()
+  const { ok, files, problems } = await lint({ root, config: options.config })
+  logger.problems(problems)
+  if (ok) logger.info(`\n✅ ${files} files of source/ follow the source contract`)
+  else logger.error(`${problems.length} problem(s) in ${files} files of source/`)
+  logger.info(`⏱️  Completed in ${formatDuration(Date.now() - startTime)}\n`)
+  return ok
+}
+
+/**
+ * Runs the command `verify`.
+ * @param {CliOptions} options
+ * @param {Logger} logger
+ * @param {string} root
+ * @returns {Promise<boolean>} Whether every job succeeded and the contract holds.
+ */
+async function runVerify(options, logger, root) {
+  const { brands, apps, platforms, out, config, optimize } = options
+  const startTime = Date.now()
+  const result = await verify({
+    ...{ root, brands, apps, platforms, out, config, optimize },
+    onJobStart(job, index, total) {
+      if (index === 0) logger.header(`🔎 Verifying ${total} job(s)...`)
+      logger.progress(index + 1, total, jobName(job))
+    },
+    onJobEnd(report) {
+      if (report.errors.length === 0) logger.job(report)
+      for (const error of report.errors) logger.error(`Failed: ${jobName(report)}`, error)
+    }
+  })
+
+  const name = jobName(CONTRACT_JOB)
+  const { checked, missing } = result.contract
+  if (!checked) logger.info(`\nThe consumer contract was not checked: ${name} was not built`)
+  else if (missing.length === 0) logger.info(`\n✔︎ ${name} holds the files of the consumer contract`)
+  else {
+    logger.error(`${name} lacks ${missing.length} file(s) of the consumer contract`)
+    for (const { path, reader } of missing) logger.error(`${path}, read by ${reader}`, null, false)
+  }
+  const failed = result.jobs.filter((report) => report.errors.length > 0).length
+  logger.summary(result.jobs.length - failed, failed, startTime)
+  return result.ok
+}
+
+/**
  * Runs the command line.
  * @param {string[]} [args] - The arguments after the script name.
  * @param {Object} [context]
@@ -225,7 +283,8 @@ export async function run(args = process.argv.slice(2), context = {}) {
         rule: 'cli'
       })
     }
-    return (await runBuild(options, logger, root)) ? 0 : 1
+    const commands = { build: runBuild, lint: runLint, verify: runVerify }
+    return (await commands[options.command](options, logger, root)) ? 0 : 1
   } catch (error) {
     logger.error(error instanceof BuildError ? 'Build failed' : 'Build failed unexpectedly', error)
     return 1

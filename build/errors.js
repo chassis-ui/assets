@@ -6,6 +6,8 @@
  * @license MIT
  */
 
+/** @import { Problem } from './types.js' */
+
 /**
  * An error that names what it is about. The command line prints it without a stack trace.
  */
@@ -23,4 +25,13 @@ export class BuildError extends Error {
     this.file = file
     this.rule = rule
   }
+}
+
+/**
+ * Makes the error of a problem.
+ * @param {Problem} problem
+ * @returns {BuildError}
+ */
+export function errorOf({ rule, file, message }) {
+  return new BuildError(`${file}: ${message}`, { file, rule })
 }

@@ -50,12 +50,20 @@ export const LFS_POINTER =
 
 /**
  * A reader of a tree in memory.
- * @param {Record<string, { width?: number, height?: number, bytes?: number } | null>} tree -
- *   The files by their path from the root. A size of an image is given with the file.
+ * @param {Record<string, string | object | { width?: number, height?: number,
+ *   bytes?: number, content?: string }>} tree - The files by their path from the root. A
+ *   file is its content as text, a manifest as an object with `version`, or an object
+ *   with the size of an image.
  * @returns {SourceReader}
  */
 export function memoryReader(tree) {
   const paths = Object.keys(tree)
+  const contentOf = (/** @type {string} */ file) => {
+    const value = tree[file]
+    if (typeof value === 'string') return value
+    if ('version' in value) return JSON.stringify(value)
+    return value.content ?? `the content of ${file}`
+  }
   return {
     async list(folder) {
       const below = paths.filter((file) => file.startsWith(`${folder}/`))
@@ -63,16 +71,18 @@ export function memoryReader(tree) {
       const names = [...new Set(below.map((file) => file.slice(folder.length + 1).split('/')[0]))]
       // Not sorted: the inventory has to give one order whatever the reader gives
       return names.reverse().map((name) => {
-        const directory = !paths.includes(`${folder}/${name}`)
-        return { name, directory, bytes: directory ? 0 : (tree[`${folder}/${name}`]?.bytes ?? 1) }
+        const file = `${folder}/${name}`
+        const directory = !paths.includes(file)
+        const bytes = directory ? 0 : (tree[file].bytes ?? contentOf(file).length)
+        return { name, directory, bytes }
       })
     },
     async size(file) {
-      const { width, height } = tree[file] ?? {}
+      const { width, height } = /** @type {any} */ (tree[file] ?? {})
       return width && height ? { width, height } : null
     },
-    async read() {
-      return new Uint8Array()
+    async read(file) {
+      return Buffer.from(contentOf(file))
     }
   }
 }
@@ -88,8 +98,8 @@ afterEach(async () => {
 
 /**
  * Writes a tree into a scratch folder, which is removed after the test.
- * @param {Record<string, string | Uint8Array | object>} [tree] - The files by their path.
- *   An object is written as JSON.
+ * @param {Record<string, string | Uint8Array | object | undefined>} [tree] - The files by
+ *   their path. An object is written as JSON, and a file without content is left out.
  * @returns {Promise<string>} The scratch folder.
  */
 export async function scratch(tree = {}) {
@@ -106,6 +116,8 @@ export async function scratch(tree = {}) {
  */
 export async function writeTree(root, tree) {
   for (const [file, content] of Object.entries(tree)) {
+    // A test takes a file out of a tree by giving it no content
+    if (content === undefined) continue
     const target = path.join(root, file)
     await mkdir(path.dirname(target), { recursive: true })
     const plain = typeof content === 'string' || content instanceof Uint8Array

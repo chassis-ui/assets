@@ -1,45 +1,25 @@
 /**
  * @file rules/web.js
- * @description The files of the web output. Until session 2.2 of the roadmap renames the
- *              source, a file gets the name that 0.1.8 gave it.
+ * @description The files of the web output. Paths and names are those of the source, and
+ *              the variants of an image are next to each other.
  * @copyright Copyright (c) 2026 Ozgur Gunes
  * @license MIT
  */
 
 import { posix } from 'node:path'
-import { copyOf, hasExtension, legacyCase, legacyParts } from './legacy.js'
+import { imageFiles, isLeftOut } from './variants.js'
 
-/** @import { Asset, PlannedFile, SourceFile } from '../types.js' */
-
-/** The files of `fonts/` that the web takes. */
-const FONT_FILES = ['.woff', '.woff2', '.css', '.scss']
+/** @import { Asset, Job, PlannedFile } from '../types.js' */
 
 /**
- * Whether the web takes a file.
- * @param {SourceFile} file
- * @returns {boolean}
- */
-function takes(file) {
-  return file.type !== 'fonts' || hasExtension(file, FONT_FILES)
-}
-
-/**
- * The name of a file on the web: lowercase with hyphens, the resolution indicator and
- * the extension as they are written.
- * @param {SourceFile} file
- * @returns {string}
- */
-function nameOf(file) {
-  const { base, resolution, extension } = legacyParts(posix.basename(file.path))
-  return legacyCase(base, '-') + resolution + extension
-}
-
-/**
+ * The web takes images, icons and the files of `other/`. It takes no font until session
+ * 2.4 of the roadmap writes the WOFF2 files and the stylesheet.
  * @param {Asset} asset
+ * @param {Job} job
  * @returns {boolean}
  */
-export function include(asset) {
-  return asset.files.some(takes)
+export function include(asset, job) {
+  return asset.type !== 'fonts' && !isLeftOut(asset, job)
 }
 
 /**
@@ -47,7 +27,12 @@ export function include(asset) {
  * @returns {PlannedFile[]}
  */
 export function files(asset) {
-  return asset.files.filter(takes).map((file) => copyOf(file, nameOf(file)))
+  if (asset.type === 'images') return imageFiles(asset)
+  return asset.files.map((file) => ({
+    path: posix.join(file.type, file.folder, posix.basename(file.path)),
+    type: file.type,
+    source: file.path
+  }))
 }
 
 /**

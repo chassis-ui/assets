@@ -7,17 +7,21 @@
  * @license MIT
  */
 
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { CACHE_FOLDER, openCache } from './cache.js'
 import { loadConfig } from './config.js'
-import { fsReader, readInventory } from './inventory.js'
-import { buildManifest, writeManifest } from './manifest.js'
+import { CONTRACT_JOB, missingFromContract } from './contract.js'
+import { fsReader, readInventory, readSource } from './inventory.js'
+import { lintSource } from './lint.js'
+import { buildManifest, readManifest, writeManifest } from './manifest.js'
 import { runJob } from './pipeline.js'
 import { planFiles, planJobs } from './plan.js'
 import { rules } from './rules/index.js'
 
 /**
- * @import { Asset, Job, PlannedFile, Report, SourceReader, StepRunner } from './types.js'
+ * @import { Asset, Job, PlannedFile, Problem, Report, SourceReader, StepRunner } from './types.js'
  */
 
 /**
@@ -122,5 +126,55 @@ export async function build(options = {}) {
     ok: reports.every((report) => report.errors.length === 0),
     version: planned.version,
     jobs: reports
+  }
+}
+
+/**
+ * Checks `source/` against the source contract. It reads every file, and writes nothing.
+ * @param {Pick<PlanOptions, 'root' | 'config' | 'reader'>} [options]
+ * @returns {Promise<{ ok: boolean, files: number, problems: Problem[] }>} `files` is the
+ *   number of files that were read.
+ * @throws {import('./errors.js').BuildError} When the configuration is wrong.
+ */
+export async function lint(options = {}) {
+  const { root = process.cwd() } = options
+  const { config } = await loadConfig({ root, config: options.config })
+  const reader = options.reader ?? fsReader(root)
+
+  const source = await readSource(config, reader)
+  const problems = lintSource(source)
+  const paths = source.stacks.flatMap((stack) => stack.layers.flatMap((layer) => layer.files))
+  const files = new Set(paths.map((file) => file.path)).size
+  return { ok: problems.length === 0, files, problems }
+}
+
+/**
+ * Builds into a scratch folder, and checks that the docs output holds every file of the
+ * consumer contract. The comparison with the golden files comes with session 2.6 of the
+ * roadmap.
+ * @param {PlanOptions & BuildOptions} [options] - With `out`, the build is written there
+ *   and kept.
+ * @returns {Promise<{ ok: boolean, version: string, jobs: Report[],
+ *   contract: { checked: boolean, missing: Array<{ path: string, reader: string }> } }>}
+ *   `contract.checked` is `false` when the filters leave out the job that the sites read.
+ * @throws {import('./errors.js').BuildError} When the configuration or a filter is wrong.
+ */
+export async function verify(options = {}) {
+  const scratch = options.out ? null : await mkdtemp(path.join(tmpdir(), 'chassis-assets-'))
+  try {
+    const built = await build({ ...options, out: options.out ?? scratch })
+    const job = built.jobs.find((report) =>
+      Object.entries(CONTRACT_JOB).every(([key, value]) => report[key] === value)
+    )
+    const contract = { checked: false, missing: [] }
+    if (job && job.errors.length === 0) {
+      const root = options.root ?? process.cwd()
+      const manifest = await readManifest(path.resolve(root, job.out))
+      contract.checked = true
+      contract.missing = missingFromContract(manifest.files.map((file) => file.path))
+    }
+    return { ...built, ok: built.ok && contract.missing.length === 0, contract }
+  } finally {
+    if (scratch) await rm(scratch, { recursive: true, force: true })
   }
 }

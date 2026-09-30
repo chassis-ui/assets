@@ -114,7 +114,11 @@ describe('parseCli', () => {
     ['an unknown option', ['build', '--theme', 'dark'], "Unknown option '--theme'"],
     ['a filter without a value', ['build', '--brand'], '--brand'],
     ['an empty value', ['build', '--brand', 'chassis,'], '--brand has an empty value'],
-    ['an unknown command', ['publish'], 'Unknown command "publish". The commands are: build'],
+    [
+      'an unknown command',
+      ['publish'],
+      'Unknown command "publish". The commands are: build, lint, verify'
+    ],
     ['a second command', ['build', 'build'], 'Unexpected argument "build"']
   ])('fails on %s', (_, args, message) => {
     expect(() => parseCli(args)).toThrow(BuildError)
@@ -147,7 +151,7 @@ describe('run', () => {
   test('fails without a command', async () => {
     const { code, errors } = await cli([])
     expect(code).toBe(1)
-    expect(errors).toContain('A command is missing: build. See --help')
+    expect(errors).toContain('A command is missing: build, lint, verify. See --help')
   })
 
   test('builds every job, and prints what each did', async () => {
@@ -206,22 +210,60 @@ describe('run', () => {
   })
 
   test('fails when a job fails, and builds the others', async () => {
+    // Two names that iOS and Android write as one
     const files = {
       ...tree,
-      'source/default/docs/images/Alert Window.png': png(1, 1),
-      'source/default/docs/images/alert-window.png': png(1, 1)
+      'source/default/demo/images/alert_window.svg': '<svg/>',
+      'source/default/demo/images/alert-window.svg': '<svg/>'
     }
     const { code, root, log, errors } = await cli(['build', '--brand', 'chassis'], files)
     expect(code).toBe(1)
-    expect(errors).toContain('Failed: web/docs/chassis')
+    expect(errors).toContain('Failed: ios/demo/chassis')
+    expect(errors).toContain('Failed: android/demo/chassis')
     expect(errors).toContain('two files would get one path')
-    expect(log).toContain('✅ 2 succeeded, ❌ 1 failed')
+    expect(log).toContain('✅ 1 succeeded, ❌ 2 failed')
     expect(await listTree(`${root}/dist`)).toEqual([
-      'android/demo/chassis/chassis-assets.json',
-      'android/demo/chassis/images/drawable/logo.svg',
-      'ios/demo/chassis/chassis-assets.json',
-      'ios/demo/chassis/images/logo.svg'
+      'web/docs/chassis/chassis-assets.json',
+      'web/docs/chassis/images/home/lego@2x.png'
     ])
+  })
+
+  test('lints the source, and prints its problems by file', async () => {
+    const clean = await cli(['lint'])
+    expect(clean).toMatchObject({ code: 0, errors: '' })
+    expect(clean.log).toContain('✅ 3 files of source/ follow the source contract')
+
+    const broken = await cli(['lint', '--quiet'], {
+      ...tree,
+      'source/default/docs/images/Alert Window@2x.svg': '<svg/>'
+    })
+    expect(broken.code).toBe(1)
+    expect(broken.log).toBe('')
+    expect(broken.errors).toContain(
+      '\nsource/default/docs/images/Alert Window@2x.svg\n' +
+        '  names: has the resolution indicator @2x, which only a raster image has\n' +
+        '  names: has the name "Alert Window"'
+    )
+    expect(broken.errors).toContain('❌ 2 problem(s) in 4 files of source/')
+  })
+
+  test('verifies the build, and names the files of the contract that are missing', async () => {
+    const { code, root, log, errors } = await cli(['verify', '--app', 'docs'])
+    expect(code).toBe(1)
+    expect(log).toContain('🔎 Verifying 2 job(s)...')
+    expect(log).toContain('✅ 2 succeeded')
+    expect(errors).toContain('web/docs/chassis lacks')
+    expect(errors).toContain('file(s) of the consumer contract')
+    expect(errors).toContain(
+      '   icons/cx-sprite.svg, read by the home page of every site, which fails the build'
+    )
+    expect((await listTree(root)).filter((file) => file.startsWith('dist'))).toEqual([])
+  })
+
+  test('says when the contract was not checked', async () => {
+    const { code, log } = await cli(['verify', '--app', 'demo'])
+    expect(code).toBe(0)
+    expect(log).toContain('The consumer contract was not checked: web/docs/chassis was not built')
   })
 
   test('sets the exit code of the process', async () => {

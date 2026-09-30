@@ -8,7 +8,7 @@
 
 import { BuildError } from './errors.js'
 
-/** @import { PlannedFile, Report } from './types.js' */
+/** @import { PlannedFile, Problem, Report } from './types.js' */
 
 /**
  * @param {number} ms
@@ -47,9 +47,10 @@ export function createLogger({
      * is printed without a stack trace.
      * @param {string} message
      * @param {unknown} [error]
+     * @param {boolean} [first] - `false` for a line that follows another error.
      */
-    error(message, error) {
-      out.error(`\n❌ ${message}`)
+    error(message, error, first = true) {
+      out.error(first ? `\n❌ ${message}` : `   ${message}`)
       if (!(error instanceof Error)) return
       const expected = error instanceof BuildError
       const text = debug && !expected ? error.stack : error.message
@@ -100,6 +101,20 @@ export function createLogger({
       if (report.cached > 0) parts.push(`${report.cached} from the cache`)
       if (report.removed.length > 0) parts.push(`${report.removed.length} removed`)
       out.log(`  ✔︎ ${report.out}: ${parts.join(', ')} (${formatDuration(report.ms)})`)
+    },
+
+    /**
+     * Prints the problems of the source lint, by file. It prints them also when the
+     * logger is quiet.
+     * @param {Problem[]} problems
+     */
+    problems(problems) {
+      let file
+      for (const problem of problems) {
+        if (problem.file !== file) out.error(`\n${problem.file}`)
+        file = problem.file
+        out.error(`  ${problem.rule}: ${problem.message}`)
+      }
     },
 
     /**

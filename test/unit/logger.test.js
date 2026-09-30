@@ -103,6 +103,33 @@ describe('createLogger', () => {
     expect(expected.lines).toEqual(['error: \n❌ Failed', 'error:    a', 'error:    b'])
   })
 
+  test('prints the problems of the lint by file, also when it is quiet', () => {
+    const out = recorder()
+    createLogger({ quiet: true, console: out }).problems([
+      { rule: 'names', file: 'source/a.png', message: 'has the name "A"' },
+      { rule: 'one-master', file: 'source/a.png', message: 'is one of 2 files' },
+      { rule: 'fonts', file: 'source/b.otf', message: 'is in no family' }
+    ])
+    expect(out.lines).toEqual([
+      'error: \nsource/a.png',
+      'error:   names: has the name "A"',
+      'error:   one-master: is one of 2 files',
+      'error: \nsource/b.otf',
+      'error:   fonts: is in no family'
+    ])
+  })
+
+  test('prints a line that follows an error without the mark', () => {
+    const out = recorder()
+    const logger = createLogger({ console: out })
+    logger.error('web/docs/chassis lacks 1 file(s)')
+    logger.error('images/social-image.png, read by BaseLayout.astro', null, false)
+    expect(out.lines).toEqual([
+      'error: \n❌ web/docs/chassis lacks 1 file(s)',
+      'error:    images/social-image.png, read by BaseLayout.astro'
+    ])
+  })
+
   test('prints debug messages with debug only', () => {
     const out = recorder()
     createLogger({ debug: false, console: out }).debug('hidden')

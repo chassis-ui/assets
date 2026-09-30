@@ -1,7 +1,8 @@
 /**
  * @file build.test.js
  * @description Tests for the library, on a tree in a scratch folder: what a build writes,
- *              and that it writes the same twice.
+ *              that it writes the same twice, what the lint finds, and what `verify`
+ *              checks.
  * @copyright Copyright (c) 2026 Ozgur Gunes
  * @license MIT
  */
@@ -9,8 +10,9 @@
 import { readFile } from 'node:fs/promises'
 import { describe, expect, test } from 'vitest'
 import { sha256 } from '../../build/cache.js'
+import { CONTRACT, expand } from '../../build/contract.js'
 import { BuildError } from '../../build/errors.js'
-import { build, plan } from '../../build/index.js'
+import { build, lint, plan, verify } from '../../build/index.js'
 import { listTree, packageJson, png, scratch, svg, writeTree } from './helpers/tree.js'
 
 const tree = {
@@ -19,15 +21,29 @@ const tree = {
     apps: { docs: ['web'], demo: ['ios', 'android'] }
   }),
   'source/default/shared/images/logo/brand.svg': svg(100, 20),
+  'source/default/docs/images/images.json': {
+    version: 1,
+    rules: [{ match: 'home/lego', committed: true }]
+  },
   'source/default/docs/images/home/lego@2x.png': png(200, 100),
   'source/default/docs/images/home/lego.png': png(100, 50),
-  'source/default/docs/images/figma/alert/Alert Window.png': png(10, 10),
+  'source/default/docs/images/figma/alert/alert-window.png': png(10, 10),
   'source/default/docs/icons/cx-sprite.svg': '<svg/>',
-  'source/default/docs/fonts/text-normal.otf': 'otf',
-  'source/default/docs/fonts/text-normal.woff2': 'woff2',
   'source/default/docs/.DS_Store': '',
   'source/default/demo/images/hero@3x.png': png(300, 150),
+  'source/default/demo/fonts/fonts.json': {
+    version: 1,
+    families: [
+      {
+        id: 'text',
+        family: 'Inter',
+        license: 'licenses/inter.txt',
+        faces: [{ file: 'text-normal.otf', weight: 400, style: 'normal' }]
+      }
+    ]
+  },
   'source/default/demo/fonts/text-normal.otf': 'otf',
+  'source/default/demo/fonts/licenses/inter.txt': 'OFL',
   'source/example/shared/images/logo/brand.svg': svg(200, 40)
 }
 
@@ -42,7 +58,6 @@ describe('plan', () => {
         [
           'dist/web/docs/chassis',
           [
-            'fonts/text-normal.woff2',
             'icons/cx-sprite.svg',
             'images/figma/alert/alert-window.png',
             'images/home/lego.png',
@@ -52,14 +67,20 @@ describe('plan', () => {
         ],
         [
           'dist/ios/demo/chassis',
-          ['fonts/text_normal.otf', 'images/hero@3x.png', 'images/logo/brand.svg']
+          [
+            'fonts/text_normal.otf',
+            'images/hero@3x.png',
+            'images/logo/brand.svg',
+            'licenses/inter.txt'
+          ]
         ],
         [
           'dist/android/demo/chassis',
           [
             'fonts/text_normal.otf',
             'images/drawable-xxhdpi/hero.png',
-            'images/logo/drawable/brand.svg'
+            'images/logo/drawable/brand.svg',
+            'licenses/inter.txt'
           ]
         ],
         ['dist/web/docs/example', expect.any(Array)],
@@ -77,6 +98,25 @@ describe('plan', () => {
     expect(logo.map((file) => [file.source, file.width])).toEqual([
       ['source/default/shared/images/logo/brand.svg', 100],
       ['source/example/shared/images/logo/brand.svg', 200]
+    ])
+  })
+
+  test('plans the variants that a rule derives, each with its step', async () => {
+    const root = await scratch({
+      ...tree,
+      'source/default/docs/images/images.json': {
+        version: 1,
+        rules: [{ match: 'home/lego', densities: [1, 2], formats: ['png', 'webp'] }]
+      },
+      'source/default/docs/images/home/lego.png': undefined
+    })
+    const { jobs } = await plan({ root, brands: ['chassis'], apps: ['docs'] })
+    const lego = jobs[0].files.filter((file) => file.path.startsWith('images/home/'))
+    expect(lego.map((file) => [file.path, file.step?.name, file.width])).toEqual([
+      ['images/home/lego.png', 'raster', 100],
+      ['images/home/lego.webp', 'raster', 100],
+      ['images/home/lego@2x.png', undefined, 200],
+      ['images/home/lego@2x.webp', 'raster', 200]
     ])
   })
 
@@ -105,10 +145,9 @@ describe('build', () => {
 
     expect(result).toMatchObject({ ok: true, version: '1.2.3' })
     expect(result.jobs).toHaveLength(1)
-    expect(result.jobs[0]).toMatchObject({ out: 'dist/web/docs/chassis', written: 6, errors: [] })
+    expect(result.jobs[0]).toMatchObject({ out: 'dist/web/docs/chassis', written: 5, errors: [] })
     expect(await listTree(`${root}/dist`)).toEqual([
       'web/docs/chassis/chassis-assets.json',
-      'web/docs/chassis/fonts/text-normal.woff2',
       'web/docs/chassis/icons/cx-sprite.svg',
       'web/docs/chassis/images/figma/alert/alert-window.png',
       'web/docs/chassis/images/home/lego.png',
@@ -126,8 +165,8 @@ describe('build', () => {
       app: 'docs',
       platform: 'web'
     })
-    expect(manifest.files).toHaveLength(6)
-    expect(manifest.files[4]).toEqual({
+    expect(manifest.files).toHaveLength(5)
+    expect(manifest.files[3]).toEqual({
       path: 'images/home/lego@2x.png',
       type: 'images',
       bytes: 33,
@@ -138,7 +177,7 @@ describe('build', () => {
       source: 'source/default/docs/images/home/lego@2x.png',
       derived: false
     })
-    expect(manifest.files[1]).toEqual({
+    expect(manifest.files[0]).toEqual({
       path: 'icons/cx-sprite.svg',
       type: 'icons',
       bytes: 6,
@@ -146,6 +185,21 @@ describe('build', () => {
       source: 'source/default/docs/icons/cx-sprite.svg',
       derived: false
     })
+  })
+
+  test('writes the licenses of the fonts into every output that holds them', async () => {
+    const root = await scratch(tree)
+    await build({ root, brands: ['chassis'], apps: ['demo'] })
+    expect(await listTree(`${root}/dist/ios`)).toEqual([
+      'demo/chassis/chassis-assets.json',
+      'demo/chassis/fonts/text_normal.otf',
+      'demo/chassis/images/hero@3x.png',
+      'demo/chassis/images/logo/brand.svg',
+      'demo/chassis/licenses/inter.txt'
+    ])
+    expect(await readFile(`${root}/dist/android/demo/chassis/licenses/inter.txt`, 'utf8')).toBe(
+      'OFL'
+    )
   })
 
   test('writes the same manifest twice, without a date and without the root', async () => {
@@ -182,24 +236,136 @@ describe('build', () => {
       onJobStart: (job, index, total) => calls.push(`${index + 1}/${total} ${job.platform}`),
       onJobEnd: (report) => calls.push(`${report.platform} ${report.written}`)
     })
-    expect(calls).toEqual(['1/3 web', 'web 6', '2/3 ios', 'ios 3', '3/3 android', 'android 3'])
+    expect(calls).toEqual(['1/3 web', 'web 5', '2/3 ios', 'ios 4', '3/3 android', 'android 4'])
   })
 
   test('reports a job that fails, builds the others, and never ends the process', async () => {
+    // Two names that iOS and Android write as one
     const root = await scratch({
       ...tree,
-      'source/default/docs/images/figma/alert/alert-window.png': png(1, 1)
+      'source/default/demo/images/hero_3.png': png(1, 1),
+      'source/default/demo/images/hero-3.png': png(1, 1)
     })
-    const result = await build({ root, brands: ['chassis'] })
+    const result = await build({ root, brands: ['chassis'], platforms: ['web', 'ios'] })
 
     expect(result.ok).toBe(false)
     expect(result.jobs.map((report) => [report.platform, report.written])).toEqual([
-      ['web', 0],
-      ['ios', 3],
-      ['android', 3]
+      ['web', 5],
+      ['ios', 0]
     ])
-    expect(result.jobs[0].errors[0]).toBeInstanceOf(BuildError)
-    expect(result.jobs[0].errors[0]).toMatchObject({ rule: 'collision' })
-    expect(await listTree(`${root}/dist`)).not.toContain('web/docs/chassis/chassis-assets.json')
+    expect(result.jobs[1].errors[0]).toBeInstanceOf(BuildError)
+    expect(result.jobs[1].errors[0]).toMatchObject({ rule: 'collision' })
+    expect(await listTree(`${root}/dist`)).not.toContain('ios/demo/chassis/chassis-assets.json')
+  })
+
+  test('fails a job whose rule derives, until the build has the step', async () => {
+    const root = await scratch({
+      ...tree,
+      'source/default/demo/images/images.json': {
+        version: 1,
+        rules: [{ match: 'hero', platforms: ['web', 'ios', 'android'] }]
+      },
+      'source/default/docs/images/images.json': {
+        version: 1,
+        rules: [{ match: 'figma/**', formats: ['webp'] }]
+      }
+    })
+    const result = await build({ root, brands: ['chassis'], apps: ['docs'] })
+    expect(result.jobs[0].errors[0].message).toContain('the build has no step "raster"')
+  })
+})
+
+describe('lint', () => {
+  test('finds nothing in a source that follows the contract', async () => {
+    const root = await scratch(tree)
+    expect(await lint({ root })).toEqual({ ok: true, files: 9, problems: [] })
+  })
+
+  test('returns the problems of the source, and writes nothing', async () => {
+    const root = await scratch({
+      ...tree,
+      'source/default/docs/images/Alert Window.png': png(1, 1),
+      'source/default/demo/fonts/text.css': '@font-face {}',
+      'source/acme/docs/images/logo.svg': svg(1, 1)
+    })
+    const before = await listTree(root)
+    const result = await lint({ root })
+
+    expect(result.ok).toBe(false)
+    expect(result.problems.map(({ rule, file }) => [rule, file])).toEqual([
+      ['reserved-names', 'source/acme/'],
+      ['no-generated-file', 'source/default/demo/fonts/text.css'],
+      ['names', 'source/default/docs/images/Alert Window.png']
+    ])
+    expect(await listTree(root)).toEqual(before)
+  })
+
+  test('fails on a configuration that is wrong', async () => {
+    const root = await scratch({ 'package.json': packageJson({ brands: [] }) })
+    await expect(lint({ root })).rejects.toThrow(BuildError)
+  })
+})
+
+describe('verify', () => {
+  /** The files of the consumer contract, in the docs app of a tree. */
+  const contract = Object.fromEntries(
+    [
+      ...CONTRACT.flatMap(({ files }) => files.flatMap(expand)),
+      ...expand('images/figma/components/alert/{light,dark}/alert-window{,@2x}.png')
+    ].map((path) => [
+      path.startsWith('images/logo/')
+        ? `source/default/shared/${path}`
+        : `source/default/docs/${path}`,
+      path.endsWith('.svg') ? svg(10, 10) : png(10, 10)
+    ])
+  )
+  const complete = {
+    ...tree,
+    ...contract,
+    'source/default/docs/images/images.json': {
+      version: 1,
+      rules: [{ match: '**', committed: true }]
+    }
+  }
+
+  test('builds into a scratch folder, and leaves the root as it was', async () => {
+    const root = await scratch(complete)
+    const before = await listTree(root)
+    const result = await verify({ root })
+
+    expect(result.ok).toBe(true)
+    expect(result.jobs).toHaveLength(6)
+    expect(result.contract).toEqual({ checked: true, missing: [] })
+    expect(await listTree(root)).toEqual(before)
+  })
+
+  test('fails when the docs output lacks a file of the consumer contract', async () => {
+    const root = await scratch({
+      ...complete,
+      'source/default/docs/images/social-image.png': undefined,
+      'source/default/docs/images/home/comp-gallery-dark-small@2x.webp': undefined
+    })
+    const result = await verify({ root, brands: ['chassis'], apps: ['docs'] })
+
+    expect(result.ok).toBe(false)
+    expect(result.jobs[0].errors).toEqual([])
+    expect(result.contract.missing.map((file) => file.path)).toEqual([
+      'images/home/comp-gallery-dark-small@2x.webp',
+      'images/social-image.png'
+    ])
+  })
+
+  test('does not check the contract when the filters leave its job out', async () => {
+    const root = await scratch(tree)
+    const result = await verify({ root, apps: ['demo'] })
+    expect(result).toMatchObject({ ok: true, contract: { checked: false, missing: [] } })
+  })
+
+  test('keeps the build in the folder of out', async () => {
+    const root = await scratch(tree)
+    const result = await verify({ root, out: 'checked', brands: ['chassis'], apps: ['docs'] })
+    expect(result.ok).toBe(false)
+    expect(result.contract.missing.length).toBeGreaterThan(40)
+    expect(await listTree(`${root}/checked`)).toHaveLength(6)
   })
 })
