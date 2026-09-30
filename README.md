@@ -114,6 +114,10 @@ pnpm test                   # Run the tests on the fixture in test/fixtures/, in
 pnpm test:golden            # Write test/golden/ again after an intended change to the build
 pnpm assets:analyze         # Analyze asset distribution (supports --brand, --app, --platform, --out)
 pnpm assets:validate        # Validate distribution integrity (supports --out)
+pnpm assets:verify          # The validator, then the consumer contract of dist/web/docs/chassis/
+pnpm assets:contract        # The consumer contract alone
+pnpm assets:lint:source     # Check the names and layout of source/ (--allow-lfs-pointers without Git LFS)
+pnpm assets:typecheck       # Type-check build/ from its JSDoc
 pnpm assets:lint            # Lint the build scripts and the tests
 pnpm lint:prettier          # Check formatting across the repository
 pnpm check                  # Type-check the site, then audit the dependencies

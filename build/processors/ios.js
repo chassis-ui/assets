@@ -10,6 +10,7 @@ import { extractResolutionIndicator } from './shared.js'
  * iOS Platform Processor Configuration
  * Converts assets to iOS-compatible formats with snake_case naming
  */
+/** @type {import('../types.js').Processor} */
 const iosProcessor = {
   name: 'ios',
   icon: '🍎',

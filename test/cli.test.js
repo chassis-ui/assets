@@ -1,6 +1,6 @@
 /**
  * @file cli.test.js
- * @description The command-line entries of the build, the analyzer and the validator, run as
+ * @description The command-line entries of the build and its checks, run as
  *              `node build/<entry>.js` the way the `pnpm assets*` scripts run them: the
  *              flags of the build-system page, the exit codes, and the messages of a wrong
  *              call. Every run reads the fixture and writes to a temporary folder.
@@ -13,9 +13,12 @@ import { afterAll, describe, expect, test } from 'vitest'
 import {
   ANALYZE_CLI,
   BUILD_CLI,
+  CONTRACT_CLI,
   FIXTURE,
   GOLDEN,
+  LINT_SOURCE_CLI,
   VALIDATE_CLI,
+  VERIFY_CLI,
   compareDirs,
   listFiles,
   removeTempDirs,
@@ -184,5 +187,49 @@ describe('pnpm assets:validate', () => {
     const { code, stderr } = run(VALIDATE_CLI, ['--nope'])
     expect(code).toBe(2)
     expect(stderr).toContain('Unknown option --nope')
+  })
+})
+
+describe('pnpm assets:lint:source', () => {
+  test('exits 1 on the fixture, whose names break the rules on purpose, and names them', () => {
+    const { code, stdout, stderr } = run(LINT_SOURCE_CLI, [])
+    expect(code).toBe(1)
+    expect(stderr).toContain('source/default/site/images/HeroBanner.png has the name "HeroBanner"')
+    expect(stdout).toContain('42 files checked: 7 error(s), 0 warning(s)')
+  })
+
+  test('exits 0 on a source that keeps the rules', () => {
+    const root = tempDir()
+    fs.copyFileSync(path.join(FIXTURE, 'package.json'), path.join(root, 'package.json'))
+    fs.mkdirSync(path.join(root, 'source/default/site/images'), { recursive: true })
+    fs.writeFileSync(path.join(root, 'source/default/site/images/hero-banner@2x.png'), 'png')
+    const { code, stdout } = run(LINT_SOURCE_CLI, ['--cwd', root])
+    expect(code).toBe(0)
+    expect(stdout).toContain('1 files checked: 0 error(s), 0 warning(s)')
+  })
+
+  test('--help exits 0, an unknown option exits 2', () => {
+    expect(run(LINT_SOURCE_CLI, ['--help'])).toMatchObject({ code: 0 })
+    expect(run(LINT_SOURCE_CLI, ['--nope'])).toMatchObject({ code: 2 })
+  })
+})
+
+describe('pnpm assets:contract and assets:verify', () => {
+  test('the contract check exits 1 on an output without the docs job', () => {
+    const { code, stderr } = run(CONTRACT_CLI, ['--out', '../golden'])
+    expect(code).toBe(1)
+    expect(stderr).toContain('../golden/web/docs/chassis/ does not exist')
+  })
+
+  test('verify runs the validator and the contract check, and exits 1 when one fails', () => {
+    const { code, stdout, stderr } = run(VERIFY_CLI, ['--out', '../golden'])
+    expect(code).toBe(1)
+    expect(stdout).toContain('Overall: 8/8 checks passed')
+    expect(stderr).toContain('Verify failed: the consumer contract')
+  })
+
+  test('an unknown option exits 2', () => {
+    expect(run(CONTRACT_CLI, ['--nope'])).toMatchObject({ code: 2 })
+    expect(run(VERIFY_CLI, ['--nope'])).toMatchObject({ code: 2 })
   })
 })

@@ -20,10 +20,13 @@ export const FIXTURE = path.join(here, 'fixtures')
 /** The output of a default build of the fixture, committed. */
 export const GOLDEN = path.join(here, 'golden')
 
-/** The command-line entries of the build, the analyzer and the validator. */
+/** The command-line entries of the build and its checks. */
 export const BUILD_CLI = path.join(ROOT, 'build', 'build-assets.js')
 export const ANALYZE_CLI = path.join(ROOT, 'build', 'analyze-assets.js')
 export const VALIDATE_CLI = path.join(ROOT, 'build', 'validate-assets.js')
+export const LINT_SOURCE_CLI = path.join(ROOT, 'build', 'lint-source.js')
+export const CONTRACT_CLI = path.join(ROOT, 'build', 'contract.js')
+export const VERIFY_CLI = path.join(ROOT, 'build', 'verify.js')
 
 const made = []
 

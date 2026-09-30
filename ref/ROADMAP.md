@@ -368,18 +368,26 @@ and a temporary folder.
 
 ### Session 2.2: contract, verify and CI
 
-- [ ] `build/contract.js`: the consumer contract as data, one entry per file or pattern, with
+- [x] `build/contract.js`: the consumer contract as data, one entry per file or pattern, with
       the consumer that reads it. `pnpm assets:contract` checks `dist/web/docs/chassis`
-      against it. Port it from `archive/rewrite-2026-09` where it fits.
-- [ ] `pnpm assets:verify` runs the validator and the contract check on an existing `dist/`.
-- [ ] `pnpm assets:lint:source`: file names against the rules of the design-guidelines page,
+      against it. Port it from `archive/rewrite-2026-09` where it fits. Ported, and checked
+      again against the website at `d83a1d6` and `chassis-figma` at `dd89279`. The archive's
+      screenshot rule failed on 18 Figma export copies that no page reads; they need both
+      modes and no `@2x` now (`EXPORT_COPY`).
+- [x] `pnpm assets:verify` runs the validator and the contract check on an existing `dist/`.
+- [x] `pnpm assets:lint:source`: file names against the rules of the design-guidelines page,
       LFS pointers, files outside a type folder. Warns on the known oddities that D7 keeps.
-- [ ] T2: `tsconfig.json` with `checkJs`, JSDoc types in `build/types.js`, and
-      `pnpm assets:typecheck`. No TypeScript files.
-- [ ] CI: the Assets job runs `assets:lint`, `assets:lint:source`, `assets:typecheck`,
-      `test`, then a full build, `assets:verify`. The Site job stays.
+      Three files: `default.tokens.json` and the two `chassis-icons.min.css`. Warns too about
+      a brand or an app folder the build does not read.
+- [x] T2: `tsconfig.json` with `checkJs`, JSDoc types in `build/types.js`, and
+      `pnpm assets:typecheck`. No TypeScript files. The site's three scripts in `build/` are
+      left out until session 5.1 replaces them.
+- [x] CI: the Assets job runs `assets:lint`, `assets:lint:source`, `assets:typecheck`,
+      `test`, then a full build, `assets:verify`. The Site job stays. `assets:lint` moved
+      from the Lint job.
 - [ ] `AGENTS.md` (session 4.2) and `CONTRIBUTING.md` get the table of checks per changed
-      area.
+      area. The table is in `docs/architecture.md`, "Checks per changed area"; session 4.2
+      copies it into the two files when it writes them.
 
 **Acceptance:** CI is green on `develop` and the four required checks pass in under five
 minutes including the LFS pull.
@@ -389,7 +397,7 @@ minutes including the LFS pull.
 - [x] Every pure function of the build has a unit test.
 - [x] The golden test fails when a processor changes a name. Checked in session 2.1 by
       changing the web processor: the golden test failed.
-- [ ] The contract check fails when a file of the consumer contract is missing.
+- [x] The contract check fails when a file of the consumer contract is missing.
 - [ ] A pull request runs all of it.
 
 ## Phase 3: package and release
@@ -625,3 +633,4 @@ None is scheduled; the maintainer picks one when it is wanted.
 | 2026-09-30 | 1.2       | Fixed the build where the pages are right. The library takes options and throws; only the entry reads argv and exits (F6). Unknown filter values fail (F18). `--clean` with filters removes the selected jobs only (D6). `--out`, `--cwd`, `--dry-run`, `--allow-lfs-pointers`, `--quiet`, `--help`, `--version`. LFS pointers fail the build (T12). The analyzer finds duplicates (F8); the validator prints once and exits 1 on failure (F19). `.png` icons for iOS (D15). Stylesheets: `text.css` and `code.css` rewritten, `display.css` added, for the files in the folder (F3). Licenses of the five families beside the fonts, by role (F15, D8); the font filters keep `.txt`. 40 screenshots renamed to the output names (F14). Old tests adapted and green. Output diff against the baseline: the four stylesheets, `display.css`, and the license files in every `fonts/` folder, nothing else. F11 left: it needs Git LFS, steps in `docs/architecture.md`. |
 | 2026-09-30 | 1.3       | Corrected the eleven pages against the inventory: the `dist/<platform>/<app>/<brand>/` layout everywhere (F1), the distribution trees of every asset type and platform as the build writes them (F2, F4, F5, F22), Node 22.12, pnpm from `packageManager` and current action versions in the CI examples (F9), no test counts (F10), `other/` as a folder name (F12), no "commit built assets" (F13), the stylesheets and the licenses in the fonts page (F3, F15, F16), the broken slug (F17), WebP and PNG icons per platform in the guidelines tables (F21, D15), the API as session 1.2 left it (F6, F24), the options table and the `--clean` semantics (D6), the eight checks of the validator, "filtered builds" (F23). Android icons: the pages say SVG, converted in the app. The callouts stay until session 5.2 runs the platform samples. Deleted the inventory. `pnpm site:lint` and `pnpm check:astro` pass; the site build runs in CI.                   |
 | 2026-09-30 | 2.1       | Replaced the three runners with Vitest: 271 tests in about three seconds, no Git LFS files needed, nothing written outside temporary folders. A fixture in `test/fixtures/` (two brands, `alpha` and `beta`, two apps, `site` and `mobile`, six jobs, every type and case the roadmap names) and its golden output in `test/golden/`, written again with `pnpm test:golden`. Table tests for the processors and the filters, one row per rule of the pages; tests of the library, the analyzer, the validator, the API and the three command lines. The tests found three bugs, fixed: the wildcards of the ignore list (F25), the analyzer's platform filter (F26), and the API's paths and categories (F27). `keepsFile()` and `createCollisionTracker()` are exported for the tests. The real build's output is identical before and after. `test/README.md` describes the suite. Next: session 2.2.                                                                 |
+| 2026-09-30 | 2.2       | Ported the consumer contract from `archive/rewrite-2026-09` into `build/contract.js`, checked again against the website and `chassis-figma`, with the reader of every file; narrowed the screenshot rule for 18 Figma export copies no page reads. `pnpm assets:contract` and `pnpm assets:verify` (validator, then contract). `pnpm assets:lint:source` for the naming rules of the design-guidelines page, type folders and LFS pointers; the real source has no error and three known oddities. `tsconfig.json`, `build/types.js` and `pnpm assets:typecheck`, clean. CI's Assets job runs lint, source lint, type check, tests, full build and verify. 324 tests in about three seconds. The table of checks per area waits in `docs/architecture.md` for session 4.2. Next: Phase 3 or 4, or 5.1.                                                                                                                                                                  |

@@ -10,6 +10,7 @@ import { extractResolutionIndicator } from './shared.js'
  * Web Platform Processor Configuration
  * Converts assets to web-friendly formats with kebab-case naming
  */
+/** @type {import('../types.js').Processor} */
 const webProcessor = {
   name: 'web',
   icon: '🌐',

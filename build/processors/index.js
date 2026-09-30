@@ -8,9 +8,12 @@ import webProcessor from './web.js'
 import iosProcessor from './ios.js'
 import androidProcessor from './android.js'
 
+/** @import { Processor } from '../types.js' */
+
 /**
  * Platform processor registry
  * Maps platform names to their respective processor configurations
+ * @type {Record<string, Processor>}
  */
 export const platformProcessors = {
   web: webProcessor,
@@ -21,7 +24,7 @@ export const platformProcessors = {
 /**
  * Get a processor by platform name
  * @param {string} platform - Platform name ('web', 'ios', 'android')
- * @returns {Object|null} Processor configuration or null if not found
+ * @returns {Processor|null} Processor configuration or null if not found
  */
 export function getProcessor(platform) {
   return platformProcessors[platform] || null

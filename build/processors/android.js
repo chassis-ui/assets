@@ -11,6 +11,7 @@ import { extractResolutionIndicator } from './shared.js'
  * Converts assets to Android-compatible formats with snake_case naming,
  * ic_ prefix for icons, and density-specific folder structure
  */
+/** @type {import('../types.js').Processor} */
 const androidProcessor = {
   name: 'android',
   icon: '🤖',
@@ -25,7 +26,7 @@ const androidProcessor = {
 
   /**
    * Density folder mapping for resolution indicators
-   * Maps @1x, @2x, @3x, etc. to Android drawable density folders
+   * Maps `@1x`, `@2x`, `@3x`, etc. to Android drawable density folders
    */
   densityMapping: {
     '@1x': 'drawable-mdpi',
@@ -51,9 +52,8 @@ const androidProcessor = {
    * Note: Resolution indicators are NOT included in Android filenames
    * as they are handled by the density folder structure
    * @param {string} fileName - Original filename
-   * @param {Object|boolean} context - Directory context or legacy isIcon boolean
-   * @param {string} context.currentDir - Current directory name
-   * @param {string} context.parentDir - Parent directory name
+   * @param {import('../types.js').RenameContext} [context] - The folder of the file and its
+   *   parent, `{ currentDir, parentDir }`, or the legacy boolean that says it is an icon
    * @returns {string} Transformed filename in snake_case (no resolution)
    * @example
    * renameFile('MyIcon@2x.svg', { currentDir: 'icons' }) // Returns: 'ic_my_icon.svg'

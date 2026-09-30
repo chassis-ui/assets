@@ -187,7 +187,9 @@ async function main() {
     process.exit(1)
   }
 
-  const bumpType = bumpFlags.length === 1 ? bumpFlags[0].slice(2) : null
+  const bumpType = /** @type {'patch'|'minor'|'major'|null} */ (
+    bumpFlags.length === 1 ? bumpFlags[0].slice(2) : null
+  )
 
   let oldVersion
   let newVersion

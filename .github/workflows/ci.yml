@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Formatting, the build scripts, the site's code and its types. Needs no Git LFS files.
+  # Formatting, the site's code and its types. Needs no Git LFS files.
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -46,16 +46,14 @@ jobs:
       - name: Prettier
         run: pnpm lint:prettier
 
-      - name: Lint build scripts
-        run: pnpm assets:lint
-
       - name: Lint site
         run: pnpm site:lint
 
       - name: Astro check
         run: pnpm check:astro
 
-  # The tests, a full build of every brand, app and platform, and the validation of dist/
+  # The build's lint, source lint, type check and tests, then a full build of every brand,
+  # app and platform, verified: the validator and the consumer contract
   assets:
     name: Assets
     runs-on: ubuntu-latest
@@ -93,24 +91,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint build scripts and tests
+        run: pnpm assets:lint
+
+      - name: Lint source
+        run: pnpm assets:lint:source
+
+      - name: Type check
+        run: pnpm assets:typecheck
+
       - name: Test
         run: pnpm test
 
       - name: Build all assets
         run: pnpm assets
 
-      - name: Validate asset distribution
-        run: pnpm assets:validate
-
       - name: Verify distribution
-        run: |
-          for platform in web ios android; do
-            if [ ! -d "dist/$platform" ]; then
-              echo "Error: platform $platform not found in dist/"
-              exit 1
-            fi
-          done
-          echo "Distribution verification passed"
+        run: pnpm assets:verify
 
   # The same build as Vercel: the docs assets, then Astro and Pagefind
   site:

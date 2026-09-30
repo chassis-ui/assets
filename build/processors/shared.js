@@ -4,7 +4,7 @@
  */
 
 /**
- * Extract resolution indicator from filename (e.g., @2x, @3x)
+ * Extract resolution indicator from filename (e.g., `@2x`, `@3x`)
  * @param {string} fileName - The filename to parse
  * @returns {Object} Object with base name, resolution indicator, and extension
  * @example

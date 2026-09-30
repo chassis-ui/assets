@@ -38,7 +38,7 @@ pnpm assets --no-clean
 # Clean build output manually
 pnpm clean
 
-# Run validation tests
+# Run the tests
 pnpm test
 
 # View build statistics
@@ -185,6 +185,38 @@ The command exits with 1 when a check fails. `--out <dir>` validates another fol
 - In CI/CD pipelines
 - After manual dist/ modifications
 - To verify nothing is missing
+
+### Verify Distribution
+
+Run the validation and the consumer contract check together on an existing `dist/`. CI runs it after a full build:
+
+```bash
+# The validator, then the consumer contract
+pnpm assets:verify
+
+# The consumer contract alone, after pnpm assets:site
+pnpm assets:contract
+```
+
+The consumer contract is the list of files that the Chassis sites read by name from `dist/web/docs/chassis/`: the logo, the favicons, the social image, `icons/cx-sprite.svg`, the home page images, the brand banners and the Figma component screenshots. It lives in `build/contract.js`, each file with the code that reads it. A screenshot has to be there in the light and dark mode and at `1x` and `@2x`. The check exits with 1 and names each missing file and its reader.
+
+### Lint the Source
+
+Check the names and the layout of `source/` against the [naming conventions]([[docsref:/getting-started/design-guidelines]]):
+
+```bash
+pnpm assets:lint:source
+```
+
+**What the source lint checks:**
+
+- ✅ Names and folders of lowercase letters, digits and hyphens, with a resolution indicator such as `@2x` only at the end of a name
+- ✅ Extensions in lowercase
+- ✅ Every file in a type folder: `source/<brand>/<app>/<type>/`
+- ✅ No Git LFS pointer in place of a file; `--allow-lfs-pointers` checks the names only
+- ⚠️ A folder under `source/` that is not the default folder or a configured brand, and an app folder that is not configured, which the build does not read
+
+The command exits with 1 on an error and suggests a name that keeps the rules. A few files that break a rule on purpose, such as the build output of `@chassis-ui/icons`, are printed as warnings.
 
 ## Configuration
 

@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build options `--out <dir>`, `--cwd <dir>`, `--dry-run`, `--allow-lfs-pointers`,
   `--quiet`, `--help` and `--version`. The analyzer and the validator take `--out` and
   `--cwd`.
+- `pnpm assets:verify`: the validator, then the consumer contract, the files the Chassis
+  sites read from `dist/web/docs/chassis/`. `pnpm assets:contract` runs the contract check
+  alone.
+- `pnpm assets:lint:source`: the names and the layout of `source/` against the naming
+  conventions of the design-guidelines page, and Git LFS pointers.
+- `pnpm assets:typecheck`: TypeScript checks `build/` against its JSDoc, with the shared
+  types in `build/types.js`.
 - `generateAssets(options)` takes `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`,
   `out`, `dryRun` and `allowLfsPointers`, and `ChassisAssets.build()` passes its filters on.
   The library no longer reads the command line or exits the process; the command-line entry

@@ -26,7 +26,7 @@ class DistValidator {
 
   /**
    * Run all validation checks.
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>} Whether every check passed
    */
   async runValidation() {
     console.log('🔍 Starting Distribution Validation...\n')
@@ -852,7 +852,8 @@ class DistValidator {
   }
 
   /**
-   * Print validation results summary and exit with appropriate code.
+   * Print validation results summary.
+   * @returns {boolean} Whether every check passed
    */
   printResults() {
     console.log('\n📊 Validation Results Summary:')

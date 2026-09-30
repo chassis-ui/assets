@@ -250,7 +250,7 @@ export class ChassisAssets {
    * @param {string[]} [options.platforms] - Only these platforms
    * @param {boolean|null} [options.clean] - Whether to clean the output first; null decides by the filters
    * @param {boolean} [options.quiet] - Print errors only
-   * @returns {Promise<import('../build-assets.js').BuildStats>} The statistics of the run
+   * @returns {Promise<import('../types.js').BuildStats>} The statistics of the run
    */
   async build(options = {}) {
     const { brands = [], apps = [], platforms = [], clean = null, quiet = false } = options

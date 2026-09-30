@@ -15,46 +15,7 @@ import fs from 'fs'
 import path from 'path'
 import { platformProcessors } from './processors/index.js'
 
-/**
- * @typedef {Object} BuildConfig
- * @property {string[]} brands - Brands to build, `chassis.build.brands`
- * @property {Record<string, string[]>} apps - Apps with their platforms, `chassis.build.apps`
- * @property {string} brandFolder - The fallback brand folder, `chassis.defaults.brandFolder`
- * @property {string} [name] - The package name
- * @property {string} [version] - The package version
- */
-
-/**
- * @typedef {Object} BuildOptions
- * @property {string[]} [brands] - Only these brands
- * @property {string[]} [apps] - Only these apps
- * @property {string[]} [platforms] - Only these platforms
- * @property {boolean|null} [clean] - true removes the output first, false keeps it,
- *   null (default) removes it for a full build and keeps it for a filtered one
- * @property {boolean} [quiet] - Print errors only
- * @property {string} [cwd] - The repository root, where `package.json` and `source/` are
- * @property {string} [out] - The output folder, relative to `cwd`. Default `dist`
- * @property {boolean} [dryRun] - Print the jobs and their file counts, write nothing
- * @property {boolean} [allowLfsPointers] - Copy Git LFS pointer files instead of failing
- */
-
-/**
- * @typedef {Object} Job
- * @property {string} brand
- * @property {string} app
- * @property {string} platform
- */
-
-/**
- * @typedef {Object} BuildStats
- * @property {number} filesProcessed
- * @property {number} filesRenamed
- * @property {number} directoriesCreated
- * @property {string[]} errors
- * @property {string[]} warnings
- * @property {string[]} lfsPointers - Source files that are Git LFS pointers
- * @property {Array<Job & { files: number }>} jobs
- */
+/** @import { BuildConfig, BuildOptions, BuildStats, Job, Processor } from './types.js' */
 
 const LFS_POINTER_HEADER = 'version https://git-lfs.github.com/spec/v1'
 
@@ -318,7 +279,7 @@ export function isExcluded(fileName, excludedExtensions) {
  * Whether a platform keeps a file of a type. `fonts` and `icons` keep the formats the
  * processor allows, `images` drop the formats it excludes, and any other type keeps every
  * file.
- * @param {Object} processor - The platform processor
+ * @param {Processor} processor - The platform processor
  * @param {string|null} type - The type folder the file is under: fonts, images, icons or another
  * @param {string} fileName
  * @returns {boolean}
@@ -505,7 +466,7 @@ function trackRename(destPath, oldName, newName) {
 /**
  * Recursively rename files in a directory
  * NOTE: This only operates on the DESTINATION folder (dist/), never touches source files
- * @param {Object} processor - The platform processor with renameFile method
+ * @param {Processor} processor - The platform processor with renameFile method
  * @param {string} folderPath - Path to the folder to process (in dist/ folder)
  * @param {string} parentDir - Name of parent directory (for context)
  */
@@ -567,7 +528,7 @@ function renameFilesRecursively(processor, folderPath, parentDir = '') {
 
 /**
  * Copy files recursively with platform-specific filtering
- * @param {Object} processor - The platform processor with filtering rules
+ * @param {Processor} processor - The platform processor with filtering rules
  * @param {string} srcPath - Source path to copy from
  * @param {string} destPath - Destination path to copy to
  * @param {string} dirName - Current directory name
@@ -651,7 +612,7 @@ function copyFilesWithProcessor(processor, srcPath, destPath, dirName, rootDir =
 
 /**
  * Process assets for a platform using the processor configuration
- * @param {Object} processor - The platform processor
+ * @param {Processor} processor - The platform processor
  * @param {string[]} srcPaths - Array of source paths to process
  * @param {string} destPath - Destination path for processed assets
  * @param {string} defaultAppPath - The default source path (required)
