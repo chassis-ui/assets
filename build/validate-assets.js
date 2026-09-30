@@ -10,9 +10,16 @@ import { getValidExtensions, getAllValidExtensions, isMetadataFile } from '../bu
  * Checks if dist/ directory is complete.
  */
 class DistValidator {
-  constructor() {
+  /**
+   * @param {{ cwd?: string, out?: string }} [options] - The repository root and the output folder
+   */
+  constructor(options = {}) {
+    this.cwd = path.resolve(options.cwd || process.cwd())
+    this.out = options.out || 'dist'
+    this.sourceDir = path.join(this.cwd, 'source')
+    this.distDir = path.resolve(this.cwd, this.out)
     this.validationResults = []
-    this.api = new ChassisAssets()
+    this.api = new ChassisAssets('package.json', { cwd: this.cwd, out: this.out })
     this.errors = []
     this.warnings = []
   }
@@ -34,11 +41,10 @@ class DistValidator {
       await this.checkForEmptyDirectories()
       await this.validatePlatformConventions()
 
-      this.printResults()
+      return this.printResults()
     } catch (error) {
       console.error('💥 Validation failed:', error.message)
-      console.error(error.stack)
-      process.exit(1)
+      throw error
     }
   }
 
@@ -49,14 +55,14 @@ class DistValidator {
   async checkDistExists() {
     console.log('📁 Checking dist directory...')
 
-    if (!fs.existsSync('dist')) {
+    if (!fs.existsSync(this.distDir)) {
       this.addTestResult('Dist Exists', false, 'dist/ directory not found. Run `pnpm build` first.')
       this.addError('dist/ directory does not exist')
       return
     }
 
     // Check if dist has content
-    const distContents = fs.readdirSync('dist')
+    const distContents = fs.readdirSync(this.distDir)
     const hasContent = distContents.length > 0
 
     this.addTestResult(
@@ -79,13 +85,13 @@ class DistValidator {
   async checkSourceExists() {
     console.log('📂 Checking source directory...')
 
-    if (!fs.existsSync('source')) {
+    if (!fs.existsSync(this.sourceDir)) {
       this.addTestResult('Source Exists', false, 'source/ directory not found')
       this.addError('source/ directory does not exist')
       return
     }
 
-    const sourceContents = fs.readdirSync('source')
+    const sourceContents = fs.readdirSync(this.sourceDir)
     const hasContent = sourceContents.length > 0
 
     this.addTestResult(
@@ -114,7 +120,7 @@ class DistValidator {
     let incompleteCombos = 0
 
     for (const combo of combinations) {
-      const distPath = path.join('dist', combo.platform, combo.app, combo.brand)
+      const distPath = path.join(this.distDir, combo.platform, combo.app, combo.brand)
 
       if (!fs.existsSync(distPath)) {
         missingCombos++
@@ -181,7 +187,7 @@ class DistValidator {
         // Check each platform for this brand-app
         const platformsForApp = this.api.getPlatforms(app)
         for (const platform of platformsForApp) {
-          const distPath = path.join('dist', platform, app, brand)
+          const distPath = path.join(this.distDir, platform, app, brand)
 
           if (!fs.existsSync(distPath)) {
             continue // Already reported as missing combination
@@ -232,8 +238,8 @@ class DistValidator {
     const defaultBrandFolder = this.api.config.defaults?.brandFolder || 'default'
 
     // Check brand-specific source first, then fall back to default
-    const brandPath = path.join('source', brand, app)
-    const defaultPath = path.join('source', defaultBrandFolder, app)
+    const brandPath = path.join(this.sourceDir, brand, app)
+    const defaultPath = path.join(this.sourceDir, defaultBrandFolder, app)
 
     const sourcePath = fs.existsSync(brandPath)
       ? brandPath
@@ -311,7 +317,7 @@ class DistValidator {
 
         // For each platform, check if files exist in dist
         for (const platform of platforms) {
-          const distPath = path.join('dist', platform, app, brand)
+          const distPath = path.join(this.distDir, platform, app, brand)
 
           if (!fs.existsSync(distPath)) {
             continue // Already reported as missing combination
@@ -424,8 +430,8 @@ class DistValidator {
     const files = []
 
     // Check brand-specific source first
-    const brandPath = path.join('source', brand, app)
-    const defaultPath = path.join('source', defaultBrandFolder, app)
+    const brandPath = path.join(this.sourceDir, brand, app)
+    const defaultPath = path.join(this.sourceDir, defaultBrandFolder, app)
 
     // Collect from brand-specific folder (overrides)
     if (fs.existsSync(brandPath)) {
@@ -604,10 +610,10 @@ class DistValidator {
     console.log('📊 Validating asset counts...')
 
     // Count source assets (excluding system files)
-    const sourceCount = this.countAssets('source')
+    const sourceCount = this.countAssets(this.sourceDir)
 
     // Count dist assets
-    const distCount = this.countAssets('dist')
+    const distCount = this.countAssets(this.distDir)
 
     // Dist should have more files than source (due to multi-platform expansion)
     const hasDistAssets = distCount > 0
@@ -658,8 +664,8 @@ class DistValidator {
       }
     }
 
-    if (fs.existsSync('dist')) {
-      scanDir('dist')
+    if (fs.existsSync(this.distDir)) {
+      scanDir(this.distDir)
     }
 
     const noEmptyDirs = emptyDirs.length === 0
@@ -686,7 +692,7 @@ class DistValidator {
   async validatePlatformConventions() {
     console.log('📝 Validating platform naming conventions...')
 
-    if (!fs.existsSync('dist')) {
+    if (!fs.existsSync(this.distDir)) {
       return
     }
 
@@ -694,7 +700,7 @@ class DistValidator {
     const violations = []
 
     for (const platform of platforms) {
-      const platformPath = path.join('dist', platform)
+      const platformPath = path.join(this.distDir, platform)
       if (!fs.existsSync(platformPath)) continue
 
       this.checkPlatformNaming(platformPath, platform, violations)
@@ -827,8 +833,6 @@ class DistValidator {
    */
   addTestResult(checkName, passed, message) {
     this.validationResults.push({ checkName, passed, message })
-    const status = passed ? '✅' : '❌'
-    console.log(`${status} ${checkName}: ${message}`)
   }
 
   /**
@@ -876,20 +880,33 @@ class DistValidator {
     }
 
     if (passed !== total || this.errors.length > 0) {
-      console.log('\n💡 Fix issues and run `pnpm build` to regenerate dist/')
-      process.exit(1)
+      console.log('\n💡 Fix the issues and run `pnpm assets` to write dist/ again')
+      return false
     } else if (this.warnings.length > 0) {
       console.log('\n✅ Validation passed with warnings')
     } else {
       console.log('\n✅ Distribution is complete and valid')
     }
+    return true
   }
 }
 
 // Run validation if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const validator = new DistValidator()
-  validator.runValidation()
+  const options = { cwd: undefined, out: undefined }
+  const argv = process.argv.slice(2)
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--out' || argv[i] === '--cwd') {
+      options[argv[i].slice(2)] = argv[++i]
+    } else {
+      console.error(`❌ Unknown option ${argv[i]}. Options: --out <dir>, --cwd <dir>`)
+      process.exit(2)
+    }
+  }
+  new DistValidator(options)
+    .runValidation()
+    .then((ok) => process.exit(ok ? 0 : 1))
+    .catch(() => process.exit(1))
 }
 
 export default DistValidator

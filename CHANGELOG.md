@@ -5,6 +5,42 @@ All notable changes to the Chassis Assets project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `display.css` in the docs and demo fonts of the default brand: the `@font-face` rules of
+  the display family.
+- The licenses of the fonts, `text-license.txt`, `display-license.txt` and
+  `code-license.txt`, beside the fonts of every brand and app that has them. The build copies
+  them to the `fonts/` folder of every platform.
+- Build options `--out <dir>`, `--cwd <dir>`, `--dry-run`, `--allow-lfs-pointers`,
+  `--quiet`, `--help` and `--version`. The analyzer and the validator take `--out` and
+  `--cwd`.
+- `generateAssets(options)` takes `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`,
+  `out`, `dryRun` and `allowLfsPointers`, and `ChassisAssets.build()` passes its filters on.
+  The library no longer reads the command line or exits the process; the command-line entry
+  does.
+
+### Changed
+
+- `text.css` and `code.css` of the default brand declare the font files that are in the
+  folder, one `@font-face` per file, instead of Inter and Fira Code files that were not.
+- `--clean` with `--brand`, `--app` or `--platform` removes the output of the selected jobs
+  only. A full build without filters removes `dist/` whole, as before.
+- A filter value that is not configured, or filters that select no job, fail the build and
+  name the configured values. They built nothing and exited 0.
+- A source file that is a Git LFS pointer fails the build with the list of files, unless
+  `--allow-lfs-pointers` or `CHASSIS_ALLOW_LFS_POINTERS=1` is given.
+- PNG files under `icons/` are kept for iOS.
+- 40 Figma screenshots in `source/` are renamed to the names the web build writes, so the
+  output does not change.
+
+### Fixed
+
+- The analyzer finds files with the same content. It kept one file per hash and found none.
+- The validator prints each result once, and exits with 1 when a check fails.
+
 ## [0.1.8] - 2026-07-14
 
 ### Added

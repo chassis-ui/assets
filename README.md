@@ -81,6 +81,23 @@ pnpm assets --app docs
 pnpm assets --brand chassis --app docs --platform web
 ```
 
+A filter value that is not configured fails the build and names the configured values.
+
+More options:
+
+```shell
+pnpm assets --clean --brand chassis   # Remove the output of the selected jobs first
+pnpm assets --no-clean                # Keep the output of a full build
+pnpm assets --dry-run                 # Print the jobs and their file counts, write nothing
+pnpm assets --out build/out           # Write somewhere else than dist/
+pnpm assets --allow-lfs-pointers      # Copy Git LFS pointer files instead of failing
+pnpm assets --help                    # Every option
+```
+
+A full build removes `dist/` first; a filtered build keeps it. A source file that is a Git
+LFS pointer fails the build, since the output would be a pointer too. Run `git lfs pull`, or
+set `CHASSIS_ALLOW_LFS_POINTERS=1` where the binaries are not needed.
+
 **Benefits:**
 
 - Faster builds during development
@@ -94,8 +111,8 @@ Manage, analyze, and validate your asset distribution:
 ```shell
 # Development workflow
 pnpm test                   # Run the test suites
-pnpm assets:analyze         # Analyze asset distribution (supports filtering)
-pnpm assets:validate        # Validate distribution integrity
+pnpm assets:analyze         # Analyze asset distribution (supports --brand, --app, --platform, --out)
+pnpm assets:validate        # Validate distribution integrity (supports --out)
 pnpm assets:lint            # Lint the build scripts
 pnpm lint:prettier          # Check formatting across the repository
 pnpm check                  # Type-check the site, then audit the dependencies

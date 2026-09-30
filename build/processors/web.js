@@ -16,9 +16,9 @@ const webProcessor = {
 
   /**
    * File type filters for web platform
-   * Web only supports modern font formats and excludes platform-specific formats
+   * Web keeps the web font formats, the stylesheets beside them, and the license files
    */
-  allowedFontFormats: ['.woff', '.woff2', '.css', '.scss'],
+  allowedFontFormats: ['.woff', '.woff2', '.css', '.scss', '.txt'],
   excludedFormats: [],
 
   /**

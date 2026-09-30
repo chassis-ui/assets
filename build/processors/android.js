@@ -17,9 +17,9 @@ const androidProcessor = {
 
   /**
    * File type filters for Android platform
-   * Android supports TTF/OTF fonts, SVG icons only, and excludes WebP images
+   * Android keeps TTF/OTF fonts with their license files, SVG icons only, and excludes WebP images
    */
-  allowedFontFormats: ['.ttf', '.otf'],
+  allowedFontFormats: ['.ttf', '.otf', '.txt'],
   allowedIconFormats: ['.svg'],
   excludedImageFormats: ['.webp'],
 

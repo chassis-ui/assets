@@ -16,10 +16,10 @@ const iosProcessor = {
 
   /**
    * File type filters for iOS platform
-   * iOS supports TTF/OTF fonts, SVG/PDF icons, and excludes WebP images
+   * iOS keeps TTF/OTF fonts with their license files, SVG/PDF/PNG icons, and excludes WebP images
    */
-  allowedFontFormats: ['.ttf', '.otf'],
-  allowedIconFormats: ['.svg', '.pdf'],
+  allowedFontFormats: ['.ttf', '.otf', '.txt'],
+  allowedIconFormats: ['.svg', '.pdf', '.png'],
   excludedImageFormats: ['.webp'],
 
   /**

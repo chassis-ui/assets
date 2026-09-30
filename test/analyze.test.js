@@ -128,15 +128,19 @@ class AnalyzeTestSuite {
           : 'Duplicate detection not working correctly'
       )
 
-      // Test that we don't have excessive false positives
-      const reasonableDuplicateCount = totalDuplicates < 100 // Should be low in a well-maintained repo
+      // A known pair: the demo app mirrors the icon set of the docs app
+      const known = stats.duplicatesInSource.find(
+        (group) =>
+          group.paths.some((p) => p.endsWith('docs/icons/svgs/alarm-clock-outline.svg')) &&
+          group.paths.some((p) => p.endsWith('demo/icons/svgs/alarm-clock-outline.svg'))
+      )
 
       this.addTestResult(
-        'No False Duplicates',
-        reasonableDuplicateCount,
-        reasonableDuplicateCount
-          ? `Low duplicate count indicates accurate detection (${totalDuplicates} total)`
-          : `Suspiciously high duplicate count (${totalDuplicates}) - may have false positives`
+        'Known Duplicates',
+        Boolean(known),
+        known
+          ? `Finds the icon set copied into both apps (${totalDuplicates} groups in total)`
+          : 'Does not find alarm-clock-outline.svg in both apps'
       )
     } catch (error) {
       this.addTestResult('Duplicate Detection', false, error.message)

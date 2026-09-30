@@ -12,10 +12,16 @@ import { generateAssets, shouldIgnoreFile } from '../build-assets.js'
 export class ChassisAssets {
   /**
    * Create a new ChassisAssets instance.
-   * @param {string} configPath - Path to package.json containing chassis configuration
+   * @param {string} configPath - Path to package.json containing chassis configuration,
+   *   relative to `options.cwd`
+   * @param {{ cwd?: string, out?: string }} [options] - The repository root and the output folder
    */
-  constructor(configPath = 'package.json') {
-    this.configPath = configPath
+  constructor(configPath = 'package.json', options = {}) {
+    this.cwd = path.resolve(options.cwd || process.cwd())
+    this.out = options.out || 'dist'
+    this.sourceDir = path.join(this.cwd, 'source')
+    this.distDir = path.resolve(this.cwd, this.out)
+    this.configPath = path.resolve(this.cwd, configPath)
     this.loadConfig()
   }
 
@@ -97,7 +103,7 @@ export class ChassisAssets {
    * @returns {boolean} True if assets exist
    */
   assetsExist(brand, app, type = 'source') {
-    const basePath = type === 'source' ? 'source' : 'dist'
+    const basePath = type === 'source' ? this.sourceDir : this.distDir
 
     if (type === 'source') {
       const defaultPath = path.join(basePath, this.config.defaults.brandFolder, app)
@@ -136,14 +142,14 @@ export class ChassisAssets {
 
     if (platform) {
       // Look in dist
-      const distPath = path.join('dist', platform.split('-')[0], app, brand)
+      const distPath = path.join(this.distDir, platform.split('-')[0], app, brand)
       if (fs.existsSync(distPath)) {
         searchPaths.push(distPath)
       }
     } else {
       // Look in source
-      const defaultPath = path.join('source', this.config.defaults.brandFolder, app)
-      const brandPath = path.join('source', brand, app)
+      const defaultPath = path.join(this.sourceDir, this.config.defaults.brandFolder, app)
+      const brandPath = path.join(this.sourceDir, brand, app)
 
       if (fs.existsSync(defaultPath)) searchPaths.push(defaultPath)
       if (fs.existsSync(brandPath)) searchPaths.push(brandPath)
@@ -234,28 +240,8 @@ export class ChassisAssets {
    * @returns {Promise<void>}
    */
   async build(options = {}) {
-    const { clean = true } = options
-
-    // Note: The generateAssets function currently uses config from package.json
-    // and doesn't accept filtering parameters. This is a known limitation.
-    // TODO: Update generateAssets to accept brand/app/platform filters
-
-    if (clean && fs.existsSync('dist')) {
-      try {
-        fs.rmSync('dist', { recursive: true, force: true, maxRetries: 3, retryDelay: 100 })
-      } catch (error) {
-        if (error.code === 'ENOTEMPTY') {
-          // Fallback for macOS
-          console.warn(
-            'Warning: Could not clean dist directory completely. Build will overwrite existing files.'
-          )
-        } else {
-          throw error
-        }
-      }
-    }
-
-    await generateAssets()
+    const { brands = [], apps = [], platforms = [], clean = null, quiet = false } = options
+    return generateAssets({ brands, apps, platforms, clean, quiet, cwd: this.cwd, out: this.out })
   }
 
   /**
@@ -271,7 +257,7 @@ export class ChassisAssets {
     }
 
     // Add source statistics if available
-    if (fs.existsSync('source')) {
+    if (fs.existsSync(this.sourceDir)) {
       stats.sourceAssets = this.countAssets('source')
     }
 

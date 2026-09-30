@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { generateAssets } from '../build/build-assets.js'
+import { generateAssets, parseArgs } from '../build/build-assets.js'
 
 /**
  * Test suite for chassis-assets build system.
@@ -11,6 +11,19 @@ class AssetBuildTester {
     this.testResults = []
     this.tempDir = 'test-output'
     this.originalArgv = process.argv
+  }
+
+  /**
+   * Build with command-line style arguments, as `pnpm assets` would.
+   * `--clean` starts from an empty dist/, so that a filtered build can be checked for what
+   * it did not write.
+   * @param {string[]} args
+   */
+  async build(args) {
+    if (args.includes('--clean')) {
+      fs.rmSync('dist', { recursive: true, force: true })
+    }
+    await generateAssets({ quiet: true, ...parseArgs(args) })
   }
 
   /**
@@ -81,8 +94,7 @@ class AssetBuildTester {
 
     try {
       // Full build with no filters (should clean automatically)
-      process.argv = ['node', 'build/build-assets.js']
-      await generateAssets({ quiet: true })
+      await this.build([])
 
       // Verify dist structure exists for actual configuration
       // Config: brands: [chassis, example], apps: {docs: [web], demo: [ios, android]}
@@ -131,8 +143,7 @@ class AssetBuildTester {
 
     try {
       // Test brand filtering
-      process.argv = ['node', 'build/build-assets.js', '--clean', '--brand', 'chassis']
-      await generateAssets({ quiet: true })
+      await this.build(['--clean', '--brand', 'chassis'])
 
       const expectedBrandPaths = [
         'dist/web/docs/chassis',
@@ -168,8 +179,7 @@ class AssetBuildTester {
       )
 
       // Test app filtering
-      process.argv = ['node', 'build/build-assets.js', '--clean', '--app', 'docs']
-      await generateAssets({ quiet: true })
+      await this.build(['--clean', '--app', 'docs'])
 
       const expectedAppPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
 
@@ -202,8 +212,7 @@ class AssetBuildTester {
       )
 
       // Test platform filtering
-      process.argv = ['node', 'build/build-assets.js', '--clean', '--platform', 'web']
-      await generateAssets({ quiet: true })
+      await this.build(['--clean', '--platform', 'web'])
 
       const expectedPlatformPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
 
@@ -236,16 +245,7 @@ class AssetBuildTester {
       )
 
       // Test combined filtering
-      process.argv = [
-        'node',
-        'build/build-assets.js',
-        '--clean',
-        '--brand',
-        'example',
-        '--platform',
-        'ios'
-      ]
-      await generateAssets({ quiet: true })
+      await this.build(['--clean', '--brand', 'example', '--platform', 'ios'])
 
       const expectedCombinedPaths = ['dist/ios/demo/example']
 
@@ -279,17 +279,7 @@ class AssetBuildTester {
       )
 
       // Test several values for one filter: --brand takes one or more, as --app does
-      process.argv = [
-        'node',
-        'build/build-assets.js',
-        '--clean',
-        '--brand',
-        'chassis',
-        'example',
-        '--platform',
-        'web'
-      ]
-      await generateAssets({ quiet: true })
+      await this.build(['--clean', '--brand', 'chassis', 'example', '--platform', 'web'])
 
       const expectedMultiPaths = ['dist/web/docs/chassis', 'dist/web/docs/example']
       const unexpectedMultiPaths = ['dist/ios/demo/chassis', 'dist/android/demo/example']
@@ -323,16 +313,7 @@ class AssetBuildTester {
 
     try {
       // Step 1: Build chassis/web with clean
-      process.argv = [
-        'node',
-        'build/build-assets.js',
-        '--clean',
-        '--brand',
-        'chassis',
-        '--platform',
-        'web'
-      ]
-      await generateAssets({ quiet: true })
+      await this.build(['--clean', '--brand', 'chassis', '--platform', 'web'])
 
       const firstBuildPath = 'dist/web/docs/chassis'
       if (!fs.existsSync(firstBuildPath)) {
@@ -341,8 +322,7 @@ class AssetBuildTester {
       }
 
       // Step 2: Build example/ios without clean (should be incremental)
-      process.argv = ['node', 'build/build-assets.js', '--brand', 'example', '--platform', 'ios']
-      await generateAssets({ quiet: true })
+      await this.build(['--brand', 'example', '--platform', 'ios'])
 
       const secondBuildPath = 'dist/ios/demo/example'
       const firstBuildStillExists = fs.existsSync(firstBuildPath)
@@ -368,16 +348,7 @@ class AssetBuildTester {
       )
 
       // Test explicit --clean flag
-      process.argv = [
-        'node',
-        'build/build-assets.js',
-        '--clean',
-        '--brand',
-        'chassis',
-        '--platform',
-        'web'
-      ]
-      await generateAssets({ quiet: true })
+      await this.build(['--clean', '--brand', 'chassis', '--platform', 'web'])
 
       const afterCleanBuild = fs.existsSync('dist/web/docs/chassis')
       const otherPlatformGone = !fs.existsSync('dist/ios/demo/example')
@@ -407,8 +378,7 @@ class AssetBuildTester {
 
     try {
       // Ensure we have a full build
-      process.argv = ['node', 'build/build-assets.js', '--clean']
-      await generateAssets({ quiet: true })
+      await this.build(['--clean'])
       process.argv = this.originalArgv
 
       // Check Android file naming (should use underscores, not dashes)
@@ -491,8 +461,7 @@ class AssetBuildTester {
 
     try {
       // Ensure we have a full build
-      process.argv = ['node', 'build/build-assets.js', '--clean']
-      await generateAssets({ quiet: true })
+      await this.build(['--clean'])
       process.argv = this.originalArgv
 
       // Check that both brands have their assets

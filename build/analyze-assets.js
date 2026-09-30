@@ -18,6 +18,9 @@ import { shouldIgnoreFile } from './build-assets.js'
 class AssetAnalyzer {
   constructor(options = {}) {
     this.quiet = options.quiet || false
+    this.cwd = path.resolve(options.cwd || process.cwd())
+    this.sourceDir = path.join(this.cwd, 'source')
+    this.distDir = path.resolve(this.cwd, options.out || 'dist')
     this.config = this.loadConfig()
     this.stats = {
       totalFiles: 0,
@@ -36,7 +39,11 @@ class AssetAnalyzer {
       source: new Map(),
       dist: new Map()
     }
-    this.options = this.parseArgs()
+    this.options = {
+      brands: options.brands || [],
+      apps: options.apps || [],
+      platforms: options.platforms || []
+    }
     this.processedCount = 0
     this.startTime = Date.now()
 
@@ -74,8 +81,7 @@ class AssetAnalyzer {
       this.printReport()
     } catch (error) {
       this.error('💥 Analysis failed:', error.message)
-      this.error(error.stack)
-      process.exit(1)
+      throw error
     }
   }
 
@@ -84,18 +90,18 @@ class AssetAnalyzer {
    */
   analyzeSource() {
     this.log('🔍 Analyzing source directory...')
-    this.analyzeDirectory('source', 'source')
+    this.analyzeDirectory(this.sourceDir, 'source')
   }
 
   /**
    * Analyze dist directory if it exists
    */
   analyzeDist() {
-    if (fs.existsSync('dist')) {
+    if (fs.existsSync(this.distDir)) {
       this.log('📦 Analyzing distribution directory...')
-      this.analyzeDirectory('dist', 'dist')
+      this.analyzeDirectory(this.distDir, 'dist')
     } else {
-      this.log('⚠️  Distribution directory not found. Run `pnpm build` first.')
+      this.log('⚠️  Distribution directory not found. Run `pnpm assets` first.')
     }
   }
 
@@ -122,7 +128,7 @@ class AssetAnalyzer {
     }
 
     // Parse dist path: dist/[platform]/[app]/[brand]/...
-    const relativePath = path.relative('dist', filePath)
+    const relativePath = path.relative(this.distDir, filePath)
     const pathParts = relativePath.split(path.sep)
 
     if (pathParts.length < 1) {
@@ -220,7 +226,7 @@ class AssetAnalyzer {
 
     // Track platforms, brands, and apps (for dist analysis)
     if (type === 'dist') {
-      const relativePath = path.relative('dist', filePath)
+      const relativePath = path.relative(this.distDir, filePath)
       const pathParts = relativePath.split(path.sep)
 
       if (pathParts.length >= 1) {
@@ -287,8 +293,9 @@ class AssetAnalyzer {
         hash = crypto.createHash('md5').update(fileContent).digest('hex')
       }
 
-      const hashKey = `${hash}_${stat.size}`
-      this.fileHashesByLocation[type].set(hashKey, {
+      // Keyed by path: two files with the same content must both be kept, so that
+      // detectDuplicates() can group them by hash.
+      this.fileHashesByLocation[type].set(filePath, {
         path: filePath,
         size: stat.size,
         hash: hash
@@ -319,7 +326,8 @@ class AssetAnalyzer {
     const hashGroups = new Map()
 
     // Group files by hash
-    for (const [hashKey, fileInfo] of hashMap.entries()) {
+    for (const fileInfo of hashMap.values()) {
+      const hashKey = `${fileInfo.hash}_${fileInfo.size}`
       if (!hashGroups.has(hashKey)) {
         hashGroups.set(hashKey, [])
       }
@@ -539,9 +547,7 @@ class AssetAnalyzer {
    */
   loadConfig() {
     try {
-      const packageJson = JSON.parse(
-        fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8')
-      )
+      const packageJson = JSON.parse(fs.readFileSync(path.join(this.cwd, 'package.json'), 'utf-8'))
       return packageJson.chassis || {}
     } catch (error) {
       this.warn('⚠️  Could not load package.json configuration:', error.message)
@@ -553,32 +559,12 @@ class AssetAnalyzer {
    * Parse command line arguments
    * @returns {Object} Parsed options
    */
-  parseArgs() {
-    const args = process.argv.slice(2)
-    const options = {
-      brands: [],
-      apps: [],
-      platforms: []
-    }
-
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i]
-      if (arg === '--brand') {
-        while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
-          options.brands.push(args[++i])
-        }
-      } else if (arg === '--app') {
-        while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
-          options.apps.push(args[++i])
-        }
-      } else if (arg === '--platform') {
-        while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
-          options.platforms.push(args[++i])
-        }
-      }
-    }
-
-    return options
+  /**
+   * Parse the command line. Kept for compatibility; see `parseAnalyzerArgs()`.
+   * @param {string[]} [argv]
+   */
+  parseArgs(argv = process.argv.slice(2)) {
+    return parseAnalyzerArgs(argv)
   }
 
   /**
@@ -595,10 +581,54 @@ class AssetAnalyzer {
   }
 }
 
+/**
+ * Parse the command line of the analyzer.
+ * `--brand`, `--app` and `--platform` take one or more values; `--out` and `--cwd` one.
+ * @param {string[]} [argv]
+ * @returns {{ brands: string[], apps: string[], platforms: string[], out?: string, cwd?: string, quiet: boolean }}
+ * @throws {Error} On an unknown option
+ */
+export function parseAnalyzerArgs(argv = process.argv.slice(2)) {
+  const options = {
+    quiet: false,
+    out: undefined,
+    cwd: undefined,
+    brands: [],
+    apps: [],
+    platforms: []
+  }
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    if (arg === '--brand' || arg === '--app' || arg === '--platform') {
+      const key = { '--brand': 'brands', '--app': 'apps', '--platform': 'platforms' }[arg]
+      while (i + 1 < argv.length && !argv[i + 1].startsWith('--')) {
+        options[key].push(argv[++i])
+      }
+    } else if (arg === '--out' || arg === '--cwd') {
+      const value = argv[i + 1]
+      if (!value || value.startsWith('--')) throw new Error(`${arg} needs a value`)
+      options[arg.slice(2)] = value
+      i++
+    } else if (arg === '--quiet') {
+      options.quiet = true
+    } else {
+      throw new Error(`Unknown option ${arg}`)
+    }
+  }
+
+  return options
+}
+
 // Run analysis if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const analyzer = new AssetAnalyzer()
-  analyzer.analyze()
+  try {
+    const analyzer = new AssetAnalyzer(parseAnalyzerArgs())
+    analyzer.analyze()
+  } catch (error) {
+    console.error(`❌ ${error.message}`)
+    process.exit(1)
+  }
 }
 
 export default AssetAnalyzer
