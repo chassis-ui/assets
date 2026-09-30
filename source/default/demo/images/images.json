@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "rules": [
+    { "match": "chassis-logo-shadow", "committed": true },
+    { "match": "home/comp-gallery-*", "committed": true },
+    { "match": "home/figma-*", "committed": true },
+    { "match": "home/lego-chassis", "committed": true },
+    { "match": "home/platforms", "committed": true }
+  ]
+}

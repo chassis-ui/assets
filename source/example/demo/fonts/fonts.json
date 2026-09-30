@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "families": [
+    {
+      "id": "display",
+      "family": "Roboto Serif",
+      "license": "licenses/roboto-serif.txt",
+      "faces": [
+        { "file": "display-elegant.ttf", "weight": 300, "style": "normal" },
+        { "file": "display-elegant-italic.ttf", "weight": 300, "style": "italic" },
+        { "file": "display-normal.ttf", "weight": 400, "style": "normal" },
+        { "file": "display-normal-italic.ttf", "weight": 400, "style": "italic" },
+        { "file": "display-strong.ttf", "weight": 600, "style": "normal" },
+        { "file": "display-strong-italic.ttf", "weight": 600, "style": "italic" },
+        { "file": "display-mass.ttf", "weight": 700, "style": "normal" },
+        { "file": "display-mass-italic.ttf", "weight": 700, "style": "italic" }
+      ]
+    },
+    {
+      "id": "code",
+      "family": "Roboto Mono",
+      "license": "licenses/roboto-mono.txt",
+      "faces": [
+        { "file": "code-normal.ttf", "weight": 400, "style": "normal" },
+        { "file": "code-strong.ttf", "weight": 700, "style": "normal" }
+      ]
+    }
+  ]
+}

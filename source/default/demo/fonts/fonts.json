@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "families": [
+    {
+      "id": "text",
+      "family": "Inter",
+      "license": "licenses/inter.txt",
+      "faces": [
+        { "file": "text-elegant.otf", "weight": 300, "style": "normal" },
+        { "file": "text-elegant-italic.otf", "weight": 300, "style": "italic" },
+        { "file": "text-normal.otf", "weight": 400, "style": "normal" },
+        { "file": "text-normal-italic.otf", "weight": 400, "style": "italic" },
+        { "file": "text-strong.otf", "weight": 600, "style": "normal" },
+        { "file": "text-strong-italic.otf", "weight": 600, "style": "italic" },
+        { "file": "text-mass.otf", "weight": 700, "style": "normal" },
+        { "file": "text-mass-italic.otf", "weight": 700, "style": "italic" }
+      ]
+    },
+    {
+      "id": "display",
+      "family": "Archivo Narrow",
+      "license": "licenses/archivo-narrow.txt",
+      "faces": [
+        { "file": "display-elegant.otf", "weight": 400, "style": "normal" },
+        { "file": "display-elegant-italic.otf", "weight": 400, "style": "italic" },
+        { "file": "display-normal.otf", "weight": 500, "style": "normal" },
+        { "file": "display-normal-italic.otf", "weight": 500, "style": "italic" },
+        { "file": "display-strong.otf", "weight": 600, "style": "normal" },
+        { "file": "display-strong-italic.otf", "weight": 600, "style": "italic" },
+        { "file": "display-mass.otf", "weight": 700, "style": "normal" },
+        { "file": "display-mass-italic.otf", "weight": 700, "style": "italic" }
+      ]
+    },
+    {
+      "id": "code",
+      "family": "Fira Code",
+      "license": "licenses/fira-code.txt",
+      "faces": [
+        { "file": "code-normal.ttf", "weight": 400, "style": "normal" },
+        { "file": "code-strong.ttf", "weight": 600, "style": "normal" }
+      ]
+    }
+  ]
+}
