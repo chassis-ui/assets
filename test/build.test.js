@@ -595,7 +595,8 @@ class AssetBuildTester {
    * @returns {boolean} True if conventions are followed
    */
   checkWebNaming(dirPath) {
-    const items = fs.readdirSync(dirPath)
+    // Without the hidden files: macOS writes .DS_Store into dist/ while the test runs
+    const items = fs.readdirSync(dirPath).filter((item) => !item.startsWith('.'))
 
     for (const item of items) {
       const itemPath = path.join(dirPath, item)
