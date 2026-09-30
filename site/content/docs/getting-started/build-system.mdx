@@ -37,7 +37,7 @@ pnpm assets --dry-run
 # Remove the build output
 pnpm clean
 
-# Run validation tests
+# Run the unit tests of the build
 pnpm test
 
 # View build statistics
@@ -131,22 +131,26 @@ The asset analyzer provides comprehensive insights:
 - **Smart Recommendations**: Platform-specific optimization suggestions
 - **Configuration Insights**: Validation against build configuration
 
-### Validate Distribution
+### Check the Source and the Build
 
-Validate that your existing `dist` directory is complete and correctly structured without rebuilding:
+Two commands tell you whether a change is right. Neither writes into `dist`.
 
 ```bash
-# Validate existing dist/ without rebuilding
-pnpm assets:validate
+# Check source/ against the rules of the source: names, manifests, fonts, duplicates
+pnpm assets:lint:source
+
+# Build into a scratch folder, and check that the docs output holds what the sites read
+pnpm assets:verify
 ```
 
-**What validation does:**
+**What the source lint finds:**
 
-- ✅ Check if dist/ exists and has content
-- ✅ Verify all brand-app-platform combinations are present
-- ✅ Check asset counts (dist should have > source due to expansion)
-- ✅ Detect empty directories
-- ✅ Validate platform naming conventions (`kebab-case`, `snake_case`, `ic_` prefix)
+- A name that is not in lowercase with hyphens, or a resolution indicator that is not `@2x`, `@3x` or `@4x`
+- A file outside a type folder, or of a kind that its folder does not take
+- A Git LFS pointer where a file should be
+- An image with two files, unless a rule of `images.json` says `committed`
+- A font file that `fonts.json` does not name, and a family without its license
+- Two files of one folder with the same content
 
 **Use validation:**
 
@@ -423,90 +427,44 @@ pnpm assets --platform desktop
 
 ## Programmatic API
 
-Use the Chassis Assets API for custom integrations:
+The build is a library. Every function takes its options as an argument and returns a report. None reads the command line, and none ends the process.
 
 ```javascript
-import ChassisAssets from '@chassis-ui/assets/build/api/index.js'
-import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
-import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
-
-// Build assets programmatically
-const assets = new ChassisAssets()
-
-// Get asset inventory
-const inventory = assets.getAssetInventory('chassis', 'docs')
+import { build, lint, plan, verify } from './build/index.js'
 
 // Build specific combinations
-await assets.build({
+const result = await build({
   brands: ['chassis'],
   apps: ['docs'],
-  platforms: ['web']
+  platforms: ['web'],
+  out: 'dist'
 })
+console.log(result.ok, result.jobs[0].written, result.jobs[0].bytes)
 
-// Get build statistics
-const stats = assets.getStats()
+// See what a build would write, without writing
+const planned = await plan({ brands: ['chassis'] })
+console.log(planned.jobs.map(({ job, files }) => [job.out, files.length]))
 
-// Analyze assets programmatically
-const analyzer = new AssetAnalyzer()
-
-// Analyze with filters
-analyzer.options = { brand: 'chassis', apps: ['docs'], platforms: ['web'] }
-analyzer.analyze()  // Note: synchronous, not async
-
-// Access analysis results
-console.log('Total files:', analyzer.stats.totalFiles)
-console.log('Real duplicates in source:', analyzer.stats.duplicatesInSource.length)
-console.log('Real duplicates in dist:', analyzer.stats.duplicatesInDist.length)
-console.log('Total size:', analyzer.formatBytes(analyzer.stats.totalSize))
+// Check the source
+const { problems } = await lint()
+console.log(problems.map(({ rule, file, message }) => `${file}: ${message} (${rule})`))
 ```
 
-### API Methods
+### API Functions
 
-**ChassisAssets Class:**
+- `build(options)` - Build the combinations that the filters select. Returns a report per combination: the files written and removed, the bytes, the time, and the errors
+- `plan(options)` - Return the combinations and the files that each would write
+- `lint(options)` - Check `source/`, and return the problems
+- `verify(options)` - Build into a scratch folder, and return the files of the consumer contract that the docs output lacks
 
-- `getBrands()` - Get list of configured brands
-- `getApps()` - Get list of configured app names
-- `getPlatforms()` - Get list of all platforms used across apps
-- `getCombinations()` - Get all brand+app+platform combinations
-- `assetsExist(brand, app)` - Check if source assets exist
-- `getAssetInventory(brand, app)` - Get categorized asset list
-- `build(options)` - Build with specific brand/app/platform filters
-- `getStats()` - Get source and dist asset counts
-- `validate()` - Validate configuration and source files
+**Options:**
 
-**AssetAnalyzer Class:**
+- `brands`, `apps`, `platforms` - The filters. Without one, everything
+- `out` - The root of the output. `dist` for `build`
+- `root` - The folder of `package.json` and `source/`. The working directory without it
+- `config` - A JSON file to read the configuration from, instead of `package.json`
 
-- `analyze()` - Run full analysis (synchronous)
-- `analyzeDirectory(path, type)` - Analyze specific directory
-- `analyzeFile(path, stat, type)` - Analyze single file
-- `detectDuplicates()` - Find duplicate files by content hash
-- `formatBytes(bytes)` - Convert bytes to human-readable format
-- `stats` - Access analysis results object
-  - `totalFiles` - Total file count
-  - `totalSize` - Total size in bytes
-  - `fileTypes` - File extension distribution
-  - `duplicatesInSource` - Real duplicates within source
-  - `duplicatesInDist` - Real duplicates within dist
-  - `largestFiles` - Top 10 largest files
-
-### Quiet Mode
-
-For automated testing or CI/CD pipelines, use quiet mode to suppress verbose output:
-
-```javascript
-import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
-import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
-
-// Build assets silently (only errors shown)
-await generateAssets({ quiet: true })
-
-// Analyze assets silently
-const analyzer = new AssetAnalyzer({ quiet: true })
-analyzer.analyze()
-
-// Errors are always visible even in quiet mode
-console.log('Analysis complete:', analyzer.stats.totalFiles, 'files')
-```
+A combination that fails does not stop the others: its report has the error. A wrong configuration or a wrong filter fails the call.
 
 ## CI/CD Integration
 
@@ -804,35 +762,16 @@ Follow these best practices when configuring and using the build system:
 
 ## Development Tests
 
-The build system includes comprehensive test coverage to ensure reliability and correctness. These tests validate that the build system **works correctly** by rebuilding from scratch:
+The build has unit tests for every module. They write their own small source trees, so they do not read `source/`, and they run in about a second:
 
 ```bash
-# Run all development tests (39 tests - rebuilds everything)
-pnpm assets:test
+# Run the unit tests
+pnpm test
 
-# Individual test suites
-pnpm assets:test:build    # Build system functionality (13 tests)
-pnpm assets:test:analyze  # Asset analyzer logic (10 tests)
-pnpm assets:test:api      # Programmatic API (16 tests)
+# Lint and type-check the build scripts
+pnpm assets:lint
+pnpm assets:typecheck
 ```
-
-**What development tests do:**
-
-- ✅ Delete dist → Build → Validate → Clean up
-- ✅ Test that build system can create correct output
-- ✅ Test analyzer detects duplicates accurately
-- ✅ Test API methods return correct data
-
-### Test Comparison
-
-<CxTable>
-| Command | Rebuilds Dist? | Purpose |
-|---------|----------------|---------|
-| `pnpm assets:test` | ✅ Yes | Validate build system works correctly |
-| `pnpm assets:test:build` | ✅ Yes | Test build functionality |
-| `pnpm assets:test:analyze` | ✅ Yes | Test analyzer logic |
-| `pnpm assets:test:api` | ❌ No | Test API methods |
-</CxTable>
 
 ## Related Resources
 

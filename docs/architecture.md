@@ -11,12 +11,13 @@ source or the build, and for the maintainers of the sites and apps that read the
 > Phase 2 that finds a reason to build something another way changes this document in the
 > same commit.
 >
-> **Built so far:** session 2.1 built the configuration, the plan, the inventory, the
-> pipeline with its cache, the output manifest, the library and the command `build`.
-> `pnpm assets` and `pnpm assets:site` run them. The source is still that of 0.1.8, so the
-> rules of the three platforms give the names and the folders of 0.1.8, and the output is
-> that of 0.1.8 with `chassis-assets.json` added. [Where the build is](#where-the-build-is)
-> says what is missing.
+> **Built so far:** sessions 2.1 and 2.2 built the configuration, the plan, the inventory
+> with the two manifests, the pipeline with its cache, the output manifest, the source
+> lint, the consumer contract, the library and the commands `build`, `lint` and `verify`.
+> The source has the layout and the names of this document. The build derives nothing yet:
+> the images that have variants keep them, under rules that say `committed`, until session
+> 2.3. The native outputs have the layout of 0.1.8 until session 2.5.
+> [Where the build is](#where-the-build-is) says what is missing.
 
 | Section                                               | Answers                                         |
 | ----------------------------------------------------- | ----------------------------------------------- |
@@ -96,15 +97,18 @@ reads `source/`, loads no image or font tool and writes nothing.
 
 ### Where the build is
 
-| Part                                                | State                                                                  |
-| --------------------------------------------------- | ---------------------------------------------------------------------- |
-| `config.js`, `plan.js`, `inventory.js`, `names.js`  | Built in session 2.1. The inventory reads no manifest yet              |
-| `pipeline.js`, `cache.js`, `manifest.js`            | Built in session 2.1. No step exists, so every file is a copy          |
-| `index.js`, `cli.js`, `logger.js`                   | Built in session 2.1, with `build()`, `plan()` and the command `build` |
-| `rules/`                                            | Built in session 2.1 for the layout of 0.1.8, with `rules/legacy.js`   |
-| `manifests/`, `lint.js`, the source layout          | Session 2.2                                                            |
-| `steps/`, `writers/`                                | Sessions 2.3 to 2.5                                                    |
-| `verify.js`, `diff.js`, `analyze.js`, `contract.js` | Session 2.6                                                            |
+| Part                                                     | State                                                                                   |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `config.js`, `plan.js`, `names.js`                       | Built in session 2.1                                                                    |
+| `inventory.js`, `assets.js`, `manifests/`                | Built in sessions 2.1 and 2.2                                                           |
+| `pipeline.js`, `cache.js`, `manifest.js`                 | Built in session 2.1. No step exists, so every file is a copy                           |
+| `index.js`, `cli.js`, `logger.js`                        | Built in sessions 2.1 and 2.2, with `build`, `plan`, `lint` and `verify`                |
+| `rules/web.js`, `rules/variants.js`                      | Built in session 2.2. They plan the variants of an image, and no font                   |
+| `rules/ios.js`, `rules/android.js`                       | Built in session 2.1 for the layout of 0.1.8, with `rules/legacy.js`, until session 2.5 |
+| `lint.js`, the source layout, the manifests of `source/` | Built in session 2.2. The size budgets come with session 2.3                            |
+| `contract.js`, `verify.js`                               | The contract is built, and `verify()` checks it. The golden files come with session 2.6 |
+| `steps/`, `writers/`                                     | Sessions 2.3 to 2.5                                                                     |
+| `diff.js`, `analyze.js`                                  | Session 2.6. Until then `pnpm assets:analyze` runs `analyze-assets.js` of 0.1.8         |
 
 ## Design decisions
 
@@ -230,10 +234,12 @@ Every path is relative to `build/`.
 | `config.js`            | Reads `chassis.build` or the file of `--config`, checks it, names the key that is wrong                                                                                                         | no   |
 | `plan.js`              | `planJobs`: the jobs and their layers, from the configuration and the filters. `planFiles`: the files of a job, from its inventory and the rules of its platform, with the check for collisions | yes  |
 | `inventory.js`         | Walks the layers of a job, reads the manifests and the sizes, and returns the assets. The reading is passed in, so a test gives it a tree in memory                                             | no   |
+| `assets.js`            | Puts the assets of a job together from its layers: what a later layer overrides, the rule of an image, the files of a font family                                                               | yes  |
 | `names.js`             | Takes a file name apart: name, size, density, extension. Builds the names of the variants and the native names                                                                                  | yes  |
 | `manifests/images.js`  | Checks `images.json`, and returns the rule of an image from the rules that match it                                                                                                             | yes  |
 | `manifests/fonts.js`   | Checks `fonts.json`, and returns the families with their faces                                                                                                                                  | yes  |
 | `rules/web.js`         | The files of the web output                                                                                                                                                                     | yes  |
+| `rules/variants.js`    | The variants of an image: their names, their sizes in pixels, and the step that makes each                                                                                                      | yes  |
 | `rules/android.js`     | The files of the `res/` tree                                                                                                                                                                    | yes  |
 | `rules/ios.js`         | The files of the Swift package                                                                                                                                                                  | yes  |
 | `writers/font-face.js` | The text of `fonts.css`                                                                                                                                                                         | yes  |
@@ -257,8 +263,7 @@ Every path is relative to `build/`.
 | `types.js`             | The JSDoc types of the data below                                                                                                                                                               | yes  |
 
 `rules/index.js` holds the rules by the name of their platform. `rules/legacy.js` holds the
-names and the folders of 0.1.8, and goes with them: the names of the web in session 2.2,
-the layout of the native outputs in session 2.5.
+names and the folders of the native outputs of 0.1.8, and goes with them in session 2.5.
 
 A pure module imports only pure modules. `plan.js`, `names.js`, the manifests, the rules, the
 writers, `contract.js` and `lint.js` import nothing from Node.js but `node:path`, whose
@@ -270,6 +275,10 @@ entries of a folder, `size` the size of an image in pixels, and `read` the conte
 file. `fsReader` is the one of the file system. A test passes one that reads a tree in
 memory.
 
+What is wrong with a layer is data, a list of problems with their rule and their file.
+`readLayer` returns it and throws nothing. The build fails with the first problem, and the
+lint lists them all.
+
 ### The data between the modules
 
 | Type          | Holds                                                                                                            | Made by        |
@@ -277,7 +286,9 @@ memory.
 | `Config`      | `brands`, `apps`, `options`                                                                                      | `config.js`    |
 | `Job`         | `brand`, `app`, `platform`, `layers` in override order, `out`, the folder of the job, and `optimize`             | `planJobs`     |
 | `SourceFile`  | `path`, `layer`, `type`, `folder`, `name`, `density`, `extension`, `bytes`, and `width` and `height` of an image | `inventory.js` |
-| `Asset`       | `type`, `id`, the `files` of the layer that won, and the `rule` of an image or the `family` of a font            | `inventory.js` |
+| `Layer`       | `path`, the `files`, the `rules` and the `families` of its manifests, and the `problems`                         | `inventory.js` |
+| `Asset`       | `type`, `id`, the `files` of the layer that won, and the `rule` of an image or the `family` of a font            | `assets.js`    |
+| `Problem`     | `rule`, `file` and `message`: what the lint lists                                                                | the lint       |
 | `PlannedFile` | `path` in the folder of the job, `type`, `source`, `step` with its parameters or `text`, and the size in pixels  | the rules      |
 | `Report`      | Per job: the files written, taken from the cache and removed, the bytes, the time, and the errors                | `pipeline.js`  |
 
@@ -293,11 +304,10 @@ source file into those of the output.
 changes the version. They are not part of the asset build, and the rewrite leaves them
 alone: sessions 3.2 and 5.1 of the roadmap replace them.
 
-`build-assets.js`, `processors/`, `asset-types.js`, `api/`, `analyze-assets.js` and
-`validate-assets.js` stay next to the new modules until session 2.6, which deletes them
-with `build-site.js`, which no script calls. Since session 2.1 no script of `package.json`
-builds with them: `pnpm assets:analyze`, `pnpm assets:validate`, the three old test suites
-and `pnpm assets:compare` are what still runs them.
+Session 2.2 deleted `build-assets.js`, `processors/`, `asset-types.js`, `api/`,
+`validate-assets.js` and their tests: the build of 0.1.8 cannot read the source layout of
+0.2.0. `analyze-assets.js` stays until session 2.6 replaces it, with `build-site.js`, which
+no script calls.
 
 ## Configuration
 
@@ -336,8 +346,8 @@ or `android`, when `options` names a platform that no app uses, and when
 node build/cli.js <command> [options]
 ```
 
-The command line has the command `build` today. The others come with their modules, in
-sessions 2.2 and 2.6 of the roadmap.
+The command line has the commands `build`, `lint` and `verify` today. `diff` and `analyze`
+come with their modules, in session 2.6 of the roadmap.
 
 | Command   | Does                                                                         |
 | --------- | ---------------------------------------------------------------------------- |
@@ -516,7 +526,7 @@ colors.
   type folder.
 
 The build does not rename a file for the web: the name in `source/` is the name a site
-reads.
+reads. A name that breaks these rules is copied as it is, and the lint reports it.
 
 ### Images: masters and variants
 
@@ -587,9 +597,17 @@ build writes for them.
 }
 ```
 
+This is the manifest of the docs app from session 2.3 of the roadmap on. Until the build
+derives the variants, the rules of the home images say `committed`, and their variants are
+in `source/`.
+
 The rules are read in order, and a later rule overrides the keys it sets for the images it
 matches, as in a `.gitattributes` file. An image gets the keys of every rule that matches
-it.
+it. A rule that says `committed` cannot ask for densities, sizes or formats, and a rule
+with a `name` names one image, without `*`.
+
+An image is known to a rule by its folders and its name below `images/`, without
+resolution indicator and extension: `home/comp-gallery-light`.
 
 | Key         | Value                                                                                 | Without it                      |
 | ----------- | ------------------------------------------------------------------------------------- | ------------------------------- |
@@ -647,6 +665,10 @@ the tokens: `text`, `display` and `code`, and `elegant`, `normal`, `strong` and 
 **One file per face is committed**, as OTF or TTF. The build writes the WOFF2 file of the
 web and the stylesheet. A WOFF2 file or a stylesheet in `fonts/` is an error.
 
+A family is one asset: a brand that has the family `display` in its font manifest replaces
+every face of it, and the license. The build leaves out a font file that no family names,
+and the lint reports it.
+
 **Every family has its license.** The fonts of the default brand are under the SIL Open
 Font License, which asks for the license text next to every copy. The build writes the
 license files into every output that holds the fonts.
@@ -654,7 +676,8 @@ license files into every output that holds the fonts.
 ### What the source lint checks
 
 `lint` reads `source/` and the manifests. It writes nothing, and every message names the
-file.
+file. It reads the layers as the jobs do, brand by brand and app by app, so that an image
+is checked with the rule that a job gives it.
 
 | Rule               | Fails when                                                                                |
 | ------------------ | ----------------------------------------------------------------------------------------- |
@@ -669,6 +692,9 @@ file.
 | No generated file  | `fonts/` holds a WOFF2 file or a stylesheet                                               |
 | No duplicate       | Two files of one folder have the same content, and no rule says `committed`               |
 | Reserved names     | A folder of `source/` is not `default` or a configured brand, or an app is named `shared` |
+
+The size budgets of the image manifest are checked from session 2.3 on, when the build
+writes the files that they are about.
 
 Two files in different folders can have the same content: the logos of two apps did in
 0.1.8. The exports under a `committed` rule can have it in one folder too.
@@ -877,6 +903,9 @@ Paths of 0.1.8 and what becomes of them. Nothing in
 | `fonts/text.css`, `fonts/code.css`                                         | Replaced by `fonts/fonts.css`, which names files that exist                      |
 | The 1x, `-small` and WebP files of the home images                         | Same paths. The build derives them, so their bytes change                        |
 | `images/figma/components/button-solid/*/meta-1*.png`, `badge/*/group*.png` | Removed. No page of the Figma documentation shows them                           |
+| `images/figma/components/card/*/card-orientation-top-{1,2,3}.png`, `-2x-*` | Removed. They were copies of `card-orientation-{bottom,left,right}`              |
+| `images/figma/components/list/*/list-item-text-basic-2x-1.png`             | `list-item-text-basic-1@2x.png`, the 2x file of `list-item-text-basic-1.png`     |
+| `images/logo/*.png`, at 1x, 2x and 3x                                      | Removed. The logos are SVG files, and no site reads a PNG file of them           |
 | `images/figma/components/alert/*/alert-window*.png`                        | Stays. The source file is renamed from `Alert Window.png`                        |
 | `dist/android/demo/<brand>/{fonts,icons,images}/`                          | `dist/android/demo/<brand>/res/`                                                 |
 | `dist/ios/demo/<brand>/{fonts,icons,images}/`, loose files                 | A Swift package with an asset catalog                                            |
@@ -884,25 +913,25 @@ Paths of 0.1.8 and what becomes of them. Nothing in
 
 ## Checks
 
-`pnpm assets:lint`, `pnpm assets:typecheck` and `pnpm assets:test:unit` exist since
-session 2.1 of the roadmap. The others come with sessions 2.2, 2.5 and 2.6.
+Session 2.2 of the roadmap has built the checks of the source and of the contract. The
+golden files, `diff` and the native checks come with sessions 2.5 and 2.6.
 
 | Command                      | Checks                                                                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm assets:lint:source`    | `source/` and the manifests, against [the rules of the source contract](#what-the-source-lint-checks)                           |
 | `pnpm assets:lint`           | ESLint on `build/` and `test/`                                                                                                  |
 | `pnpm assets:typecheck`      | TypeScript `checkJs` on `build/`                                                                                                |
-| `pnpm assets:test:unit`      | Vitest, in `test/unit/`, on source trees that the tests write. No test reads `source/`, and the tests run in under ten seconds  |
+| `pnpm assets:test`           | Vitest, in `test/unit/`, on source trees that the tests write. No test reads `source/`, and the tests run in under ten seconds  |
 | `pnpm assets:verify`         | A fresh build gives the manifests of `test/golden/`, and the docs output holds every file of the consumer contract              |
 | `pnpm assets:diff`           | Not a check: the paths added, removed, renamed and changed in each job against another commit. CI writes it to the pull request |
 | `pnpm assets:analyze`        | Not a check: the sizes by type and job, the largest files, and the files with the same content                                  |
 | `pnpm assets:native:ios`     | The asset catalogs with `actool`, and a sample that uses a Swift package of the output (needs Xcode)                            |
 | `pnpm assets:native:android` | The `res/` trees with `aapt2`, in a Gradle library (needs a JDK and the Android SDK)                                            |
 
-Until session 2.6 deletes the build of 0.1.8, `pnpm assets:test` also runs its three test
-suites. Until session 2.2 moves the source, `pnpm assets:compare` runs both builds into a
-scratch folder and fails when a file of a job differs: the new build writes the files of
-0.1.8, byte for byte, and `chassis-assets.json`.
+Until session 2.6 has the golden files, `pnpm assets:verify` checks the consumer contract
+only: it builds every job into a scratch folder, and fails when the docs output lacks a
+file that a site reads by name, or when a screenshot is not there in both modes and at
+both densities.
 
 ### What `verify` compares
 
@@ -924,13 +953,13 @@ A renamed file is a removed and an added path with one hash. `diff` reports it a
 They are part of the contracts and kept on purpose. Don't fix one without saying in the
 changelog what breaks.
 
-- **The docs output holds the screenshots of one site.** `images/figma/` is about 45 of the 57 MB
+- **The docs output holds the screenshots of one site.** `images/figma/` is 38 of the 46 MB
   of the docs output of 0.2.0, and only the site of `chassis-figma` reads it. The consumer
   contract names the path, so it stays until the sites can build a job of their own. See W8
   of the roadmap.
 - **The screenshots are committed at two densities.** Every other raster image has one
   master. See [Committed variants](#committed-variants).
-- **Many screenshots are the same file.** 210 of the 1592 light and dark pairs are, and 323
+- **Many screenshots are the same file.** 210 of the 1572 light and dark pairs are, and 311
   groups of files in one folder: a component that looks the same in both modes, and a state
   that is exported under two names. The pages read each file by its name, so every file
   stays, and the lint does not report them.
@@ -959,7 +988,7 @@ The build of 0.1.8 copied `source/` to `dist/` and renamed the copies. It derive
 and every variant of an image was made by hand and committed. It was reviewed on
 2026-09-29, and the rewrite follows `ref/ROADMAP.md`: the scope and the contracts in
 session 1.1, this document in session 1.2, the build in Phase 2. The findings behind every
-decision are in the roadmap, as F1 to F38, and the decisions as D1 to D13.
+decision are in the roadmap, as F1 to F40, and the decisions as D1 to D13.
 
 The shape of the build, a plan, pure rules, a pipeline and a check against a committed
 reference, is that of the build of `@chassis-ui/tokens`, rewritten in 2026.

@@ -93,11 +93,11 @@ Manage, analyze, and validate your asset distribution:
 
 ```shell
 # Development workflow
-pnpm test                   # Run the test suites
-pnpm assets:test:unit       # Run the unit tests of the build only
+pnpm test                   # Run the unit tests of the build
 pnpm assets --dry-run       # Show what a build would write, without writing
+pnpm assets:lint:source     # Check source/ against the source contract
+pnpm assets:verify          # Build into a scratch folder, and check what the sites read
 pnpm assets:analyze         # Analyze asset distribution (supports filtering)
-pnpm assets:validate        # Validate distribution integrity
 pnpm assets:lint            # Lint the build scripts and the tests
 pnpm assets:typecheck       # Type-check the build scripts
 pnpm lint:prettier          # Check formatting across the repository
@@ -131,15 +131,21 @@ The build system processes assets in the following structure:
 
 ```
 source/
-├── default/              -> Default brand assets (fallback)
+├── default/              -> What every brand starts from
+│   ├── shared/           -> What every app gets: the logos
 │   ├── docs/             -> Documentation website assets
-│   │   ├── fonts/        -> Font files
-│   │   ├── images/       -> Images and illustrations
-│   │   └── icons/        -> Icon library
+│   │   ├── images/       -> Images, with images.json
+│   │   └── icons/        -> The sprite of the home page icons
 │   └── demo/             -> Demo app assets
+│       ├── fonts/        -> One OTF or TTF file per face, with fonts.json and licenses/
+│       └── images/       -> Images, with images.json
 └── [brand]/              -> Brand-specific overrides
-    └── [app]/            -> App-specific assets
+    ├── shared/           -> For every app of the brand
+    └── [app]/            -> For one app
 ```
+
+[`docs/architecture.md`](docs/architecture.md) has the source contract: the layers, the
+names, and the two manifests. `pnpm assets:lint:source` checks `source/` against it.
 
 Output structure:
 
@@ -167,9 +173,9 @@ The build system applies intelligent transformations for each platform:
 
 #### Web
 
-- Files renamed to **kebab-case** (lowercase with hyphens)
+- Paths and names are those of `source/`, which are in lowercase with hyphens
 - Resolution indicators (@2x, @3x) preserved in filenames
-- Font formats: WOFF/WOFF2 only (TTF/OTF excluded)
+- Fonts: none yet. The build will write WOFF2 files and a stylesheet from the OTF and TTF files
 - Image formats: All formats supported
 
 #### iOS
@@ -195,7 +201,7 @@ The build system applies intelligent transformations for each platform:
 **Additional Features:**
 
 - Case-insensitive filesystem handling (macOS compatibility)
-- Collision detection with warnings for duplicate target filenames
+- Two files that would get one name fail the build, before a file is written
 - Automatic filtering of system files (.DS_Store, Thumbs.db, hidden files)
 - Empty directory cleanup after processing
 
@@ -205,9 +211,6 @@ The `chassis` key in `package.json` defines the build configuration for asset di
 
 ```json
 "chassis": {
-  "defaults": {
-    "brandFolder": "default"
-  },
   "build": {
     "brands": ["chassis", "example"],
     "apps": {
@@ -220,9 +223,9 @@ The `chassis` key in `package.json` defines the build configuration for asset di
 
 ### Configuration Details
 
-#### `defaults`
+#### `build.brands`
 
-- **`brandFolder`**: Default source folder for assets (fallback when brand-specific assets don't exist)
+The brands to build. `source/default/` is the first layer of every brand, and not a brand.
 
 #### `build.apps`
 
@@ -241,10 +244,13 @@ Maps applications to their target platforms:
 
 For each brand-app-platform combination:
 
-1. Copy assets from `source/default/[app]/` as the base
-2. Override with brand-specific assets from `source/[brand]/[app]/` if they exist
+1. Read four layers in this order: `source/default/shared/`, `source/default/[app]/`,
+   `source/[brand]/shared/` and `source/[brand]/[app]/`. A layer that does not exist is
+   skipped
+2. A later layer overrides an asset of an earlier one, with every file of it
 3. Apply platform-specific processing (naming conventions, file transformations)
-4. Output to `dist/[platform]/[app]/[brand]/`
+4. Output to `dist/[platform]/[app]/[brand]/`, with `chassis-assets.json`, the list of
+   what was written
 
 ## Chassis Ecosystem
 
