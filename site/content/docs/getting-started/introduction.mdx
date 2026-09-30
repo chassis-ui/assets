@@ -6,7 +6,6 @@ sections:
   - title: Quick Start
     description: Get started with Chassis Assets by cloning the repository and adding design assets for your project.
   - title: Design Guidelines
-    slug: test-slug
     description: Best practices and guidelines for designers exporting and managing assets in the Chassis Assets system.
 aliases:
  - "/getting-started"
@@ -44,7 +43,7 @@ Generate platform-specific asset outputs for web, iOS, and Android from a single
 
 - **Web:** Lowercase filenames with hyphens and web-compatible file formats
 - **iOS:** Lowercase filenames with underscores and iOS-compatible file formats
-- **Android:** Lowercase filenames with underscores, Android-compatible file formats, density-based folders, and `ic_` prefix for icons
+- **Android:** Lowercase filenames with underscores, Android-compatible file formats, density-based folders for images, and `ic_` prefix for icons
 
 ### Scalable Architecture
 
@@ -77,7 +76,7 @@ The build system transforms source assets into platform-specific outputs:
 1. **Read Configuration**: Load brand, app, and platform definitions from `package.json`
 2. **Copy Assets**: Merge default and brand-specific assets (platform compatible formats only)
 3. **Apply Transforms**: Convert filenames and structures for platform requirements
-4. **Generate Output**: Create organized distributions in the `dist/` directory
+4. **Generate Output**: Create organized distributions in `dist/[platform]/[app]/[brand]/`
 
 The build process runs as a command-line script and generates production-ready asset files that developers can reference directly in their applications.
 

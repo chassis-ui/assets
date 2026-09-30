@@ -16,7 +16,7 @@ Chassis Assets enables efficient multi-brand Android development:
 
 - **Single Source, Multiple Brands**: Maintain one asset repository, build for unlimited brands/apps
 - **Automated Builds**: Generate brand-specific assets with simple CLI commands
-- **Native Android Formats**: Vector Drawable (XML), PNG density variants
+- **Native Android Formats**: PNG density variants, SVG icons to convert to vector drawables
 - **Automatic Naming**: Converted to Android conventions (lowercase, underscores)
 - **Density Support**: mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi
 - **CI/CD Ready**: Integrate seamlessly into automated build pipelines
@@ -78,24 +78,30 @@ chassis-assets/
 │   └── example/                -> Example brand overrides
 └── dist/                       -> Generated distributions
     └── android/
-        ├── chassis-demo/       -> Built: chassis brand + demo app
-        │   ├── fonts/
-        │   │   ├── text_normal.otf
-        │   │   └── display_elegant.otf
-        │   ├── images/
-        │   │   ├── hero_background.png
-        │   │   └── icon.png
-        │   └── icons/
-        │       ├── ic_menu.xml
-        │       └── ic_search.xml
-        ├── example-demo/       -> Built: example brand + demo app
-        │   ├── fonts/
-        │   ├── images/
-        │   └── icons/
-        └── brand-mobile-app/   -> Built: custom brand + custom app
-            ├── fonts/
-            ├── images/
-            └── icons/
+        ├── demo/
+        │   ├── chassis/        -> Built: demo app, chassis brand
+        │   │   ├── fonts/
+        │   │   │   ├── text_normal.otf
+        │   │   │   ├── display_elegant.otf
+        │   │   │   └── text_license.txt
+        │   │   ├── images/
+        │   │   │   ├── drawable/
+        │   │   │   │   └── hero_background.png
+        │   │   │   └── drawable-xhdpi/
+        │   │   │       └── hero_background.png
+        │   │   └── icons/
+        │   │       └── svgs/
+        │   │           ├── ic_menu_solid.svg
+        │   │           └── ic_search_solid.svg
+        │   └── example/        -> Built: demo app, example brand
+        │       ├── fonts/
+        │       ├── images/
+        │       └── icons/
+        └── mobile-app/
+            └── brand-a/        -> Built: custom app, custom brand
+                ├── fonts/
+                ├── images/
+                └── icons/
 ```
 
 <Callout type="info">
@@ -111,8 +117,8 @@ Each brand inherits from `default/` and can selectively override specific assets
 
 ```bash
 # From your Android project directory
-# Replace 'chassis-demo' with your brand-app combination
-cp ../chassis-assets/dist/android/chassis-demo/fonts/*.{ttf,otf} app/src/main/res/font/
+# Replace 'demo/chassis' with your app and brand
+cp ../chassis-assets/dist/android/demo/chassis/fonts/*.{ttf,otf} app/src/main/res/font/
 ```
 
 <Callout type="info">
@@ -218,14 +224,17 @@ Android organizes images by density. The build system automatically:
 
 ```bash
 # From your Android project directory
-# Replace 'chassis-demo' with your brand-app combination
+# Replace 'demo/chassis' with your app and brand
 
 # Copy density-independent images (SVGs, PNGs without @2x)
-cp -r ../chassis-assets/dist/android/chassis-demo/images/drawable app/src/main/res/
+cp -r ../chassis-assets/dist/android/demo/chassis/images/drawable app/src/main/res/
 
 # Copy density-specific images (@2x → xhdpi, @3x → xxhdpi)
-cp -r ../chassis-assets/dist/android/chassis-demo/images/drawable-xhdpi app/src/main/res/
-cp -r ../chassis-assets/dist/android/chassis-demo/images/drawable-xxhdpi app/src/main/res/
+cp -r ../chassis-assets/dist/android/demo/chassis/images/drawable-xhdpi app/src/main/res/
+cp -r ../chassis-assets/dist/android/demo/chassis/images/drawable-xxhdpi app/src/main/res/
+
+# A subfolder of images/ has its own density folders: copy those too
+cp -r ../chassis-assets/dist/android/demo/chassis/images/logo/drawable* app/src/main/res/
 ```
 
 ### Density Folders Structure
@@ -233,7 +242,7 @@ cp -r ../chassis-assets/dist/android/chassis-demo/images/drawable-xxhdpi app/src
 After building, your distribution contains:
 
 ```
-dist/android/chassis-demo/images/
+dist/android/demo/chassis/images/
 ├── drawable/               # Density-independent (SVG, or no @2x variant)
 │   ├── chassis_logo.svg
 │   └── hero_background.png
@@ -315,7 +324,7 @@ imageView.setImageDrawable(icon);
 
 ### Vector Drawables (Recommended)
 
-For scalable icons, use Vector Drawable XML:
+The build gives Android the SVG files of `icons/`, with the `ic_` prefix, under `icons/svgs/`. Import them with Android Studio's Vector Asset tool (File → New → Vector Asset → Local file), or convert them with `svg2vectordrawable`, to get Vector Drawable XML like this:
 
 **res/drawable/ic_menu.xml:**
 
@@ -507,20 +516,20 @@ echo "Building Chassis Assets..."
 # Copy fonts
 echo "Copying fonts..."
 mkdir -p "$PROJECT_PATH/res/font"
-cp -r "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/fonts/"* \
+cp -r "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/fonts/"* \
    "$PROJECT_PATH/res/font/"
 
 # Copy images from density folders
 echo "Copying images..."
 # Copy density-independent images (drawable/)
-if [ -d "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/images/drawable" ]; then
+if [ -d "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images/drawable" ]; then
     mkdir -p "$PROJECT_PATH/res/drawable"
-    cp -r "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/images/drawable/"* \
+    cp -r "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images/drawable/"* \
        "$PROJECT_PATH/res/drawable/" 2>/dev/null || true
 fi
 
-# Copy density-specific images (drawable-xhdpi/, drawable-xxhdpi/, etc.)
-for density_folder in "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/images"/drawable-*/; do
+# Copy density-specific images (drawable-xhdpi/, drawable-xxhdpi/, etc.), of images/ and of its subfolders
+for density_folder in "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images"/drawable-*/ "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images"/*/drawable-*/; do
     if [ -d "$density_folder" ]; then
         folder_name=$(basename "$density_folder")
         mkdir -p "$PROJECT_PATH/res/$folder_name"
@@ -528,11 +537,11 @@ for density_folder in "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/images"/dra
     fi
 done
 
-# Copy icons (Vector Drawables)
-echo "Copying icons..."
+# Convert the SVG icons to Vector Drawables, with svg2vectordrawable (npm)
+echo "Converting icons..."
 mkdir -p "$PROJECT_PATH/res/drawable"
-cp -r "$CHASSIS_ASSETS_PATH/dist/android/$BRAND-$APP/icons/"*.xml \
-   "$PROJECT_PATH/res/drawable/" 2>/dev/null || true
+npx svg2vectordrawable -i "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/icons/svgs" \
+   -o "$PROJECT_PATH/res/drawable" 2>/dev/null || true
 
 echo "✓ Assets synced for $BRAND-$APP"
 ```
@@ -608,21 +617,21 @@ jobs:
 
     steps:
       - name: Checkout app repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       - name: Checkout Chassis Assets
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           repository: chassis-ui/assets
           path: chassis-assets
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
-          node-version: '18'
+          node-version-file: chassis-assets/.nvmrc
 
       - name: Install pnpm
-        run: npm install -g pnpm
+        run: corepack enable
 
       - name: Build Chassis Assets
         working-directory: chassis-assets
@@ -635,7 +644,7 @@ jobs:
           ./scripts/sync-assets.sh ${{ matrix.brand }} ${{ matrix.app }}
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -661,11 +670,11 @@ stages:
 
 build-assets:
   stage: assets
-  image: node:18
+  image: node:24
   script:
     - git clone https://github.com/chassis-ui/assets.git chassis-assets
     - cd chassis-assets
-    - npm install -g pnpm
+    - corepack enable
     - pnpm install
     - pnpm assets --platform android --brand $BRAND --app $APP
   artifacts:

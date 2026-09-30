@@ -296,27 +296,29 @@ behaviour that a page states is checked against a run. Style follows `WRITING.md
 `chassis-tokens` for language and accuracy; the structure of the pages is left for session
 5.2.
 
-- [ ] F1: `dist/<platform>/<app>/<brand>/` everywhere, with `dist/web/docs/chassis/` as the
+- [x] F1: `dist/<platform>/<app>/<brand>/` everywhere, with `dist/web/docs/chassis/` as the
       example. `README.md` too.
-- [ ] F2, F4 and F5: the distribution trees of the fonts, images and icons pages and of the
+- [x] F2, F4 and F5: the distribution trees of the fonts, images and icons pages and of the
       three `use-in-project/` pages show what the build writes.
-- [ ] F9: Node 22.12 or later, pnpm from `packageManager`, current action versions in the CI
+- [x] F9: Node 22.12 or later, pnpm from `packageManager`, current action versions in the CI
       examples.
-- [ ] F10: drop the test counts; describe `pnpm test` as Phase 2 leaves it, or as it is if
+- [x] F10: drop the test counts; describe `pnpm test` as Phase 2 leaves it, or as it is if
       Phase 2 has not run.
-- [ ] F12: `other/` is a folder name, not a type; the four folders of the page are examples.
-- [ ] F13: remove "commit built assets" from the quick-start workflow.
-- [ ] F16: a stylesheet in `fonts/` is copied like a font.
-- [ ] F17: fix `slug: test-slug`; remove a callout only from a page checked line by line.
-- [ ] F21: the design-guidelines table says WebP is dropped for iOS and Android, or D14.
-- [ ] F22: the Android page's tree and copy script match the output.
-- [ ] F23: "filtered builds".
-- [ ] F24: the API methods and options as in the code.
-- [ ] The Programmatic API section shows the library as session 1.2 left it, with imports
+- [x] F12: `other/` is a folder name, not a type; the four folders of the page are examples.
+- [x] F13: remove "commit built assets" from the quick-start workflow.
+- [x] F16: a stylesheet in `fonts/` is copied like a font.
+- [x] F17: fix `slug: test-slug`; remove a callout only from a page checked line by line.
+- [x] F21: the design-guidelines table says WebP is dropped for iOS and Android, or D14.
+- [x] F22: the Android page's tree and copy script match the output.
+- [x] F23: "filtered builds".
+- [x] F24: the API methods and options as in the code.
+- [x] The Programmatic API section shows the library as session 1.2 left it, with imports
       that work from a script in another folder.
 - [ ] `pnpm site:build` and `pnpm site:lint` pass; the link check of the website
-      (`pnpm site:lint:links` there, task A23) finds no broken link on `/assets/`.
-- [ ] Delete `docs/pages-vs-build.md`.
+      (`pnpm site:lint:links` there, task A23) finds no broken link on `/assets/`. Lint and
+      `check:astro` pass locally; the build and the link check wait for CI and for the website's
+      crawl of the deployed site.
+- [x] Delete `docs/pages-vs-build.md`.
 
 **Acceptance:** every statement about the build in the pages is true, checked by running it.
 
@@ -614,3 +616,4 @@ None is scheduled; the maintainer picks one when it is wanted.
 | 2026-09-30 | Decisions | The maintainer decided D1 (the code's layout), D2 (not on npm) and D3 (a workspace with `source/` and `dist/` at the root, the build in `packages/assets/` and the site in `packages/site/`), and delegated the other decisions to the plan. D4 to D8 are taken by their recommendations. Session 3.1 is rewritten for D3, and Principle 8 records that the default build needs nothing installed, which is what keeps the consumer contract under the new layout.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | 2026-09-30 | 1.1       | Read every page against the code and ran the build, the analyzer and the validator with the flags the pages describe. Wrote `docs/pages-vs-build.md`, one table per page, every statement with a verdict. Added F18 to F24 and D14 and D15; D14 is the one decision that goes to the maintainer, since it adds files to the default output. Wrote the first `docs/architecture.md`: the build in one picture, the modules, the configuration, the command line, the output contract per platform, the checks, the known oddities. No code changed. Next: session 1.2.                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 2026-09-30 | 1.2       | Fixed the build where the pages are right. The library takes options and throws; only the entry reads argv and exits (F6). Unknown filter values fail (F18). `--clean` with filters removes the selected jobs only (D6). `--out`, `--cwd`, `--dry-run`, `--allow-lfs-pointers`, `--quiet`, `--help`, `--version`. LFS pointers fail the build (T12). The analyzer finds duplicates (F8); the validator prints once and exits 1 on failure (F19). `.png` icons for iOS (D15). Stylesheets: `text.css` and `code.css` rewritten, `display.css` added, for the files in the folder (F3). Licenses of the five families beside the fonts, by role (F15, D8); the font filters keep `.txt`. 40 screenshots renamed to the output names (F14). Old tests adapted and green. Output diff against the baseline: the four stylesheets, `display.css`, and the license files in every `fonts/` folder, nothing else. F11 left: it needs Git LFS, steps in `docs/architecture.md`. |
+| 2026-09-30 | 1.3       | Corrected the eleven pages against the inventory: the `dist/<platform>/<app>/<brand>/` layout everywhere (F1), the distribution trees of every asset type and platform as the build writes them (F2, F4, F5, F22), Node 22.12, pnpm from `packageManager` and current action versions in the CI examples (F9), no test counts (F10), `other/` as a folder name (F12), no "commit built assets" (F13), the stylesheets and the licenses in the fonts page (F3, F15, F16), the broken slug (F17), WebP and PNG icons per platform in the guidelines tables (F21, D15), the API as session 1.2 left it (F6, F24), the options table and the `--clean` semantics (D6), the eight checks of the validator, "filtered builds" (F23). Android icons: the pages say SVG, converted in the app. The callouts stay until session 5.2 runs the platform samples. Deleted the inventory. `pnpm site:lint` and `pnpm check:astro` pass; the site build runs in CI.                   |

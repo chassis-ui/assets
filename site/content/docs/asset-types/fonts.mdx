@@ -12,7 +12,7 @@ Font assets define the typography of your brand identity. Chassis Assets manages
 
 Chassis Assets provides a robust system for handling font assets with features like:
 
-- **Format Support**: TTF, OTF, WOFF, and WOFF2 files
+- **Format Support**: TTF, OTF, WOFF, and WOFF2 files, with the stylesheets and the licenses beside them
 - **Platform Optimization**: Web font declarations, iOS font references, Android asset bundling
 - **Brand Variations**: Different fonts for different brands
 - **Weight Management**: Support for multiple font weights and styles
@@ -47,7 +47,10 @@ Copies font files directly with original filenames. Supported formats include:
 
 - **WOFF2**: Modern format with best compression (recommended)
 - **WOFF**: Fallback for older browsers
-- **TTF/OTF**: Legacy format support
+- **CSS and SCSS**: A stylesheet in `fonts/` is copied like a font, see below
+- **TXT**: The license files, see below
+
+TTF and OTF files are not copied to the web output.
 
 **iOS Platforms:**  
 Copies font files with original filenames but only supports TTF and OTF formats:
@@ -284,6 +287,31 @@ source/
 
 The build system automatically uses brand-specific fonts when available, falling back to defaults.
 
+## Stylesheets and Licenses
+
+Two kinds of text files live beside the fonts and follow the same override order.
+
+### Stylesheets
+
+A `.css` or `.scss` file in `fonts/` is copied to the web output, and to the web output only. The default brand ships `text.css`, `display.css` and `code.css`: one `@font-face` rule per font file of the folder, under the real family name, with the weight of each role. A brand that overrides the font files overrides the stylesheets by name too, since a stylesheet names the files of its folder.
+
+```css
+/* source/default/docs/fonts/text.css, one rule per file */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("text-normal.woff2") format("woff2");
+}
+```
+
+A stylesheet may also load the fonts from a service instead of the folder. The example brand's `fonts.scss` imports two families from Google Fonts and ships no `text-*` files of its own.
+
+### Licenses
+
+Every family in `source/` has its license beside the fonts, named by role: `text-license.txt`, `display-license.txt` and `code-license.txt`. The build copies them to the `fonts/` folder of every platform, so that the license text travels with every copy, as the SIL Open Font License asks. A brand that overrides a family adds the license of the new family under the same name.
+
 ## Distribution Structure
 
 After running the build, fonts are distributed to platform-specific directories:
@@ -293,13 +321,11 @@ After running the build, fonts are distributed to platform-specific directories:
 With semantic naming aligned to tokens:
 
 ```
-dist/web/[brand]-[app]/fonts/
+dist/web/[app]/[brand]/fonts/
 ├── text-normal.woff2
-├── text-normal.woff
-├── text-normal.ttf
 ├── text-strong.woff2
-├── text-strong.woff
-└── text-strong.ttf
+├── text.css
+└── text-license.txt
 ```
 
 See [Web Applications]([[docsref:/use-in-project/web-applications#using-fonts]]) for how to use these fonts in your web project.
@@ -309,9 +335,10 @@ See [Web Applications]([[docsref:/use-in-project/web-applications#using-fonts]])
 With semantic naming (converted to snake_case):
 
 ```
-dist/ios/[brand]-[app]/fonts/
+dist/ios/[app]/[brand]/fonts/
 ├── text_normal.ttf
-└── text_strong.ttf
+├── text_strong.ttf
+└── text_license.txt
 ```
 
 See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-fonts]]) for how to use these fonts in your iOS project.
@@ -321,9 +348,10 @@ See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-fonts]])
 With semantic naming (converted to snake_case):
 
 ```
-dist/android/[brand]-[app]/fonts/
+dist/android/[app]/[brand]/fonts/
 ├── text_normal.ttf
-└── text_strong.ttf
+├── text_strong.ttf
+└── text_license.txt
 ```
 
 See [Android Applications]([[docsref:/use-in-project/android-applications#using-fonts]]) for how to use these fonts in your Android project.

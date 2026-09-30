@@ -12,7 +12,7 @@ Image assets include all visual content used in applications: photographs, illus
 
 Chassis Assets provides streamlined image management across platforms with features like:
 
-- **Format Support**: JPG, PNG, SVG, WebP, and GIF
+- **Format Support**: JPG, PNG, SVG, WebP, and GIF. WebP is copied to the web only
 - **Multi-Resolution**: Automatic handling of @2x, @3x variants for mobile
 - **Brand Flexibility**: Different imagery for different brands
 - **Platform Optimization**: Web-optimized, iOS @2x/@3x, Android density folders
@@ -108,7 +108,7 @@ After running the build, images are distributed to platform-specific directories
 Web images preserve original kebab-case filenames and support all format types:
 
 ```
-dist/web/[brand]-[app]/images/
+dist/web/[app]/[brand]/images/
 ├── hero-background.jpg
 ├── hero-background.webp
 ├── illustration-feature.svg
@@ -123,7 +123,7 @@ See [Web Applications]([[docsref:/use-in-project/web-applications#using-images]]
 iOS images use snake_case naming with resolution indicators preserved in filenames:
 
 ```
-dist/ios/[brand]-[app]/images/
+dist/ios/[app]/[brand]/images/
 ├── hero_background.jpg
 ├── icon_arrow.png
 ├── icon_arrow@2x.png
@@ -137,14 +137,15 @@ See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-images]]
 Android images use snake_case naming with resolution variants organized into density-specific folders:
 
 ```
-dist/android/[brand]-[app]/images/
+dist/android/[app]/[brand]/images/
+├── drawable/
+│   └── hero_background.jpg # Images without a resolution indicator
 ├── drawable-mdpi/
 │   └── icon_arrow.png      # @1x variant
 ├── drawable-xhdpi/
 │   └── icon_arrow.png      # @2x variant
-├── drawable-xxhdpi/
-│   └── icon_arrow.png      # @3x variant
-└── hero_background.jpg     # Non-density-specific images
+└── drawable-xxhdpi/
+    └── icon_arrow.png      # @3x variant
 ```
 
 Android uses density-specific folders for resolution variants:
@@ -214,7 +215,7 @@ source/default/[app]/images/
     └── icon-arrow@2x.png
 ```
 
-This structure is preserved in the distribution, making it easier to find and reference assets in your codebase.
+This structure is preserved in the distribution, making it easier to find and reference assets in your codebase. On Android, the density folders are created inside each subfolder: `images/backgrounds/hero-homepage-light@2x.jpg` becomes `images/backgrounds/drawable-xhdpi/hero_homepage_light.jpg`. Android resources do not nest, so copy the density folders of each subfolder into `res/`.
 
 ## Related Resources
 

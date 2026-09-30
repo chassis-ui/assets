@@ -12,8 +12,8 @@ Chassis Assets is a centralized repository for managing and distributing design 
 
 Before working with Chassis Assets, ensure you have the following installed and configured:
 
-- **Node.js**: Version 18 or higher required for running the build scripts
-- **pnpm**: Package manager used by Chassis Assets (install with `npm install -g pnpm`)
+- **Node.js**: Version 22.12 or later, see `engines` in `package.json`. The repository pins 24 in `.nvmrc`
+- **pnpm**: The version named by `packageManager` in `package.json`. Run `corepack enable` once and pnpm is used at that version
 - **Git**: For cloning the repository and version control
 - **Git LFS**: Required for font and image assets — install from [git-lfs.com](https://git-lfs.com) then run `git lfs install` once on your machine before cloning
 - **Repository Access**: Appropriate permissions to clone or fork the Chassis Assets repository
@@ -107,26 +107,34 @@ pnpm assets --app docs
 
 # Build for a specific platform
 pnpm assets --platform web
+
+# Print the jobs and their file counts without writing
+pnpm assets --dry-run
 ```
 
-The build system generates organized output directories for each platform with appropriate naming conventions and formats:
+Each flag takes one or more values. A value that is not configured fails the build and names the configured values.
+
+The build system generates one folder per platform, app and brand, with the naming conventions and formats of the platform:
 
 **Build output structure:**
 
 ```
 dist/
 ├── web/
-│   └── [brand]-[app]/
-│       ├── fonts/
-│       ├── images/
-│       ├── icons/
-│       └── ...
+│   └── [app]/
+│       └── [brand]/      -> kebab-case filenames, e.g. dist/web/docs/chassis/
+│           ├── fonts/
+│           ├── images/
+│           ├── icons/
+│           └── ...
 ├── ios/
-│   └── [brand]-[app]/    -> snake_case filenames with underscores
-│       └── ...
+│   └── [app]/
+│       └── [brand]/      -> snake_case filenames with underscores
+│           └── ...
 └── android/
-    └── [brand]-[app]/    -> snake_case filenames, density-based folders, ic_ prefix for icons
-        └── ...
+    └── [app]/
+        └── [brand]/      -> snake_case filenames, density folders for images, ic_ prefix for icons
+            └── ...
 ```
 
 The build system uses a modular processor architecture to transform assets for each platform. See the [Build System]([[docsref:/getting-started/build-system]]) documentation for details on how the build system works and how to customize it.
@@ -141,12 +149,12 @@ Manually copy built assets to your project, or create automation scripts to keep
 
 ```bash
 # Copy web assets to your project
-cp -r dist/web/[brand]-[app]/* /path/to/project/public/assets/
+cp -r dist/web/[app]/[brand]/* /path/to/project/public/assets/
 
 # Create a sync script in your project's package.json
 {
   "scripts": {
-    "sync-assets": "cp -r ../chassis-assets/dist/web/chassis-docs/* public/assets/"
+    "sync-assets": "cp -r ../chassis-assets/dist/web/docs/chassis/* public/assets/"
   }
 }
 ```
@@ -220,7 +228,7 @@ Follow this workflow when adding new assets to the repository:
 1. Export asset from design tool (Figma, Sketch, etc.)
 2. Add to appropriate `source/` directory with proper naming
 3. Run build command to generate platform-specific outputs
-4. Commit both source and built assets
+4. Commit the source files. `dist/` is not committed; every consumer builds it
 5. Copy built assets to your application project
 
 ### Creating Brand Variations
@@ -257,6 +265,8 @@ Key directories in the Chassis Assets repository:
 | `source/` | Source asset files organized by brand and app |
 | `dist/` | Built assets for each platform |
 | `build/` | Build scripts and configuration |
+| `test/` | The test scripts of the build |
+| `docs/` | The architecture document of the build |
 | `site/` | Documentation website |
 </CxTable>
 
@@ -279,7 +289,7 @@ Fundamental concepts that drive the Chassis Assets architecture:
 - **Multi-brand structure**: Shared defaults with brand-specific overrides
 - **Platform-specific builds**: Automatic transformation for Web, iOS, Android
 - **Token integration**: Assets reference Chassis Tokens for consistency
-- **Override hierarchy**: Brand > App > Default
+- **Override order**: A brand file replaces the default file of the same name, app by app
 
 ## Next Steps
 

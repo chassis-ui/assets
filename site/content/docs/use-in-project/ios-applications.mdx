@@ -16,7 +16,7 @@ Chassis Assets enables efficient multi-brand iOS development:
 
 - **Single Source, Multiple Brands**: Maintain one asset repository, build for unlimited brands/apps
 - **Automated Builds**: Generate brand-specific assets with simple CLI commands
-- **Native iOS Formats**: PDF for vectors, PNG for rasters (@2x, @3x)
+- **Native iOS Formats**: SVG and PDF icons, PNG rasters with @2x and @3x variants
 - **CI/CD Ready**: Integrate seamlessly into automated build pipelines
 - **Asset Catalog Ready**: Organized for Xcode Asset Catalogs
 - **Framework Support**: Works with UIKit and SwiftUI
@@ -80,18 +80,20 @@ chassis-assets/
 │       └── mobile-app/
 └── dist/                       -> Generated distributions
     └── ios/
-        ├── chassis-demo/      -> Built: chassis brand + demo app
-        │   ├── fonts/
-        │   ├── images/
-        │   └── icons/
-        ├── example-demo/      -> Built: example brand + demo app
-        │   ├── fonts/
-        │   ├── images/
-        │   └── icons/
-        └── brand-mobile-app/  -> Built: custom brand + custom app
-            ├── fonts/
-            ├── images/
-            └── icons/
+        ├── demo/
+        │   ├── chassis/       -> Built: demo app, chassis brand
+        │   │   ├── fonts/
+        │   │   ├── images/
+        │   │   └── icons/
+        │   └── example/       -> Built: demo app, example brand
+        │       ├── fonts/
+        │       ├── images/
+        │       └── icons/
+        └── mobile-app/
+            └── brand-a/       -> Built: custom app, custom brand
+                ├── fonts/
+                ├── images/
+                └── icons/
 ```
 
 <Callout type="info">
@@ -110,9 +112,9 @@ Copy font files from the built distribution to your Xcode project:
 
 ```bash
 # From your iOS project directory
-# Replace 'chassis-demo' with your brand-app combination
+# Replace 'demo/chassis' with your app and brand
 # Copy both TTF and OTF files (use * or specify formats)
-cp ../chassis-assets/dist/ios/chassis-demo/fonts/*.{ttf,otf} \
+cp ../chassis-assets/dist/ios/demo/chassis/fonts/*.{ttf,otf} \
    YourProject/Resources/Fonts/
 ```
 
@@ -337,7 +339,7 @@ let adaptiveImage = UIImage { traitCollection in
 
 ## Using Icons
 
-iOS icons work best as PDF vectors or PNG rasters with @2x/@3x variants.
+The build gives iOS the SVG, PDF and PNG files under `icons/`. Xcode imports SVG and PDF into an asset catalog as vector data; PNG icons need @2x/@3x variants.
 
 ### PDF Icons (Recommended)
 
@@ -499,19 +501,19 @@ echo "Building Chassis Assets..."
 # Copy fonts
 echo "Copying fonts..."
 mkdir -p "$PROJECT_PATH/Resources/Fonts"
-cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$BRAND-$APP/fonts/" \
+cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$APP/$BRAND/fonts/" \
    "$PROJECT_PATH/Resources/Fonts/"
 
 # Copy images to brand-specific Asset Catalog folder
 echo "Copying images..."
 mkdir -p "$PROJECT_PATH/Assets.xcassets/$BRAND/Images"
-cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$BRAND-$APP/images/" \
+cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$APP/$BRAND/images/" \
    "$PROJECT_PATH/Assets.xcassets/$BRAND/Images/"
 
 # Copy icons
 echo "Copying icons..."
 mkdir -p "$PROJECT_PATH/Assets.xcassets/$BRAND/Icons"
-cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$BRAND-$APP/icons/" \
+cp -r "$CHASSIS_ASSETS_PATH/dist/ios/$APP/$BRAND/icons/" \
    "$PROJECT_PATH/Assets.xcassets/$BRAND/Icons/"
 
 echo "✓ Assets synced for $BRAND-$APP"
@@ -556,7 +558,7 @@ if [ -d "$SRCROOT/../chassis-assets" ]; then
     fi
 
     # Copy to project
-    cp -r "dist/ios/${BRAND:-chassis}-${APP:-demo}/fonts/"* \
+    cp -r "dist/ios/${APP:-demo}/${BRAND:-chassis}/fonts/"* \
        "$SRCROOT/Resources/Fonts/" 2>/dev/null || true
 fi
 ```
@@ -589,21 +591,21 @@ jobs:
 
     steps:
       - name: Checkout app repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       - name: Checkout Chassis Assets
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           repository: chassis-ui/assets
           path: chassis-assets
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
-          node-version: '18'
+          node-version-file: chassis-assets/.nvmrc
 
       - name: Install pnpm
-        run: npm install -g pnpm
+        run: corepack enable
 
       - name: Build Chassis Assets
         working-directory: chassis-assets
@@ -638,11 +640,11 @@ stages:
 
 build-assets:
   stage: assets
-  image: node:18
+  image: node:24
   script:
     - git clone https://github.com/chassis-ui/assets.git chassis-assets
     - cd chassis-assets
-    - npm install -g pnpm
+    - corepack enable
     - pnpm install
     - pnpm assets --platform ios --brand $BRAND --app $APP
   artifacts:

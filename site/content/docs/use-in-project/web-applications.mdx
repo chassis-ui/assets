@@ -69,19 +69,23 @@ chassis-assets/
 │   └── [brand]/
 └── dist/                       -> Generated platform assets
     └── web/
-        └── [brand]-[app]/
-            ├── fonts/
-            │   ├── inter-regular.woff2
-            │   ├── inter-bold.woff2
-            │   └── ...
-            ├── images/
-            │   ├── hero-background.webp
-            │   ├── illustration-feature.svg
-            │   └── ...
-            └── icons/
-                ├── arrow-right.svg
-                ├── menu.svg
-                └── ...
+        └── [app]/
+            └── [brand]/            -> e.g. dist/web/docs/chassis/
+                ├── fonts/
+                │   ├── text-normal.woff2
+                │   ├── text-strong.woff2
+                │   ├── text.css
+                │   └── ...
+                ├── images/
+                │   ├── hero-background.webp
+                │   ├── illustration-feature.svg
+                │   └── ...
+                └── icons/
+                    ├── cx-sprite.svg
+                    ├── icons/          -> the icon font, its stylesheets and the sprite
+                    └── svgs/
+                        ├── arrow-right-solid.svg
+                        └── ...
 ```
 
 ### Copy Assets to Your Project
@@ -89,12 +93,12 @@ chassis-assets/
 Copy the generated web assets to your application's public directory:
 
 ```bash
-# Copy all web assets for a brand-app
-cp -r dist/web/chassis-docs/* /path/to/your-project/public/assets/
+# Copy all web assets for an app and a brand
+cp -r dist/web/docs/chassis/* /path/to/your-project/public/assets/
 
 # Or copy specific asset types
-cp -r dist/web/chassis-docs/fonts /path/to/your-project/public/assets/
-cp -r dist/web/chassis-docs/images /path/to/your-project/public/assets/
+cp -r dist/web/docs/chassis/fonts /path/to/your-project/public/assets/
+cp -r dist/web/docs/chassis/images /path/to/your-project/public/assets/
 ```
 
 <Callout type="info">
@@ -112,20 +116,30 @@ Copy fonts to your public directory or import them through your bundler:
 **Manual copy (public folder):**
 
 ```bash
-cp -r dist/web/chassis-docs/fonts public/assets/
+cp -r dist/web/docs/chassis/fonts public/assets/
 ```
 
 **Vite/Webpack import:**
 
 ```javascript
 // Import fonts in your main CSS/JS file
-import '/path/to/chassis-assets/dist/web/chassis-docs/fonts/text-normal.woff2';
-import '/path/to/chassis-assets/dist/web/chassis-docs/fonts/text-strong.woff2';
+import '/path/to/chassis-assets/dist/web/docs/chassis/fonts/text-normal.woff2';
+import '/path/to/chassis-assets/dist/web/docs/chassis/fonts/text-strong.woff2';
+```
+
+### Use the Shipped Stylesheets
+
+The `fonts/` folder of the default brand ships `text.css`, `display.css` and `code.css`, one `@font-face` rule per font file under the real family name. Link them next to the fonts and the declarations are done:
+
+```html
+<link rel="stylesheet" href="/assets/fonts/text.css">
+<link rel="stylesheet" href="/assets/fonts/display.css">
+<link rel="stylesheet" href="/assets/fonts/code.css">
 ```
 
 ### Define @font-face Rules
 
-Define font-face declarations to load custom fonts in your application.
+Or define the font-face declarations yourself, to use the family names of your tokens.
 
 <Callout type="info" title="Token-Aligned Naming">
 If your fonts use semantic names (text-normal, text-strong, etc.), they align with [Chassis Tokens typography system](https://tokens.chassis-ui.com/docs/design-tokens/typography-tokens). This enables brand switching without code changes.
@@ -140,8 +154,7 @@ If your fonts use semantic names (text-normal, text-strong, etc.), they align wi
 /* Text Family - Normal Weight */
 @font-face {
   font-family: $cx-typography-font-family-text;  // From token: typography.fontFamily.text
-  src: url('/assets/fonts/text-normal.woff2') format('woff2'),
-       url('/assets/fonts/text-normal.woff') format('woff');
+  src: url('/assets/fonts/text-normal.woff2') format('woff2');
   font-weight: $cx-typography-font-weight-text-normal-weight;  // From token
   font-style: normal;
   font-display: swap;
@@ -150,8 +163,7 @@ If your fonts use semantic names (text-normal, text-strong, etc.), they align wi
 /* Text Family - Strong Weight */
 @font-face {
   font-family: $cx-typography-font-family-text;
-  src: url('/assets/fonts/text-strong.woff2') format('woff2'),
-       url('/assets/fonts/text-strong.woff') format('woff');
+  src: url('/assets/fonts/text-strong.woff2') format('woff2');
   font-weight: $cx-typography-font-weight-text-strong-weight;  // From token
   font-style: normal;
   font-display: swap;
@@ -160,8 +172,7 @@ If your fonts use semantic names (text-normal, text-strong, etc.), they align wi
 /* Display Family - Normal Weight */
 @font-face {
   font-family: $cx-typography-font-family-display;  // From token: typography.fontFamily.display
-  src: url('/assets/fonts/display-normal.woff2') format('woff2'),
-       url('/assets/fonts/display-normal.woff') format('woff');
+  src: url('/assets/fonts/display-normal.woff2') format('woff2');
   font-weight: $cx-typography-font-weight-display-normal-weight;  // From token
   font-style: normal;
   font-display: swap;
@@ -275,7 +286,7 @@ Web images support all standard formats including WebP for modern browsers.
 Copy image assets to your public directory for static hosting:
 
 ```bash
-cp -r dist/web/chassis-docs/images public/assets/
+cp -r dist/web/docs/chassis/images public/assets/
 ```
 
 ### Reference in HTML
@@ -320,7 +331,7 @@ Import images as modules for automatic optimization and cache-busting.
 
 ```jsx
 // Import images as modules (Vite/Webpack)
-import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
+import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
 
 function Hero() {
   return <img src={heroImage} alt="Hero" />;
@@ -331,7 +342,7 @@ function Hero() {
 
 ```jsx
 <script setup>
-import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
+import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
 </script>
 
 <template>
@@ -343,7 +354,7 @@ import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero
 
 ```jsx
 import Image from 'next/image';
-import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
+import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
 
 export default function Hero() {
   return (
@@ -370,7 +381,7 @@ Defer loading of offscreen images until they're needed:
 
 ## Using Icons
 
-Icons are provided as individual SVG files for maximum flexibility.
+Icons are provided as individual SVG files under `icons/svgs/`, named `<icon>-solid.svg` and `<icon>-outline.svg`, plus the icon font and its stylesheet under `icons/icons/` and the sprite `icons/cx-sprite.svg`.
 
 ### Inline SVG (Recommended)
 
@@ -380,13 +391,13 @@ Inline SVG allows dynamic styling and interactions:
 // utils/loadIcon.js
 export async function loadIcon(name) {
   const icon = await import(
-    `/path/to/chassis-assets/dist/web/chassis-docs/icons/${name}.svg?raw`
+    `/path/to/chassis-assets/dist/web/docs/chassis/icons/svgs/${name}.svg?raw`
   );
   return icon.default;
 }
 
 // Component
-const iconSvg = await loadIcon('arrow-right');
+const iconSvg = await loadIcon('arrow-right-solid');
 element.innerHTML = iconSvg;
 ```
 
@@ -394,7 +405,7 @@ element.innerHTML = iconSvg;
 
 ```jsx
 // components/Icon.jsx
-import { ReactComponent as ArrowRight } from '/path/to/chassis-assets/dist/web/chassis-docs/icons/arrow-right.svg';
+import { ReactComponent as ArrowRight } from '/path/to/chassis-assets/dist/web/docs/chassis/icons/svgs/arrow-right-solid.svg';
 
 export function Icon() {
   return <ArrowRight className="w-6 h-6 text-primary" />;
@@ -405,7 +416,7 @@ export function Icon() {
 
 ```jsx
 <script setup>
-import IconArrow from '/path/to/chassis-assets/dist/web/chassis-docs/icons/arrow-right.svg';
+import IconArrow from '/path/to/chassis-assets/dist/web/docs/chassis/icons/svgs/arrow-right-solid.svg';
 </script>
 
 <template>
@@ -418,7 +429,7 @@ import IconArrow from '/path/to/chassis-assets/dist/web/chassis-docs/icons/arrow
 Use image tags for static icons that don't require styling:
 
 ```html
-<img src="/assets/icons/menu.svg"
+<img src="/assets/icons/svgs/menu-solid.svg"
      alt="Menu"
      width="24"
      height="24">
@@ -462,7 +473,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   resolve: {
     alias: {
-      '@assets': '/path/to/chassis-assets/dist/web/chassis-docs'
+      '@assets': '/path/to/chassis-assets/dist/web/docs/chassis'
     }
   },
   build: {
@@ -475,7 +486,7 @@ export default defineConfig({
 
 ```javascript
 import heroImage from '@assets/images/hero.jpg';
-import '@assets/fonts/inter-regular.woff2';
+import '@assets/fonts/text-normal.woff2';
 ```
 
 ### Webpack
@@ -487,7 +498,7 @@ Configure aliases and asset loaders:
 module.exports = {
   resolve: {
     alias: {
-      '@assets': path.resolve(__dirname, '../chassis-assets/dist/web/chassis-docs')
+      '@assets': path.resolve(__dirname, '../chassis-assets/dist/web/docs/chassis')
     }
   },
   module: {
@@ -518,8 +529,8 @@ module.exports = {
 Parcel handles assets automatically with zero configuration:
 
 ```javascript
-import heroImage from '/path/to/chassis-assets/dist/web/chassis-docs/images/hero.jpg';
-import '/path/to/chassis-assets/dist/web/chassis-docs/fonts/inter-regular.woff2';
+import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
+import '/path/to/chassis-assets/dist/web/docs/chassis/fonts/text-normal.woff2';
 ```
 
 ## Brand Switching
@@ -531,13 +542,14 @@ Support multiple brands by loading assets dynamically based on brand configurati
 const BRAND = process.env.VITE_BRAND || 'chassis';
 const APP = 'docs';
 
+// Copy the dist/web/ tree as it is: /assets/<app>/<brand>/<type>/
 export function getAssetPath(type, filename) {
-  return `/assets/${BRAND}-${APP}/${type}/${filename}`;
+  return `/assets/${APP}/${BRAND}/${type}/${filename}`;
 }
 
 // Usage
 const heroPath = getAssetPath('images', 'hero.jpg');
-const fontPath = getAssetPath('fonts', 'brand-regular.woff2');
+const fontPath = getAssetPath('fonts', 'text-normal.woff2');
 ```
 
 **React Context:**
@@ -562,7 +574,7 @@ export function useBrand() {
 
 export function useAsset(type, filename) {
   const brand = useBrand();
-  return `/assets/${brand}-docs/${type}/${filename}`;
+  return `/assets/docs/${brand}/${type}/${filename}`;
 }
 
 // Usage in components
@@ -582,7 +594,7 @@ Use preload, lazy loading, and prefetch strategies:
 
 ```html
 <!-- Preload critical assets -->
-<link rel="preload" href="/assets/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/text-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/images/hero.webp" as="image">
 
 <!-- Lazy load below-fold images -->

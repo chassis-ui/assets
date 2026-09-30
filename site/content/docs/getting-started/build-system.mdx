@@ -13,15 +13,16 @@ The Chassis Assets build system transforms source assets into platform-specific 
 - **Multi-Brand Support**: Build assets for multiple brands from single source
 - **Multi-Platform Support**: Generate web, iOS, and Android distributions
 - **Selective Building**: Filter by brand, app, or platform
-- **Smart Build Mode**: Full builds clean dist/, filtered builds preserve existing files
+- **Smart Build Mode**: Full builds clean `dist/`, filtered builds keep the output of the other jobs
+- **Git LFS Check**: A source file that is still a Git LFS pointer fails the build
 - **Smart Overrides**: Brand-specific assets override defaults automatically
 - **Platform Processing**: Automatic naming conversions and structure transformations
 - **Collision Detection**: Warns about filename conflicts during renaming process
 - **System File Filtering**: Automatically excludes 13 patterns (.DS_Store, Thumbs.db, hidden files, etc.)
 - **Empty Directory Cleanup**: Removes empty folders after filtering operations
 - **macOS Compatibility**: Robust cleanup with retry logic for ENOTEMPTY errors
-- **Asset Analysis**: Built-in analyzer with accurate duplicate detection
-- **Programmatic API**: Use the API for custom integrations and automation
+- **Asset Analysis**: Built-in analyzer with duplicate detection by content
+- **Programmatic API**: Use the library from a script, with the same options as the command line
 
 ## Build Commands
 
@@ -42,7 +43,29 @@ pnpm test
 
 # View build statistics
 pnpm assets:analyze
+
+# Print the jobs and their file counts without writing
+pnpm assets --dry-run
+
+# Every option
+pnpm assets --help
 ```
+
+| Option                 | What it does                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| `--brand <name...>`    | Only these brands. One or more values                                                               |
+| `--app <name...>`      | Only these apps                                                                                     |
+| `--platform <name...>` | Only these platforms                                                                                |
+| `--clean`              | Remove the output first: all of `dist/` without filters, the folders of the selected jobs with them |
+| `--no-clean`           | Keep `dist/` even for a full build                                                                  |
+| `--out <dir>`          | Write to another folder than `dist/`                                                                |
+| `--cwd <dir>`          | The repository root, where `package.json` and `source/` are                                         |
+| `--dry-run`            | Print the jobs and their file counts, write nothing                                                 |
+| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same         |
+| `--quiet`              | Print errors only                                                                                   |
+| `--help`, `--version`  | The options; the version of `package.json`                                                          |
+
+A filter value that is not configured, or filters that together select no job, fail the build and name the configured values.
 
 ### Selective Build
 
@@ -87,11 +110,11 @@ pnpm assets --brand chassis --platform web
 # All three filters (preserves existing dist files)
 pnpm assets --brand chassis --app docs --platform web
 
-# Force clean with filters
+# Clean the output of the selected jobs first
 pnpm assets --clean --brand chassis --platform web
 ```
 
-**Note:** Using `--brand`, `--app`, or `--platform` filters preserves existing dist/ files by default, allowing you to build different combinations without losing previous work.
+**Note:** Using `--brand`, `--app`, or `--platform` filters preserves existing dist/ files by default, allowing you to build different combinations without losing previous work. With `--clean`, a filtered build removes the folders of the selected jobs only, so the output of the other jobs stays.
 
 ### Clean Build
 
@@ -107,9 +130,8 @@ pnpm assets --no-clean
 # Filtered build (preserves existing dist files)
 pnpm assets --brand chassis --platform web
 
-# Force clean even with filters
-pnpm assets --clean --brand chassis --platform web
-
+# Filtered build that removes its own output first, dist/web/docs/chassis/ here
+pnpm assets --clean --brand chassis --app docs --platform web
 ```
 
 ### Analyze Assets
@@ -147,11 +169,15 @@ pnpm assets:validate
 
 **What validation does:**
 
-- ✅ Check if dist/ exists and has content
+- ✅ Check if dist/ exists and has content, and that source/ exists
 - ✅ Verify all brand-app-platform combinations are present
+- ✅ Check that every asset type folder of the source is present in each combination
+- ✅ Check that every source file exists in dist/ under its platform name
 - ✅ Check asset counts (dist should have > source due to expansion)
 - ✅ Detect empty directories
 - ✅ Validate platform naming conventions (`kebab-case`, `snake_case`, `ic_` prefix)
+
+The command exits with 1 when a check fails. `--out <dir>` validates another folder than `dist/`.
 
 **Use validation:**
 
@@ -242,7 +268,7 @@ The build system generates every combination of **brand × app × platform**.
 **Output:** 1 combination
 
 ```
-dist/web/acme-website/
+dist/web/website/acme/
 ```
 
 #### Multi-Brand, One App
@@ -263,9 +289,9 @@ dist/web/acme-website/
 **Output:** 3 combinations
 
 ```
-dist/web/acme-website/
-dist/web/wonka-website/
-dist/web/duff-website/
+dist/web/website/acme/
+dist/web/website/wonka/
+dist/web/website/duff/
 ```
 
 #### One Brand, Multi-Platform
@@ -286,8 +312,8 @@ dist/web/duff-website/
 **Output:** 2 combinations
 
 ```
-dist/ios/acme-mobile/
-dist/android/acme-mobile/
+dist/ios/mobile/acme/
+dist/android/mobile/acme/
 ```
 
 #### Multi-Brand, Multi-App
@@ -309,13 +335,15 @@ dist/android/acme-mobile/
 **Output:** 6 combinations
 
 ```
-dist/web/acme-website/
-dist/web/wonka-website/
-dist/ios/acme-mobile/
-dist/ios/wonka-mobile/
-dist/android/acme-mobile/
-dist/android/wonka-mobile/
+dist/web/website/acme/
+dist/web/website/wonka/
+dist/ios/mobile/acme/
+dist/ios/mobile/wonka/
+dist/android/mobile/acme/
+dist/android/mobile/wonka/
 ```
+
+The layout is `dist/[platform]/[app]/[brand]/`, the same as the output of Chassis Tokens.
 
 ## Platform Support
 
@@ -329,26 +357,26 @@ Each platform has specific rules for naming, structure, and supported formats:
 
 - **Naming**: Lowercase with hyphens (kebab-case)
 - **Resolution**: @2x/@3x preserved in filenames
-- **Fonts**: Only WOFF/WOFF2 formats copied (TTF/OTF excluded)
+- **Fonts**: WOFF and WOFF2 files, the stylesheets (`.css`, `.scss`) and the license files (`.txt`) beside them. TTF and OTF are not copied
 - **Images**: All formats supported
-- **Icons**: SVG, PNG, WebP supported
+- **Icons**: Every file
 
 #### iOS Platform
 
 - **Naming**: Lowercase with underscores (snake_case)
 - **Resolution**: @2x/@3x preserved in filenames
-- **Fonts**: Only TTF/OTF formats copied (WOFF/WOFF2 excluded)
+- **Fonts**: TTF and OTF files and the license files (`.txt`). WOFF and WOFF2 are not copied
 - **Images**: WebP format excluded for compatibility
-- **Icons**: SVG and PDF vector formats supported
+- **Icons**: SVG, PDF and PNG files. Other formats are not copied
 
 #### Android Platform
 
 - **Naming**: Lowercase with underscores (snake_case)
 - **Icon Prefix**: All icon files prefixed with `ic_`
 - **Resolution**: @2x/@3x converted to density folders (drawable-mdpi, drawable-hdpi, drawable-xhdpi, drawable-xxhdpi, drawable-xxxhdpi)
-- **Fonts**: Only TTF/OTF formats copied
-- **Images**: WebP format excluded, resolution files placed in density folders
-- **Icons**: Only SVG format supported
+- **Fonts**: TTF and OTF files and the license files (`.txt`)
+- **Images**: WebP format excluded, resolution files placed in density folders, inside the subfolder the file came from
+- **Icons**: SVG files only, copied as SVG
 
 ### Comparison Matrix
 
@@ -363,7 +391,7 @@ Quick reference for platform-specific transformations:
 | **Font Format** | WOFF, WOFF2 | TTF, OTF | TTF, OTF |
 | **Resolution** | @2x/@3x inline | @2x/@3x inline | Density folders |
 | **Directory Structure** | As-is | As-is | As-is with density folders |
-| **Vector Format** | SVG | PDF | Vector Drawable (XML) |
+| **Icon Formats** | Any | SVG, PDF, PNG | SVG |
 </CxTable>
 
 ### Custom Platforms
@@ -377,10 +405,14 @@ const desktopProcessor = {
   name: 'desktop',
   icon: '🖥️',
 
-  // Define allowed formats
-  allowedFontFormats: ['.ttf', '.otf'],
+  // Define allowed formats. A missing list means every format
+  allowedFontFormats: ['.ttf', '.otf', '.txt'],
   allowedIconFormats: ['.svg'],
   excludedImageFormats: [],
+
+  // Optional: place an image yourself, as the Android processor does for density folders.
+  // Return true when the file was written, false to let the build copy it.
+  // processImage({ srcPath, destPath, fileName, fs, path, stats, logger }) { ... },
 
   // Define filename transformation
   renameFile(fileName) {
@@ -431,31 +463,35 @@ pnpm assets --platform desktop
 Use the Chassis Assets API for custom integrations:
 
 ```javascript
-import ChassisAssets from '@chassis-ui/assets/build/api/index.js'
-import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
-import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
+import ChassisAssets from '../chassis-assets/build/api/index.js'
+import AssetAnalyzer from '../chassis-assets/build/analyze-assets.js'
+import { generateAssets } from '../chassis-assets/build/build-assets.js'
+
+// The repository root: where package.json and source/ are. Default: the working directory
+const cwd = new URL('../chassis-assets/', import.meta.url).pathname
 
 // Build assets programmatically
-const assets = new ChassisAssets()
+const assets = new ChassisAssets('package.json', { cwd })
 
 // Get asset inventory
 const inventory = assets.getAssetInventory('chassis', 'docs')
 
-// Build specific combinations
+// Build specific combinations. Throws on a value that is not configured
 await assets.build({
   brands: ['chassis'],
   apps: ['docs'],
   platforms: ['web']
 })
 
+// Or call the build directly, with every option of the command line
+const result = await generateAssets({ brands: ['chassis'], cwd, out: 'dist', quiet: true })
+console.log(result.filesProcessed, result.jobs)
+
 // Get build statistics
 const stats = assets.getStats()
 
-// Analyze assets programmatically
-const analyzer = new AssetAnalyzer()
-
-// Analyze with filters
-analyzer.options = { brand: 'chassis', apps: ['docs'], platforms: ['web'] }
+// Analyze assets programmatically, with the same filters as the command line
+const analyzer = new AssetAnalyzer({ brands: ['chassis'], apps: ['docs'], platforms: ['web'], cwd })
 analyzer.analyze()  // Note: synchronous, not async
 
 // Access analysis results
@@ -469,18 +505,26 @@ console.log('Total size:', analyzer.formatBytes(analyzer.stats.totalSize))
 
 **ChassisAssets Class:**
 
+- `new ChassisAssets(configPath, { cwd, out })` - Read the configuration of `package.json` in `cwd`
 - `getBrands()` - Get list of configured brands
 - `getApps()` - Get list of configured app names
-- `getPlatforms()` - Get list of all platforms used across apps
+- `getPlatforms(app)` - Get the platforms of one app
+- `getAllPlatforms()` - Get list of all platforms used across apps
 - `getCombinations()` - Get all brand+app+platform combinations
 - `assetsExist(brand, app)` - Check if source assets exist
 - `getAssetInventory(brand, app)` - Get categorized asset list
-- `build(options)` - Build with specific brand/app/platform filters
+- `build({ brands, apps, platforms, clean, quiet })` - Build with specific brand/app/platform filters
 - `getStats()` - Get source and dist asset counts
 - `validate()` - Validate configuration and source files
 
+**Build function:**
+
+- `generateAssets({ brands, apps, platforms, clean, quiet, cwd, out, dryRun, allowLfsPointers })` - The build. Resolves to the statistics of the run and throws on failure
+- `loadConfig(cwd)`, `parseArgs(argv)`, `planJobs(config, filters)`, `isLfsPointer(path)` - The pieces of it
+
 **AssetAnalyzer Class:**
 
+- `new AssetAnalyzer({ brands, apps, platforms, quiet, cwd, out })` - The filters and the folders
 - `analyze()` - Run full analysis (synchronous)
 - `analyzeDirectory(path, type)` - Analyze specific directory
 - `analyzeFile(path, stat, type)` - Analyze single file
@@ -499,11 +543,11 @@ console.log('Total size:', analyzer.formatBytes(analyzer.stats.totalSize))
 For automated testing or CI/CD pipelines, use quiet mode to suppress verbose output:
 
 ```javascript
-import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
-import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
+import { generateAssets } from '../chassis-assets/build/build-assets.js'
+import AssetAnalyzer from '../chassis-assets/build/analyze-assets.js'
 
 // Build assets silently (only errors shown)
-await generateAssets({ quiet: true })
+await generateAssets({ quiet: true, cwd })
 
 // Analyze assets silently
 const analyzer = new AssetAnalyzer({ quiet: true })
@@ -527,22 +571,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
-      - uses: pnpm/action-setup@v2
+      # pnpm at the version of `packageManager`, Node.js from .nvmrc
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
-          version: 9
+          node-version-file: .nvmrc
+          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build assets
         run: pnpm assets --platform web
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: web-assets
           path: dist/web/
@@ -554,8 +601,8 @@ jobs:
 #!/bin/bash
 # build-changed.sh - Build only assets for changed brands
 
-# Get list of changed brands from git diff
-CHANGED_BRANDS=$(git diff --name-only ${{ github.event.before }} HEAD | \
+# Get list of changed brands from git diff. BEFORE_SHA comes from the workflow
+CHANGED_BRANDS=$(git diff --name-only "$BEFORE_SHA" HEAD | \
   grep "^source/" | \
   cut -d'/' -f2 | \
   sort -u)
@@ -602,27 +649,33 @@ jobs:
   build-web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v7
         with:
-          version: 9
-      - run: pnpm install
+          lfs: true
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - run: pnpm assets --platform web
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: web-assets
           path: dist/web/
 
   build-ios:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v7
         with:
-          version: 9
-      - run: pnpm install
+          lfs: true
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - run: pnpm assets --platform ios
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ios-assets
           path: dist/ios/
@@ -630,13 +683,16 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v7
         with:
-          version: 9
-      - run: pnpm install
+          lfs: true
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - run: pnpm assets --platform android
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: android-assets
           path: dist/android/
@@ -695,8 +751,14 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.ref, 'web')
     steps:
-      - uses: actions/checkout@v3
-      - run: pnpm install
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - run: pnpm assets --platform web
       - name: Deploy to CDN
         run: aws s3 sync dist/web/ s3://assets-cdn/
@@ -705,8 +767,14 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.ref, 'mobile')
     steps:
-      - uses: actions/checkout@v3
-      - run: pnpm install
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - run: pnpm assets --platform ios android
       - name: Upload to app stores
         run: ./deploy-mobile-assets.sh
@@ -726,9 +794,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
+          lfs: true
 
       - id: changed-files
         uses: tj-actions/changed-files@v40
@@ -743,11 +812,12 @@ jobs:
             grep -o 'source/[^/]*' | cut -d'/' -f2 | sort -u | tr '\n' ' ')
           echo "brands=$BRANDS" >> $GITHUB_OUTPUT
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
-          version: 9
+          node-version-file: .nvmrc
 
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile
 
       - name: Build changed brands
         run: |
@@ -795,7 +865,7 @@ Follow these best practices when configuring and using the build system:
 
 **✅ Do:**
 
-- Use 78 builds during development for faster iteration
+- Use filtered builds during development for faster iteration
 - Build selectively: `pnpm assets --brand chassis --platform web`
 - Add more platforms without rebuilding: `pnpm assets --platform ios`
 - Test with single brand/platform first before full build
@@ -809,34 +879,36 @@ Follow these best practices when configuring and using the build system:
 
 ## Development Tests
 
-The build system includes comprehensive test coverage to ensure reliability and correctness. These tests validate that the build system **works correctly** by rebuilding from scratch:
+The build system has three test scripts that check it against the real `source/`. They build into `dist/`, so they need the Git LFS files:
 
 ```bash
-# Run all development tests (39 tests - rebuilds everything)
-pnpm assets:test
+# Run all three test scripts
+pnpm test
 
-# Individual test suites
-pnpm assets:test:build    # Build system functionality (13 tests)
-pnpm assets:test:analyze  # Asset analyzer logic (10 tests)
-pnpm assets:test:api      # Programmatic API (16 tests)
+# Individual test scripts
+pnpm assets:test:build    # The build: filters, incremental builds, platform processing, overrides
+pnpm assets:test:analyze  # The analyzer, duplicates included
+pnpm assets:test:api      # The programmatic API
 ```
 
-**What development tests do:**
+**What the tests do:**
 
-- ✅ Delete dist → Build → Validate → Clean up
-- ✅ Test that build system can create correct output
-- ✅ Test analyzer detects duplicates accurately
-- ✅ Test API methods return correct data
+- ✅ Build into dist/ with and without filters, and check what was written and what was not
+- ✅ Check the platform naming, the density folders and the brand overrides in the output
+- ✅ Check that the analyzer finds a known duplicate: the icon set copied into both apps
+- ✅ Check that the API methods return the configuration and the inventory
+
+Without Git LFS on the machine, `CHASSIS_ALLOW_LFS_POINTERS=1 pnpm test` runs them on the pointer files.
 
 ### Test Comparison
 
 <CxTable>
 | Command | Rebuilds Dist? | Purpose |
 |---------|----------------|---------|
-| `pnpm assets:test` | ✅ Yes | Validate build system works correctly |
-| `pnpm assets:test:build` | ✅ Yes | Test build functionality |
+| `pnpm test` | ✅ Yes | Run the three scripts |
+| `pnpm assets:test:build` | ✅ Yes, and removes it at the end | Test build functionality |
 | `pnpm assets:test:analyze` | ✅ Yes | Test analyzer logic |
-| `pnpm assets:test:api` | ❌ No | Test API methods |
+| `pnpm assets:test:api` | Only when it is missing | Test API methods |
 </CxTable>
 
 ## Related Resources

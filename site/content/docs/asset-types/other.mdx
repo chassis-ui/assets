@@ -6,7 +6,7 @@ toc: true
 
 ## Overview
 
-Beyond fonts, images, and icons, Chassis Assets can manage any additional file types your application needs: videos, audio files, documents, PDFs, data files, and more. These assets are organized and distributed using the same brand-app-platform structure to ensure consistency across all projects.
+Beyond fonts, images, and icons, Chassis Assets can manage any additional file types your application needs: videos, audio files, documents, PDFs, data files, and more. Any folder under an app that is not `fonts`, `images` or `icons` is copied whole, with the naming of the platform and no format filter. The folder names below are examples; this repository keeps a Figma variables export under `other/`.
 
 ### Key Benefits
 
@@ -180,21 +180,21 @@ After running the build, assets are distributed to platform-specific directories
 Web assets preserve kebab-case filenames and support all file types:
 
 ```
-dist/web/[brand]-[app]/videos/
+dist/web/[app]/[brand]/videos/
 ├── onboarding-intro.mp4
 ├── tutorial-step-1.webm
 └── background-loop.mov
 
-dist/web/[brand]-[app]/audio/
+dist/web/[app]/[brand]/audio/
 ├── notification-sound.mp3
 ├── button-click.wav
 └── success-chime.ogg
 
-dist/web/[brand]-[app]/documents/
+dist/web/[app]/[brand]/documents/
 ├── user-guide.pdf
 └── terms-of-service.pdf
 
-dist/web/[brand]-[app]/data/
+dist/web/[app]/[brand]/data/
 ├── countries.json
 └── cities.csv
 ```
@@ -206,21 +206,21 @@ See [Web Applications]([[docsref:/use-in-project/web-applications#using-other-as
 iOS assets use snake_case naming conventions:
 
 ```
-dist/ios/[brand]-[app]/videos/
+dist/ios/[app]/[brand]/videos/
 ├── onboarding_intro.mp4
 ├── tutorial_step_1.webm
 └── background_loop.mov
 
-dist/ios/[brand]-[app]/audio/
+dist/ios/[app]/[brand]/audio/
 ├── notification_sound.mp3
 ├── button_click.wav
 └── success_chime.ogg
 
-dist/ios/[brand]-[app]/documents/
+dist/ios/[app]/[brand]/documents/
 ├── user_guide.pdf
 └── terms_of_service.pdf
 
-dist/ios/[brand]-[app]/data/
+dist/ios/[app]/[brand]/data/
 ├── countries.json
 └── cities.csv
 ```
@@ -232,21 +232,21 @@ See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-other-as
 Android assets use snake_case naming conventions:
 
 ```
-dist/android/[brand]-[app]/videos/
+dist/android/[app]/[brand]/videos/
 ├── onboarding_intro.mp4
 ├── tutorial_step_1.webm
 └── background_loop.mov
 
-dist/android/[brand]-[app]/audio/
+dist/android/[app]/[brand]/audio/
 ├── notification_sound.mp3
 ├── button_click.wav
 └── success_chime.ogg
 
-dist/android/[brand]-[app]/documents/
+dist/android/[app]/[brand]/documents/
 ├── user_guide.pdf
 └── terms_of_service.pdf
 
-dist/android/[brand]-[app]/data/
+dist/android/[app]/[brand]/data/
 ├── countries.json
 └── cities.csv
 ```
