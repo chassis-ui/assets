@@ -398,7 +398,8 @@ minutes including the LFS pull.
 - [x] The golden test fails when a processor changes a name. Checked in session 2.1 by
       changing the web processor: the golden test failed.
 - [x] The contract check fails when a file of the consumer contract is missing.
-- [ ] A pull request runs all of it.
+- [x] A pull request runs all of it. CI on `e4abe74`: Lint, Assets, Site and Audit green,
+      each in under 40 seconds with the LFS pull.
 
 ## Phase 3: package and release
 
