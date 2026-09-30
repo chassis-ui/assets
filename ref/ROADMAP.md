@@ -89,14 +89,14 @@ consumers is.
 Recorded in session 1.2, from the contracts of `docs/architecture.md`. The table of every
 path is under "What 0.2.0 changes" of that document.
 
-| Consumer                          | What stays                                                                                                                                                                        | What changes                                                                                                                                                                                                                                           | Has to do                                                                  |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| The six sites                     | The branch `app/docs`, `git lfs pull`, `pnpm install --ignore-workspace`, `pnpm assets:site`, `dist/web/docs/chassis/`, and every file of the consumer contract, by path and name | The derived images have other bytes. `/static/icons/icons/`, `/static/icons/svgs/`, `/static/fonts/` and `/static/other/` are no longer served. `/static/chassis-assets.json` is. The build runs `sharp`, which the lockfile already has through Astro | Nothing. A site moves its pin when it wants the new build                  |
-| An app that reads `dist/ios/`     | Nothing                                                                                                                                                                           | The folder is a Swift package with an asset catalog. Names are `PascalCase` from the path                                                                                                                                                              | Add the package, and load images by their new names                        |
-| An app that reads `dist/android/` | Nothing                                                                                                                                                                           | The folder holds a `res/` tree. Names are `snake_case` from the path, and SVG files are vector drawables                                                                                                                                               | Merge the `res/` tree, and load resources by their new names               |
-| A script that imports the build   | Nothing                                                                                                                                                                           | `ChassisAssets` of `build/api/` and `generateAssets` are gone. The library is `build()`, `plan()`, `lint()`, `verify()`, `diff()` and `analyze()` of `build/index.js`                                                                                  | Call the new functions                                                     |
-| A script that calls the scripts   | `pnpm assets`, `pnpm assets:site`, `pnpm assets:analyze`, and `--brand`, `--app` and `--platform`                                                                                 | `--clean` and `--no-clean` are gone: a job removes what it did not write. `pnpm assets:validate` becomes `pnpm assets:verify`. A filter value that the configuration does not have fails                                                               | Remove `--clean`                                                           |
-| A fork with its own brands        | `chassis.build.brands` and `chassis.build.apps`                                                                                                                                   | The layout of `source/`, the manifests, one master per image, the licenses of the fonts. `chassis.defaults.brandFolder` is gone                                                                                                                        | Move the files as session 2.2 does here, and run `pnpm assets:lint:source` |
+| Consumer                          | What stays                                                                                                                                                                        | What changes                                                                                                                                                                                                                                                                                    | Has to do                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| The six sites                     | The branch `app/docs`, `git lfs pull`, `pnpm install --ignore-workspace`, `pnpm assets:site`, `dist/web/docs/chassis/`, and every file of the consumer contract, by path and name | The derived images have other bytes. `/static/icons/icons/`, `/static/icons/svgs/`, `/static/fonts/`, `/static/other/` and the PNG files of `/static/images/logo/` are no longer served. `/static/chassis-assets.json` is. The build runs `sharp`, which the lockfile already has through Astro | Nothing. A site moves its pin when it wants the new build                  |
+| An app that reads `dist/ios/`     | Nothing                                                                                                                                                                           | The folder is a Swift package with an asset catalog. Names are `PascalCase` from the path                                                                                                                                                                                                       | Add the package, and load images by their new names                        |
+| An app that reads `dist/android/` | Nothing                                                                                                                                                                           | The folder holds a `res/` tree. Names are `snake_case` from the path, and SVG files are vector drawables                                                                                                                                                                                        | Merge the `res/` tree, and load resources by their new names               |
+| A script that imports the build   | Nothing                                                                                                                                                                           | `ChassisAssets` of `build/api/` and `generateAssets` are gone. The library is `build()`, `plan()`, `lint()`, `verify()`, `diff()` and `analyze()` of `build/index.js`                                                                                                                           | Call the new functions                                                     |
+| A script that calls the scripts   | `pnpm assets`, `pnpm assets:site`, `pnpm assets:analyze`, and `--brand`, `--app` and `--platform`                                                                                 | `--clean` and `--no-clean` are gone: a job removes what it did not write. `pnpm assets:validate` becomes `pnpm assets:verify`. A filter value that the configuration does not have fails                                                                                                        | Remove `--clean`                                                           |
+| A fork with its own brands        | `chassis.build.brands` and `chassis.build.apps`                                                                                                                                   | The layout of `source/`, the manifests, one master per image, the licenses of the fonts. `chassis.defaults.brandFolder` is gone                                                                                                                                                                 | Move the files as session 2.2 does here, and run `pnpm assets:lint:source` |
 
 Nothing reads `dist/ios/` or `dist/android/` in the ecosystem today, and no script outside
 this repository imports the build.
@@ -145,6 +145,9 @@ documentation sites need no change: every file they read keeps its path and its 
 - **Breaking:** `other/default-tokens.json`. Take the tokens from `@chassis-ui/tokens`.
 - **Breaking:** `fonts/` of the docs output, with `text.css` and `code.css`, which named
   files that did not exist.
+- **Breaking:** the PNG files of the logos, `images/logo/*.png`. The logos are SVG files.
+- The screenshots that no page of the Figma documentation shows: `meta-1`, `group`, and
+  the copies of `card-orientation-*` under a second name.
 - **Breaking:** `ChassisAssets` and `generateAssets`. Use `build()`.
 - `--clean` and `--no-clean`, and `chassis.defaults.brandFolder`.
 - The package is no longer marked for npm.
@@ -153,6 +156,8 @@ documentation sites need no change: every file they read keeps its path and its 
 
 - The analyzer finds files with the same content.
 - A checkout without Git LFS fails with a message that says so.
+- `list-item-text-basic-2x-1.png` of the Figma screenshots is
+  `list-item-text-basic-1@2x.png`.
 ```
 
 ## The consumer contract
@@ -225,6 +230,8 @@ the presets of `chassis-tokens`, and Phase 2 gives them a shape an app can use.
 | F36 | The siblings have an integration branch that the review did not see. Found on 2026-09-30.                                                      | `chassis-website`, `chassis-css` and `chassis-react` run CI on pushes to `develop`, and push the commit that passed to `staging` and `main`. `ref/DEPLOYMENT.md` of the website describes it, and its D1 decides it. `chassis-tokens` has no `develop` and works with pull requests against `main`. Here CI ran on pushes to `main` and `app/docs`, the branches that the ruleset protects, so no commit could have passed before it arrived. | 0     |
 | F37 | macOS writes `.DS_Store` into `dist/` while a build runs. Found in session 2.1.                                                                | The repository is in a folder that the Finder and Dropbox watch. `checkWebNaming()` of `test/build.test.js` took the file for a name with capitals, so `pnpm test` failed in about one run of three, on macOS only. The test leaves out hidden files now, and a job of the new build removes them from its folder.                                                                                                                            | 2     |
 | F38 | 43 file names of `source/` break the rules of the source contract, not 32. Found in session 2.1.                                               | 40 screenshots under `images/figma/`: the 32 of F28, and 8 with an indicator inside the name, `card-orientation-top@2x-1.png` and `list-item-text-basic@2x-1.png`, which the build writes as `card-orientation-top-2x-1.png`. Then `other/default.tokens.json` and the two `chassis-icons.min.css`, which D4 removes. Session 2.2 finds whether a page shows the 8.                                                                           | 2     |
+| F39 | Some screenshots are exports under a second name. Found in session 2.2.                                                                        | Figma gives a second export of one name a number: `card-orientation-top-1.png`, and at 2x `card-orientation-top@2x-1.png`. The 12 of `card` had the content of `card-orientation-bottom`, `-left` and `-right`, and are deleted. The 4 of `list`, `list-item-text-basic-1`, have a content of their own: kept, with the 2x file renamed to `list-item-text-basic-1@2x.png`. No page shows them. Delete them if they are a leftover.           | 2     |
+| F40 | The license files are put together, not downloaded. Found in session 2.2.                                                                      | Every font file names the SIL Open Font License 1.1 in its tables, Roboto Mono 3.001 too. A license file is the copyright line of the font file, then the text of the license as Google Fonts ships it, taken from a copy on this machine. Compare the five files with those of the projects before 0.2.0 is released. None reserves a font name.                                                                                             | 2, 3  |
 
 ### How the ecosystem consumes this repository
 
@@ -455,36 +462,69 @@ the I/O, and a **verify** step that compares a fresh build with a committed refe
 
 ### Session 2.2: source rules and manifests
 
-- [ ] Move the files to the source layout of D5, which the plan and the inventory have
+- [x] Move the files to the source layout of D5, which the plan and the inventory have
       since session 2.1. Remove the folders of D4, and keep `docs/icons/cx-sprite.svg`.
       Fixes F11 and F23. The logos go to `shared/` from the copy of `docs`, see F33. The
       fonts leave `docs`, and those of the example brand go to `example/demo/`. The build
       of 0.1.8 cannot read the new layout: remove `pnpm assets:compare`, its step in CI
       and `test/compare-0.1.8.js`, and decide what becomes of `pnpm assets:validate` and
-      the old tests before session 2.6 deletes them.
-- [ ] Rename the screenshots of F28 to the names the build gives them today, and delete
+      the old tests before session 2.6 deletes them. 1206 files removed and 32 moved:
+      `source/` has 3336 files, from 4537. The logos are the 12 SVG files of `default` and
+      the 4 of `example`: their PNG files at 1x, 2x and 3x are removed, since no site
+      reads one and the native outputs take the SVG file. Decided for the old code: the
+      build of 0.1.8, its API, its validator and the three old test suites are deleted,
+      with `chassis.defaults`. `analyze-assets.js` stays until session 2.6, so that
+      `pnpm assets:analyze` keeps running. `pnpm assets:verify` takes the place of
+      `pnpm assets:validate`.
+- [x] Rename the screenshots of F28 to the names the build gives them today, and delete
       the `group` and `meta-1` files that no page shows. Fixes F28. The rename is of 43
       files, see F38. Then the web rules copy a name as it is, and the names of the web
-      leave `rules/legacy.js`.
-- [ ] Add the **image manifest**, `images.json` at the root of `images/`: a list of rules
+      leave `rules/legacy.js`. Renamed `Alert Window`, 4 files. Deleted `Group`, 4 files,
+      and `Meta 1`, 24. The 8 files of F38 and their 1x files are exports under a second
+      name, see F39: 12 of `card` deleted, and 2 of `list` renamed.
+- [x] Add the **image manifest**, `images.json` at the root of `images/`: a list of rules
       that name the variants each image needs, as the source contract describes. A file
-      without a rule is copied as it is.
-- [ ] Add the **font manifest**, `fonts.json`: family, style, weight and file per face, from
-      which the build writes the `@font-face` stylesheet. Fixes F10.
-- [ ] Add the license of every font family under `fonts/licenses/`, and write them to
-      `licenses/` of every output that holds the fonts. Fixes F29.
-- [ ] Add `lint`: the source lint. Rules: naming (lowercase, hyphens, a resolution indicator
+      without a rule is copied as it is. `manifests/images.js` checks a manifest, and
+      `rules/variants.js` plans the variants of an image with their names, their sizes
+      and the step `raster`, which session 2.3 adds. The manifests of `docs` and `demo`
+      say `committed` for the screenshots, and also for the images that have variants
+      today, until session 2.3 derives them.
+- [x] Add the **font manifest**, `fonts.json`: family, style, weight and file per face, from
+      which the build writes the `@font-face` stylesheet. Fixes F10. In `default/demo`
+      and `example/demo`. The weights are those of the font files, read from their
+      tables: the role `elegant` is 300 in Inter and Roboto Serif, and 400 in Archivo
+      Narrow, whose `normal` is 500. The example brand has `display` and `code`, and takes
+      `text` from `default`. The hand-written stylesheets are deleted, and the web takes
+      no font until session 2.4.
+- [x] Add the license of every font family under `fonts/licenses/`, and write them to
+      `licenses/` of every output that holds the fonts. Fixes F29. Five families, all
+      under the SIL Open Font License 1.1, see F40.
+- [x] Add `lint`: the source lint. Rules: naming (lowercase, hyphens, a resolution indicator
       only on rasters), a manifest entry for every image that has variants, no committed
       variant that the build derives, no stylesheet that references a missing file, no two
       files with the same content in one folder, an LFS pointer where a real file should be.
       Every message names the file. Fixes F5. The rule for the same content leaves out the
       images of a `committed` rule, see F34. The full list is in the source contract.
+      Every rule of the source contract but the size budgets, which wait for the files of
+      session 2.3. `pnpm assets:lint:source` finds nothing in `source/`, and found 2098
+      problems before the move. Fixes F26: the message of a Git LFS pointer.
+- [x] Added to the session: `contract.js`, the files of the consumer contract as data, and
+      `verify`, which builds into a scratch folder and fails when the docs output lacks
+      one. Both were tasks of session 2.6. The source moves in this session and the next,
+      and nothing else tells that a site lost a file. CI runs the lint of the source and
+      `verify` in the place of the old validator.
 
 ### Session 2.3: image optimization
 
 - [ ] Add `sharp` as the one raster dependency. Derive from a master: densities (`@1x` from
       `@2x` or `@3x`), sizes (`-small` from the manifest), and formats (WebP, AVIF where the
-      manifest asks). Never upscale.
+      manifest asks). Never upscale. The step is `raster` of `steps/raster.js`:
+      `rules/variants.js` plans it since session 2.2, with the width, the height, the
+      format and the quality.
+- [ ] Replace the rules that say `committed` for the home images, in `images.json` of
+      `docs` and `demo`, by the rules of the source contract, and delete the variants:
+      the master of an image is its file at the highest density. `verify` tells whether
+      the docs output still has every file that the sites read.
 - [ ] Optimize what is copied: PNG with palette quantization where the manifest allows,
       JPEG with a stated quality, metadata stripped. Report the bytes saved.
 - [ ] Add `svgo` with a conservative preset: keep `viewBox`, ids and `currentcolor`; remove
@@ -492,7 +532,9 @@ the I/O, and a **verify** step that compares a fresh build with a committed refe
 - [ ] Make the output **deterministic**: no timestamps, fixed encoder settings, pinned
       versions of `sharp` and `svgo`. Two builds of the same input give the same bytes.
       Check it on Linux and macOS; record any difference as a known oddity.
-- [ ] Add size budgets to the manifest, checked by `lint`: a variant over its budget fails.
+- [ ] Check the size budgets of the manifest, which `images.json` takes since session 2.2:
+      a variant over its budget fails. The lint reads no output, so decide where the
+      check runs: in the build, or in `verify`.
 - [ ] Optimizations are **opt-in per platform** in `chassis.build.options`, off by default,
       so that a consumer's build stays fast and the golden check stays simple. The docs app
       turns them on. Deriving the variants is not an optimization and always runs, see
@@ -514,6 +556,9 @@ the I/O, and a **verify** step that compares a fresh build with a committed refe
 
 ### Session 2.5: native output
 
+- [ ] Replace the rules of `rules/ios.js` and `rules/android.js`, which give the layout of
+      0.1.8 and copy the files of an image as they are, and delete `rules/legacy.js`. The
+      native rules take the variants of an image from `variantsOf` of `rules/variants.js`.
 - [ ] **Android:** write a `res/` tree per job. Rasters go to `drawable-mdpi` to
       `drawable-xxxhdpi` by density, density-independent images to `drawable`, SVG icons to
       `drawable` as vector drawables with `svg2vectordrawable`, as the tokens package does.
@@ -538,21 +583,20 @@ the I/O, and a **verify** step that compares a fresh build with a committed refe
       the lint rules. No test reads the real `source/`. A test writes its source tree, in
       memory or into a scratch folder. Add `test/fixtures/` when a tree is too large to
       read in a test. Fixes F15.
-- [ ] Add `verify`: builds into a scratch directory and compares the output manifest of
-      every job with the committed `test/golden/<platform>/<app>-<brand>.json`. `dist/` is
-      not committed. See D11. `--update` writes the golden files.
-- [ ] Add `contract.js`, the files of the consumer contract as patterns, and make `verify`
-      fail when the docs output lacks one.
+- [ ] Add the golden files to `verify`, which checks the consumer contract since session
+      2.2: it compares the output manifest of every job with the committed
+      `test/golden/<platform>/<app>-<brand>.json`. `dist/` is not committed. See D11.
+      `--update` writes the golden files. Move `verify()` from `index.js` to `verify.js`.
 - [ ] Add `diff`: the report of what a change adds, removes, renames or changes in the output
       of each job, as Markdown for the pull request summary, in the pattern of the tokens
       diff. It reads the golden files of two commits, and builds nothing.
 - [ ] Remove the list of `exclude` from `tsconfig.json`, which session 2.1 added with
       `pnpm assets:typecheck`: it names the scripts of 0.1.8. Add the license header to
       every build file that is left. Fixes F16.
-- [ ] Replace `analyze-assets.js` and `validate-assets.js` with `analyze` and `verify` of
-      the new CLI, and delete `build/api/`, `build/build-site.js` and the old tests.
-- [ ] Update CI: lint, source lint, typecheck, test, build, verify, and the diff summary on
-      pull requests.
+- [ ] Replace `analyze-assets.js` with `analyze` of the new CLI, and delete it with
+      `build/build-site.js`. Session 2.2 deleted the rest of the build of 0.1.8.
+- [ ] Update CI, which has the lint, the source lint, the type check, the tests and
+      `verify` since session 2.2: add the diff summary on pull requests.
 
 ### Exit criteria
 
@@ -755,3 +799,4 @@ here and, when a session gets to it, in `ref/SIBLING_TASKS.md` of `chassis-websi
 | 2026-09-30 | 0.2, settings | The maintainer turned on the dependency graph and Dependabot alerts. Read back from the API: on, 998 packages, no open alert. Every task and every exit criterion of Phase 0 is ticked. Open for the maintainer to decide: `staging` in the ruleset, and `Audit` as a required check.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 2026-09-30 | 0.2, settings | The maintainer added `staging` to the ruleset. Read back from the API: `main`, `staging` and `app/docs` have no deletion, no force push and the four required checks; `develop` has no rule. `Audit` is still a required check.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | 2026-09-30 | 2.1           | Built the core of the new build beside the old one: `config.js`, `plan.js`, `inventory.js`, `names.js`, the rules of the three platforms, `pipeline.js` with `cache.js`, `manifest.js`, the library `index.js` with `build()` and `plan()`, `cli.js` with the command `build`, and `logger.js`. Acceptance met for all six jobs: the new build writes the 10121 files of 0.1.8 byte for byte, and `chassis-assets.json`, in about a second. `pnpm assets` and `pnpm assets:site` run the new build, and `--clean` fails with what replaced it. Pulled forward from session 2.6: Vitest with 169 unit tests, and the type check of the new modules. CI has the type check and the comparison with 0.1.8. Ran locally: lint, Prettier, type check, the unit tests, the three old suites, the validator, the comparison and the site build. Corrected the Build System page and the README where they named `--clean`. Differences from the plan: the command line has `build` only until the other commands exist, the rules of iOS and Android reproduce 0.1.8 too, a job removes before it writes, and paths that differ by case collide. Added F37 and F38, and changed the tasks of sessions 2.2 and 2.6 to match. Merged into `develop` as a fast-forward and pushed. CI passed on `develop` at `9db85f5` with the four checks, which is the first run of the new build on Linux, the comparison with 0.1.8 included. The same commit went to `staging`, `main` and `app/docs`, and the ruleset took each push. Vercel deployed production: `chassis-ui.com/assets/` serves the corrected Build System page, the files of the consumer contract and `/static/chassis-assets.json`. Tag Release ran on `app/docs` and made no tag, since the version is 0.1.8. |
+| 2026-09-30 | 2.2           | Moved `source/` to the layout of D5 and removed what D4 names: 1206 files removed, 32 moved, 3336 left. Renamed and deleted the screenshots of F28 and F38. Added `images.json` for `docs` and `demo`, `fonts.json` and the licenses of five font families for `default/demo` and `example/demo`. Built `manifests/images.js`, `manifests/fonts.js`, `rules/variants.js`, `assets.js`, `lint.js` with the command `lint`, and, pulled forward from session 2.6, `contract.js` with the command `verify`. The web rules copy a name as it is and plan the variants of a rule. The build derives nothing yet, so the images with variants keep them under rules that say `committed`, until session 2.3. Deleted the build of 0.1.8 with its API, its validator and its tests. Checked against a build from before the move: every file of the docs output that stayed has the same bytes, and what left it is the icon copies, the fonts, the tokens export, the PNG logos and 40 screenshots. The docs output is 3241 files and 45.5 MB, from 3834 and 50.2. Ran locally: lint, Prettier, type check, 339 unit tests, the source lint, `verify`, the audit and the site build. Read the six sites again for the paths that left: none reads one. Added F39 and F40, and changed the tasks of sessions 2.3, 2.5 and 2.6 to match. Differences from the plan: the PNG logos are removed, the old build is deleted now, and `verify` exists without the golden files. Not pushed, and CI has not run on it.                                                                                                                                                                                                                                                         |
