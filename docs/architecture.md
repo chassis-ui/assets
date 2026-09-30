@@ -6,10 +6,17 @@ source or the build, and for the maintainers of the sites and apps that read the
 
 > **Status:** this document describes version 0.2.0, the rewrite of the build that
 > [the roadmap](../ref/ROADMAP.md) plans. It was written before the code, in sessions 1.1
-> and 1.2, and it is the specification that Phase 2 implements. Until 0.2.0 is released,
-> the scripts in `build/` are those of 0.1.8, and
-> [What 0.2.0 changes](#what-020-changes) lists the differences. A session of Phase 2 that
-> finds a reason to build something another way changes this document in the same commit.
+> and 1.2, and it is the specification that Phase 2 implements.
+> [What 0.2.0 changes](#what-020-changes) lists the differences from 0.1.8. A session of
+> Phase 2 that finds a reason to build something another way changes this document in the
+> same commit.
+>
+> **Built so far:** session 2.1 built the configuration, the plan, the inventory, the
+> pipeline with its cache, the output manifest, the library and the command `build`.
+> `pnpm assets` and `pnpm assets:site` run them. The source is still that of 0.1.8, so the
+> rules of the three platforms give the names and the folders of 0.1.8, and the output is
+> that of 0.1.8 with `chassis-assets.json` added. [Where the build is](#where-the-build-is)
+> says what is missing.
 
 | Section                                               | Answers                                         |
 | ----------------------------------------------------- | ----------------------------------------------- |
@@ -87,6 +94,18 @@ manifest.js          writeManifest  chassis-assets.json
 `node build/cli.js build --dry-run` prints the jobs and the files each would write. It
 reads `source/`, loads no image or font tool and writes nothing.
 
+### Where the build is
+
+| Part                                                | State                                                                  |
+| --------------------------------------------------- | ---------------------------------------------------------------------- |
+| `config.js`, `plan.js`, `inventory.js`, `names.js`  | Built in session 2.1. The inventory reads no manifest yet              |
+| `pipeline.js`, `cache.js`, `manifest.js`            | Built in session 2.1. No step exists, so every file is a copy          |
+| `index.js`, `cli.js`, `logger.js`                   | Built in session 2.1, with `build()`, `plan()` and the command `build` |
+| `rules/`                                            | Built in session 2.1 for the layout of 0.1.8, with `rules/legacy.js`   |
+| `manifests/`, `lint.js`, the source layout          | Session 2.2                                                            |
+| `steps/`, `writers/`                                | Sessions 2.3 to 2.5                                                    |
+| `verify.js`, `diff.js`, `analyze.js`, `contract.js` | Session 2.6                                                            |
+
 ## Design decisions
 
 ### A job is planned before it is written
@@ -97,7 +116,8 @@ the source file it comes from, and the step that makes it. Only then does it wri
 - `--dry-run` prints what a build would write, file by file.
 - Two assets that would get one path fail the job before a file is written, with both
   source paths in the message. In 0.1.8 a collision was a warning after the second file had
-  replaced the first.
+  replaced the first. Two paths that differ by case only count as one path: they are one
+  file on macOS and Windows, and two on Linux.
 - The size in pixels of every variant is known from the plan, so the output manifest does
   not read the files again.
 - A test compares a plan with an expected list. It needs no image tool and writes no file.
@@ -136,10 +156,16 @@ derivation off.
 
 ### A job owns its folder
 
-A job writes into `<out>/<platform>/<app>/<brand>/` and nowhere else. When it has written
-its files, it removes every other file of that folder. So the folder holds what the plan
-lists, after a full build and after a build of one job, and there is no `--clean`. In 0.1.8
-a build of one job kept the files of the build before it.
+A job writes into `<out>/<platform>/<app>/<brand>/` and nowhere else. Before it writes
+its files, it removes every other file of that folder, and afterwards the folders that are
+left empty. So the folder holds what the plan lists, after a full build and after a build
+of one job, and there is no `--clean`. In 0.1.8 a build of one job kept the files of the
+build before it.
+
+The removal comes first because of the file systems that do not tell `A.png` from `a.png`:
+a file that is left under another case would give its name to the file that replaces it.
+macOS writes `.DS_Store` into a folder that the Finder shows. A job removes those of its
+folder too.
 
 ### The cache is keyed by content
 
@@ -175,6 +201,17 @@ library, prints the report and sets the exit code.
 
 An error that a contributor can fix is a `BuildError`, with the `file` it is about and the
 `rule` or the step that found it. `cli.js` prints these without a stack trace.
+
+A wrong configuration or a wrong filter fails the call. A job that fails does not: its
+report has the error, and the other jobs are built. `build()` tells through `onJobStart`
+and `onJobEnd` what it does, and prints nothing.
+
+### A file that is not what it says fails the build
+
+A checkout without Git LFS has a pointer of three lines in the place of every font and
+every raster image. The inventory and the pipeline know a pointer by its first line, and
+fail with the name of the file and the command to run, `git lfs pull`. In 0.1.8 the
+pointers were copied to `dist/`.
 
 ### JavaScript, checked as TypeScript
 
@@ -215,11 +252,23 @@ Every path is relative to `build/`.
 | `diff.js`              | Compares the golden files of two commits, and writes the report as Markdown                                                                                                                     | no   |
 | `analyze.js`           | Reports the sizes by type, the largest files, and the files with the same content                                                                                                               | no   |
 | `logger.js`            | The output of the command line, in the pattern of the tokens build, with `--quiet`                                                                                                              | no   |
+| `errors.js`            | `BuildError`, the error that names its file and its rule                                                                                                                                        | yes  |
+| `concurrency.js`       | `mapLimit`: runs a function over a list, a bounded number of calls at a time                                                                                                                    | yes  |
 | `types.js`             | The JSDoc types of the data below                                                                                                                                                               | yes  |
+
+`rules/index.js` holds the rules by the name of their platform. `rules/legacy.js` holds the
+names and the folders of 0.1.8, and goes with them: the names of the web in session 2.2,
+the layout of the native outputs in session 2.5.
 
 A pure module imports only pure modules. `plan.js`, `names.js`, the manifests, the rules, the
 writers, `contract.js` and `lint.js` import nothing from Node.js but `node:path`, whose
-`posix` functions they use, so that a plan is the same on every operating system.
+`posix` functions they use, so that a plan is the same on every operating system. For the
+same reason a list is sorted by code units, not by the rules of a language.
+
+The inventory reads through a `SourceReader` with three functions: `list` gives the
+entries of a folder, `size` the size of an image in pixels, and `read` the content of a
+file. `fsReader` is the one of the file system. A test passes one that reads a tree in
+memory.
 
 ### The data between the modules
 
@@ -234,6 +283,10 @@ writers, `contract.js` and `lint.js` import nothing from Node.js but `node:path`
 
 A `PlannedFile` without a step and without text is a copy.
 
+A step is known to the pipeline by its name. What runs it is a `StepRunner`: `version`
+gives the version of its tool, for the key of the cache, and `run` turns the bytes of the
+source file into those of the output.
+
 ### What stays from 0.1.8
 
 `html-validate.js` and `vnu-jar.js` check the documentation site, and `change-version.js`
@@ -241,8 +294,10 @@ changes the version. They are not part of the asset build, and the rewrite leave
 alone: sessions 3.2 and 5.1 of the roadmap replace them.
 
 `build-assets.js`, `processors/`, `asset-types.js`, `api/`, `analyze-assets.js` and
-`validate-assets.js` stay next to the new modules until the new build writes what they
-write. They are deleted in session 2.6, with `build-site.js`, which no script calls.
+`validate-assets.js` stay next to the new modules until session 2.6, which deletes them
+with `build-site.js`, which no script calls. Since session 2.1 no script of `package.json`
+builds with them: `pnpm assets:analyze`, `pnpm assets:validate`, the three old test suites
+and `pnpm assets:compare` are what still runs them.
 
 ## Configuration
 
@@ -281,6 +336,9 @@ or `android`, when `options` names a platform that no app uses, and when
 node build/cli.js <command> [options]
 ```
 
+The command line has the command `build` today. The others come with their modules, in
+sessions 2.2 and 2.6 of the roadmap.
+
 | Command   | Does                                                                         |
 | --------- | ---------------------------------------------------------------------------- |
 | `build`   | Builds the jobs                                                              |
@@ -305,6 +363,10 @@ A filter takes one or more values, in three spellings: `--brand chassis example`
 `--brand chassis --brand example` and `--brand chassis,example`. A value that the
 configuration does not have fails, with the values it has. So do filters that select no
 job.
+
+The command comes first, since a word after the values of a filter is one more value. An
+option that the command line does not know fails, and `--clean` and `--no-clean` fail with
+what replaced them. The `--` that pnpm passes on from `pnpm assets -- --quiet` is left out.
 
 The scripts of `package.json` call the command line. `pnpm assets:site` is
 `build --brand chassis --app docs`, with the optimization off: it is the build of the
@@ -822,19 +884,25 @@ Paths of 0.1.8 and what becomes of them. Nothing in
 
 ## Checks
 
-The commands exist from sessions 2.5 and 2.6 of the roadmap on.
+`pnpm assets:lint`, `pnpm assets:typecheck` and `pnpm assets:test:unit` exist since
+session 2.1 of the roadmap. The others come with sessions 2.2, 2.5 and 2.6.
 
 | Command                      | Checks                                                                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm assets:lint:source`    | `source/` and the manifests, against [the rules of the source contract](#what-the-source-lint-checks)                           |
 | `pnpm assets:lint`           | ESLint on `build/` and `test/`                                                                                                  |
 | `pnpm assets:typecheck`      | TypeScript `checkJs` on `build/`                                                                                                |
-| `pnpm assets:test`           | Vitest, on the source tree of `test/fixtures/`. No test reads `source/`, and the unit tests run in under ten seconds            |
+| `pnpm assets:test:unit`      | Vitest, in `test/unit/`, on source trees that the tests write. No test reads `source/`, and the tests run in under ten seconds  |
 | `pnpm assets:verify`         | A fresh build gives the manifests of `test/golden/`, and the docs output holds every file of the consumer contract              |
 | `pnpm assets:diff`           | Not a check: the paths added, removed, renamed and changed in each job against another commit. CI writes it to the pull request |
 | `pnpm assets:analyze`        | Not a check: the sizes by type and job, the largest files, and the files with the same content                                  |
 | `pnpm assets:native:ios`     | The asset catalogs with `actool`, and a sample that uses a Swift package of the output (needs Xcode)                            |
 | `pnpm assets:native:android` | The `res/` trees with `aapt2`, in a Gradle library (needs a JDK and the Android SDK)                                            |
+
+Until session 2.6 deletes the build of 0.1.8, `pnpm assets:test` also runs its three test
+suites. Until session 2.2 moves the source, `pnpm assets:compare` runs both builds into a
+scratch folder and fails when a file of a job differs: the new build writes the files of
+0.1.8, byte for byte, and `chassis-assets.json`.
 
 ### What `verify` compares
 
@@ -891,7 +959,7 @@ The build of 0.1.8 copied `source/` to `dist/` and renamed the copies. It derive
 and every variant of an image was made by hand and committed. It was reviewed on
 2026-09-29, and the rewrite follows `ref/ROADMAP.md`: the scope and the contracts in
 session 1.1, this document in session 1.2, the build in Phase 2. The findings behind every
-decision are in the roadmap, as F1 to F35, and the decisions as D1 to D13.
+decision are in the roadmap, as F1 to F38, and the decisions as D1 to D13.
 
 The shape of the build, a plan, pure rules, a pipeline and a check against a committed
 reference, is that of the build of `@chassis-ui/tokens`, rewritten in 2026.
