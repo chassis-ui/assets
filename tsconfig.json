@@ -15,14 +15,9 @@
   "include": ["build"],
   "exclude": [
     "build/analyze-assets.js",
-    "build/api",
-    "build/asset-types.js",
-    "build/build-assets.js",
     "build/build-site.js",
     "build/change-version.js",
     "build/html-validate.js",
-    "build/processors",
-    "build/validate-assets.js",
     "build/vnu-jar.js"
   ]
 }

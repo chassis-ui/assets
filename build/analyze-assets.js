@@ -10,7 +10,7 @@
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { shouldIgnoreFile } from './build-assets.js'
+import { isSystemFile as shouldIgnoreFile } from './names.js'
 
 /**
  * Asset analyzer for Chassis build system

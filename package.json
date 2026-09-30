@@ -13,9 +13,6 @@
   "author": "Ozgur Gunes <o.gunes@gmail.com>",
   "license": "MIT",
   "chassis": {
-    "defaults": {
-      "brandFolder": "default"
-    },
     "build": {
       "brands": [
         "chassis",
@@ -56,14 +53,9 @@
     "assets:analyze": "node build/analyze-assets.js",
     "assets:lint": "eslint build test --cache --cache-location .cache/.eslintcache",
     "assets:lint:source": "node build/cli.js lint",
-    "assets:test": "pnpm assets:test:unit && node test/build.test.js && node test/analyze.test.js && node test/api.test.js",
-    "assets:test:unit": "vitest run --dir test/unit",
-    "assets:test:build": "node test/build.test.js",
-    "assets:test:analyze": "node test/analyze.test.js",
-    "assets:test:api": "node test/api.test.js",
+    "assets:test": "vitest run --dir test/unit",
     "assets:site": "node build/cli.js build --brand chassis --app docs",
     "assets:typecheck": "tsc -p tsconfig.json",
-    "assets:validate": "node build/validate-assets.js",
     "assets:verify": "node build/cli.js verify",
     "site": "pnpm site:build && pnpm site:lint",
     "site:build": "pnpm assets:site && pnpm astro:build && pnpm site:pagefind",

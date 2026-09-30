@@ -59,7 +59,8 @@ jobs:
       - name: Astro check
         run: pnpm check:astro
 
-  # The tests, a full build of every brand, app and platform, and the validation of dist/
+  # The tests, the lint of source/, and a build of every brand, app and platform that is
+  # checked against the consumer contract
   assets:
     name: Assets
     runs-on: ubuntu-latest
@@ -100,21 +101,13 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Build all assets
-        run: pnpm assets
+      - name: Lint source
+        run: pnpm assets:lint:source
 
-      - name: Validate asset distribution
-        run: pnpm assets:validate
-
-      - name: Verify distribution
-        run: |
-          for platform in web ios android; do
-            if [ ! -d "dist/$platform" ]; then
-              echo "Error: platform $platform not found in dist/"
-              exit 1
-            fi
-          done
-          echo "Distribution verification passed"
+      # Builds every job into a scratch folder, and fails when the docs output lacks a file
+      # that the sites read
+      - name: Verify the build
+        run: pnpm assets:verify
 
   # The same build as Vercel: the docs assets, then Astro and Pagefind
   site:
