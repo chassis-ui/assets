@@ -20,7 +20,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Formatting, the build scripts, the site's code and its types. Needs no Git LFS files.
+  # Formatting, the build scripts and their types, the site's code and its types. Needs no
+  # Git LFS files.
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -48,6 +49,9 @@ jobs:
 
       - name: Lint build scripts
         run: pnpm assets:lint
+
+      - name: Type-check build scripts
+        run: pnpm assets:typecheck
 
       - name: Lint site
         run: pnpm site:lint
@@ -95,6 +99,11 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      # Until the source moves in session 2.2 of the roadmap: the new build writes the
+      # files of the build of 0.1.8, byte for byte
+      - name: Compare with the build of 0.1.8
+        run: pnpm assets:compare
 
       - name: Build all assets
         run: pnpm assets
