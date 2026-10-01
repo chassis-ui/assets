@@ -1,0 +1,28 @@
+name: Documentation
+description: Something on the documentation site, in the README or in CONTRIBUTING.md is wrong, missing or unclear
+labels: [documentation, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For the docs of Chassis CSS, Tokens, Icons, Figma or React, open the issue in [that project's repository](https://github.com/chassis-ui).
+  - type: input
+    id: location
+    attributes:
+      label: Where
+      description: The page URL or the file.
+      placeholder: https://chassis-ui.com/assets/docs/getting-started/quick-start/
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing
+      description: If a page says something the build does not do, include the command and what it printed.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What it should say
+      description: Optional. A suggested wording helps.

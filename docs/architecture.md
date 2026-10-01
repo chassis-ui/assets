@@ -233,6 +233,7 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 | `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
 | The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                                  |
 | `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
+| `chassis.checks.json`                                    | `pnpm assets:lint:source`, `pnpm assets:verify` on a full build.                                                                                            |
 | `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
 | Anything                                                 | `pnpm lint:prettier`.                                                                                                                                       |
 
@@ -331,3 +332,5 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 - 2026-10-01: the consumer contracts and the names the source lint keeps are data of
   `chassis.checks.json`, and the build names nothing of this
   repository (roadmap session 3.3).
+- 2026-10-01: the contributing guide, the community files, `AGENTS.md` and `WRITING.md`
+  (roadmap session 4.2).

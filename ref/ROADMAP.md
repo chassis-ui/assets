@@ -231,8 +231,9 @@ Done on 2026-09-30, see the superseded roadmap for the record. What holds since 
 ### Left for the maintainer
 
 - [ ] `Audit` is a required check. The website does not require it (its D1). Decide.
-- [ ] Merge locally or with pull requests. Both work with the ruleset. Say which in
-      `CONTRIBUTING.md` (session 4.2).
+- [x] Merge locally or with pull requests. Both work with the ruleset. Say which in
+      `CONTRIBUTING.md` (session 4.2). Both: a contributor opens a pull request against
+      `develop`, the maintainer merges locally, and the same checks run.
 
 ## Phase 1: pages and build agree
 
@@ -396,9 +397,9 @@ and a temporary folder.
 - [x] CI: the Assets job runs `assets:lint`, `assets:lint:source`, `assets:typecheck`,
       `test`, then a full build, `assets:verify`. The Site job stays. `assets:lint` moved
       from the Lint job.
-- [ ] `AGENTS.md` (session 4.2) and `CONTRIBUTING.md` get the table of checks per changed
+- [x] `AGENTS.md` (session 4.2) and `CONTRIBUTING.md` get the table of checks per changed
       area. The table is in `docs/architecture.md`, "Checks per changed area"; session 4.2
-      copies it into the two files when it writes them.
+      copied it into the two files.
 
 **Acceptance:** CI is green on `develop` and the four required checks pass in under five
 minutes including the LFS pull.
@@ -566,29 +567,40 @@ asking, and does not break a rule that is not written down.
 
 ### Session 4.2: community files and agent rules
 
-- [ ] `.github/CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CODEOWNERS`, a pull
+- [x] `.github/CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CODEOWNERS`, a pull
       request template with the checklist of checks, issue forms for a bug, an asset request
       and a docs problem, `ISSUE_TEMPLATE/config.yml` with links to the site, the security
       advisories and the siblings. Copy from `chassis-tokens` and adjust (website task A11).
-- [ ] `.github/dependabot.yml`: npm weekly into `develop`, with groups for `@chassis-ui/*`,
+      The issue forms are YAML forms, as the website's. Blank issues stay enabled: the
+      repository has no Discussions to send a question to.
+- [x] `.github/dependabot.yml`: npm weekly into `develop`, with groups for `@chassis-ui/*`,
       Astro, other minor and patch updates; GitHub Actions grouped (website task A12).
-- [ ] `AGENTS.md` and `CLAUDE.md` (`@AGENTS.md`), in the shape of `chassis-tokens`: the
-      layout, the commands, the checks per changed area, and the rules: Principles 1 to 7 of
+- [x] `AGENTS.md` and `CLAUDE.md` (`@AGENTS.md`), in the shape of `chassis-tokens`: the
+      layout, the commands, the checks per changed area, and the rules: Principles 1 to 9 of
       this roadmap as rules an agent breaks without being told; never edit `dist/`,
-      `test/golden/` or `vendor/`; never commit or push unasked; add a changeset; do not
-      convert the build to TypeScript.
-- [ ] `WRITING.md`: take the one of `chassis-tokens`, replace the vocabulary section with
-      this repository's (brand, app, type, platform, variant, density, the build), and the
-      section order of a page with the order of the asset-type pages.
-- [ ] Labels on the repository, as the website's session 3.2 added them.
+      `test/golden/` or the copies of other projects; never push unasked; add a changeset;
+      do not convert the build to TypeScript. This repository has no `vendor/`.
+- [x] `WRITING.md`: take the one of `chassis-tokens`, replace the vocabulary section with
+      this repository's (brand, app, type, platform, job, variant, indicator, density, the
+      build), and the section order of a page with the order of the asset-type pages. Its
+      accuracy section is "names are facts, files are examples": every path and command
+      exists, a tree of `dist/` is copied from a build, a statement about the build is run.
+      The pages do not follow it yet: session 5.2.
+- [x] Labels on the repository, as the website's session 3.2 added them. The maintainer
+      created `needs-triage` and `asset` on 2026-10-01, the two that the issue forms use.
+      `needs-info`, `confirmed`, `site`, `build` and `ci` of the website's set are not
+      created; no form needs them.
 - [ ] Optional: the pre-commit hook of the website, `simple-git-hooks` with `lint-staged` on
-      `build/`, `test/` and `site/src/`.
+      `build/`, `test/` and `site/src/`. Not added: the two packages would go into the root
+      `devDependencies`, which every site installs with `pnpm install --ignore-workspace`.
+      The checks per changed area are in three documents instead.
 
 ### Exit criteria
 
 - [x] A contributor can find, in the README or `CONTRIBUTING.md`, every command that CI runs.
-- [ ] An agent reading `AGENTS.md` knows the seven principles and the checks per area.
-- [ ] Dependabot opens grouped pull requests against `develop`.
+- [x] An agent reading `AGENTS.md` knows the nine principles and the checks per area.
+- [ ] Dependabot opens grouped pull requests against `develop`. Configured; seen when the
+      commit is on the default branch.
 
 ## Phase 5: the docs site
 
@@ -719,3 +731,4 @@ None is scheduled; the maintainer picks one when it is wanted.
 | 2026-10-01 | 4.1       | Rewrote `README.md` from `package.json` and the help of the commands: what the repository is and how it is distributed, setup, the layout of the workspace, of `source/` and of `dist/`, what each platform gets, every command with its options, the configuration, what consumers rely on, the branch flow, the ecosystem table of the website. The quick-start page and the README have the same setup and link to each other. `--help` for `assets:analyze`, `assets:validate`, `assets:contract` and `assets:verify`, with tests and a changeset; 350 tests. Deleted `build/build-site.js`, which nothing called. Prettier, the lints, the type check, the tests and the Astro check pass locally; CI has not seen the commit. Next: session 4.2, or 5.1; the release of 0.2.0 is the maintainer's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 2026-10-01 | 3.3       | Added Principle 9 and session 3.3 after the maintainer found that the contract check was written for the Chassis sites inside the build (F28). `contract.js` is an engine: `chassis.checks.json`, beside `package.json`, holds the contracts by job, with `files` and `sets`, and no file is a pass. The contract of the Chassis sites is data of that file and passes on the same output. The names the source lint keeps are its `lint.allow` (F29). The lists are not in `package.json`, where they were half of the file. The root scripts run the packages by folder, the release archives take their prefix from the root package name, and the version sync skips a README without a badge (F30). The fixture has its own checks file. The build-system and quick-start pages, the README and `docs/architecture.md` say what an adopter changes. 369 tests; Prettier, the lints, the type check, `pnpm assets:verify` on a full build and the site build pass locally. A changeset, minor and breaking for a script that imported `CONTRACT`. Open: platforms are still code in `build/processors/`. Next: session 4.2, or 5.1; the release of 0.2.0 is the maintainer's.                                                                                                                                                                                                                              |
 | 2026-10-01 | Source    | The maintainer removed 28 Figma screenshots that no page of `chassis-figma` reads: `group` of the badge, and `meta-1` of the solid button with its ten export copies, in both modes. Checked against the pages of `chassis-figma` before the commit. The `meta-1-*` exception left `chassis.checks.json`; eight export copies remain. A full build, `pnpm assets:verify` and the source lint pass. A changeset, minor, names the files.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2026-10-01 | 4.2       | The contributing guide in full: setup, branches and commits, changing assets, the build and the site, the checks per changed area, what a pull request needs, changesets, and the releases of session 3.2. `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CODEOWNERS`, a pull request template, issue forms for a bug, an asset request and a docs problem, and `dependabot.yml` into `develop`, from `chassis-tokens` and the website. `AGENTS.md` with the nine principles as rules, and `CLAUDE.md`. `WRITING.md`, the guide of `chassis-tokens` with this repository's vocabulary, section orders and accuracy rules. Prettier passes; no code changed. The maintainer created the labels `needs-triage` and `asset`. Not added: the pre-commit hook, which would weigh on the consumer install. Next: session 5.1, then 5.2 with `WRITING.md` as the checklist; the release of 0.2.0 is the maintainer's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |

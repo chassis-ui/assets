@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://chassis-ui.com/assets/docs/getting-started/introduction/
+    about: The asset types, the build, and how to use the output on the web, iOS and Android.
+  - name: Chassis Icons, Tokens, CSS, Figma, React or the website
+    url: https://github.com/chassis-ui
+    about: A problem in one of those projects, or in its docs under chassis-ui.com, belongs in its own repository.
+  - name: Security vulnerability
+    url: https://github.com/chassis-ui/assets/security/advisories/new
+    about: Report it privately, not as a public issue.

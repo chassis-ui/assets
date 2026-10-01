@@ -243,7 +243,7 @@ Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, 
 
 ## Contributing
 
-Branch from `develop` and open a pull request against `develop`. Before that, run the checks of what you changed, see [Checks per changed area](docs/architecture.md#checks-per-changed-area), and add a changeset when you changed `source/` or the build. [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) covers changesets and releases.
+Branch from `develop` and open a pull request against `develop`. [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) covers the setup, changing assets, the build and the site, the checks to run for each, changesets and releases. [WRITING.md](WRITING.md) is the style guide of the documentation, and [AGENTS.md](AGENTS.md) holds the rules for AI coding agents. Everyone taking part follows the [Code of Conduct](.github/CODE_OF_CONDUCT.md); report a vulnerability as [SECURITY.md](.github/SECURITY.md) says.
 
 ## License
 

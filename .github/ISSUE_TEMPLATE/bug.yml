@@ -1,0 +1,51 @@
+name: Bug report
+description: A file that is missing, wrongly named or broken in the output, or a build or check that fails
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This repository holds the fonts, images and icons of the Chassis Design System and the build that copies them for each platform. A problem with a token, a style or a component belongs in [that project's repository](https://github.com/chassis-ui).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options:
+        - A file in the output, dist/
+        - The build, pnpm assets
+        - A check, such as pnpm assets:verify or pnpm assets:lint:source
+        - The documentation site
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw. Include the exact error message or the output of the command if there was one.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce it
+      description: The command you ran, and the `chassis` block of `package.json` if you changed it. For a file, its path in `source/` and in `dist/`.
+      placeholder: pnpm assets --brand chassis --platform android
+    validations:
+      required: true
+  - type: input
+    id: job
+    attributes:
+      label: Platform, app and brand
+      placeholder: android / demo / chassis
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: The version of Chassis Assets or the commit, Node.js, and whether Git LFS is installed.
+      placeholder: 0.2.0, Node.js 24.8, Git LFS 3.7

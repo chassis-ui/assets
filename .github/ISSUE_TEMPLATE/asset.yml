@@ -1,0 +1,46 @@
+name: Asset request
+description: Ask for a font, an image or an icon to be added, replaced or removed
+labels: [asset, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An icon of the icon library is drawn in [chassis-icons](https://github.com/chassis-ui/icons); this repository copies its output. Ask for a new icon there.
+  - type: dropdown
+    id: type
+    attributes:
+      label: Asset type
+      options:
+        - Font
+        - Image
+        - Icon
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: The asset
+      description: What it is, and its path under `source/<brand>/<app>/<type>/` if it exists. Attach the file or link the Figma frame.
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Brand, app and platforms
+      description: Where it is needed. `default` when every brand gets it.
+      placeholder: default / docs / web
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The page, the screen or the component that needs it.
+    validations:
+      required: true
+  - type: textarea
+    id: license
+    attributes:
+      label: License
+      description: For a font or an image that is not yours, its license and where it comes from. A font needs its license text beside it.
