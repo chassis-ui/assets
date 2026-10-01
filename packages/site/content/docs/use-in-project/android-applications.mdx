@@ -37,7 +37,7 @@ dist/android/demo/chassis/
 </CxTable>
 
 <Callout type="warning">
-The output is not a `res/` folder. The build copies files: it does not convert an SVG to a vector drawable, and it keeps the subfolders of `images/`, which `res/` does not allow. You copy the files you need into `res/`, and import the SVG files with Android Studio.
+The output is not a `res/` folder. The build keeps the subfolders of `images/`, which `res/` does not allow, and it copies an SVG as SVG, which `res/` does not accept. You copy the files you need into `res/`. For the icons, build with `--vector-drawables` or import the SVG files with Android Studio, see [Vector drawables](#vector-drawables).
 </Callout>
 
 ## Installation
@@ -306,7 +306,37 @@ The files of `icons/svgs/` are the icons, one file per icon and style. `icons/ic
 
 ### Vector drawables
 
-An Android app draws an icon from a vector drawable, which you make from the SVG file with Vector Asset Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then a file of `icons/svgs/`. Keep the name that the dialog proposes, so the resource has the name of the file: `ic_arrow_right_solid.svg` becomes `res/drawable/ic_arrow_right_solid.xml`. Import the icons the app uses, not the whole folder, and import an icon again when its SVG changes.
+An Android app draws an icon from a vector drawable. The build writes one for each icon when you give it the `--vector-drawables` option, which needs the packages of the repository:
+
+```bash
+cd chassis-assets
+pnpm install
+pnpm assets --platform android --vector-drawables
+```
+
+Each SVG file under `icons/` is then an XML file of the same name, which `res/drawable/` takes as it is:
+
+```text
+dist/android/demo/chassis/icons/
+├── icons/
+│   └── ic_chassis_icons.svg
+└── svgs/
+    ├── ic_arrow_right_outline.xml
+    ├── ic_arrow_right_solid.xml
+    ├── ic_bars_outline.xml
+    ├── ic_bars_solid.xml
+    └── ...
+```
+
+A path without a fill color is filled black, which the tint of the app replaces. A file with no shape to draw stays an SVG, and the build warns about it: `icons/icons/ic_chassis_icons.svg` is the one of this output. Add the icons to the copy script of [Copying to res](#copying-to-res):
+
+```bash
+# The vector drawables of the icons, from a build with --vector-drawables
+mkdir -p "$SRC/res/drawable"
+cp "$ASSETS"/icons/svgs/*.xml "$SRC/res/drawable/"
+```
+
+The release archives are built without the option and hold the SVG files. From an SVG file you make the vector drawable with Vector Asset Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then a file of `icons/svgs/`. Keep the name that the dialog proposes, so the resource has the name of the file: `ic_arrow_right_solid.svg` becomes `res/drawable/ic_arrow_right_solid.xml`. Import the icons the app uses, not the whole folder, and import an icon again when its SVG changes.
 
 ### Using an icon
 
@@ -459,7 +489,7 @@ The copy script stops at a `cp` line with `No such file or directory`. The job f
 
 ### SVG file in res
 
-Gradle fails on a file of `res/drawable/` with `The file name must end with .xml or .png`. An SVG of `images/` or `icons/` was copied as it is, and `res/` does not accept SVG. Remove the file and import it with Vector Asset Studio, as in [SVG images](#svg-images).
+Gradle fails on a file of `res/drawable/` with `The file name must end with .xml or .png`. An SVG of `images/` or `icons/` was copied as it is, and `res/` does not accept SVG. Remove the file and import it with Vector Asset Studio, as in [SVG images](#svg-images), or build the icons with `--vector-drawables`, as in [Vector drawables](#vector-drawables).
 
 ### Duplicate resources
 
@@ -475,7 +505,7 @@ An image is soft on a dense screen. It has only a file in `drawable/`, which And
 
 ### Icon is not found
 
-The compiler reports `Unresolved reference` for an icon such as `R.drawable.ic_arrow_right`. The name of an icon ends with its style, and the vector drawable exists only after the import: check the name with `ls dist/android/demo/chassis/icons/svgs`, and import `ic_arrow_right_solid.svg` or `ic_arrow_right_outline.svg`.
+The compiler reports `Unresolved reference` for an icon such as `R.drawable.ic_arrow_right`. The name of an icon ends with its style, and the vector drawable exists only after the copy or the import: check the name with `ls dist/android/demo/chassis/icons/svgs`, and use `ic_arrow_right_solid` or `ic_arrow_right_outline`.
 
 ## Next steps
 

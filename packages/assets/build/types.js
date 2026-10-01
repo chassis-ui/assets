@@ -34,6 +34,8 @@
  * @property {string} [out] - The output folder, relative to `cwd`. Default `dist`
  * @property {boolean} [dryRun] - Print the jobs and their file counts, write nothing
  * @property {boolean} [allowLfsPointers] - Copy Git LFS pointer files instead of failing
+ * @property {boolean} [vectorDrawables] - Write the files a processor names in
+ *   `vectorDrawables` as vector drawables. Needs the package `svg2vectordrawable`
  */
 
 /**
@@ -50,6 +52,8 @@
  * @property {number} filesProcessed
  * @property {number} filesRenamed
  * @property {number} directoriesCreated
+ * @property {number} filesConverted - Files written as vector drawables, with
+ *   `vectorDrawables`
  * @property {string[]} errors
  * @property {string[]} warnings
  * @property {string[]} lfsPointers - Source files that are Git LFS pointers
@@ -75,6 +79,14 @@
  */
 
 /**
+ * A conversion of the files of one type folder, which an option of the build turns on.
+ * @typedef {Object} Conversion
+ * @property {string} type - The type folder whose files are converted, such as `icons`
+ * @property {string} from - The extension of the files that are converted, such as `.svg`
+ * @property {string} to - The extension they are written with, such as `.xml`
+ */
+
+/**
  * A platform processor of `build/processors/`: the platform's names and filters.
  * @typedef {Object} Processor
  * @property {string} name - The platform, a key of `platformProcessors`
@@ -90,6 +102,8 @@
  *   true when it did
  * @property {(fileName: string) => string} [imageFolder] - The folder `processImage()` writes
  *   an image to, under the folder of the image. The build reads it to find collisions
+ * @property {Conversion} [vectorDrawables] - What `--vector-drawables` converts for the
+ *   platform. Without it the option leaves the platform as it is
  */
 
 /**

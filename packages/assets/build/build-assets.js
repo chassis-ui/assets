@@ -15,6 +15,7 @@ import fs from 'fs'
 import path from 'path'
 import { platformProcessors } from './processors/index.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
+import { convertFolder, loadConverter } from './vector-drawables.js'
 
 /** @import { BuildConfig, BuildOptions, BuildStats, ContractEntry, Job, LintAllowance, Processor } from './types.js' */
 
@@ -37,6 +38,8 @@ Options:
   --dry-run              Print the jobs and their file counts, write nothing
   --allow-lfs-pointers   Copy Git LFS pointer files instead of failing
                          (also CHASSIS_ALLOW_LFS_POINTERS=1 in the environment)
+  --vector-drawables     Write the SVG icons of Android as vector drawables, .xml in
+                         place of .svg. Needs \`pnpm install\`
   --quiet                Print errors only
   --help, -h             Print this help
   --version, -v          Print the version
@@ -50,7 +53,8 @@ let run = {
   cwd: process.cwd(),
   outDir: path.join(process.cwd(), 'dist'),
   dryRun: false,
-  allowLfsPointers: false
+  allowLfsPointers: false,
+  vectorDrawables: false
 }
 
 /** Statistics of the run. @type {BuildStats} */
@@ -76,6 +80,7 @@ function emptyStats() {
     filesProcessed: 0,
     filesRenamed: 0,
     directoriesCreated: 0,
+    filesConverted: 0,
     errors: [],
     warnings: [],
     lfsPointers: [],
@@ -163,6 +168,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     out: undefined,
     dryRun: false,
     allowLfsPointers: false,
+    vectorDrawables: false,
     help: false,
     version: false
   }
@@ -197,6 +203,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.dryRun = true
     } else if (arg === '--allow-lfs-pointers') {
       options.allowLfsPointers = true
+    } else if (arg === '--vector-drawables') {
+      options.vectorDrawables = true
     } else if (arg === '--quiet') {
       options.quiet = true
     } else if (arg === '--help' || arg === '-h') {
@@ -730,6 +738,38 @@ function processAssets(processor, srcPaths, destPath, defaultAppPath) {
   cleanupEmptyDirectories(destPath)
 }
 
+/**
+ * Write the files a processor names in `vectorDrawables` as vector drawables, in the output
+ * of one job. A file without a shape stays as it is, with a warning.
+ * @param {Processor} processor - The platform processor
+ * @param {string} destPath - The output folder of the job
+ * @param {(svg: string) => Promise<string>} convert - The converter
+ */
+async function convertVectorDrawables(processor, destPath, convert) {
+  const conversion = processor.vectorDrawables
+  if (!conversion) return
+
+  const { converted, kept, failed } = await convertFolder(
+    path.join(destPath, conversion.type),
+    conversion,
+    convert
+  )
+  stats.filesConverted += converted.length
+  if (converted.length > 0) {
+    logger.log(`🎨 Converted ${converted.length} files to vector drawables`)
+  }
+  kept.forEach((file) =>
+    stats.warnings.push(
+      `Not converted, a vector drawable of it draws nothing: ${path.relative(run.cwd, file)}`
+    )
+  )
+  failed.forEach(({ file, message }) =>
+    stats.errors.push(
+      `Failed to convert ${path.relative(run.cwd, file)} to a vector drawable: ${message}`
+    )
+  )
+}
+
 // Re-export platform processors for backward compatibility
 export { platformProcessors }
 
@@ -751,7 +791,8 @@ export async function generateAssets(options = {}) {
     cwd,
     outDir: path.resolve(cwd, options.out || 'dist'),
     dryRun: options.dryRun || false,
-    allowLfsPointers: options.allowLfsPointers || process.env.CHASSIS_ALLOW_LFS_POINTERS === '1'
+    allowLfsPointers: options.allowLfsPointers || process.env.CHASSIS_ALLOW_LFS_POINTERS === '1',
+    vectorDrawables: options.vectorDrawables || false
   }
   config = loadConfig(cwd)
 
@@ -771,6 +812,19 @@ export async function generateAssets(options = {}) {
     filters.brands.length > 0 || filters.apps.length > 0 || filters.platforms.length > 0
   const clean = options.clean === undefined ? null : options.clean
   const shouldClean = clean !== null ? clean : !isSelectiveBuild
+
+  // The converter is loaded before anything is removed: a build that cannot run keeps
+  // the output that is there
+  let convert = null
+  if (run.vectorDrawables) {
+    if (!jobs.some((job) => platformProcessors[job.platform].vectorDrawables)) {
+      stats.warnings.push(
+        '--vector-drawables changes nothing: no selected job has a platform that converts'
+      )
+    } else if (!run.dryRun) {
+      convert = await loadConverter()
+    }
+  }
 
   /** @param {Job} job */
   const jobDir = (job) => path.join(run.outDir, job.platform, job.app, job.brand)
@@ -807,6 +861,7 @@ export async function generateAssets(options = {}) {
     const processor = platformProcessors[platform]
     const before = stats.filesProcessed
     processAssets(processor, [defaultAppPath, brandAppPath], destPath, defaultAppPath)
+    if (convert) await convertVectorDrawables(processor, destPath, convert)
     stats.jobs.push({ ...job, files: stats.filesProcessed - before })
   }
 
@@ -824,6 +879,9 @@ export async function generateAssets(options = {}) {
     logger.log(`✅ ${stats.filesProcessed} files processed`)
     logger.log(`📝 ${stats.filesRenamed} files renamed`)
     logger.log(`📁 ${stats.directoriesCreated} directories created`)
+    if (run.vectorDrawables) {
+      logger.log(`🎨 ${stats.filesConverted} files converted to vector drawables`)
+    }
   }
 
   if (stats.warnings.length > 0) {

@@ -12,7 +12,7 @@ This page is the reference of the build: its commands and options, the `chassis`
 
 ## Prerequisites
 
-The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only. Run `pnpm install` for the tests, the type check and the documentation site.
+The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only. Run `pnpm install` for the tests, the type check, the documentation site and the `--vector-drawables` option.
 
 Run every command from the repository root. A clone needs its Git LFS files, see [Build fails on pointers](#build-fails-on-pointers).
 
@@ -50,6 +50,7 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 | `--cwd <dir>` | Repository root, by default the nearest folder upward whose `package.json` has a `chassis` block |
 | `--dry-run` | Print the jobs and their file counts, write nothing |
 | `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same |
+| `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
 | `--quiet` | Print errors only |
 | `--help`, `-h` | Print the options |
 | `--version`, `-v` | Print the version |
@@ -79,6 +80,19 @@ pnpm assets --clean --brand chassis --app docs # removes the folders of the sele
 ```
 
 With filters, `--clean` removes the folders of the selected jobs only. The output of the other jobs stays.
+
+### Vector drawables
+
+The `--vector-drawables` option writes each SVG file under `icons/` of an Android job as a vector drawable, the format the `res/drawable/` folder of an app takes. It is off by default, and the output of every other platform and type stays as it is.
+
+```bash
+pnpm install
+pnpm assets --vector-drawables
+```
+
+The file keeps its folder and its name and gets the `.xml` extension: `icons/svgs/ic_arrow_right_solid.svg` becomes `icons/svgs/ic_arrow_right_solid.xml`. A path without a fill color is filled black, which a tint replaces in the app.
+
+The conversion is the one step of the build that uses a package, `svg2vectordrawable`, and the build loads it only with this option. Without the package the build stops before it removes anything and names `pnpm install` as the fix. An SVG without a shape, such as the SVG file of an icon font, stays an SVG and the build warns about it. A file that is not an SVG fails the build.
 
 ## Configuration
 
@@ -158,7 +172,7 @@ Each platform has a processor that says which formats it keeps and how a file is
 | Indicator `@2x`, `@3x` | Kept in the name | Kept in the name | Removed from the name |
 | `fonts/` | WOFF, WOFF2, CSS, SCSS, TXT | TTF, OTF, TXT | TTF, OTF, TXT |
 | `images/` | Every format | Every format but WebP | Every format, in density folders |
-| `icons/` | Every format | SVG, PDF, PNG | SVG, with the `ic_` prefix |
+| `icons/` | Every format | SVG, PDF, PNG | SVG, with the `ic_` prefix. Vector drawables with `--vector-drawables` |
 | Subfolders | Kept | Kept | Kept, with the density folders inside each |
 </CxTable>
 
@@ -322,6 +336,8 @@ Name the platform in an app of the `chassis` block, and build it with `pnpm asse
 
 A processor may also place an image itself with `processImage()`, as the Android processor does for the density folders. It returns `true` when it wrote the file, and `false` to let the build copy it. Such a processor also has `imageFolder(fileName)`, which returns the folder the image goes to, so that the build can warn about two images that meet there.
 
+A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`.
+
 ## Library
 
 The commands are thin entries over modules that a script can import. An imported function takes its options as an object, never reads the command line, and throws where the command would exit.
@@ -359,7 +375,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 
 ### generateAssets
 
-`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`, `out`, `dryRun` and `allowLfsPointers`.
+`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers` and `vectorDrawables`.
 
 ### ChassisAssets
 
@@ -375,7 +391,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 | `getCombinations()` | Every job, as brand, app and platform |
 | `assetsExist(brand, app)` | Whether the source has files for the brand and the app |
 | `getAssetInventory(brand, app)` | The source files of the brand and the app, by type |
-| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `clean` and `quiet` |
+| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `clean`, `quiet` and `vectorDrawables` |
 | `getStats()` | The numbers of brands, apps, jobs, source files and output files |
 | `validate()` | The errors and the warnings of the configuration and the source |
 </CxTable>

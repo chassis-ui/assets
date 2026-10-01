@@ -190,7 +190,8 @@ find dist/android/demo/chassis -name 'ic_arrow_right_solid*'
 
 - **Font families.** The font files are named by role: `text`, `display`, `code`. Which family a role holds is the choice of the brand. Write "the text font of the brand", not the family.
 - **File sizes and counts.** They change with every export. See [§8](#8-counts-versions-and-configuration).
-- **Features the build does not have.** The build does not convert SVG to vector drawables, write an asset catalog, or optimize images. A page says what an app does with the files instead, and names the tool of the platform.
+- **Features the build does not have.** The build does not write an asset catalog, a `res/` folder, or optimized images. A page says what an app does with the files instead, and names the tool of the platform.
+- **An option as the default.** A feature behind an option, such as the vector drawables of `--vector-drawables`, is described with its option. The trees and the tables of a page show the output of the default build first.
 
 **Platform code is checked on the platform.** A Swift, Kotlin or Gradle sample that was not run on its platform says so: the page carries the `created-by-ai` callout until its samples have been run ([§15](#15-callouts)).
 

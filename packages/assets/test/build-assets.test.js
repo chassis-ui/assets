@@ -236,6 +236,7 @@ describe('parseArgs()', () => {
     out: undefined,
     dryRun: false,
     allowLfsPointers: false,
+    vectorDrawables: false,
     help: false,
     version: false
   }
@@ -252,6 +253,7 @@ describe('parseArgs()', () => {
       ['--dry-run', '--quiet', '--allow-lfs-pointers'],
       { dryRun: true, quiet: true, allowLfsPointers: true }
     ],
+    [['--vector-drawables'], { vectorDrawables: true }],
     [['--help'], { help: true }],
     [['-h'], { help: true }],
     [['--version'], { version: true }],

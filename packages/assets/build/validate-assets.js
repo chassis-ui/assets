@@ -384,7 +384,10 @@ class DistValidator {
                 ? path.join(distPath, sourceFile.assetType, sourceFile.subFolder, transformedName)
                 : expectedDistPath
 
-              if (!fs.existsSync(fullDistPath)) {
+              if (
+                !fs.existsSync(fullDistPath) &&
+                !fs.existsSync(this.convertedPath(fullDistPath, platform, sourceFile.assetType))
+              ) {
                 missingFiles++
                 const detail = `${platform}/${app}/${brand}: ${sourceFile.assetType}/${sourceFile.subFolder ? sourceFile.subFolder + '/' : ''}${transformedName}`
                 if (missingDetails.length < 20) {
@@ -583,6 +586,27 @@ class DistValidator {
 
     // Use processor's renameFile method
     return processor.renameFile(filename, isIcon)
+  }
+
+  /**
+   * The path a file has in an output that was built with `--vector-drawables`: the
+   * extension of the platform's conversion in place of its own. The path itself when the
+   * platform does not convert the file.
+   * @param {string} filePath - The path of the file in the output
+   * @param {string} platform - Platform name
+   * @param {string} assetType - Asset type (icons, images, fonts, etc)
+   * @returns {string}
+   */
+  convertedPath(filePath, platform, assetType) {
+    const conversion = platformProcessors[platform]?.vectorDrawables
+    if (
+      !conversion ||
+      conversion.type !== assetType ||
+      path.extname(filePath).toLowerCase() !== conversion.from
+    ) {
+      return filePath
+    }
+    return filePath.slice(0, -conversion.from.length) + conversion.to
   }
 
   /**

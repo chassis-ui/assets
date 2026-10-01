@@ -122,20 +122,21 @@ pnpm assets --app docs --platform web         # Filters combine
 pnpm assets:site                              # The output the Chassis sites read: --clean --brand chassis --app docs
 ```
 
-| Option                 | What it does                                                                                  |
-| ---------------------- | --------------------------------------------------------------------------------------------- |
-| `--brand <name...>`    | Only these brands                                                                             |
-| `--app <name...>`      | Only these apps                                                                               |
-| `--platform <name...>` | Only these platforms                                                                          |
-| `--clean`              | Remove the output first, of the selected jobs when filtered                                   |
-| `--no-clean`           | Keep the output even for a full build                                                         |
-| `--out <dir>`          | Output folder, default `dist`                                                                 |
-| `--cwd <dir>`          | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block |
-| `--dry-run`            | Print the jobs and their file counts, write nothing                                           |
-| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`            |
-| `--quiet`              | Print errors only                                                                             |
-| `--help`, `-h`         | Print the options                                                                             |
-| `--version`, `-v`      | Print the version                                                                             |
+| Option                 | What it does                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| `--brand <name...>`    | Only these brands                                                                                   |
+| `--app <name...>`      | Only these apps                                                                                     |
+| `--platform <name...>` | Only these platforms                                                                                |
+| `--clean`              | Remove the output first, of the selected jobs when filtered                                         |
+| `--no-clean`           | Keep the output even for a full build                                                               |
+| `--out <dir>`          | Output folder, default `dist`                                                                       |
+| `--cwd <dir>`          | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block       |
+| `--dry-run`            | Print the jobs and their file counts, write nothing                                                 |
+| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                  |
+| `--vector-drawables`   | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
+| `--quiet`              | Print errors only                                                                                   |
+| `--help`, `-h`         | Print the options                                                                                   |
+| `--version`, `-v`      | Print the version                                                                                   |
 
 A full build removes `dist/` first; a filtered build keeps it. A filter value that is not configured fails the build and names the configured values.
 

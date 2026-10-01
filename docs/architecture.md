@@ -72,6 +72,10 @@ For each job, in order:
 4. **Rename** every file in the output folder with the processor's `renameFile()`
    (`renameFilesRecursively()`). The copy keeps the source name; the rename pass runs after.
 5. **Remove empty folders** left by the filters (`cleanupEmptyDirectories()`).
+6. **Convert**, only with `--vector-drawables` and only for a processor that has
+   `vectorDrawables`: each SVG under `icons/` of the job is written as a vector drawable
+   beside itself and removed (`convertVectorDrawables()`, `convertFolder()`). See
+   "Vector drawables".
 
 Before the jobs, `validateConfiguration()` checks that brands and apps are configured, that
 the default brand folder exists and that every platform has a processor, and `planJobs()`
@@ -95,6 +99,7 @@ jobs with their file counts.
 | `packages/assets/build/processors/ios.js`     | The iOS processor: snake_case names, indicator kept, fonts `.ttf` and `.otf`, icons `.svg` and `.pdf`, images without `.webp`.                                                                                                                                                                                                                                                                                |
 | `packages/assets/build/processors/android.js` | The Android processor: snake_case names, `ic_` prefix under `icons/`, indicator removed, density folders, fonts `.ttf` and `.otf`, icons `.svg`, every image format, `processImage()`.                                                                                                                                                                                                                        |
 | `packages/assets/build/processors/index.js`   | The registry `platformProcessors`, `getProcessor()`, `getPlatformNames()`. A platform of `chassis.build.apps` must be a key here.                                                                                                                                                                                                                                                                             |
+| `packages/assets/build/vector-drawables.js`   | The conversion of `--vector-drawables`: `loadConverter()`, which imports `svg2vectordrawable` when it is called and says how to install it when it is missing, `drawsSomething()` and `convertFolder()`. The one module that uses a package.                                                                                                                                                                  |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -164,6 +169,7 @@ on the fixture, which has its own configuration.
 | `--cwd <dir>`                    | The repository root, where `package.json` and `source/` are. Default: the nearest folder upward whose `package.json` has a `chassis` block.                                                                                     |
 | `--dry-run`                      | Print the jobs and their file counts, write nothing.                                                                                                                                                                            |
 | `--allow-lfs-pointers`           | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                    |
+| `--vector-drawables`             | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                            |
 | `--quiet`, `--help`, `--version` | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
 | `pnpm assets:site`               | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
 | `pnpm assets:analyze [filters]`  | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
@@ -210,8 +216,32 @@ the roadmap.
   `drawable-xxhdpi/` (`@3x`) or `drawable-xxxhdpi/` (`@4x`); a file without one goes into
   `drawable/`. Both are created under the folder the file came from, so `images/logo/x@2x.png`
   becomes `images/logo/drawable-xhdpi/x.png` (roadmap F4, D5).
-- `icons/`: `.svg` only, as SVG. No conversion to vector drawables (roadmap F5). A PNG icon is not kept, since the build places only `images/` in density folders (D15).
+- `icons/`: `.svg` only, as SVG. With `--vector-drawables`, as vector drawables: the same folder and name, `.xml` (roadmap 6.2, D9). A PNG icon is not kept, since the build places only `images/` in density folders (D15).
 - Other folders: every file.
+
+### Vector drawables
+
+`pnpm assets --vector-drawables` is the first option of Phase 6 of the roadmap: off by
+default, and the default output is the same file for file with and without the code.
+
+- The processor says what is converted: `vectorDrawables: { type: 'icons', from: '.svg', to: '.xml' }`
+  on Android, nothing on the web and iOS. The SVG images under `images/` are not converted:
+  several exist as PNG under the same name, and two files of one name are one resource.
+- The converter is `svg2vectordrawable` with `fillBlack` and three decimals, the options
+  `chassis-tokens` uses for its icons. It is an `optionalDependencies` entry of
+  `packages/assets/package.json`, so `pnpm install` brings it and
+  `pnpm install --ignore-workspace` does not. `loadConverter()` imports it when the option
+  is given, before the output is removed; without the package the build fails there and
+  the output stays.
+- A file that converts to a drawable without a `<path>` stays as SVG, with a warning:
+  the SVG file of the icon font, `icons/icons/ic_chassis_icons.svg`. A file that the
+  converter throws on is an error of the build.
+- The layout does not change: `icons/svgs/ic_arrow_right_solid.xml`. A `res/drawable/`
+  layout is roadmap 6.4.
+- The validator takes the converted name for the source file, so `pnpm assets:verify`
+  passes on either output. The release archives are built without the option.
+- Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
+  has read the drawables.
 
 ## Checks
 
@@ -341,3 +371,5 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
   repository (roadmap session 3.3).
 - 2026-10-01: the contributing guide, the community files, `AGENTS.md` and `WRITING.md`
   (roadmap session 4.2).
+- 2026-10-01: `--vector-drawables`, the first optional feature, and the first package the
+  build loads, only with its option (roadmap 6.2).

@@ -25,6 +25,12 @@ const androidProcessor = {
   excludedImageFormats: [],
 
   /**
+   * What `--vector-drawables` converts: the SVG files of `icons/` become vector drawables,
+   * the format `res/drawable/` takes, under the same name
+   */
+  vectorDrawables: { type: 'icons', from: '.svg', to: '.xml' },
+
+  /**
    * Density folder mapping for resolution indicators
    * Maps `@1x`, `@2x`, `@3x`, etc. to Android drawable density folders
    */

@@ -8,7 +8,7 @@ toc: true
 
 Icons are the files under `icons/` of an app. They are not drawn or exported here: the folder holds a copy of the build output of [Chassis Icons](https://chassis-ui.com/icons), which the build then copies to each platform.
 
-The web output gets every file of the folder. iOS gets the SVG, PDF and PNG files, and Android gets the SVG files, each with the `ic_` prefix. The build does not convert an icon to a vector drawable or to a PDF.
+The web output gets every file of the folder. iOS gets the SVG, PDF and PNG files, and Android gets the SVG files, each with the `ic_` prefix. The build copies an icon as it is. With the `--vector-drawables` option it writes the SVG icons of Android as vector drawables.
 
 ## Source layout
 
@@ -45,7 +45,7 @@ Each platform keeps the formats it can use, and the build leaves the rest out.
 | WOFF, WOFF2, CSS, SCSS, JSON | Copied | Dropped | Dropped |
 </CxTable>
 
-The icon font and its stylesheets are for the web, so the apps get the SVG files only. An Android app turns an SVG into a vector drawable with the Vector Asset Studio of Android Studio.
+The icon font and its stylesheets are for the web, so the apps get the SVG files only. An Android app draws an icon from a vector drawable: a build with `--vector-drawables` writes one per SVG file, and Vector Asset Studio of Android Studio makes one from a single file.
 
 ## Naming
 
@@ -149,6 +149,18 @@ dist/android/demo/chassis/icons/
 └── svgs/
     ├── ic_arrow_right_outline.svg
     ├── ic_arrow_right_solid.svg
+    └── ...
+```
+
+A build with `pnpm assets --vector-drawables` writes each of these SVG files as a vector drawable of the same name. The SVG file of the icon font has no shape to draw, so it stays, and the build warns about it:
+
+```text
+dist/android/demo/chassis/icons/
+├── icons/
+│   └── ic_chassis_icons.svg
+└── svgs/
+    ├── ic_arrow_right_outline.xml
+    ├── ic_arrow_right_solid.xml
     └── ...
 ```
 
