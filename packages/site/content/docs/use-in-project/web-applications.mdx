@@ -454,19 +454,21 @@ The commands of this job were run in a project with the submodule; the workflow 
 
 ## Best practices
 
-✅ **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so the output has `other/default-tokens.json` and `icons/icons/chassis-icons-min.css`. Find a name with `find dist/web/docs/chassis -name '<pattern>'`.
+These practices keep your application reading the output as the build wrote it, with the names and the folders of `dist/web/`.
 
-✅ **Keep a stylesheet beside its fonts:** `text.css`, `display.css`, `code.css` and `chassis-icons.css` read their font files by a relative URL. Copy `fonts/` and `icons/icons/` whole.
+- **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so the output has `other/default-tokens.json` and `icons/icons/chassis-icons-min.css`. Find a name with `find dist/web/docs/chassis -name '<pattern>'`.
+- **Keep a stylesheet beside its fonts:** `text.css`, `display.css`, `code.css` and `chassis-icons.css` read their font files by a relative URL. Copy `fonts/` and `icons/icons/` whole.
+- **Ship the licenses:** copy `<role>-license.txt` with the fonts of `fonts/`.
+- **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is marked `**Breaking.**` in the changelog.
 
-✅ **Ship the licenses:** copy `<role>-license.txt` with the fonts of `fonts/`.
+Avoid the habits that undo this:
 
-✅ **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is marked `**Breaking.**` in the changelog.
-
-❌ **Do not edit `dist/`:** a full `pnpm assets` removes it first, and `--clean` removes the folders of the selected jobs. Change the file in `source/` and build again.
-
-❌ **Do not expect a file the designer did not export:** the default build copies. An image without an `@2x` file in `source/` has none in the output, and one without a `.webp` file has one only in a build with `--webp`.
+- **Do not edit `dist/`:** a full `pnpm assets` removes it first, and `--clean` removes the folders of the selected jobs. Change the file in `source/` and build again.
+- **Do not expect a file the designer did not export:** the default build copies. An image without an `@2x` file in `source/` has none in the output, and one without a `.webp` file has one only in a build with `--webp`.
 
 ## Troubleshooting
+
+Each entry gives the message or the symptom, then the cause and the fix.
 
 ### Build fails on pointers
 
@@ -493,6 +495,8 @@ The build stops with `Unknown brand "<name>". Configured: <brands>`. The value o
 The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each filter value is configured, but no app has that platform: `pnpm assets --app demo --platform web` fails in the committed configuration, where `demo` is built for iOS and Android. Read the jobs with `pnpm assets --dry-run`.
 
 ## Next steps
+
+Continue with one of these pages:
 
 - [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]): the source layout and the rules of each type.
 - [Build system]([[docsref:/getting-started/build-system]]): the commands, the options and the configuration.

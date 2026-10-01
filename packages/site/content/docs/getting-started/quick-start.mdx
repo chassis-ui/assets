@@ -178,6 +178,8 @@ git remote set-url origin https://github.com/your-org/acme-assets.git
 
 ## Troubleshooting
 
+Each entry gives the message or the symptom, then the cause and the fix.
+
 ### Build fails on pointers
 
 The build stops with `<count> source file(s) are Git LFS pointers, not files`. The clone was made without Git LFS, so the fonts and the images are pointer files of a few lines. Install Git LFS, run `git lfs pull`, and build again.
@@ -191,6 +193,8 @@ The build stops with `Unknown brand "<name>". Configured: <names>`. A filter nam
 The build passes and a file of `source/` is not in the folder of a job. The platform does not keep the format: a TTF font is not copied to the web, and a WebP image is not copied to iOS. The page of the type has a table of the formats each platform gets.
 
 ## Next steps
+
+Continue with one of these pages:
 
 - [Design guidelines]([[docsref:/getting-started/design-guidelines]]): the folders, the naming rules and the workflow of a designer.
 - [Build system]([[docsref:/getting-started/build-system]]): the commands, the configuration and the checks.

@@ -80,15 +80,16 @@ A subfolder groups images that belong together, such as `logo/` or `home/`. The 
 
 ## Best practices
 
-✅ **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them. An image without variants reaches Android in `drawable/` only.
+The build copies an image as the designer exported it. These practices cover what to export and where to put it, so each platform gets the file it reads.
 
-✅ **Keep the base name the same across variants:** `hero.png`, `hero@2x.png` and `hero@3x.png` become one Android drawable in three densities. A variant with another base name becomes another image.
+- **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them. An image without variants reaches Android in `drawable/` only.
+- **Keep the base name the same across variants:** `hero.png`, `hero@2x.png` and `hero@3x.png` become one Android drawable in three densities. A variant with another base name becomes another image.
+- **Add a PNG or JPG beside a WebP:** iOS does not get WebP files.
+- **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/logo/chassis-logo.svg` for `images/logo/chassis-logo.svg`.
 
-✅ **Add a PNG or JPG beside a WebP:** iOS does not get WebP files.
+Avoid the habits that undo this:
 
-✅ **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/logo/chassis-logo.svg` for `images/logo/chassis-logo.svg`.
-
-❌ **Do not put icons of the interface under `images/`:** the files of `icons/` come from Chassis Icons, and Android gives them the `ic_` prefix. See [icons]([[docsref:/asset-types/icons]]).
+- **Do not put icons of the interface under `images/`:** the files of `icons/` come from Chassis Icons, and Android gives them the `ic_` prefix. See [icons]([[docsref:/asset-types/icons]]).
 
 ## Platform output
 

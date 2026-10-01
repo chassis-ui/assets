@@ -136,15 +136,16 @@ The two projects meet in the names only. The build of Chassis Assets does not re
 
 ## Best practices
 
-✅ **Name fonts by role:** `text-strong.woff2` works for every brand. A file named after a family has to be renamed, in the source and in every app, when the brand changes its font.
+The rules of `fonts/` leave a few choices to the designer. These keep a font replaceable by brand and complete on every platform.
 
-✅ **Add every format a platform needs:** WOFF2 for a web app, TTF or OTF for an iOS or Android app. The build drops a format a platform does not keep and does not convert one.
+- **Name fonts by role:** `text-strong.woff2` works for every brand. A file named after a family has to be renamed, in the source and in every app, when the brand changes its font.
+- **Add every format a platform needs:** WOFF2 for a web app, TTF or OTF for an iOS or Android app. The build drops a format a platform does not keep and does not convert one.
+- **Keep the license beside the font:** as `<role>-license.txt` in the same folder. The build copies it to every platform.
+- **Replace the stylesheet with the font:** a brand that replaces `display-*.woff2` adds its own `display.css`, or the web output declares the family of the default brand for the files of the brand.
 
-✅ **Keep the license beside the font:** as `<role>-license.txt` in the same folder. The build copies it to every platform.
+Avoid the habits that undo this:
 
-✅ **Replace the stylesheet with the font:** a brand that replaces `display-*.woff2` adds its own `display.css`, or the web output declares the family of the default brand for the files of the brand.
-
-❌ **Do not put a font outside `fonts/`:** a WOFF2 file under another folder is copied to iOS and Android as well, since only `fonts/` has the format rules.
+- **Do not put a font outside `fonts/`:** a WOFF2 file under another folder is copied to iOS and Android as well, since only `fonts/` has the format rules.
 
 ## Platform output
 

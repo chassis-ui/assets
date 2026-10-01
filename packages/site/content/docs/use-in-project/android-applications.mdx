@@ -514,27 +514,25 @@ With release archives the workflow needs neither the submodule nor Node.js: it d
 
 ## Best practices
 
-✅ **Copy by a script:** keep the list of the `images/` folders the app uses in `scripts/sync-assets.sh`, so a new file of `source/` reaches `res/` with the next build.
+These practices keep the copy from `dist/android/` into `res/` repeatable, so every file of the app comes from a build of the assets.
 
-✅ **Keep the licenses:** ship the `<role>_license.txt` files of `fonts/` with the app, from `assets/licenses/`.
+- **Copy by a script:** keep the list of the `images/` folders the app uses in `scripts/sync-assets.sh`, so a new file of `source/` reaches `res/` with the next build.
+- **Keep the licenses:** ship the `<role>_license.txt` files of `fonts/` with the app, from `assets/licenses/`.
+- **Name flavors after brands:** a flavor named as the brand in `chassis.build.brands` maps `dist/android/<app>/<brand>/` to `app/src/<brand>/` without a table of names.
+- **Ask for the variants:** the build does not resize, so an image that has only a `drawable/` file needs `@2x` and `@3x` exports in `source/`.
+- **Pin the assets:** use a submodule commit or the archive of one version, so a build of the app is repeatable.
+- **Build with `--webp` for smaller images:** the option, which needs `pnpm install`, writes a lossless WebP in place of each PNG that it makes smaller, under the same resource name.
 
-✅ **Name flavors after brands:** a flavor named as the brand in `chassis.build.brands` maps `dist/android/<app>/<brand>/` to `app/src/<brand>/` without a table of names.
+Avoid the habits that undo this:
 
-✅ **Ask for the variants:** the build does not resize, so an image that has only a `drawable/` file needs `@2x` and `@3x` exports in `source/`.
-
-✅ **Pin the assets:** use a submodule commit or the archive of one version, so a build of the app is repeatable.
-
-❌ **Do not edit the copies:** a file under `app/src/<brand>/res/` that the script wrote is replaced by the next run. Change the file in `source/` and build again.
-
-❌ **Do not rename in the app:** the names of `dist/android/` are the same for every brand. A renamed copy breaks that for the next brand.
-
-✅ **Build with `--webp` for smaller images:** the option, which needs `pnpm install`, writes a lossless WebP in place of each PNG that it makes smaller, under the same resource name.
-
-❌ **Do not keep one image as PNG and as WebP in `res/`:** the Android output has both when the designer exported both, and a resource has one file per folder. Remove the extension the app does not use from the copy script.
-
-❌ **Do not commit `dist/`:** it is build output. Commit the submodule pointer, or name the version of the archive.
+- **Do not edit the copies:** a file under `app/src/<brand>/res/` that the script wrote is replaced by the next run. Change the file in `source/` and build again.
+- **Do not rename in the app:** the names of `dist/android/` are the same for every brand. A renamed copy breaks that for the next brand.
+- **Do not keep one image as PNG and as WebP in `res/`:** the Android output has both when the designer exported both, and a resource has one file per folder. Remove the extension the app does not use from the copy script.
+- **Do not commit `dist/`:** it is build output. Commit the submodule pointer, or name the version of the archive.
 
 ## Troubleshooting
+
+Each entry gives the message or the symptom, then the cause and the fix.
 
 ### Git LFS pointers
 
@@ -569,6 +567,8 @@ An image is soft on a dense screen. It has only a file in `drawable/`, which And
 The compiler reports `Unresolved reference` for an icon such as `R.drawable.ic_arrow_right`. The name of an icon ends with its style, and the vector drawable exists only after the copy or the import: check the name with `ls dist/android/demo/chassis/icons/svgs`, and use `ic_arrow_right_solid` or `ic_arrow_right_outline`.
 
 ## Next steps
+
+Continue with one of these pages:
 
 - [Build System]([[docsref:/getting-started/build-system]]): the commands, their options and the configuration of brands and apps.
 - [Fonts]([[docsref:/asset-types/fonts]]), [Images]([[docsref:/asset-types/images]]), [Icons]([[docsref:/asset-types/icons]]) and [Other assets]([[docsref:/asset-types/other]]): where each type goes in `source/` and how it is named.

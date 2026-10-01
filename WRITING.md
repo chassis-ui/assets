@@ -60,7 +60,7 @@ Every `##`, `###`, and `####` heading must be followed by at least one explanato
 
 **Floor:** one full sentence is enough — don't pad.
 
-**Exception:** `## Best practices`, `## Troubleshooting`, and `## Next steps` may go directly into their entries. Their names say what follows, and a sentence there is filler.
+**No exception for list sections.** `## Best practices`, `## Troubleshooting`, and `## Next steps` open with a sentence too, before the first entry. `## Best practices` gets a sentence of its page, which says what the practices of the page protect; one that would fit any page ("Follow these best practices") is filler. The entries of the other two have the same shape on every page, so their sentence is fixed: "Each entry gives the message or the symptom, then the cause and the fix." for `## Troubleshooting` ([§16](#16-troubleshooting-entries)), and "Continue with one of these pages:" for `## Next steps`.
 
 **Good:**
 
@@ -345,7 +345,21 @@ Use `<Callout>` for asides that interrupt the reading flow but are important eno
 
 **No `title` attribute.** `<Callout>` has no `title` prop and ignores one. Titles like "Note", "Important", and "Key Concept" add nothing; when a callout needs a lead-in, start its body with a bold phrase.
 
-**No emoji** in headings or prose, and no emoji as a substitute for a callout (`⚠️`). The one exception is `✅` and `❌` as markers of the entries of a `## Best practices` section, each followed by a bold imperative phrase, a colon, and one or two sentences that name a folder, a format or a command.
+**No emoji** in headings or prose, no emoji as a substitute for a callout (`⚠️`), and no `✅` or `❌` as the marker of an entry.
+
+**Best practices are two lists.** After the intro sentence of the section ([§2](#2-every-heading-earns-its-paragraph)), the entries of a `## Best practices` section are a bullet list of what to do, then the sentence "Avoid the habits that undo this:" and a bullet list of what to avoid, whose entries start with "Do not". Each item is a bold imperative phrase, a colon, and one or two sentences that name a folder, a format or a command.
+
+```mdx
+## Best practices
+
+The build copies an image as the designer exported it. These practices cover what to export and where to put it.
+
+- **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them.
+
+Avoid the habits that undo this:
+
+- **Do not put icons of the interface under `images/`:** the files of `icons/` come from Chassis Icons.
+```
 
 ### 16. Troubleshooting entries
 
@@ -441,7 +455,7 @@ Before opening a PR with a doc change, verify:
 - [ ] **Voice check ([§1](#1-voice-by-doc-type)):**
   - _Asset type docs:_ No second-person or first-person plural in prose. Quick check: `grep -niE "\b(you|your|yours|we|our|ours|us)\b" <file>` returns nothing relevant.
   - _Getting-started and use-in-project docs:_ "you/your" are acceptable; confirm "we/us/our" are absent.
-- [ ] Every `##`/`###`/`####` heading has an explanatory sentence before the next block ([§2](#2-every-heading-earns-its-paragraph)).
+- [ ] Every `##`/`###`/`####` heading has an explanatory sentence before the next block, `## Best practices`, `## Troubleshooting` and `## Next steps` included ([§2](#2-every-heading-earns-its-paragraph)).
 - [ ] No container phrases ("The following…", "Below is…") and no bold label paragraphs ([§2](#2-every-heading-earns-its-paragraph)).
 - [ ] No marketing adjectives and no generic advice in prose ([§3](#3-describe-behavior-not-benefits)).
 - [ ] Project vocabulary: brand, app, type, platform, job, variant, indicator, density, the build ([§5](#5-vocabulary)).
@@ -459,7 +473,7 @@ Before opening a PR with a doc change, verify:
 - [ ] All `##` / `###` headings under ~25 characters, sentence case, no trailing punctuation, no `&` ([§12](#12-heading-length-case-and-punctuation)).
 - [ ] `## Platform output` follows the template ([§13](#13-the--platform-output-section)).
 - [ ] Every table is wrapped in `<CxTable>` ([§14](#14-tables-and-trees)).
-- [ ] Callouts have no `title`, a status callout is removed only by the PR that checked the page, and there is no emoji outside `## Best practices` ([§15](#15-callouts)).
+- [ ] Callouts have no `title`, a status callout is removed only by the PR that checked the page, there is no emoji, and the entries of `## Best practices` are two bullet lists ([§15](#15-callouts)).
 - [ ] Troubleshooting entries name the symptom, quote the message, give the cause and the fix ([§16](#16-troubleshooting-entries)).
 - [ ] Cross-references use `[[docsref:/...]]` for internal links and Markdown for external ([§17](#17-cross-references)).
 - [ ] All fenced code blocks have a language tag ([§18](#18-fenced-code-language-tags)).

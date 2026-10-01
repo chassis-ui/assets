@@ -454,23 +454,23 @@ Run the lane with `fastlane ios build_brand brand:example`.
 
 ## Best practices
 
-✅ **Refer to fonts by role:** list `text_normal.otf` in `UIAppFonts` and read the PostScript name from the file, so a brand that changes the family of a role changes no code.
+These practices keep the Xcode project in step with `dist/ios/`, so a new export or another brand needs no change in code.
 
-✅ **Fill every slot the output has:** put `@2x` and `@3x` files in their slots of an image set. The build does not resize, so a missing variant is fixed by an export into `source/`, not in Xcode.
+- **Refer to fonts by role:** list `text_normal.otf` in `UIAppFonts` and read the PostScript name from the file, so a brand that changes the family of a role changes no code.
+- **Fill every slot the output has:** put `@2x` and `@3x` files in their slots of an image set. The build does not resize, so a missing variant is fixed by an export into `source/`, not in Xcode.
+- **Take icons from `icons/svgs/`:** add them as single-scale SVG image sets with **Preserve Vector Data** and **Template Image**.
+- **Keep the license with the font:** copy `<role>_license.txt` of `fonts/` along with the font files.
+- **Build one job in CI:** `pnpm assets --platform ios --app <app> --brand <brand>` writes only `dist/ios/<app>/<brand>/`.
 
-✅ **Take icons from `icons/svgs/`:** add them as single-scale SVG image sets with **Preserve Vector Data** and **Template Image**.
+Avoid the habits that undo this:
 
-✅ **Keep the license with the font:** copy `<role>_license.txt` of `fonts/` along with the font files.
-
-✅ **Build one job in CI:** `pnpm assets --platform ios --app <app> --brand <brand>` writes only `dist/ios/<app>/<brand>/`.
-
-❌ **Do not rename the files in the project:** the names of `dist/ios/` are the contract. Rename the file in `source/` and build again.
-
-❌ **Do not commit `dist/`:** commit the submodule pointer, or pin the version of the archive, and build or unpack the files.
-
-❌ **Do not edit the copied files:** a change to a file under `Resources/Chassis/` is lost at the next copy. Change `source/<brand>/<app>/` instead.
+- **Do not rename the files in the project:** the names of `dist/ios/` are the contract. Rename the file in `source/` and build again.
+- **Do not commit `dist/`:** commit the submodule pointer, or pin the version of the archive, and build or unpack the files.
+- **Do not edit the copied files:** a change to a file under `Resources/Chassis/` is lost at the next copy. Change `source/<brand>/<app>/` instead.
 
 ## Troubleshooting
+
+Each entry gives the message or the symptom, then the cause and the fix.
 
 ### Build fails on pointers
 
@@ -501,6 +501,8 @@ An image looks soft on a 3x screen. The output has no `@3x` file for it, because
 An icon stays black whatever the tint of the view. Its image set renders as an original image. Set **Render As** to **Template Image** in the attributes inspector.
 
 ## Next steps
+
+Continue with one of these pages:
 
 - [Fonts]([[docsref:/asset-types/fonts]]): the roles, the formats and the licenses of the font files.
 - [Images]([[docsref:/asset-types/images]]): the variants and the naming of the images.

@@ -42,19 +42,13 @@ Add a file to a brand only when it differs from the default one. A logo that eve
 
 A name in `source/` is made of lowercase letters, digits and hyphens, with a lowercase extension. Each platform renames the file from there: the web keeps the hyphens, iOS and Android get underscores.
 
-✅ **Separate words with hyphens:** `hero-background.jpg`.
-
-✅ **Name a file after what it shows or does:** `illustration-onboarding.svg`, not `image1.svg`.
-
-✅ **Put the color mode at the end of the name:** `comp-gallery-light.png` and `comp-gallery-dark.png`.
-
-✅ **End a variant with its indicator:** `hero-image.png`, `hero-image@2x.png`, `hero-image@3x.png`.
-
-❌ **Do not use spaces, capitals or underscores:** `Hero Background.jpg` and `hero_background.jpg` fail the source lint.
-
-❌ **Do not put a dot or an indicator inside a name:** `hero.v2.png` and `hero@2x-final.png` fail the source lint.
-
-❌ **Do not put the brand in the name:** the folder says it, and a brand file has to have the name of the default file to replace it.
+- **Separate words with hyphens:** `hero-background.jpg`.
+- **Name a file after what it shows or does:** `illustration-onboarding.svg`, not `image1.svg`.
+- **Put the color mode at the end of the name:** `comp-gallery-light.png` and `comp-gallery-dark.png`.
+- **End a variant with its indicator:** `hero-image.png`, `hero-image@2x.png`, `hero-image@3x.png`.
+- **Do not use spaces, capitals or underscores:** `Hero Background.jpg` and `hero_background.jpg` fail the source lint.
+- **Do not put a dot or an indicator inside a name:** `hero.v2.png` and `hero@2x-final.png` fail the source lint.
+- **Do not put the brand in the name:** the folder says it, and a brand file has to have the name of the default file to replace it.
 
 The source lint checks these rules on every pull request. Run it yourself with `pnpm assets:lint:source`.
 
@@ -132,19 +126,21 @@ git push origin feature/onboarding-assets
 
 ## Best practices
 
-✅ **Check the license before adding a font or a stock image:** a font keeps its license beside it as `text-license.txt`, `display-license.txt` or `code-license.txt`.
+These practices keep `source/` to the files the build is meant to copy, and a commit to one change.
 
-✅ **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them.
+- **Check the license before adding a font or a stock image:** a font keeps its license beside it as `text-license.txt`, `display-license.txt` or `code-license.txt`.
+- **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them.
+- **Commit the exported file only:** design sources, such as a `.fig` or a `.sketch` file, do not belong in `source/`. Every file of a type folder is copied to the output.
+- **Stage only the files of the change:** a commit with unrelated exports is hard to review and to revert.
 
-✅ **Commit the exported file only:** design sources, such as a `.fig` or a `.sketch` file, do not belong in `source/`. Every file of a type folder is copied to the output.
+Avoid the habits that undo this:
 
-✅ **Stage only the files of the change:** a commit with unrelated exports is hard to review and to revert.
-
-❌ **Do not copy a default file into a brand folder unchanged:** the brand gets the default file anyway, and the copy has to be kept in step by hand.
-
-❌ **Do not edit the icon folders by hand:** `icons/icons/` and `icons/svgs/` are replaced by the next copy from Chassis Icons.
+- **Do not copy a default file into a brand folder unchanged:** the brand gets the default file anyway, and the copy has to be kept in step by hand.
+- **Do not edit the icon folders by hand:** `icons/icons/` and `icons/svgs/` are replaced by the next copy from Chassis Icons.
 
 ## Next steps
+
+Continue with one of these pages:
 
 - [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]): the rules of each type.
 - [Build system]([[docsref:/getting-started/build-system]]): the commands and what each one checks.

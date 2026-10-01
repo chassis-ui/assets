@@ -67,13 +67,15 @@ A brand replaces a file by adding one with the same path to its own folder, `sou
 
 ## Best practices
 
-✅ **Name the folder after its content:** `videos/`, `audio/`, `documents/`. The folder name is the folder name of the output, and an app reads its files from there.
+The build copies a folder of another name as it is, so the name of the folder and the names of its files are what an app reads.
 
-✅ **Track large formats with Git LFS:** add the extension to `.gitattributes` before the first commit of such a file.
+- **Name the folder after its content:** `videos/`, `audio/`, `documents/`. The folder name is the folder name of the output, and an app reads its files from there.
+- **Track large formats with Git LFS:** add the extension to `.gitattributes` before the first commit of such a file.
 
-❌ **Do not use a folder of another name for fonts, images or icons:** the format rules, the density folders and the `ic_` prefix belong to `fonts/`, `images/` and `icons/` only.
+Avoid the habits that undo this:
 
-❌ **Do not put a dot inside a name:** the build turns it into the separator of the platform, so `default.tokens.json` is `default-tokens.json` in the web output.
+- **Do not use a folder of another name for fonts, images or icons:** the format rules, the density folders and the `ic_` prefix belong to `fonts/`, `images/` and `icons/` only.
+- **Do not put a dot inside a name:** the build turns it into the separator of the platform, so `default.tokens.json` is `default-tokens.json` in the web output.
 
 ## Platform output
 

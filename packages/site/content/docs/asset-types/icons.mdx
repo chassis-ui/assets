@@ -89,13 +89,15 @@ The [Chassis Icons docs](https://chassis-ui.com/icons) show every icon with its 
 
 ## Best practices
 
-✅ **Keep the icon names across brands:** an app that shows `arrow-right-solid` gets the drawing of the brand it is built for. A brand that renames an icon needs a change in every app.
+The icon files are a copy of the output of Chassis Icons. These practices keep the copy whole and the icon names stable across brands.
 
-✅ **Refresh both folders together:** `icons/icons/` and `icons/svgs/` come from one build of Chassis Icons. A font from one version and SVG files from another disagree on the icons they hold.
+- **Keep the icon names across brands:** an app that shows `arrow-right-solid` gets the drawing of the brand it is built for. A brand that renames an icon needs a change in every app.
+- **Refresh both folders together:** `icons/icons/` and `icons/svgs/` come from one build of Chassis Icons. A font from one version and SVG files from another disagree on the icons they hold.
+- **Refresh every app of the brand:** `docs` and `demo` of the default brand each hold a copy.
 
-✅ **Refresh every app of the brand:** `docs` and `demo` of the default brand each hold a copy.
+Avoid the habits that undo this:
 
-❌ **Do not put other images under `icons/`:** Android adds the `ic_` prefix to every file of the folder, and the apps get only the formats of the table above. A logo or an illustration belongs under `images/`.
+- **Do not put other images under `icons/`:** Android adds the `ic_` prefix to every file of the folder, and the apps get only the formats of the table above. A logo or an illustration belongs under `images/`.
 
 ## Platform output
 

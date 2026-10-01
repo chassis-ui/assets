@@ -616,19 +616,21 @@ One test builds the fixture and compares the result, file by file, with the comm
 
 ## Best practices
 
-✅ **Build a part while you work:** `pnpm assets --brand chassis --platform web` writes one job and keeps the rest of `dist/`.
+These practices keep a build short while you work, and keep the paths of the output stable for the consumers.
 
-✅ **Run a full build before the checks:** `pnpm assets:validate` and `pnpm assets:verify` expect the output of every job.
+- **Build a part while you work:** `pnpm assets --brand chassis --platform web` writes one job and keeps the rest of `dist/`.
+- **Run a full build before the checks:** `pnpm assets:validate` and `pnpm assets:verify` expect the output of every job.
+- **Start with the default brand:** put a complete set of files in `source/default/<app>/`, and add to a brand folder only what differs.
+- **Keep brand and app names in lowercase with hyphens:** they are folder names in `source/` and in `dist/`, and a consumer reads its files by that path.
 
-✅ **Start with the default brand:** put a complete set of files in `source/default/<app>/`, and add to a brand folder only what differs.
+Avoid the habits that undo this:
 
-✅ **Keep brand and app names in lowercase with hyphens:** they are folder names in `source/` and in `dist/`, and a consumer reads its files by that path.
-
-❌ **Do not commit `dist/`:** every consumer builds it from the source.
-
-❌ **Do not rename a brand or an app without telling the consumers:** the name is part of every path of its output.
+- **Do not commit `dist/`:** every consumer builds it from the source.
+- **Do not rename a brand or an app without telling the consumers:** the name is part of every path of its output.
 
 ## Troubleshooting
+
+Each entry gives the message or the symptom, then the cause and the fix.
 
 ### Build fails on pointers
 
@@ -647,6 +649,8 @@ The build stops with `The filters select no job. Check --brand, --app and --plat
 `pnpm assets:validate` fails after a filtered build and names the folders or the files of other jobs. The validator checks every job of the configuration. Run `pnpm assets` without filters, then validate.
 
 ## Next steps
+
+Continue with one of these pages:
 
 - [Design guidelines]([[docsref:/getting-started/design-guidelines]]): the naming rules that the source lint checks.
 - [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]): the rules of each type.
