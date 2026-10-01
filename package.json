@@ -59,8 +59,8 @@
     "site:lint:eslint": "eslint packages/site --cache --cache-location .cache/.eslintcache --report-unused-disable-directives",
     "site:lint:stylelint": "stylelint packages/site/\"**/*.{css,scss}\" --cache --cache-location .cache/.stylelintcache",
     "site:lint:prettier": "prettier packages/site -c --cache",
-    "site:lint:html": "node build/html-validate.js",
-    "site:lint:vnu": "node build/vnu-jar.js",
+    "site:lint:html": "pnpm -C packages/site lint:html",
+    "site:lint:vnu": "pnpm -C packages/site lint:vnu",
     "site:pagefind": "pagefind --site _site --output-subdir assets/pagefind",
     "astro:dev": "pnpm -C packages/site dev",
     "astro:build": "pnpm -C packages/site build",
@@ -86,17 +86,13 @@
     "eslint-plugin-unicorn": "^70.0.0",
     "find-unused-sass-variables": "^6.2.1",
     "globals": "^17.12.0",
-    "globby": "^16.2.4",
-    "html-validate": "^11.16.1",
     "pagefind": "^1.5.2",
-    "picocolors": "^1.1.1",
     "prettier": "^3.9.9",
     "prettier-plugin-astro": "^0.14.1",
     "stylelint": "^16.26.1",
     "stylelint-config-twbs-bootstrap": "^16.1.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.0",
-    "vnu-jar": "26.7.3"
+    "typescript-eslint": "^8.71.0"
   },
   "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8"
 }

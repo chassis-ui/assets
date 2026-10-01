@@ -1,6 +1,5 @@
 ---
-import { getConfig } from '@libs/config'
-import { getChassisDocsPath } from '@libs/path'
+import { getConfig, getDocsPath } from '@chassis-ui/docs/site'
 import Code from '@chassis-ui/docs/shortcodes/Code.astro'
 import Icon from '@chassis-ui/docs/shortcodes/Icon.astro'
 ---
@@ -33,7 +32,7 @@ import Icon from '@chassis-ui/docs/shortcodes/Icon.astro'
       />
       <!-- Buttons -->
       <div class="d-grid md:d-flex gap-md md:justify-content-center flex-wrap">
-        <a href={getChassisDocsPath('')} class="button primary lg">
+        <a href={getDocsPath('')} class="button primary lg">
           <Icon name="book-open-outline" />
           <span>Get Started</span>
         </a>
@@ -45,7 +44,7 @@ import Icon from '@chassis-ui/docs/shortcodes/Icon.astro'
 
       <!-- Version info -->
       <p class="fg-subtle mb-0 text-center font-md">
-        Currently <strong>v{getConfig().current_version}</strong>
+        Currently <strong>v{getConfig().currentVersion}</strong>
         <span class="px-2xs">&middot;</span>
         <a
           href={getConfig().repo + '/blob/main/packages/assets/CHANGELOG.md'}

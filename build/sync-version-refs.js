@@ -4,7 +4,7 @@
  * Version Reference Sync Script
  *
  * Copies the version of @chassis-ui/assets into the places that show it and that
- * `changeset version` cannot update: `current_version` of packages/site/config.yml and the
+ * `changeset version` cannot update: `currentVersion` of packages/site/config.yml and the
  * version badge of README.md.
  *
  * Runs as part of `pnpm changeset:version`, after `changeset version` has bumped
@@ -28,8 +28,8 @@ const REFERENCES = [
   {
     file: 'packages/site/config.yml',
     required: true,
-    pattern: /^current_version:(\s*)"[^"]*"/m,
-    replace: (version, spacing) => `current_version:${spacing}"${version}"`
+    pattern: /^currentVersion:(\s*)"[^"]*"/m,
+    replace: (version, spacing) => `currentVersion:${spacing}"${version}"`
   },
   {
     file: 'README.md',

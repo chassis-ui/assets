@@ -1,28 +1,26 @@
 ---
+import { getCollection, render, type CollectionEntry } from 'astro:content'
 import DocsLayout from '@chassis-ui/docs/layouts/DocsLayout.astro'
-import { docsPages } from '@libs/content'
 import Code from '@chassis-ui/docs/shortcodes/Code.astro'
-import { render } from 'astro:content'
-import type { CollectionEntry } from 'astro:content'
 
 export async function getStaticPaths() {
-  return docsPages.map((docsPage: CollectionEntry<'docs'>) => {
-    return {
-      params: { slug: docsPage.id },
-      props: docsPage
-    }
-  })
+  const docsPages = await getCollection('docs')
+
+  return docsPages.map((docsPage) => ({
+    params: { slug: docsPage.id },
+    props: docsPage
+  }))
 }
 
+type Props = CollectionEntry<'docs'>
+
 const docsPage = Astro.props
-const { id, data } = docsPage
-const frontmatter = data
 const { Content, headings } = await render(docsPage)
 ---
 
-<DocsLayout frontmatter={frontmatter} headings={headings} id={id}>
+<DocsLayout frontmatter={docsPage.data} headings={headings} id={docsPage.id}>
   <Content components={{ pre: Code }} />
   <Fragment slot="scripts">
-    <script is:inline src="/static/js/example-mode.js"></script>
+    <script src="@chassis-ui/docs/js/example-mode.js"></script>
   </Fragment>
 </DocsLayout>

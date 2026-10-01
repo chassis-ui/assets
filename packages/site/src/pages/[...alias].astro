@@ -1,42 +1,24 @@
 ---
-import type { InferGetStaticPropsType } from 'astro'
+import { getCollection } from 'astro:content'
 import RedirectLayout from '@chassis-ui/docs/layouts/RedirectLayout.astro'
-import { getChassisDocsPath } from '@libs/path'
 import { trimLeadingAndTrailingSlashes } from '@chassis-ui/docs'
-import { replaceConfigInText, replaceDocsrefInText } from '@libs/remark'
-import { aliasedDocsPages } from '@libs/content'
+import { getDocsPath, resolveConfigRefs, resolveDocsrefs } from '@chassis-ui/docs/site'
 
+// A redirect for each path in the `aliases` of a docs page.
 export async function getStaticPaths() {
-  function normalizeAliases(aliases: string | string[] | undefined): string[] {
-    return aliases ? (Array.isArray(aliases) ? aliases : [aliases]) : []
-  }
+  const docsPages = await getCollection('docs')
 
-  function getAliasStaticPath(alias: string, path: string) {
-    return {
-      params: {
-        alias: trimLeadingAndTrailingSlashes(replaceDocsrefInText(replaceConfigInText(alias)))
-      },
-      props: { path }
-    }
-  }
+  return docsPages.flatMap(({ data, id }) => {
+    const aliases = data.aliases ? [data.aliases].flat() : []
 
-  const staticPaths = []
-
-  // Generate static paths for all docs pages with aliases.
-  for (const aliasedDocsPage of aliasedDocsPages) {
-    const aliases = normalizeAliases(aliasedDocsPage.data.aliases)
-
-    for (const alias of aliases) {
-      staticPaths.push(getAliasStaticPath(alias, aliasedDocsPage.id))
-    }
-  }
-
-  return staticPaths.flat()
+    return aliases.map((alias) => ({
+      params: { alias: trimLeadingAndTrailingSlashes(resolveDocsrefs(resolveConfigRefs(alias))) },
+      props: { path: id }
+    }))
+  })
 }
-
-type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
 const { path } = Astro.props
 ---
 
-<RedirectLayout path={getChassisDocsPath(path)} />
+<RedirectLayout path={getDocsPath(path)} />

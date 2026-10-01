@@ -165,6 +165,8 @@ pnpm site:build         # Build the docs assets, the site and its search index i
 pnpm astro:dev          # Run the site without building the assets
 pnpm astro:build        # Build the site without the assets and the search index
 pnpm site:lint          # ESLint, Stylelint, unused Sass variables and Prettier over the site
+pnpm site:lint:html     # html-validate over _site/, after a build
+pnpm site:lint:vnu      # The Nu Html Checker over _site/, after a build; skipped without Java
 ```
 
 ### Release

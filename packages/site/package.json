@@ -8,6 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "lint:html": "chassis-docs html-validate ../../_site",
+    "lint:vnu": "chassis-docs vnu ../../_site",
     "clean": "rm -rf .astro public"
   },
   "devDependencies": {
@@ -16,28 +18,23 @@
     "@astrojs/mdx": "^7.0.8",
     "@astrojs/sitemap": "^3.7.4",
     "@chassis-ui/css": "^0.5.2",
-    "@chassis-ui/docs": "^0.5.1",
+    "@chassis-ui/docs": "^0.6.1",
     "@chassis-ui/icons": "^0.3.1",
     "@chassis-ui/tokens": "^0.5.3",
     "@floating-ui/dom": "^1.8.0",
     "@pagefind/component-ui": "^1.5.2",
     "@shikijs/transformers": "^4.4.3",
-    "@stackblitz/sdk": "^1.11.1",
-    "@types/mdast": "^4.0.4",
     "astro": "^7.3.5",
     "autoprefixer": "^10.6.1",
-    "clipboard": "^2.0.11",
+    "html-validate": "^11.16.1",
     "htmlparser2": "^12.0.0",
-    "js-yaml": "^5.4.2",
-    "mdast-util-mdx-jsx": "^3.2.0",
     "postcss": "^8.5.28",
     "postcss-prefix-custom-properties": "^0.1.0",
     "rehype-autolink-headings": "^7.1.0",
     "sass": "^1.105.0",
+    "shiki": "^4.4.3",
     "typescript": "^6.0.3",
-    "unified": "^11.0.5",
-    "unist-util-visit": "^5.1.0",
     "vanilla-calendar-pro": "^3.4.0",
-    "zod": "^4.6.5"
+    "vnu-jar": "26.7.3"
   }
 }

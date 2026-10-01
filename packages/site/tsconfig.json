@@ -4,13 +4,7 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@chassis-ui/css/*": ["node_modules/@chassis-ui/css/*"],
-      "@assets/*": ["src/assets/*"],
-      "@components/*": ["src/components/*"],
-      "@layouts/*": ["src/layouts/*"],
-      "@libs/*": ["src/libs/*"],
-      "@scss/*": ["src/scss/*"],
-      "@shortcodes/*": ["src/components/shortcodes/*"]
+      "@components/*": ["src/components/*"]
     }
   },
   "exclude": ["public"]

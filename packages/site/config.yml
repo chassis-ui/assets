@@ -1,24 +1,22 @@
 title:                  "Chassis Assets"
 baseURL:                "https://chassis-ui.com/assets"
 
-docsDir:                "."
-docsPath:                "/assets/docs"
+docsPath:               "/assets/docs"
 
 subtitle:               "Multi-Brand, Multi-Platform Design Asset Distribution"
 description:            "Multi-platform design asset management for Chassis UI. Copy, rename, and distribute fonts, images, icons, and illustrations across brands and apps."
 authors:                "Ozgur Gunes"
 
-current_version:        "0.1.8"
+currentVersion:         "0.1.8"
 repo:                   "https://github.com/chassis-ui/assets"
 sitePath:               "packages/site"
-blog:                   "https://chassis-ui.com/blog/"
 
-github_org:             "chassis-ui"
-figma_handle:           "chassis_ui"
-x_username:             "chassis_ui"
+githubOrg:              "chassis-ui"
+figmaHandle:            "chassis_ui"
+xUsername:              "chassis_ui"
 
 analytics:
-  google_id:            "G-QGR8C28VYN"
+  googleId:             "G-QGR8C28VYN"
 
 anchors:
   min:                  2

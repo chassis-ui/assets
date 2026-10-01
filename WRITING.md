@@ -198,7 +198,7 @@ find dist/android/demo/chassis -name 'ic_arrow_right_solid*'
 
 A doc that states a number makes a promise the next commit can break. Don't count files, icons, tests or checks ("488 icons", "39 tests", "eight checks"); name the things or their pattern instead.
 
-**Versions.** Write "Node.js 22.12 or later", not "the latest Node.js", and "the version named by `packageManager`" for pnpm. For the version of Chassis Assets, use the `[[config:current_version]]` token ([§17](#17-cross-references)) instead of a number typed by hand. In a CI example, use the current major version of each action.
+**Versions.** Write "Node.js 22.12 or later", not "the latest Node.js", and "the version named by `packageManager`" for pnpm. For the version of Chassis Assets, use the `[[config:currentVersion]]` token ([§17](#17-cross-references)) instead of a number typed by hand. In a CI example, use the current major version of each action.
 
 **Configuration.** The brands and apps in the `chassis` block of `package.json` are the committed configuration, not the system. Name them as such ("the configured web app is `docs`"), and use them in examples, not in definitions, so an adopter with another configuration can follow. The same goes for `chassis.checks.json`: its contracts are those of the Chassis sites.
 
@@ -379,7 +379,7 @@ Quote the message as the tool prints it, so a search for the error finds the pag
 
 **Within the same doc.** Use plain `#anchor` links — IDs are auto-generated from heading text by slugifying (`### Density folders` becomes `#density-folders`). Don't create two headings with the same slug in a doc, and re-verify anchors after renaming a heading — internal links to the old slug silently break. Migrating a heading to sentence case doesn't change its slug.
 
-**Configuration values.** `[[config:<key>]]` prints a value of `packages/site/config.yml`, in prose, links, and code blocks: `[[config:current_version]]`, `[[config:repo]]`.
+**Configuration values.** `[[config:<key>]]` prints a value of `packages/site/config.yml`, in prose, links, and code blocks: `[[config:currentVersion]]`, `[[config:repo]]`.
 
 **Other Chassis docs.** Use a standard Markdown link to the page on chassis-ui.com. Chassis Icons owns the icons and their font; Chassis Tokens owns the names of the font roles. Link their docs rather than describing them here.
 
@@ -509,7 +509,7 @@ Replaced at build time in prose, link targets, code blocks, and frontmatter.
 | Token                 | Replaced with                                                | Example                                           |
 | --------------------- | ------------------------------------------------------------ | ------------------------------------------------- |
 | `[[docsref:/<path>]]` | The URL of a doc of this site, with an optional `#anchor`    | `[[docsref:/asset-types/images#platform-output]]` |
-| `[[config:<key>]]`    | A value of `packages/site/config.yml`; nested keys with dots | `[[config:current_version]]`                      |
+| `[[config:<key>]]`    | A value of `packages/site/config.yml`; nested keys with dots | `[[config:currentVersion]]`                       |
 
 ### Other components
 

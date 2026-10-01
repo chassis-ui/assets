@@ -2,7 +2,7 @@
 
 - title: Getting Started
   icon: rocket-solid
-  icon_color: yellow
+  iconColor: yellow
   pages:
     - title: Introduction
     - title: Quick Start
@@ -11,7 +11,7 @@
 
 - title: Asset Types
   icon: file-solid
-  icon_color: blue
+  iconColor: blue
   pages:
     - title: Fonts
     - title: Images
@@ -20,7 +20,7 @@
 
 - title: Use in Project
   icon: code-solid
-  icon_color: green
+  iconColor: green
   pages:
     - title: Web Applications
     - title: iOS Applications
