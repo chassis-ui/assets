@@ -2,7 +2,6 @@ title:                  "Chassis Assets"
 baseURL:                "https://chassis-ui.com/assets"
 
 docsPath:               "/assets/docs"
-staticPath:             "/assets/static"
 
 subtitle:               "Multi-Brand, Multi-Platform Design Asset Distribution"
 description:            "Multi-platform design asset management for Chassis UI. Copy, rename, and distribute fonts, images, icons, and illustrations across brands and apps."

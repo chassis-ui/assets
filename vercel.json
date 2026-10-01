@@ -9,7 +9,6 @@
       "dependabot/**": false
     }
   },
-  "rewrites": [{ "source": "/assets/static/(.*)", "destination": "/static/$1" }],
   "headers": [
     {
       "source": "/(.*)",
