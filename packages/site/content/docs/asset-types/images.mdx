@@ -1,226 +1,141 @@
 ---
 title: Image Assets
-description: Managing photos, illustrations, graphics, and visual content across multiple brands and platforms.
+description: Where images go in the source, how resolution variants are named, and what the build writes for web, iOS and Android.
 toc: true
 ---
 
-## Overview
+## Introduction
 
-Image assets include all visual content used in applications: photographs, illustrations, graphics, backgrounds, and decorative elements. Chassis Assets organizes, optimizes, and distributes images to all target platforms.
+Images are the files under `images/` of an app: logos, illustrations, photos, screenshots and backgrounds. The build copies them to every platform with the name the platform expects, and keeps the subfolders of `images/`.
 
-### Key Benefits
+An image has the variants the designer exported. The build does not resize or re-encode a file. It reads the `@2x` or `@3x` indicator of a name, and on Android it sorts the variants into density folders.
 
-Chassis Assets provides streamlined image management across platforms with features like:
+## Source layout
 
-- **Format Support**: JPG, PNG, SVG, WebP, and GIF. WebP is copied to the web only
-- **Multi-Resolution**: Automatic handling of @2x, @3x variants for mobile
-- **Brand Flexibility**: Different imagery for different brands
-- **Platform Optimization**: Web-optimized, iOS @2x/@3x, Android density folders
+Images live in `source/<brand>/<app>/images/`, in any subfolders. The default brand holds the images of every brand, and a brand holds only the files that differ.
 
-## File Organization
-
-Image files are organized by brand, application, and optionally by resolution:
-
-```
-source/
-├── default/
-│   └── [app]/
-│       └── images/
-│           ├── brand-logo.svg
-│           ├── hero-background.jpg
-│           ├── illustration-onboarding.svg
-│           ├── icon-feature.png
-│           ├── icon-feature@2x.png
-│           ├── icon-feature@3x.png
-│           └── photo-team.webp
-└── [brand]/
-    └── [app]/
-        └── images/
-            └── brand-logo.svg  # Brand override
+```text
+source/default/demo/images/
+├── chassis-logo.svg
+├── chassis-logo-shadow.png
+├── chassis-logo-shadow@2x.png
+├── home/
+│   ├── comp-gallery-dark.png
+│   ├── comp-gallery-dark@2x.png
+│   └── ...
+└── logo/
+    └── ...
 ```
 
-### File Formats
+A brand file replaces the default file of the same path, subfolder included. The example brand of this repository has a `logo/` folder only, so it gets its own logos and every other image of the default brand.
 
-Chassis Assets distributes every file from the `source` directory with platform-appropriate naming, regardless of format or extension.
+## Formats
 
-For example, `hero-background@2x.jpg` in the source will be distributed as:
+The build copies an image of any format. One format is the exception: iOS and Android do not get WebP files.
 
-- **Web**: `hero-background@2x.jpg` (kebab-case preserved)
-- **iOS**: `hero_background@2x.jpg` (snake_case)
-- **Android**: `hero_background.jpg` in `drawable-xhdpi/` (snake_case, resolution handled by density folder)
+<CxTable>
+| Format | Web | iOS | Android |
+| --- | --- | --- | --- |
+| PNG, JPG, GIF, SVG | Copied | Copied | Copied |
+| WebP | Copied | Dropped | Dropped |
+</CxTable>
 
-### Naming Conventions
+Export a WebP image in a second format, PNG or JPG, when an app needs it too. The web output then holds both files, and a page chooses between them with a `<picture>` element.
 
-Use descriptive, hyphenated names that indicate content and purpose:
+PNG, JPG and WebP files are Git LFS files. SVG files are text and are committed as they are.
 
-**Good examples:**
+## Naming
 
-- `hero-homepage-light.jpg`
-- `hero-homepage-dark.jpg`
-- `illustration-empty-state.svg`
-- `background-pattern.png`
-- `photo-team-office.webp`
-- `graphic-feature-comparison.png`
+Name an image in lowercase with hyphens, after what it shows: `comp-gallery-dark.png`, `chassis-logo-white.svg`. Each platform renames the file, so the source name is written once and the web, iOS and Android names follow from it.
 
-**For resolution variants:**
+### Variants
 
-- `icon-arrow.png` (1x)
-- `icon-arrow@2x.png` (2x)
-- `icon-arrow@3x.png` (3x)
+A variant is the same image exported at another resolution. Its name ends with an indicator before the extension: `@2x` for twice the size, `@3x` for three times. The file without an indicator is the base size.
 
-<Callout type="info" title="Android Density Folders">
-Android uses density-specific folders instead of filename suffixes. `icon-arrow@2x.png` becomes `icon_arrow.png` in `drawable-xhdpi/`, and `icon-arrow@3x.png` becomes `icon_arrow.png` in `drawable-xxhdpi/`.
-</Callout>
-
-**Avoid:**
-
-- Generic names: `image1.jpg`, `photo.png`
-- Spaces: `Team Photo.jpg` (use hyphens)
-- Special characters: `image#1.jpg`
-- Uppercase: `HERO.jpg` (use lowercase)
-
-## Exporting from Design Tools
-
-Follow these guidelines when exporting images from design tools:
-
-### Figma Export
-
-Export images from Figma with the correct naming and folder structure:
-
-1. Rename the image layer in Figma to match the desired filename (e.g., `hero-background.jpg`)
-2. Add an export setting to the layer with the appropriate format (PNG, JPG, SVG, WebP) and resolution variants if needed
-3. Export to the correct `source/[brand]/[app]/images/` directory in your Chassis Assets repository
-
-### Sketch Export
-
-Export images from Sketch with the correct naming and folder structure:
-
-1. Name the layer in Sketch according to the desired filename (e.g., `hero-background.jpg`)
-2. Use Sketch's export options to set the format and resolution variants
-3. Export to the correct `source/[brand]/[app]/images/` directory in your Chassis Assets repository
-
-## Distribution Structure
-
-After running the build, images are distributed to platform-specific directories with appropriate naming conventions.
-
-### Web Distribution
-
-Web images preserve original kebab-case filenames and support all format types:
-
-```
-dist/web/[app]/[brand]/images/
-├── hero-background.jpg
-├── hero-background.webp
-├── illustration-feature.svg
-├── photo-team.jpg
-└── icon-arrow@2x.png
+```text
+source/default/demo/images/logo/
+├── chassis-icon-black.png
+├── chassis-icon-black@2x.png
+└── chassis-icon-black@3x.png
 ```
 
-See [Web Applications]([[docsref:/use-in-project/web-applications#using-images]]) for how to use these images in your web project.
+The web and the iOS output keep the indicator in the name. Android has no indicator: the build writes each variant under the same name into the density folder of its resolution, see [Platform output](#platform-output).
 
-### iOS Distribution
+### Color modes
 
-iOS images use snake_case naming with resolution indicators preserved in filenames:
+An image that differs between the light and the dark mode is two files, with the mode at the end of the name: `comp-gallery-light.png` and `comp-gallery-dark.png`. The build treats them as two images, and the app chooses between them.
 
-```
-dist/ios/[app]/[brand]/images/
-├── hero_background.jpg
-├── icon_arrow.png
-├── icon_arrow@2x.png
-└── icon_arrow@3x.png
-```
+## Adding files
 
-See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-images]]) for how to use these images in your iOS project.
+An image enters the repository as an export from the design tool, saved under `images/` of the brand and the app it belongs to.
 
-### Android Distribution
+1. Name the layer or the frame in the design tool as the file is to be named, without the extension.
+2. Add one export setting per variant: the base size, then `2x` and `3x` for a raster image that an app shows. Figma adds the `@2x` and `@3x` indicators to the names by itself. An SVG needs no variant.
+3. Export to `source/default/<app>/images/` for an image of every brand, or to `source/<brand>/<app>/images/` for an image of one brand.
+4. Run `pnpm assets` and look for the file in `dist/`.
 
-Android images use snake_case naming with resolution variants organized into density-specific folders:
+A subfolder groups images that belong together, such as `logo/` or `home/`. The build keeps the subfolder on every platform.
 
-```
-dist/android/[app]/[brand]/images/
+## Best practices
+
+✅ **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them. An image without variants reaches Android in `drawable/` only.
+
+✅ **Keep the base name the same across variants:** `hero.png`, `hero@2x.png` and `hero@3x.png` become one Android drawable in three densities. A variant with another base name becomes another image.
+
+✅ **Add a PNG or JPG beside a WebP:** iOS and Android do not get WebP files.
+
+✅ **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/logo/chassis-logo.svg` for `images/logo/chassis-logo.svg`.
+
+❌ **Do not put icons of the interface under `images/`:** the files of `icons/` come from Chassis Icons, and Android gives them the `ic_` prefix. See [icons]([[docsref:/asset-types/icons]]).
+
+## Platform output
+
+The build copies each image to the `images/` folder of the job, in its subfolder, and renames it for the platform.
+
+<CxTable>
+| Platform | Folder | Name | Formats |
+| --- | --- | --- | --- |
+| Web | `dist/web/<app>/<brand>/images/` | kebab-case, indicator kept | Every format |
+| iOS | `dist/ios/<app>/<brand>/images/` | snake_case, indicator kept | Every format but WebP |
+| Android | `dist/android/<app>/<brand>/images/` | snake_case, in density folders | Every format but WebP |
+</CxTable>
+
+The source file `images/home/comp-gallery-dark@2x.png` is `images/home/comp-gallery-dark@2x.png` in the web output and `images/home/comp_gallery_dark@2x.png` in the iOS output. In the Android output it is `images/home/drawable-xhdpi/comp_gallery_dark.png`:
+
+```text
+dist/android/demo/chassis/images/
 ├── drawable/
-│   └── hero_background.jpg # Images without a resolution indicator
-├── drawable-mdpi/
-│   └── icon_arrow.png      # @1x variant
+│   ├── chassis_logo.svg
+│   ├── chassis_logo_shadow.png
+│   └── ...
 ├── drawable-xhdpi/
-│   └── icon_arrow.png      # @2x variant
-└── drawable-xxhdpi/
-    └── icon_arrow.png      # @3x variant
+│   └── chassis_logo_shadow.png
+├── home/
+│   ├── drawable/
+│   │   ├── comp_gallery_dark.png
+│   │   └── ...
+│   └── drawable-xhdpi/
+│       ├── comp_gallery_dark.png
+│       └── ...
+└── logo/
+    ├── drawable/
+    ├── drawable-xhdpi/
+    └── drawable-xxhdpi/
 ```
 
-Android uses density-specific folders for resolution variants:
+On Android the indicator of a name chooses the density folder, and a file without an indicator goes to `drawable/`.
 
-- `drawable-mdpi` - @1x (mdpi)
-- `drawable-hdpi` - @1.5x (hdpi)
-- `drawable-xhdpi` - @2x (xhdpi)
-- `drawable-xxhdpi` - @3x (xxhdpi)
-- `drawable-xxxhdpi` - @4x (xxxhdpi)
+<CxTable>
+| Indicator | Density folder |
+| --- | --- |
+| none | `drawable/` |
+| `@1x` | `drawable-mdpi/` |
+| `@1.5x` | `drawable-hdpi/` |
+| `@2x` | `drawable-xhdpi/` |
+| `@3x` | `drawable-xxhdpi/` |
+| `@4x` | `drawable-xxxhdpi/` |
+</CxTable>
 
-Resolution indicators are removed from filenames and handled by folder placement.
+The density folders are written inside each subfolder of `images/`, so `images/logo/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`.
 
-See [Android Applications]([[docsref:/use-in-project/android-applications#using-images]]) for how to use these images in your Android project.
-
-## Best Practices
-
-Follow these recommendations to maintain organized and maintainable image assets across brands and platforms.
-
-### Multiple Brands
-
-Organize image assets for all brands in a dedicated page or section in your design tool:
-
-```
-Mobile-App          -> Figma file
-├── Design          -> Figma page
-│   ├── Home        -> Frame or section with unified design for all brands using variable modes
-│   ├── Profile
-│   └── Settings
-└── Assets          -> Figma page
-    ├── Logo        -> Frame or section with logo images
-    │   └── default/[app]/images/brand-logo
-    │   └── brand-a/[app]/images/brand-logo
-    └── Hero        -> Frame or section with hero images
-        └── default/[app]/images/hero-background
-        └── brand-a/[app]/images/hero-background
-```
-
-This maintains a single source of truth for all image assets with brand-specific variations.
-
-### Color Modes
-
-Use separate files for light and dark mode variants, including the mode in the filename:
-
-```
-source/default/[app]/images/
-├── hero-homepage-light.jpg
-└── hero-homepage-dark.jpg
-```
-
-This simplifies referencing the correct image based on the user's color scheme preference.
-
-### Folder Structure
-
-Organize images into subfolders by type or purpose for better maintainability:
-
-```
-source/default/[app]/images/
-├── backgrounds/
-│   ├── hero-homepage-light.jpg
-│   └── hero-homepage-dark.jpg
-├── illustrations/
-│   └── illustration-empty-state.svg
-├── photos/
-│   └── photo-team.webp
-└── icons/
-    ├── icon-feature.png
-    └── icon-arrow@2x.png
-```
-
-This structure is preserved in the distribution, making it easier to find and reference assets in your codebase. On Android, the density folders are created inside each subfolder: `images/backgrounds/hero-homepage-light@2x.jpg` becomes `images/backgrounds/drawable-xhdpi/hero_homepage_light.jpg`. Android resources do not nest, so copy the density folders of each subfolder into `res/`.
-
-## Related Resources
-
-- [Font Assets]([[docsref:/asset-types/fonts]]) - Typography management
-- [Icon Assets]([[docsref:/asset-types/icons]]) - UI icon management
-- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration
-- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration
-- [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration
+See the [web]([[docsref:/use-in-project/web-applications#images]]), [iOS]([[docsref:/use-in-project/ios-applications#images]]), and [Android]([[docsref:/use-in-project/android-applications#images]]) docs for how an app uses these files.

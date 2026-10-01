@@ -1,302 +1,114 @@
 ---
 title: Font Assets
-description: Comprehensive guide to managing and distributing font assets across web, iOS, and Android platforms.
+description: Where font files go in the source, how they are named by role, and which formats the build copies to web, iOS and Android.
 toc: true
 ---
 
-## Overview
+## Introduction
 
-Font assets define the typography of your brand identity. Chassis Assets manages font files and ensures they're properly distributed to all target platforms with correct formats, declarations, and references.
+Fonts are the files under `fonts/` of an app. The build copies the WOFF and WOFF2 files to the web output and the TTF and OTF files to iOS and Android, together with the license of each font. Stylesheets in the folder go to the web output only.
 
-### Key Benefits
+The files are named by the role a font plays, not by its family, so that every brand ships the same file names with fonts of its own.
 
-Chassis Assets provides a robust system for handling font assets with features like:
+## Source layout
 
-- **Format Support**: TTF, OTF, WOFF, and WOFF2 files, with the stylesheets and the licenses beside them
-- **Platform Optimization**: Web font declarations, iOS font references, Android asset bundling
-- **Brand Variations**: Different fonts for different brands
-- **Weight Management**: Support for multiple font weights and styles
-- **Token Integration**: Naming conventions aligned with Chassis Tokens typography system
+Fonts live in `source/<brand>/<app>/fonts/`. The default brand holds the fonts that every brand gets, and a brand holds only the files that differ.
 
-## File Organization
-
-Font files are organized in the source directory by brand and application:
-
-```
+```text
 source/
 ├── default/
-│   └── docs/
-│       └── fonts/                -> Default fonts shared across brands
-│           ├── file-name.ttf     -> Will be copied to iOS and Android distributions
-│           └── file-name.woff    -> Will be copied to web distribution only
-└── brand-a/
-    └── docs/
-        └── fonts/                -> Brand A specific fonts that override defaults
-            ├── file-name.ttf
-            └── file-name.woff
-```
-
-Brand-specific fonts will override defaults when building for that brand. If a font file is missing for a brand, the build system will fall back to the default font file.
-
-### File Formats
-
-Chassis Assets supports the following font file formats for different platforms:
-
-**Web Platforms:**  
-Copies font files directly with original filenames. Supported formats include:
-
-- **WOFF2**: Modern format with best compression (recommended)
-- **WOFF**: Fallback for older browsers
-- **CSS and SCSS**: A stylesheet in `fonts/` is copied like a font, see below
-- **TXT**: The license files, see below
-
-TTF and OTF files are not copied to the web output.
-
-**iOS Platforms:**  
-Copies font files with original filenames but only supports TTF and OTF formats:
-
-- **TTF**: TrueType fonts
-- **OTF**: OpenType fonts
-
-**Android Platforms:**  
-Copies font files with original filenames but only supports TTF and OTF formats:
-
-- **TTF**: TrueType fonts (primary format)
-- **OTF**: OpenType fonts
-
-<Callout type="info">
-WOFF and WOFF2 formats are web-specific and won't be included in iOS or Android distributions.
-</Callout>
-
-### Naming Conventions
-
-For multi-brand design systems using Chassis Tokens, use semantic font family and weight names that **align with typography tokens**. This enables all brands to reference the same filenames while using different actual fonts:
-
-**Pattern:** `[family]-[weight].[ext]`
-
-**Font Families:**
-
-- `text` - Body text and UI fonts (maps to `typography.fontFamily.text`)
-- `display` - Heading and display fonts (maps to `typography.fontFamily.display`)
-- `code` - Monospace fonts (maps to `typography.fontFamily.code`)
-
-**Semantic Weights:**
-
-- `normal` - Default/regular weight (maps to `typography.fontWeight.[family].normal`)
-- `strong` - Bold/semibold weight (maps to `typography.fontWeight.[family].strong`)
-- `mass` - Heavy/black weight (maps to `typography.fontWeight.[family].mass`)
-- `elegant` - Light/thin weight (maps to `typography.fontWeight.[family].elegant`)
-
-**Examples:**
-
-```
-source/default/docs/fonts/
-├── text-normal.ttf        -> Body text regular weight
-├── text-strong.ttf        -> Body text bold weight
-├── text-mass.ttf          -> Body text extra bold
-├── text-elegant.ttf       -> Body text light weight
-├── display-normal.ttf     -> Display font regular
-├── display-strong.ttf     -> Display font bold
-├── display-mass.ttf       -> Display font heavy
-├── display-elegant.ttf    -> Display font light
-├── code-normal.ttf        -> Monospace regular
-└── code-strong.ttf        -> Monospace bold
-```
-
-**Benefits:**
-
-- ✅ All brands use identical filenames
-- ✅ Switch fonts by changing source directory only
-- ✅ Direct mapping to typography tokens
-- ✅ No code changes needed for brand switching
-- ✅ Clear semantic meaning
-
-<Callout type="info" title="Chassis Tokens Integration">
-Font asset naming in Chassis Assets is designed to integrate seamlessly with [Chassis Tokens typography system](https://tokens.chassis-ui.com/docs/design-tokens/typography-tokens). Font files use semantic weight names (normal, strong, mass, elegant) that correspond to typography tokens, enabling consistent naming across the entire design system. See [Chassis Tokens](/tokens) documentation for more about typography tokens and semantic weight names.
-</Callout>
-
-### Traditional Naming
-
-If not using Chassis Tokens, use descriptive names with font family and numeric/standard weight names:
-
-**Good examples:**
-
-- `inter-regular.woff2` or `inter-400.woff2`
-- `inter-bold.ttf` or `inter-700.ttf`
-- `roboto-light.otf` or `roboto-300.otf`
-- `playfair-display-black.woff` or `playfair-display-900.woff`
-
-**Avoid:**
-
-- Generic names: `font1.ttf`, `myFont.woff2`
-- Spaces: `Inter Regular.ttf` (use hyphens)
-- Special characters: `font@bold.ttf`
-
-<Callout type="info">
-The build system automatically applies platform-specific naming conventions: kebab-case (web), snake_case (iOS/Android). Use lowercase with hyphens in source files for consistency.
-</Callout>
-
-## Chassis Tokens Integration
-
-ChassisAssets integrates with Chassis Tokens to create a complete typography system:
-
-**1. Design Tokens** define the typography system:
-
-```json
-{
-  "typography": {
-    "fontFamily": {
-      "text": {
-        "$type": "fontFamily",
-        "$value": "Inter, sans-serif"
-      }
-    },
-    "fontWeight": {
-      "text": {
-        "normal": {
-          "$type": "fontWeight",
-          "$value": "Regular"   // Resolves to 400
-        },
-        "strong": {
-          "$type": "fontWeight",
-          "$value": "Semi Bold"  // Resolves to 600
-        }
-      }
-    }
-  }
-}
-```
-
-**2. Font Files** use matching semantic names:
-
-```
-source/default/[app]/fonts/
-├── text-normal.woff    (Inter-Regular.woff renamed)
-├── text-normal.ttf     (Inter-Regular.ttf renamed)
-├── text-strong.woff    (Inter-SemiBold.woff renamed)
-└── text-strong.ttf     (Inter-SemiBold.ttf renamed)
-```
-
-**3. CSS Implementation** combines both:
-
-```scss
-// SCSS variables from design tokens
-$font-family-text: $cx-typography-font-family-text;  // "Inter, sans-serif"
-$font-weight-text-normal: $cx-typography-font-weight-text-normal-weight;  // 400
-$font-weight-text-strong: $cx-typography-font-weight-text-strong-weight;  // 600
-
-// CSS custom properties from SCSS variables
-:root {
-  --font-family-text: #{$font-family-text};
-  --font-weight-text-normal: #{$font-weight-text-normal};
-  --font-weight-text-strong: #{$font-weight-text-strong};
-```
-
-## Adding Fonts to Project
-
-Prepare your font files following the naming conventions, then run the build to generate platform-specific distributions.
-
-### Obtain Font Files
-
-Ensure you have proper licensing before using fonts. Verify licenses allow:
-
-- Embedding in applications
-- Web font serving
-- Modification/subsetting (if needed)
-- Commercial use on your platforms
-
-Common sources:
-
-- **Google Fonts**: Free, open-source fonts
-- **Adobe Fonts**: Subscription-based professional fonts
-- **Commercial Vendors**: Purchased font licenses
-- **Custom Fonts**: Commissioned brand-specific typography
-
-### Prepare Font Formats
-
-Convert fonts to required formats if you don't have them already:
-
-**Using FontSquirrel Web Font Generator:**
-
-1. Upload TTF/OTF files
-2. Select "Optimal" settings
-3. Download kit with WOFF2, WOFF, TTF
-
-**Or use command-line tools:**
-
-```bash
-# Convert TTF to WOFF2 using fonttools
-pip install fonttools brotli
-pyftsubset font.ttf --output-file=font.woff2 --flavor=woff2
-
-# Convert TTF to WOFF
-pyftsubset font.ttf --output-file=font.woff --flavor=woff
-
-# Create subsets for better performance (optional)
-pyftsubset font.ttf \
-  --output-file=font-subset.woff2 \
-  --flavor=woff2 \
-  --unicodes=U+0020-007F  # Basic Latin only
-```
-
-### Add to Source Directory
-
-Place font files in the correct location with semantic names:
-
-**For token-aligned naming:**
-
-```bash
-# Add to default (shared) directory
-cp Inter-Regular.ttf source/default/docs/fonts/text-normal.ttf
-cp Inter-Regular.woff2 source/default/docs/fonts/text-normal.woff2
-cp Inter-SemiBold.ttf source/default/docs/fonts/text-strong.ttf
-cp Inter-SemiBold.woff2 source/default/docs/fonts/text-strong.woff2
-
-# Add brand-specific fonts
-cp Roboto-Regular.ttf source/brand-a/docs/fonts/text-normal.ttf
-cp Roboto-Bold.ttf source/brand-b/docs/fonts/text-strong.ttf
-```
-
-**For traditional naming:**
-
-```bash
-# For default (shared) fonts
-source/default/[app]/fonts/
-
-# For brand-specific fonts
-source/[brand]/[app]/fonts/
-```
-
-### Brand-Specific Fonts
-
-Different brands can use different fonts while sharing the same asset structure:
-
-```
-source/
-├── default/
-│   └── docs/
+│   └── <app>/
 │       └── fonts/
-│           └── text-normal.ttf     # Renamed Inter-Regular as default font
-├── brand-a/
-│   └── docs/
-│       └── fonts/
-│           └── text-normal.ttf     # Renamed Roboto-Regular for Brand A
-└── brand-b/
-    └── [no file or folder]         # Brand B uses defaults (Inter-Regular), no override needed
+│           ├── text-normal.woff2     -> copied to the web output
+│           ├── text-normal.otf       -> copied to the iOS and Android output
+│           ├── text.css              -> copied to the web output
+│           └── text-license.txt      -> copied to every platform
+└── <brand>/
+    └── <app>/
+        └── fonts/
+            └── text-normal.woff2     -> replaces the default file of the same name
 ```
 
-The build system automatically uses brand-specific fonts when available, falling back to defaults.
+A brand file replaces the default file of the same path. A brand without a `fonts/` folder gets the default fonts as they are.
 
-## Stylesheets and Licenses
+## Formats
 
-Two kinds of text files live beside the fonts and follow the same override order.
+Each platform keeps the formats it can load, and the build leaves the rest out.
+
+<CxTable>
+| Format | Web | iOS | Android |
+| --- | --- | --- | --- |
+| WOFF2, WOFF | Copied | Dropped | Dropped |
+| TTF, OTF | Dropped | Copied | Copied |
+| CSS, SCSS | Copied | Dropped | Dropped |
+| TXT | Copied | Copied | Copied |
+</CxTable>
+
+The build does not convert a font from one format to another. A font that is needed on the web and in an app is added in both formats.
+
+## Naming
+
+A font file is named `<role>-<weight>.<ext>`, with `-italic` after the weight for an italic. The role and the weight are the names that Chassis Tokens uses for typography, so a file name says where the font is used and stays the same when the family changes.
+
+<CxTable>
+| Part | Names | Meaning |
+| --- | --- | --- |
+| Role | `text`, `display`, `code` | Body and interface text, headings, monospace |
+| Weight | `elegant`, `normal`, `strong`, `mass` | From the lightest to the heaviest weight of the role |
+</CxTable>
+
+The default brand names its fonts this way:
+
+```text
+source/default/demo/fonts/
+├── code-normal.ttf
+├── code-strong.ttf
+├── display-normal.otf
+├── display-normal-italic.otf
+├── display-strong.otf
+├── text-normal.otf
+├── text-normal-italic.otf
+├── text-strong.otf
+└── ...
+```
+
+Which family a role holds, and which numeric weight a name stands for, is the choice of the brand. The stylesheet of the role records it for the web, see [Stylesheets](#stylesheets).
+
+Role names are a convention, not a rule of the build. A file with another name, such as `inter-regular.woff2`, is copied like any other font. It follows the general naming rules of the [design guidelines]([[docsref:/getting-started/design-guidelines]]): lowercase letters, digits and hyphens.
+
+## Adding files
+
+A font enters the repository as a file in `fonts/`, in every format its platforms need, with its license beside it.
+
+### Font files
+
+Put the WOFF2 file of a font in the `fonts/` folder of each web app, and the TTF or OTF file in the `fonts/` folder of each iOS and Android app. Name both by role. WOFF is copied too, for a brand that still needs it.
+
+Fonts are Git LFS files. Install Git LFS before adding one, so that the commit holds a pointer and not the font itself.
+
+### Brand fonts
+
+A brand changes a font by adding a file of the same name to its own folder. The example brand of this repository replaces the display and the code font of the web app, and takes the text font from the default brand:
+
+```text
+source/example/docs/fonts/
+├── code-license.txt
+├── code-normal.woff2
+├── code-strong.woff2
+├── display-license.txt
+├── display-normal.woff2
+├── display-strong.woff2
+├── fonts.scss
+└── ...
+```
+
+A brand that replaces the files of a role replaces the stylesheet and the license of that role too, since both describe the family.
 
 ### Stylesheets
 
-A `.css` or `.scss` file in `fonts/` is copied to the web output, and to the web output only. The default brand ships `text.css`, `display.css` and `code.css`: one `@font-face` rule per font file of the folder, under the real family name, with the weight of each role. A brand that overrides the font files overrides the stylesheets by name too, since a stylesheet names the files of its folder.
+A `.css` or `.scss` file in `fonts/` is copied to the web output like a font. The default brand has one stylesheet per role, `text.css`, `display.css` and `code.css`, each with one `@font-face` rule per font file of the role:
 
 ```css
-/* source/default/docs/fonts/text.css, one rule per file */
 @font-face {
   font-family: "Inter";
   font-style: normal;
@@ -306,60 +118,69 @@ A `.css` or `.scss` file in `fonts/` is copied to the web output, and to the web
 }
 ```
 
-A stylesheet may also load the fonts from a service instead of the folder. The example brand's `fonts.scss` imports two families from Google Fonts and ships no `text-*` files of its own.
+The rule names the family of the brand and the numeric weight of the role, and loads the file from the folder the stylesheet is in. A page that links `fonts/text.css` needs no `@font-face` rule of its own.
+
+A stylesheet may also load fonts from a service instead of the folder. `fonts.scss` of the example brand imports two families from Google Fonts.
 
 ### Licenses
 
-Every family in `source/` has its license beside the fonts, named by role: `text-license.txt`, `display-license.txt` and `code-license.txt`. The build copies them to the `fonts/` folder of every platform, so that the license text travels with every copy, as the SIL Open Font License asks. A brand that overrides a family adds the license of the new family under the same name.
+Every font in `source/` has its license beside it, named by role: `text-license.txt`, `display-license.txt` and `code-license.txt`. The build copies the license to the `fonts/` folder of every platform, so the license text travels with every copy of the font, as the SIL Open Font License asks.
 
-## Distribution Structure
+Check that the license of a font allows embedding in an app and serving on the web before adding it. A brand that replaces a font adds the license of the new font under the same name.
 
-After running the build, fonts are distributed to platform-specific directories:
+## Integration
 
-### Web Distribution
+The role and weight names come from the typography tokens of Chassis Tokens. The [font tokens](https://chassis-ui.com/tokens/docs/design-tokens/font-tokens/) hold the family of each role and the weight of each name, and the [typography tokens](https://chassis-ui.com/tokens/docs/design-tokens/typography-tokens/) combine them into text styles.
 
-With semantic naming aligned to tokens:
+The two projects meet in the names only. The build of Chassis Assets does not read a token, and a brand keeps the family in its tokens and the files in its `fonts/` folder in step by hand.
 
-```
-dist/web/[app]/[brand]/fonts/
+## Best practices
+
+✅ **Name fonts by role:** `text-strong.woff2` works for every brand. A file named after a family has to be renamed, in the source and in every app, when the brand changes its font.
+
+✅ **Add every format a platform needs:** WOFF2 for a web app, TTF or OTF for an iOS or Android app. The build drops a format a platform does not keep and does not convert one.
+
+✅ **Keep the license beside the font:** as `<role>-license.txt` in the same folder. The build copies it to every platform.
+
+✅ **Replace the stylesheet with the font:** a brand that replaces `display-*.woff2` adds its own `display.css`, or the web output declares the family of the default brand for the files of the brand.
+
+❌ **Do not put a font outside `fonts/`:** a WOFF2 file under another folder is copied to iOS and Android as well, since only `fonts/` has the format rules.
+
+## Platform output
+
+The build copies each font to the `fonts/` folder of the job, in the formats the platform keeps, and renames it for the platform.
+
+<CxTable>
+| Platform | Folder | Name | Formats |
+| --- | --- | --- | --- |
+| Web | `dist/web/<app>/<brand>/fonts/` | kebab-case | WOFF2, WOFF, CSS, SCSS, TXT |
+| iOS | `dist/ios/<app>/<brand>/fonts/` | snake_case | TTF, OTF, TXT |
+| Android | `dist/android/<app>/<brand>/fonts/` | snake_case | TTF, OTF, TXT |
+</CxTable>
+
+The web output of the configured web app, for the default fonts:
+
+```text
+dist/web/docs/chassis/fonts/
+├── text-license.txt
+├── text-normal-italic.woff2
 ├── text-normal.woff2
 ├── text-strong.woff2
 ├── text.css
-└── text-license.txt
+└── ...
 ```
 
-See [Web Applications]([[docsref:/use-in-project/web-applications#using-fonts]]) for how to use these fonts in your web project.
+The iOS and the Android output of the configured app hold the same files, under the same names:
 
-### iOS Distribution
-
-With semantic naming (converted to snake_case):
-
-```
-dist/ios/[app]/[brand]/fonts/
-├── text_normal.ttf
-├── text_strong.ttf
-└── text_license.txt
+```text
+dist/ios/demo/chassis/fonts/
+├── text_license.txt
+├── text_normal.otf
+├── text_normal_italic.otf
+├── text_strong.otf
+└── ...
 ```
 
-See [iOS Applications]([[docsref:/use-in-project/ios-applications#using-fonts]]) for how to use these fonts in your iOS project.
+The snake_case name is a valid Android resource name, so a file of the Android output can go to `res/font/` as it is.
 
-### Android Distribution
-
-With semantic naming (converted to snake_case):
-
-```
-dist/android/[app]/[brand]/fonts/
-├── text_normal.ttf
-├── text_strong.ttf
-└── text_license.txt
-```
-
-See [Android Applications]([[docsref:/use-in-project/android-applications#using-fonts]]) for how to use these fonts in your Android project.
-
-## Related Resources
-
-- [Typography Tokens](https://tokens.chassis-ui.com/design-tokens/typography-tokens) - Design token definitions for typography
-- [Font Tokens](https://tokens.chassis-ui.com/design-tokens/font-tokens) - Font family and weight tokens
-- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration guide
-- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration guide
-- [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration guide
+See the [web]([[docsref:/use-in-project/web-applications#fonts]]), [iOS]([[docsref:/use-in-project/ios-applications#fonts]]), and [Android]([[docsref:/use-in-project/android-applications#fonts]]) docs for how an app uses these files.

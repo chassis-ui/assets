@@ -1,705 +1,484 @@
 ---
 title: Web Applications
-description: Complete guide to integrating Chassis design assets into web applications using optimized fonts, images, and icons.
+description: How a web application gets the fonts, images, icons and other files of the web output of Chassis Assets, and how it reads them.
 toc: true
 ---
 
 <Callout type="warning" name="created-by-ai" />
 
-## Overview
+## Introduction
 
-Chassis Assets provides optimized design assets for web applications with proper formats, naming conventions, and distribution structures. Assets are ready to use with any modern web framework or bundler.
+The web output of an app and a brand is the folder `dist/web/<app>/<brand>/`. The build copies the source files into it and renames them to kebab-case, with the `@2x` and `@3x` indicators kept. It does not convert, resize or optimize a file, so the output holds the formats and the variants the designer exported.
 
-### Key Benefits
+<CxTable>
+| Type | What the web output holds |
+| --- | --- |
+| `fonts/` | The WOFF and WOFF2 files, the `.css` and `.scss` stylesheets and the license files |
+| `images/` | Every file, in the subfolders of the source |
+| `icons/` | Every file, in the subfolders of the source |
+| Any other folder | Every file |
+</CxTable>
 
-Chassis Assets provides optimized design assets ready for modern web development:
+The committed configuration has one web app, `docs`, and the brands `chassis` and `example`. The examples of this page use the job `dist/web/docs/chassis/`; with another configuration, read the names of your own app and brand in their place.
 
-- **Optimized Formats**: WebP images, WOFF2 fonts, SVG vectors
-- **Modern Standards**: Responsive images, font-display, lazy loading
-- **Framework Agnostic**: Works with React, Vue, Angular, vanilla JS
-- **Build Tool Compatible**: Vite, Webpack, Parcel, Rollup support
+```text
+dist/web/docs/
+├── chassis/
+│   ├── fonts/
+│   ├── icons/
+│   ├── images/
+│   └── other/
+└── example/
+    └── ...
+```
 
 ## Installation
 
-Chassis Assets is a build system that generates platform-specific assets from your source files.
+Chassis Assets is not published to npm. A web application gets the output from a release archive, from a Git submodule that it builds, or from a build in a clone.
 
-### Clone or Add as Submodule
+### Release archive
 
-Clone the repository or add it as a Git submodule to your project:
+The release workflow attaches one archive per platform, app and brand to each GitHub release, from version 0.2.0 on. The archive of a job is named `chassis-assets-<platform>-<app>-<brand>-<version>.zip` and holds the content of `dist/<platform>/<app>/<brand>/` at its top level.
+
+Download the archive of your job from the [releases]([[config:repo]]/releases) of the repository and extract it into the folder your application serves static files from:
 
 ```bash
-# Clone standalone
-git clone https://github.com/chassis-ui/assets.git chassis-assets
+unzip "chassis-assets-web-docs-chassis-<version>.zip" -d public/assets
+```
+
+An archive needs no Node.js, pnpm or Git LFS on the machine that uses it.
+
+### Git submodule
+
+A submodule pins the assets to a commit and builds them inside your project. The Chassis sites do this: each one has the repository as the submodule `vendor/assets`, on the `app/docs` branch, and builds the job it reads.
+
+```bash
+git submodule add -b app/docs [[config:repo]].git vendor/assets
+cd vendor/assets
+git lfs pull
+pnpm install --ignore-workspace
+pnpm assets:site
+```
+
+`pnpm install --ignore-workspace` installs the root package only, and the build needs none of it. `pnpm assets:site` is `pnpm assets --clean --brand chassis --app docs`: it removes `dist/web/docs/chassis/` and writes it again. For another job, run `pnpm assets` with the filters of that job:
+
+```bash
+pnpm assets --brand example --app docs --platform web
+```
+
+<Callout type="warning">
+The fonts and the raster images are Git LFS files. A checkout without Git LFS holds pointer files in their place, and the build fails and lists them. Install Git LFS from [git-lfs.com](https://git-lfs.com) and run `git lfs pull` in the submodule.
+</Callout>
+
+### Build from a clone
+
+A clone is the way to go when you change the assets yourself, in a fork or in a repository of your own. It needs Node.js 22.12 or later, pnpm and Git LFS; the [Quick Start]([[docsref:/getting-started/quick-start]]) page has the setup.
+
+```bash
+git clone [[config:repo]].git chassis-assets
 cd chassis-assets
-
-# Or add as Git submodule
-git submodule add https://github.com/chassis-ui/assets.git assets
-cd assets
-```
-
-### Install Dependencies
-
-```bash
-pnpm install
-```
-
-### Build Assets
-
-Generate platform-specific distributions:
-
-```bash
-# Build all assets
-pnpm assets
-
-# Build for specific platform
 pnpm assets --platform web
-
-# Build for specific brand-app
-pnpm assets --brand chassis --app docs
 ```
 
-## Package Structure
+`--brand`, `--app` and `--platform` each take one or more values and combine. `pnpm assets --dry-run` prints the jobs without writing, and `pnpm assets --help` prints every option. The [build system]([[docsref:/getting-started/build-system]]) page describes them.
 
-After building, generated assets are available in the `dist/` directory:
+## Output layout
 
+The folder of a job holds one folder per type, with the subfolders of the source kept. The build writes this for the job `dist/web/docs/chassis/`:
+
+```text
+dist/web/docs/chassis/
+├── fonts/
+│   ├── text-license.txt
+│   ├── text-normal.woff2
+│   ├── text.css
+│   └── ...
+├── icons/
+│   ├── cx-sprite.svg
+│   ├── icons/
+│   │   ├── chassis-icons.css
+│   │   ├── chassis-icons.woff2
+│   │   └── ...
+│   └── svgs/
+│       ├── arrow-right-solid.svg
+│       └── ...
+├── images/
+│   ├── site-logo.svg
+│   ├── home/
+│   │   └── ...
+│   └── logo/
+│       └── ...
+└── other/
+    └── default-tokens.json
 ```
-chassis-assets/
-├── source/                     -> Your source assets
-│   ├── default/
-│   └── [brand]/
-└── dist/                       -> Generated platform assets
-    └── web/
-        └── [app]/
-            └── [brand]/            -> e.g. dist/web/docs/chassis/
-                ├── fonts/
-                │   ├── text-normal.woff2
-                │   ├── text-strong.woff2
-                │   ├── text.css
-                │   └── ...
-                ├── images/
-                │   ├── hero-background.webp
-                │   ├── illustration-feature.svg
-                │   └── ...
-                └── icons/
-                    ├── cx-sprite.svg
-                    ├── icons/          -> the icon font, its stylesheets and the sprite
-                    └── svgs/
-                        ├── arrow-right-solid.svg
-                        └── ...
-```
 
-### Copy Assets to Your Project
+### Copy the output
 
-Copy the generated web assets to your application's public directory:
+A web application serves the files from its static folder. Copy the folder of the job as it is, so that the paths inside it stay the ones this page uses. From the root of a project with the submodule at `vendor/assets`:
 
 ```bash
-# Copy all web assets for an app and a brand
-cp -r dist/web/docs/chassis/* /path/to/your-project/public/assets/
-
-# Or copy specific asset types
-cp -r dist/web/docs/chassis/fonts /path/to/your-project/public/assets/
-cp -r dist/web/docs/chassis/images /path/to/your-project/public/assets/
+mkdir -p public/assets
+cp -R vendor/assets/dist/web/docs/chassis/. public/assets/
 ```
 
-<Callout type="info">
-For automated workflows, consider creating a build script (e.g., `sync-assets.sh`) that copies assets after each build, or use symlinks during development to automatically reflect changes. For production, copy assets as part of your CI/CD pipeline.
-</Callout>
+The samples of this page read the files from `/assets/`, as this copy serves them.
 
-## Using Fonts
+### Bundler alias
 
-Web fonts use WOFF2 format for optimal performance and broad browser support.
+A bundler can read the output where the build wrote it, without a copy. Add an alias to the folder of the job, and import a file by its output name. In `vite.config.js`:
 
-### Import Font Files
-
-Copy fonts to your public directory or import them through your bundler:
-
-**Manual copy (public folder):**
-
-```bash
-cp -r dist/web/docs/chassis/fonts public/assets/
-```
-
-**Vite/Webpack import:**
-
-```javascript
-// Import fonts in your main CSS/JS file
-import '/path/to/chassis-assets/dist/web/docs/chassis/fonts/text-normal.woff2';
-import '/path/to/chassis-assets/dist/web/docs/chassis/fonts/text-strong.woff2';
-```
-
-### Use the Shipped Stylesheets
-
-The `fonts/` folder of the default brand ships `text.css`, `display.css` and `code.css`, one `@font-face` rule per font file under the real family name. Link them next to the fonts and the declarations are done:
-
-```html
-<link rel="stylesheet" href="/assets/fonts/text.css">
-<link rel="stylesheet" href="/assets/fonts/display.css">
-<link rel="stylesheet" href="/assets/fonts/code.css">
-```
-
-### Define @font-face Rules
-
-Or define the font-face declarations yourself, to use the family names of your tokens.
-
-<Callout type="info" title="Token-Aligned Naming">
-If your fonts use semantic names (text-normal, text-strong, etc.), they align with [Chassis Tokens typography system](https://tokens.chassis-ui.com/docs/design-tokens/typography-tokens). This enables brand switching without code changes.
-</Callout>
-
-**Using Chassis Tokens (recommended):**
-
-```scss
-// fonts.scss - Token integration
-@import '@chassis-ui/tokens/dist/scss/tokens';
-
-/* Text Family - Normal Weight */
-@font-face {
-  font-family: $cx-typography-font-family-text;  // From token: typography.fontFamily.text
-  src: url('/assets/fonts/text-normal.woff2') format('woff2');
-  font-weight: $cx-typography-font-weight-text-normal-weight;  // From token
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Text Family - Strong Weight */
-@font-face {
-  font-family: $cx-typography-font-family-text;
-  src: url('/assets/fonts/text-strong.woff2') format('woff2');
-  font-weight: $cx-typography-font-weight-text-strong-weight;  // From token
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Display Family - Normal Weight */
-@font-face {
-  font-family: $cx-typography-font-family-display;  // From token: typography.fontFamily.display
-  src: url('/assets/fonts/display-normal.woff2') format('woff2');
-  font-weight: $cx-typography-font-weight-display-normal-weight;  // From token
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Apply to elements using token variables */
-body {
-  font-family: $font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-weight: $font-weight-text-normal;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: $font-family-display, Georgia, serif;
-  font-weight: $font-weight-display-strong;
-}
-```
-
-<Callout type="info">
-**Even Better:** Use Chassis CSS which automatically generates `@font-face` declarations from tokens:
-`@import '@chassis-ui/css/scss/chassis';`
-</Callout>
-
-### Integration with Chassis Tokens
-
-Integrate with Chassis Tokens for consistent typography across your application:
-
-```scss
-// app.scss - Using token variables
-@import '@chassis-ui/tokens/dist/scss/tokens';
-
-body {
-  font-family: $font-family-text;  // Token-based font family
-  font-weight: $font-weight-text-normal;  // Token-based weight
-  font-size: $font-size-text-medium;  // Token-based size
-}
-
-.heading {
-  font-family: $font-family-display;
-  font-weight: $font-weight-display-strong;
-  font-size: $font-size-display-large;
-}
-
-// Or with CSS custom properties
-.button {
-  font-family: var(--cx-typography-font-family-text);
-  font-weight: var(--cx-typography-font-weight-text-strong-weight);
-}
-```
-
-### Preload Critical Fonts
-
-Preload fonts used above the fold to improve initial render performance:
-
-```html
-<!-- In <head> -->
-<link rel="preload"
-      href="/assets/fonts/text-normal.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin>
-```
-
-### Framework Examples
-
-Import font styles in your framework's entry point.
-
-**React:**
-
-```jsx
-// App.jsx
-import './styles/fonts.css';
-
-function App() {
-  return <div className="font-brand">Content</div>;
-}
-```
-
-**Vue:**
-
-```jsx
-<script setup>
-import './styles/fonts.css';
-</script>
-
-<template>
-  <div class="font-brand">Content</div>
-</template>
-```
-
-**Next.js:**
-
-```jsx
-// pages/_app.js
-import '../styles/fonts.css';
-
-export default function App({ Component, pageProps }) {
-  return <Component {...pageProps} />;
-}
-```
-
-<Callout type="tip">
-Use `font-display: swap` to show fallback text immediately while custom fonts load, improving perceived performance.
-</Callout>
-
-## Using Images
-
-Web images support all standard formats including WebP for modern browsers.
-
-### Copy Images to Public Directory
-
-Copy image assets to your public directory for static hosting:
-
-```bash
-cp -r dist/web/docs/chassis/images public/assets/
-```
-
-### Reference in HTML
-
-Use standard HTML image elements with modern features:
-
-```html
-<!-- Standard image -->
-<img src="/assets/images/hero-background.jpg"
-     alt="Hero background">
-
-<!-- High-DPI support -->
-<img src="/assets/images/icon.png"
-     srcset="/assets/images/icon.png 1x,
-             /assets/images/icon@2x.png 2x,
-             /assets/images/icon@3x.png 3x"
-     alt="Icon">
-
-<!-- Modern format with fallback -->
-<picture>
-  <source srcset="/assets/images/hero.webp" type="image/webp">
-  <source srcset="/assets/images/hero.jpg" type="image/jpeg">
-  <img src="/assets/images/hero.jpg" alt="Hero">
-</picture>
-
-<!-- Responsive images -->
-<img src="/assets/images/photo-small.jpg"
-     srcset="/assets/images/photo-small.jpg 400w,
-             /assets/images/photo-medium.jpg 800w,
-             /assets/images/photo-large.jpg 1200w"
-     sizes="(max-width: 600px) 400px,
-            (max-width: 1000px) 800px,
-            1200px"
-     alt="Responsive photo">
-```
-
-### Framework Examples
-
-Import images as modules for automatic optimization and cache-busting.
-
-**React:**
-
-```jsx
-// Import images as modules (Vite/Webpack)
-import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
-
-function Hero() {
-  return <img src={heroImage} alt="Hero" />;
-}
-```
-
-**Vue:**
-
-```jsx
-<script setup>
-import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
-</script>
-
-<template>
-  <img :src="heroImage" alt="Hero">
-</template>
-```
-
-**Next.js (Image component):**
-
-```jsx
-import Image from 'next/image';
-import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
-
-export default function Hero() {
-  return (
-    <Image
-      src={heroImage}
-      alt="Hero"
-      width={1200}
-      height={600}
-      priority
-    />
-  );
-}
-```
-
-### Lazy Loading
-
-Defer loading of offscreen images until they're needed:
-
-```html
-<img src="/assets/images/below-fold.jpg"
-     loading="lazy"
-     alt="Content below fold">
-```
-
-## Using Icons
-
-Icons are provided as individual SVG files under `icons/svgs/`, named `<icon>-solid.svg` and `<icon>-outline.svg`, plus the icon font and its stylesheet under `icons/icons/` and the sprite `icons/cx-sprite.svg`.
-
-### Inline SVG (Recommended)
-
-Inline SVG allows dynamic styling and interactions:
-
-```javascript
-// utils/loadIcon.js
-export async function loadIcon(name) {
-  const icon = await import(
-    `/path/to/chassis-assets/dist/web/docs/chassis/icons/svgs/${name}.svg?raw`
-  );
-  return icon.default;
-}
-
-// Component
-const iconSvg = await loadIcon('arrow-right-solid');
-element.innerHTML = iconSvg;
-```
-
-**React component:**
-
-```jsx
-// components/Icon.jsx
-import { ReactComponent as ArrowRight } from '/path/to/chassis-assets/dist/web/docs/chassis/icons/svgs/arrow-right-solid.svg';
-
-export function Icon() {
-  return <ArrowRight className="w-6 h-6 text-primary" />;
-}
-```
-
-**Vue component:**
-
-```jsx
-<script setup>
-import IconArrow from '/path/to/chassis-assets/dist/web/docs/chassis/icons/svgs/arrow-right-solid.svg';
-</script>
-
-<template>
-  <IconArrow class="w-6 h-6 text-primary" />
-</template>
-```
-
-### Image Tag Reference
-
-Use image tags for static icons that don't require styling:
-
-```html
-<img src="/assets/icons/svgs/menu-solid.svg"
-     alt="Menu"
-     width="24"
-     height="24">
-```
-
-### Icon Sprite (Advanced)
-
-For applications with many icons, create a sprite sheet to reduce HTTP requests:
-
-```html
-<!-- sprite.svg -->
-<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-  <defs>
-    <symbol id="icon-arrow" viewBox="0 0 24 24">
-      <!-- SVG path -->
-    </symbol>
-    <symbol id="icon-menu" viewBox="0 0 24 24">
-      <!-- SVG path -->
-    </symbol>
-  </defs>
-</svg>
-
-<!-- Usage -->
-<svg class="icon">
-  <use href="#icon-arrow"></use>
-</svg>
-```
-
-## Build Tool Configuration
-
-Configure your build tool to handle asset imports efficiently.
-
-### Vite
-
-Create path aliases for cleaner imports:
-
-```javascript
-// vite.config.js
-import { defineConfig } from 'vite';
+```js
+import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@assets': '/path/to/chassis-assets/dist/web/docs/chassis'
+      '@assets': fileURLToPath(new URL('./vendor/assets/dist/web/docs/chassis', import.meta.url))
     }
-  },
-  build: {
-    assetsInlineLimit: 4096, // Inline small assets
   }
-});
+})
 ```
 
-**Usage:**
+In `webpack.config.js`, the alias goes with a rule that emits the fonts and the images as files:
 
-```javascript
-import heroImage from '@assets/images/hero.jpg';
-import '@assets/fonts/text-normal.woff2';
-```
+```js
+const path = require('node:path')
 
-### Webpack
-
-Configure aliases and asset loaders:
-
-```javascript
-// webpack.config.js
 module.exports = {
   resolve: {
     alias: {
-      '@assets': path.resolve(__dirname, '../chassis-assets/dist/web/docs/chassis')
+      '@assets': path.resolve(__dirname, 'vendor/assets/dist/web/docs/chassis')
     }
   },
   module: {
-    rules: [
-      {
-        test: /\.(woff2?|ttf|otf|eot)$/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'fonts/[name][ext]'
-        }
-      },
-      {
-        test: /\.(png|jpe?g|gif|svg|webp)$/,
-        type: 'asset',
-        parser: {
-          dataUrlCondition: {
-            maxSize: 4 * 1024 // 4kb
-          }
-        }
-      }
-    ]
+    rules: [{ test: /\.(woff2?|png|jpe?g|webp|svg)$/, type: 'asset/resource' }]
   }
-};
-```
-
-### Parcel
-
-Parcel handles assets automatically with zero configuration:
-
-```javascript
-import heroImage from '/path/to/chassis-assets/dist/web/docs/chassis/images/hero.jpg';
-import '/path/to/chassis-assets/dist/web/docs/chassis/fonts/text-normal.woff2';
-```
-
-## Brand Switching
-
-Support multiple brands by loading assets dynamically based on brand configuration:
-
-```javascript
-// utils/assets.js
-const BRAND = process.env.VITE_BRAND || 'chassis';
-const APP = 'docs';
-
-// Copy the dist/web/ tree as it is: /assets/<app>/<brand>/<type>/
-export function getAssetPath(type, filename) {
-  return `/assets/${APP}/${BRAND}/${type}/${filename}`;
-}
-
-// Usage
-const heroPath = getAssetPath('images', 'hero.jpg');
-const fontPath = getAssetPath('fonts', 'text-normal.woff2');
-```
-
-**React Context:**
-
-```jsx
-// BrandContext.jsx
-import { createContext, useContext } from 'react';
-
-const BrandContext = createContext('chassis');
-
-export function BrandProvider({ brand, children }) {
-  return (
-    <BrandContext.Provider value={brand}>
-      {children}
-    </BrandContext.Provider>
-  );
-}
-
-export function useBrand() {
-  return useContext(BrandContext);
-}
-
-export function useAsset(type, filename) {
-  const brand = useBrand();
-  return `/assets/docs/${brand}/${type}/${filename}`;
-}
-
-// Usage in components
-function Hero() {
-  const heroSrc = useAsset('images', 'hero.jpg');
-  return <img src={heroSrc} alt="Hero" />;
 }
 ```
 
-## Performance Optimization
+With either one, an import gives the URL of the file:
 
-Optimize asset loading for better user experience and Core Web Vitals.
+```js
+import '@assets/fonts/text.css'
+import siteLogo from '@assets/images/site-logo.svg'
+```
 
-### Asset Loading Strategies
+Parcel needs no alias: it resolves a relative path to a file of the output in `url()` of a stylesheet and in `new URL('<path>', import.meta.url)` of a script.
 
-Use preload, lazy loading, and prefetch strategies:
+## Fonts
+
+The `fonts/` folder holds the WOFF and WOFF2 files of the source, the stylesheets and the licenses. A font file is named by its role and its weight, not by its family, so a brand with other families has the same file names.
+
+```text
+dist/web/docs/chassis/fonts/
+├── code-license.txt
+├── code-normal.woff2
+├── code-strong.woff2
+├── code.css
+├── display-normal-italic.woff2
+├── display-normal.woff2
+├── display.css
+├── text-normal-italic.woff2
+├── text-normal.woff2
+├── text-strong.woff2
+├── text.css
+└── ...
+```
+
+The [fonts]([[docsref:/asset-types/fonts#platform-output]]) page has the roles, the weights and what each platform gets.
+
+### Font stylesheets
+
+The stylesheets `text.css`, `display.css` and `code.css` of the default brand declare one `@font-face` rule per font file of their role, under the family name of the font. Link them and the declarations are done:
 
 ```html
-<!-- Preload critical assets -->
-<link rel="preload" href="/assets/fonts/text-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/assets/images/hero.webp" as="image">
-
-<!-- Lazy load below-fold images -->
-<img src="/assets/images/content.jpg" loading="lazy" alt="Content">
-
-<!-- Async image decoding -->
-<img src="/assets/images/large.jpg" decoding="async" alt="Large image">
-
-<!-- Prefetch assets for next page -->
-<link rel="prefetch" href="/assets/images/next-page.webp">
+<link rel="stylesheet" href="/assets/fonts/text.css" />
+<link rel="stylesheet" href="/assets/fonts/display.css" />
+<link rel="stylesheet" href="/assets/fonts/code.css" />
 ```
 
-### Image Optimization
+Each rule reads its file by a relative URL, `url("text-normal.woff2")`, so a stylesheet works only beside the font files. The family name to use in `font-family` is in the comment at the top of each stylesheet.
 
-Leverage framework-specific image optimization features:
+### Own declarations
 
-```javascript
-// Next.js automatic optimization
-import Image from 'next/image';
+Write the `@font-face` rules yourself when the family name has to be one of your own, such as the name a design token holds. Use the file names of the output, and one rule per file:
 
-<Image
-  src="/assets/images/photo.jpg"
-  alt="Photo"
-  width={800}
-  height={600}
-  quality={85}
-  placeholder="blur"
+```css
+@font-face {
+  font-family: 'Brand Text';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/assets/fonts/text-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Brand Text';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/assets/fonts/text-strong.woff2') format('woff2');
+}
+
+body {
+  font-family: 'Brand Text', sans-serif;
+}
+```
+
+The weight of a role is the choice of the brand; read it in the stylesheet of the role. Chassis Tokens owns the names of the font roles, see the [Chassis Tokens docs](https://chassis-ui.com/tokens/).
+
+### Licenses
+
+The build copies the license of each role beside its fonts, as `<role>-license.txt`. Keep `text-license.txt`, `display-license.txt` and `code-license.txt` with the fonts when you copy them to another folder.
+
+## Images
+
+The `images/` folder holds every image of the source, in the same subfolders, with kebab-case names and the indicator kept. An image has the formats and the variants the designer exported: the build writes no `@2x` file and no WebP file of its own.
+
+```text
+dist/web/docs/chassis/images/
+├── site-logo.svg
+├── home/
+│   ├── platforms.png
+│   ├── platforms.webp
+│   ├── platforms@2x.png
+│   ├── platforms@2x.webp
+│   └── ...
+└── logo/
+    ├── chassis-logo-brand.png
+    ├── chassis-logo-brand.svg
+    ├── chassis-logo-brand@2x.png
+    ├── chassis-logo-brand@3x.png
+    └── ...
+```
+
+The [images]([[docsref:/asset-types/images#platform-output]]) page has the naming rules and what each platform gets.
+
+### Variants
+
+An image with `@2x` and `@3x` variants goes into `srcset`, one variant per pixel density. Use the file without an indicator as `src`:
+
+```html
+<img
+  src="/assets/images/logo/chassis-logo-brand.png"
+  srcset="
+    /assets/images/logo/chassis-logo-brand.png    1x,
+    /assets/images/logo/chassis-logo-brand@2x.png 2x,
+    /assets/images/logo/chassis-logo-brand@3x.png 3x
+  "
+  alt="Chassis"
 />
 ```
 
-### Code Splitting
+### Formats
 
-Load assets on demand to reduce initial bundle size:
+An image that the designer exported as WebP and as PNG goes into a `<picture>` element, with the PNG as the fallback. Use it only for an image that has both files in the output:
 
-```javascript
-// Lazy load assets on demand
-const loadLogo = () => import('@assets/logo/logo-main.svg');
-
-button.addEventListener('click', async () => {
-  const { default: image } = await loadLogo();
-  img.src = image;
-});
+```html
+<picture>
+  <source
+    type="image/webp"
+    srcset="/assets/images/home/platforms.webp 1x, /assets/images/home/platforms@2x.webp 2x"
+  />
+  <img
+    src="/assets/images/home/platforms.png"
+    srcset="/assets/images/home/platforms.png 1x, /assets/images/home/platforms@2x.png 2x"
+    alt="Platforms"
+  />
+</picture>
 ```
 
-## Best Practices
+## Icons
 
-Follow these recommendations for optimal asset integration and performance.
+The `icons/` folder holds every file of the source. In the committed source that is the build output of Chassis Icons, as an icon font under `icons/icons/` and as SVG files under `icons/svgs/`, and the sprite `cx-sprite.svg`.
 
-**Do:**
+```text
+dist/web/docs/chassis/icons/
+├── cx-sprite.svg
+├── icons/
+│   ├── chassis-icons-min.css
+│   ├── chassis-icons.css
+│   ├── chassis-icons.json
+│   ├── chassis-icons.scss
+│   ├── chassis-icons.svg
+│   ├── chassis-icons.woff
+│   └── chassis-icons.woff2
+└── svgs/
+    ├── arrow-right-outline.svg
+    ├── arrow-right-solid.svg
+    └── ...
+```
 
-- ✅ Use WebP with JPG/PNG fallbacks
-- ✅ Implement lazy loading for below-fold images
-- ✅ Preload critical fonts and hero images
-- ✅ Use `font-display: swap` for better performance
-- ✅ Optimize all images before deployment
-- ✅ Use SVG for icons when possible
+Chassis Icons owns the icons and their font; the [Chassis Icons docs](https://chassis-ui.com/icons/) list them. The [icons]([[docsref:/asset-types/icons#platform-output]]) page has what each platform gets.
 
-**Don't:**
+### SVG files
 
-- ❌ Load all assets upfront
-- ❌ Use unoptimized source images
-- ❌ Forget responsive image syntax
-- ❌ Ignore CORS for font files
-- ❌ Inline large images as base64
+Each icon is one file of `icons/svgs/`, named `<icon>-solid.svg` or `<icon>-outline.svg`. Use an `<img>` element for an icon that keeps its color:
+
+```html
+<img src="/assets/icons/svgs/arrow-right-solid.svg" alt="" width="24" height="24" />
+```
+
+The files have `fill="currentcolor"`, so an icon takes the color of the text only when its markup is in the page. With Vite, the `?raw` query imports the markup of a file as a string:
+
+```js
+import arrowRight from '@assets/icons/svgs/arrow-right-solid.svg?raw'
+
+document.querySelector('#next').insertAdjacentHTML('beforeend', arrowRight)
+```
+
+### Icon font
+
+The stylesheet `icons/icons/chassis-icons.css` declares the icon font and one class per icon, `cx-<icon>-solid` or `cx-<icon>-outline`. It reads `chassis-icons.woff2` and `chassis-icons.woff` by a relative URL, so keep the files of `icons/icons/` together.
+
+```html
+<link rel="stylesheet" href="/assets/icons/icons/chassis-icons.css" />
+
+<i class="cx-arrow-right-solid"></i>
+```
+
+<Callout type="warning">
+The web build turns a dot inside a name into a hyphen. The minified stylesheet of the icon font is `chassis-icons-min.css` in the output, not `chassis-icons.min.css`.
+</Callout>
+
+### Sprites
+
+A sprite holds icons as `<symbol>` elements that a page shows with `<use>`. The output has two: `icons/icons/chassis-icons.svg` has one symbol per icon of Chassis Icons, with the name of the icon as its `id`, and `icons/cx-sprite.svg` has the icons of the home pages of the Chassis sites, with `cx-<icon>` as the `id`.
+
+```html
+<svg width="24" height="24" fill="currentColor">
+  <use href="/assets/icons/icons/chassis-icons.svg#arrow-right-solid"></use>
+</svg>
+```
+
+The Chassis sites put the markup of `cx-sprite.svg` into the page and refer to a symbol by its `id` alone, `<use href="#cx-rocket"></use>`.
+
+## Other assets
+
+The build copies any other folder under an app as it is, with the names in kebab-case. In the committed source that is `other/`, which holds the design tokens of a Figma export:
+
+```text
+dist/web/docs/chassis/other/
+└── default-tokens.json
+```
+
+The source file is `source/default/docs/other/default.tokens.json`: the dot inside the name became a hyphen. Read a file of such a folder by its output name:
+
+```js
+const tokens = await fetch('/assets/other/default-tokens.json').then((response) => response.json())
+```
+
+The [other assets]([[docsref:/asset-types/other]]) page describes these folders.
+
+## Brand switching
+
+Every brand of `chassis.build.brands` has a folder of its own beside the others, `dist/web/<app>/<brand>/`. A file has the same path in each of them, so an application changes brand by reading another folder, with no change to the paths in its code.
+
+To ship one brand, copy the folder of that brand at build time:
+
+```bash
+BRAND=example
+mkdir -p public/assets
+cp -R vendor/assets/dist/web/docs/$BRAND/. public/assets/
+```
+
+To choose the brand in the browser, copy each brand into a folder of its name and build the path from the brand:
+
+```bash
+mkdir -p public/assets
+cp -R vendor/assets/dist/web/docs/. public/assets/
+```
+
+```js
+export function assetUrl(brand, path) {
+  return `/assets/${brand}/${path}`
+}
+
+document.querySelector('#logo').src = assetUrl('example', 'images/logo/chassis-logo-brand.svg')
+```
+
+A brand folder of `source/` holds only the files that differ, and the build fills the rest from the default brand. A brand can add files too: the `example` brand adds `fonts/fonts.scss`, which only its output has.
+
+<Callout type="warning">
+A brand that replaces the font files of a role without replacing the stylesheet of that role gets the stylesheet of the default brand, which declares the family name of the default font. Add `text.css`, `display.css` or `code.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).
+</Callout>
+
+## Continuous integration
+
+A workflow of your application builds the job before it builds the application, so the output is never committed. This GitHub Actions job checks out the submodule, pulls its Git LFS files, builds the job and copies it:
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: vendor/assets/.nvmrc
+
+      - name: Build the assets
+        working-directory: vendor/assets
+        run: |
+          git lfs pull
+          corepack enable
+          pnpm install --ignore-workspace
+          pnpm assets:site
+
+      - name: Copy the assets
+        run: |
+          mkdir -p public/assets
+          cp -R vendor/assets/dist/web/docs/chassis/. public/assets/
+```
+
+A workflow that uses a release archive needs none of these steps: download the archive of the job with `gh release download` and extract it.
+
+## Best practices
+
+✅ **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so the output has `other/default-tokens.json` and `icons/icons/chassis-icons-min.css`. Find a name with `find dist/web/docs/chassis -name '<pattern>'`.
+
+✅ **Keep a stylesheet beside its fonts:** `text.css`, `display.css`, `code.css` and `chassis-icons.css` read their font files by a relative URL. Copy `fonts/` and `icons/icons/` whole.
+
+✅ **Ship the licenses:** copy `<role>-license.txt` with the fonts of `fonts/`.
+
+✅ **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is marked `**Breaking.**` in the changelog.
+
+❌ **Do not edit `dist/`:** a full `pnpm assets` removes it first, and `--clean` removes the folders of the selected jobs. Change the file in `source/` and build again.
+
+❌ **Do not expect a file the designer did not export:** the build copies. An image without an `@2x` or a `.webp` file in `source/` has none in the output.
 
 ## Troubleshooting
 
-Common issues and solutions when integrating Chassis Assets.
+### Build fails on pointers
 
-### Fonts Not Loading
+The build stops with ``<count> source file(s) are Git LFS pointers, not files: <files>. Run `git lfs pull`, or pass --allow-lfs-pointers to copy the pointers.`` The checkout has no Git LFS files, so the fonts and the raster images are pointers of a few lines. Install Git LFS, run `git lfs pull` in the repository or the submodule, and build again.
 
-**Check:**
+### Font does not load
 
-1. Font files are in correct public directory
-2. `@font-face` src paths are correct
-3. CORS headers allow font loading (`crossorigin` attribute)
-4. Font MIME types are configured on server
+The browser logs `Failed to decode downloaded font` for a file of `fonts/`. The output was built with `--allow-lfs-pointers` or `CHASSIS_ALLOW_LFS_POINTERS=1`, so the font is a pointer file. Run `git lfs pull` and build again without the option.
 
-### Images Not Displaying
+### Font file not found
 
-**Check:**
+The browser gets a 404 for a font that a stylesheet of `fonts/` or of `icons/icons/` names. The stylesheet was copied without the font files beside it, and its URLs are relative. Copy the whole folder.
 
-1. Image paths match actual file locations
-2. File extensions are correct
-3. Images are in public/static directory
-4. Build tool is copying assets correctly
+### File not found
 
-### Large Bundle Size
+The browser gets a 404 for a file that is in `source/`. The build renamed it, or left it out: the web names are kebab-case with a hyphen for a dot inside the name, and `fonts/` keeps only `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files. List the output of the type, `find dist/web/docs/chassis/fonts`, and use the name it prints.
 
-**Solutions:**
+### Unknown brand
 
-1. Enable tree-shaking in bundler
-2. Use code splitting for assets
-3. Optimize images (WebP, proper compression)
-4. Load assets on demand, not upfront
-5. Use CDN for asset delivery
+The build stops with `Unknown brand "<name>". Configured: <brands>`. The value of `--brand` is not in `chassis.build.brands` of `package.json`. Use a configured brand, or add the brand to the configuration. `--app` and `--platform` fail in the same way.
 
-<Callout type="tip">
-Use browser DevTools Network tab to identify slow-loading assets and optimize them for better performance.
-</Callout>
+### No job selected
 
-## Related Resources
+The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each filter value is configured, but no app has that platform: `pnpm assets --app demo --platform web` fails in the committed configuration, where `demo` is built for iOS and Android. Read the jobs with `pnpm assets --dry-run`.
 
-- [Font Assets]([[docsref:/asset-types/fonts]]) - Font management guide
-- [Image Assets]([[docsref:/asset-types/images]]) - Image optimization guide
-- [Icon Assets]([[docsref:/asset-types/icons]]) - Icon management guide
-- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration
-- [Android Applications]([[docsref:/use-in-project/android-applications]]) - Android integration
+## Next steps
+
+- [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]): the source layout and the rules of each type.
+- [Build system]([[docsref:/getting-started/build-system]]): the commands, the options and the configuration.
+- [iOS applications]([[docsref:/use-in-project/ios-applications]]) and [Android applications]([[docsref:/use-in-project/android-applications]]): the same assets on the other platforms.

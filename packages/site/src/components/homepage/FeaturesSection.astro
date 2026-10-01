@@ -10,8 +10,8 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
           <span class="font-normal d-block">Built for</span> Production at Scale
         </h2>
         <p class="section-body md:font-lg lg:font-xl m-0">
-          Asset processing automation for multi-brand products. Handles the transformation pipeline
-          from design tools to platform-ready code.
+          A build for products with several brands, apps and platforms. It takes the files from the
+          export of the design tool to the folder an app reads.
         </p>
       </div>
     </div>
@@ -21,18 +21,17 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
         <FeatureCard icon="cx-swatchbook">
           <Fragment slot="title">Multi-Brand Architecture</Fragment>
           <Fragment slot="body">
-            Source folder structure defines brand hierarchy: default/ for shared assets, brand-name/
-            for overrides. Build script merges layers automatically based on CLI flags.
+            The folders of the source are the brands: default/ for the files every brand gets, and a
+            folder per brand for its overrides. The build lays the brand over the default files.
           </Fragment>
         </FeatureCard>
       </div>
       <div class="col">
         <FeatureCard icon="cx-laptop-mobile">
-          <Fragment slot="title">Platform-Specific Transforms</Fragment>
+          <Fragment slot="title">Platform-Specific Names</Fragment>
           <Fragment slot="body">
-            Applies naming conventions per platform: kebab-case with hyphens for web, snake_case
-            with underscores for mobile. iOS outputs flat structure, Android uses drawable-density
-            folders.
+            Applies the naming of each platform: kebab-case for the web, snake_case for iOS and
+            Android, and the ic_ prefix for Android icons. Subfolders are kept on every platform.
           </Fragment>
         </FeatureCard>
       </div>
@@ -40,8 +39,8 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
         <FeatureCard icon="cx-layer-group">
           <Fragment slot="title">Resolution Variant Handling</Fragment>
           <Fragment slot="body">
-            Detects @2x and @3x suffixes in source files. Maps to iOS @2x/@3x conventions and
-            Android density folders (hdpi, xhdpi, xxhdpi, xxxhdpi) automatically.
+            Reads the @2x and @3x indicator of a file name. The web and iOS keep it in the name, and
+            Android gets the file in its density folder, such as drawable-xhdpi.
           </Fragment>
         </FeatureCard>
       </div>
@@ -49,8 +48,8 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
         <FeatureCard icon="cx-filter">
           <Fragment slot="title">Format Filtering by Platform</Fragment>
           <Fragment slot="body">
-            Web build: WOFF2 fonts only. Mobile builds: TTF/OTF fonts only. Configurable extension
-            filters prevent unsupported formats from reaching wrong platforms.
+            The web gets WOFF and WOFF2 fonts with their stylesheets, iOS and Android get TTF and
+            OTF. WebP images stay on the web, and each platform gets the icon formats it can use.
           </Fragment>
         </FeatureCard>
       </div>
@@ -58,17 +57,18 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
         <FeatureCard icon="cx-zap">
           <Fragment slot="title">CLI Build Filters</Fragment>
           <Fragment slot="body">
-            Command-line flags filter builds by brand, app, or platform. Useful for development
-            iteration and CI/CD pipelines that deploy one app at a time.
+            The --brand, --app and --platform options build a part of the output and keep the rest.
+            A CI job builds the one job its app reads.
           </Fragment>
         </FeatureCard>
       </div>
       <div class="col">
         <FeatureCard icon="cx-shield-check">
-          <Fragment slot="title">Build Validation</Fragment>
+          <Fragment slot="title">Checks</Fragment>
           <Fragment slot="body">
-            Validates output structure after builds. Detects missing files, duplicate filenames
-            after transformation, and unsupported file types. Provides file size analysis.
+            A validator compares the output with the source, a contract check names the files a
+            consumer reads, a source lint checks the names, and an analyzer reports sizes and files
+            with the same content.
           </Fragment>
         </FeatureCard>
       </div>

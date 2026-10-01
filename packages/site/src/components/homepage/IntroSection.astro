@@ -10,8 +10,9 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
           <span class="font-normal d-block">What</span> Chassis Assets Does
         </h2>
         <p class="section-body md:font-lg lg:font-xl m-0">
-          Processes source assets into platform-specific distributions using a build script.
-          Supports multiple brands and apps from one repository with override-based architecture.
+          Copies the files a designer exports into the output of each platform, with one build
+          command. One repository holds several brands and apps, and a brand overrides only the
+          files that differ.
         </p>
       </header>
     </div>
@@ -19,10 +20,11 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
     <div class="section-features row row-cols-1 md:row-cols-3 g-md md:g-xl">
       <div class="col">
         <FeatureCard icon="cx-sparkles">
-          <Fragment slot="title">Automated File Processing</Fragment>
+          <Fragment slot="title">Platform Naming</Fragment>
           <Fragment slot="body">
-            Transforms filenames to kebab-case for web, snake_case for mobile. Handles @2x/@3x
-            resolution variants. Organizes Android drawables by density automatically.
+            Renames files to kebab-case for the web and snake_case for iOS and Android. Keeps the
+            @2x and @3x variants the designer exported, and sorts them into density folders for
+            Android.
           </Fragment>
         </FeatureCard>
       </div>
@@ -30,8 +32,8 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
         <FeatureCard icon="cx-rectangle-history">
           <Fragment slot="title">Brand Override System</Fragment>
           <Fragment slot="body">
-            Define default assets once. Override specific files per brand using folder structure.
-            Build system merges defaults with brand-specific assets automatically.
+            Put the files of every brand in the default folder, once. A brand folder holds only the
+            files that differ, and a brand file replaces the default file of the same path.
           </Fragment>
         </FeatureCard>
       </div>
@@ -39,8 +41,8 @@ import FeatureCard from '@chassis-ui/docs/components/FeatureCard.astro'
         <FeatureCard icon="cx-rocket">
           <Fragment slot="title">Multi-Platform Output</Fragment>
           <Fragment slot="body">
-            Single source generates three platform-specific distributions. WOFF2 fonts for web,
-            TTF/OTF for mobile. SVG preserved, raster images processed per platform conventions.
+            One source tree, one output folder per platform, app and brand. WOFF and WOFF2 fonts go
+            to the web, TTF and OTF fonts to iOS and Android. Nothing is converted or resized.
           </Fragment>
         </FeatureCard>
       </div>

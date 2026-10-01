@@ -1,200 +1,135 @@
 ---
 title: Quick Start
-description: Get started with Chassis Assets by cloning the repository and managing design assets for your project.
+description: Clone Chassis Assets, build the output, add a file, copy the result into a project, and make the repository your own.
 toc: true
 ---
 
-## Overview
+## Introduction
 
-Chassis Assets is a centralized repository for managing and distributing design assets across multiple brands and platforms. This guide walks you through setting up the repository, adding assets, building platform-specific distributions, and integrating them into your applications.
+This guide takes you from a clone to a built output, adds a first file, and shows where a project picks the result up. The last section is for a team that adopts the repository for its own brands.
 
-### Prerequisites
+The [README]([[config:repo]]#readme) of the repository has the same setup, and lists every command with its options.
 
-Before working with Chassis Assets, ensure you have the following installed and configured:
+## Prerequisites
 
-- **Node.js**: Version 22.12 or later, see `engines` in `package.json`. The repository pins 24 in `.nvmrc`
-- **pnpm**: The version named by `packageManager` in `package.json`. Run `corepack enable` once and pnpm is used at that version
-- **Git**: For cloning the repository and version control
-- **Git LFS**: Required for font and image assets — install from [git-lfs.com](https://git-lfs.com) then run `git lfs install` once on your machine before cloning
-- **Repository Access**: Appropriate permissions to clone or fork the Chassis Assets repository
+The build needs Node.js and nothing else. The rest is for cloning and for the other commands.
 
-The [README](https://github.com/chassis-ui/assets#readme) of the repository has the same setup, and lists every command with its options.
+- **Node.js** 22.12 or later, see `engines` in `package.json`. The repository pins its version in `.nvmrc`.
+- **pnpm**, the version named by `packageManager` in `package.json`. Run `corepack enable` once and pnpm is used at that version.
+- **Git LFS**, from [git-lfs.com](https://git-lfs.com). Run `git lfs install` once on your machine before cloning. Fonts and raster images are Git LFS files.
 
 ## Installation
 
-To get started with Chassis Assets, you can either clone the repository directly or add it as a Git submodule to your existing project. Choose the approach that best fits your workflow and project structure.
-
-### Clone the Repository
-
-Cloning the repository creates a standalone copy that you can use to manage and distribute assets:
+Clone the repository to work on the assets:
 
 ```bash
-# Clone the repository
-git clone https://github.com/chassis-ui/assets.git chassis-assets
+git clone [[config:repo]].git chassis-assets
 cd chassis-assets
 ```
 
-Alternatively, for existing projects, you can add it as a Git submodule to keep it synchronized with your main project:
+To use the assets in a project of yours, add the repository to it as a Git submodule instead:
 
 ```bash
-# Add as Git submodule to your project
-git submodule add https://github.com/chassis-ui/assets.git assets
+git submodule add [[config:repo]].git assets
 cd assets
 ```
 
-### Install Dependencies
-
-The build itself needs no dependencies: `pnpm assets` runs on a fresh clone. Install them to run the tests, the checks and the documentation site:
+The build imports Node.js modules only, so it runs on a fresh clone with nothing installed. Install the dependencies to run the tests, the checks and the documentation site:
 
 ```bash
-# Install using pnpm
 pnpm install
 ```
 
-## Add Assets to the Repository
+## Build the output
 
-After installation, you can begin adding your design assets to the repository. Chassis Assets uses a hierarchical structure that supports multiple brands and applications while minimizing duplication through shared defaults.
+Run the build from the repository root. It reads the brands and the apps of the `chassis` block of `package.json`, and writes one folder per job.
 
+```bash
+pnpm assets
 ```
+
+Use the filters to build a part of it, and `--dry-run` to see the jobs without writing a file. Each filter takes one or more values.
+
+```bash
+pnpm assets --brand chassis          # one brand
+pnpm assets --app docs               # one app
+pnpm assets --platform ios android   # two platforms
+pnpm assets --dry-run                # print the jobs, write nothing
+```
+
+The build writes the output to `dist/<platform>/<app>/<brand>/`. With the configuration of this repository:
+
+```text
+dist/
+├── web/
+│   └── docs/
+│       ├── chassis/      -> kebab-case names
+│       │   ├── fonts/
+│       │   ├── icons/
+│       │   ├── images/
+│       │   └── other/
+│       └── example/
+├── ios/
+│   └── demo/
+│       ├── chassis/      -> snake_case names
+│       └── example/
+└── android/
+    └── demo/
+        ├── chassis/      -> snake_case names, density folders, ic_ prefix
+        └── example/
+```
+
+`dist/` is not committed. The [build system]([[docsref:/getting-started/build-system]]) page describes every command and option.
+
+## Add a file
+
+A file added to `source/` is in the output of the next build. No list or configuration names it.
+
+1. Export the file from the design tool, named in lowercase with hyphens.
+2. Put it in `source/default/<app>/<type>/` when every brand gets it, or in `source/<brand>/<app>/<type>/` when it belongs to one brand.
+3. Run `pnpm assets:lint:source` to check the name, and `pnpm assets` to build.
+4. Find the file in `dist/`, under the name of each platform.
+5. Commit the file of `source/` with a changeset from `pnpm changeset`.
+
+```text
 source/
-├── default/              -> Shared assets (used by all brands)
-│   ├── docs/             -> Documentation application
+├── default/              -> the default brand, used by every brand
+│   ├── docs/             -> an app
 │   │   ├── fonts/
 │   │   ├── images/
 │   │   ├── icons/
-│   │   └── ...
-│   └── demo/             -> Demo application
-│       ├── fonts/
-│       ├── images/
-│       ├── icons/
-│       └── ...
-└── [brand]/              -> Brand-specific overrides
+│   │   └── other/        -> any other folder is a type too
+│   └── demo/
+└── example/              -> a brand: only the files that differ
     ├── docs/
     └── demo/
 ```
 
-**Key principles when adding assets:**
+A brand file replaces the default file of the same path. To give a brand a file of its own, add it to the folder of the brand under the same subfolder and name.
 
-- Place shared assets in `source/default/` to serve as fallbacks for all brands
-- Create brand-specific overrides only when assets differ from defaults
-- Follow consistent naming conventions (lowercase letters, hyphens for word separation)
-- Organize assets by application context (docs, demo, etc.) and type (fonts, images, icons, etc.)
+The [design guidelines]([[docsref:/getting-started/design-guidelines]]) have the naming rules, and each type has a page: [fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]).
 
-### Asset Types
+## Use the output
 
-Chassis Assets supports multiple asset types, each with specific requirements and best practices. Refer to the detailed documentation for guidelines on exporting, optimizing, and organizing each type:
-
-For detailed guidelines on adding specific asset types, see:
-
-- **[Fonts]([[docsref:/asset-types/fonts]])** - Font files (WOFF2, TTF, OTF)
-- **[Images]([[docsref:/asset-types/images]])** - Photos, illustrations, graphics
-- **[Icons]([[docsref:/asset-types/icons]])** - Icon assets from Chassis Icons
-- **[Other Assets]([[docsref:/asset-types/other]])** - Videos, audio, documents, data files
-
-For general best practices and design principles, see [Design Guidelines]([[docsref:/getting-started/design-guidelines]]).
-
-## Build and Distribute
-
-Once your assets are added to the source directories, use the build system to generate platform-specific distributions. The build process automatically transforms assets to match each platform's naming conventions, file formats, and directory structures.
+A project reads the folder of one job. Copy it into the project, or point the project at it.
 
 ```bash
-# Build assets for all brands, applications and platforms
-pnpm assets
-
-# Build for a specific brand
-pnpm assets --brand chassis
-
-# Build for a specific application
-pnpm assets --app docs
-
-# Build for a specific platform
-pnpm assets --platform web
-
-# Print the jobs and their file counts without writing
-pnpm assets --dry-run
+cp -R dist/web/docs/chassis/. /path/to/project/public/assets/
 ```
 
-Each flag takes one or more values. A value that is not configured fails the build and names the configured values.
+The page of each platform shows what the folder holds and how an app loads the files:
 
-The build system generates one folder per platform, app and brand, with the naming conventions and formats of the platform:
+- [Web applications]([[docsref:/use-in-project/web-applications]])
+- [iOS applications]([[docsref:/use-in-project/ios-applications]])
+- [Android applications]([[docsref:/use-in-project/android-applications]])
 
-**Build output structure:**
+## Make it your own
 
-```
-dist/
-├── web/
-│   └── [app]/
-│       └── [brand]/      -> kebab-case filenames, e.g. dist/web/docs/chassis/
-│           ├── fonts/
-│           ├── images/
-│           ├── icons/
-│           └── ...
-├── ios/
-│   └── [app]/
-│       └── [brand]/      -> snake_case filenames with underscores
-│           └── ...
-└── android/
-    └── [app]/
-        └── [brand]/      -> snake_case filenames, density folders for images, ic_ prefix for icons
-            └── ...
-```
+Chassis Assets is meant to be owned by the team that adopts it. You change `source/`, the root `package.json` and `chassis.checks.json`. The build in `packages/assets/build/` names no brand, app or file, so there is nothing to change in it.
 
-The build system uses a modular processor architecture to transform assets for each platform. See the [Build System]([[docsref:/getting-started/build-system]]) documentation for details on how the build system works and how to customize it.
+### Brands and apps
 
-## Use Assets in Your Project
-
-After building assets, you can integrate them into your applications. The simplest approach is to copy the built assets from the `dist/` directory into your project's asset directories.
-
-### Copy Built Assets
-
-Manually copy built assets to your project, or create automation scripts to keep them synchronized:
-
-```bash
-# Copy web assets to your project
-cp -r dist/web/[app]/[brand]/* /path/to/project/public/assets/
-
-# Create a sync script in your project's package.json
-{
-  "scripts": {
-    "sync-assets": "cp -r ../chassis-assets/dist/web/docs/chassis/* public/assets/"
-  }
-}
-```
-
-### Platform Integrations
-
-Each platform has specific requirements for consuming assets. Refer to the platform-specific integration guides for detailed instructions, code examples, and best practices:
-
-- **[Web Applications]([[docsref:/use-in-project/web-applications]])** - Using assets in web projects (React, Vue, Next.js, etc.)
-- **[iOS Applications]([[docsref:/use-in-project/ios-applications]])** - Using asset catalogs and generated code in iOS
-- **[Android Applications]([[docsref:/use-in-project/android-applications]])** - Using drawable resources in Android
-
-## Package Customization
-
-When adopting Chassis Assets for your organization, customize the package metadata and configuration to match your project structure and requirements.
-
-### Update Package Metadata
-
-Adopting the repository changes `source/`, the root `package.json` and `chassis.checks.json`. The build in `packages/assets/build/` names no brand, app or file of yours, so there is nothing to change in it.
-
-Modify the metadata of the root `package.json` to reflect your organization's details. The release archives take their name from it: `acme-assets-workspace` gives `acme-assets-<platform>-<app>-<brand>-<version>.zip`.
-
-```json
-{
-  "name": "acme-assets-workspace",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-org/acme-assets.git"
-  },
-  ...
-}
-```
-
-The package that carries the version is `packages/assets/package.json`. It is private and never published, so its name can stay. When you rename it, rename it in the changesets of `.changeset/` too.
-
-### Configure Brands & Apps
-
-Define your specific brands and applications in the `chassis` configuration object within `package.json`. This determines which outputs the build system generates:
+Name your brands and apps in the `chassis` block of `package.json`. Each app lists the platforms it is built for.
 
 ```json
 {
@@ -213,122 +148,50 @@ Define your specific brands and applications in the `chassis` configuration obje
 }
 ```
 
-See the [Configuration]([[docsref:/getting-started/build-system#configuration]]) documentation for detailed information on configuring brands, apps, and build options.
+Then give `source/` the same names: a folder per app under `source/default/`, and a folder per brand for the files that differ. See [configuration]([[docsref:/getting-started/build-system#configuration]]).
 
-What the checks verify is in `chassis.checks.json`, beside `package.json`: `contracts`, the files your consumers read by name, and `lint.allow`, the source files that break a naming rule on purpose. The lists of this repository are those of the Chassis sites; replace them with yours, or delete the file. See [Checks file]([[docsref:/getting-started/build-system#checks-file]]).
+### Checks
 
-### Update Git Remote URL
+What the checks verify is in `chassis.checks.json`, beside `package.json`: `contracts`, the files your consumers read by name, and `lint.allow`, the source files that break a naming rule on purpose. The lists of this repository are those of the Chassis sites. Replace them with yours, or delete the file. See [checks file]([[docsref:/getting-started/build-system#checks-file]]).
 
-If you've moved the repository to a different organization or renamed it, update the Git remote URL:
+### Package metadata
 
-```bash
-git remote set-url origin https://github.com/your-org/chassis-assets.git
+Change the name and the repository URL of the root `package.json`. The release archives take their name from it: `acme-assets-workspace` gives `acme-assets-<platform>-<app>-<brand>-<version>.zip`.
+
+```json
+{
+  "name": "acme-assets-workspace",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/acme-assets.git"
+  }
+}
 ```
 
-## Common Workflows
+The package that carries the version is `packages/assets/package.json`. It is private and never published, so its name can stay. When you rename it, rename it in the changesets of `.changeset/` too.
 
-These workflows demonstrate typical tasks you'll perform when managing assets in Chassis Assets.
-
-### Adding a New Asset
-
-Follow this workflow when adding new assets to the repository:
-
-1. Export asset from design tool (Figma, Sketch, etc.)
-2. Add to appropriate `source/` directory with proper naming
-3. Run build command to generate platform-specific outputs
-4. Commit the source files. `dist/` is not committed; every consumer builds it
-5. Copy built assets to your application project
-
-### Creating Brand Variations
-
-When you need to create brand-specific versions of assets, follow this workflow to maintain the override hierarchy:
-
-1. Start with assets in `source/default/`
-2. Create brand-specific directory: `source/[brand]/`
-3. Add only assets that differ from defaults
-4. Build to generate brand-specific distributions
-5. Deploy to brand-specific applications
-
-### Updating Existing Assets
-
-When modifying existing assets, ensure changes are properly built and distributed:
-
-1. Update source files in appropriate directory
-2. Rebuild assets: `pnpm assets`
-3. Review changes in `dist/` directory
-4. Update version number if needed
-5. Distribute updated assets to projects
-
-## Quick Reference
-
-Use this reference for quick access to common information about Chassis Assets structure and commands.
-
-### Directory Structure
-
-Key directories in the Chassis Assets repository:
-
-<CxTable>
-| Directory | Purpose |
-|-----------|---------|
-| `source/` | Source asset files organized by brand and app |
-| `dist/` | Built assets for each platform |
-| `packages/assets/build/` | Build scripts |
-| `packages/assets/test/` | The tests of the build |
-| `packages/site/` | Documentation website |
-| `docs/` | The architecture document of the build |
-| `package.json` | The `chassis` configuration and the commands |
-| `chassis.checks.json` | What the checks verify: the consumer contracts and the names the source lint keeps |
-</CxTable>
-
-### Common Commands
-
-Frequently used commands for managing and building assets:
+Point the clone at your own repository:
 
 ```bash
-pnpm install                        # Install dependencies
-pnpm assets                         # Build all assets
-pnpm assets --brand chassis         # Build specific brand
-pnpm assets --platform web          # Build web assets only
-pnpm assets --help                  # Every option of the build
-pnpm assets:verify                  # Check the output of a full build
-pnpm test                           # Run the tests of the build
-pnpm dev                            # Start documentation site
+git remote set-url origin https://github.com/your-org/acme-assets.git
 ```
 
-Every `pnpm assets*` command prints its options with `--help`.
+## Troubleshooting
 
-### Key Concepts
+### Build fails on pointers
 
-Fundamental concepts that drive the Chassis Assets architecture:
+The build stops with `<count> source file(s) are Git LFS pointers, not files`. The clone was made without Git LFS, so the fonts and the images are pointer files of a few lines. Install Git LFS, run `git lfs pull`, and build again.
 
-- **Multi-brand structure**: Shared defaults with brand-specific overrides
-- **Platform-specific builds**: Automatic transformation for Web, iOS, Android
-- **Token integration**: Assets reference Chassis Tokens for consistency
-- **Override order**: A brand file replaces the default file of the same name, app by app
+### Unknown brand
 
-## Next Steps
+The build stops with `Unknown brand "<name>". Configured: <names>`. A filter names a brand, an app or a platform that the `chassis` block of `package.json` does not have. Use one of the names the message lists.
 
-Continue your journey with Chassis Assets by exploring these related topics.
+### Missing output file
 
-### Learn the System
+The build passes and a file of `source/` is not in the folder of a job. The platform does not keep the format: a TTF font is not copied to the web, and a WebP image is not copied to iOS or Android. The page of the type has a table of the formats each platform gets.
 
-Deepen your understanding of Chassis Assets architecture and principles:
+## Next steps
 
-- **[Introduction]([[docsref:/getting-started/introduction]])** - Understand Chassis Assets architecture
-- **[Design Guidelines]([[docsref:/getting-started/design-guidelines]])** - Core principles and best practices
-
-### Manage Assets
-
-Learn how to work with specific asset types:
-
-- **[Fonts]([[docsref:/asset-types/fonts]])** - Add and manage font assets
-- **[Images]([[docsref:/asset-types/images]])** - Add and manage image assets
-- **[Icons]([[docsref:/asset-types/icons]])** - Integrate icon assets from Chassis Icons
-
-### Use in Projects
-
-Integrate distributed assets into your platform-specific applications:
-
-- **[Web Applications]([[docsref:/use-in-project/web-applications]])** - Integrate into web projects
-- **[iOS Applications]([[docsref:/use-in-project/ios-applications]])** - Integrate into iOS projects
-- **[Android Applications]([[docsref:/use-in-project/android-applications]])** - Integrate into Android projects
+- [Design guidelines]([[docsref:/getting-started/design-guidelines]]): the folders, the naming rules and the workflow of a designer.
+- [Build system]([[docsref:/getting-started/build-system]]): the commands, the configuration and the checks.
+- [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]) and [icons]([[docsref:/asset-types/icons]]): the rules of each type.

@@ -1,257 +1,151 @@
 ---
 title: Design Guidelines
-description: Best practices and guidelines for designers exporting and managing assets in the Chassis Assets system.
+description: Where a designer puts an exported file, how to name it, which formats each platform gets, and how the change reaches the repository.
 toc: true
 ---
 
-## Overview
+## Introduction
 
-This guide provides comprehensive guidelines for designers working with Chassis Assets. Follow these practices to ensure consistent, optimized, and properly organized assets across all brands and platforms.
+This page is for the designer who exports a file and adds it to the repository. It covers the folder a file goes to, the name it gets, the formats each platform keeps, and the commit that brings it in.
 
-### Design Philosophy
+You work in `source/` only. The build writes the names, the formats and the folders of each platform from what you put there, and nothing under `dist/` is edited by hand.
 
-Chassis Assets is built on the principle that design systems must serve multiple brands efficiently without sacrificing brand identity. Assets are managed in a platform-neutral source format and automatically transformed for each target platform.
+## Prerequisites
 
-- **Shared by default**: Common assets live in `source/default/` to minimize duplication
-- **Override when needed**: Brand-specific assets override defaults only when they differ
-- **Single source of truth**: Each asset exists once, reducing maintenance burden and repository size
-- **Automatic conventions**: Platform-specific naming and formats are handled by the build system
+You need Git and [Git LFS](https://git-lfs.com). Fonts and raster images are Git LFS files: run `git lfs install` once on your machine before you clone, so that you get the files and not their pointers. A Git client with a window, such as GitHub Desktop, works as well as the command line.
 
-This approach allows teams to scale from a single brand to dozens without exponentially increasing complexity.
+To build the output and look at it before you commit, you also need Node.js and pnpm, see the [quick start]([[docsref:/getting-started/quick-start]]).
 
-## File Organization
+## Source layout
 
-Assets are organized in a hierarchical structure:
+Every file has a brand, an app and a type, and its path says all three.
 
-```
+```text
 source/
-├── default/          -> Shared assets for all brands (fallback)
-│   ├── [app]/        -> Application-specific folders (e.g., docs, test)
-│   │   └── [type]/   -> Asset type folders (e.g., fonts, images, icons)
-│   └── ...           -> Other applications
-└── [brand]/          -> Brand-specific overrides
-    └── [app]/        -> Application-specific folders
-        └── [type]/   -> Same structure as default for overrides
+├── default/          -> the default brand: files that every brand gets
+│   └── <app>/        -> one folder per app
+│       └── <type>/   -> fonts, images, icons, or any other folder
+└── <brand>/          -> one folder per brand: only the files that differ
+    └── <app>/
+        └── <type>/
 ```
 
-**Key concepts:**
+The brands and the apps are those of the `chassis` block of `package.json`. A folder that the configuration does not name is not read by the build, and the source lint warns about it.
 
-- **Default folder**: Contains assets shared across all brands
-- **Brand folders**: Override defaults with brand-specific versions
-- **App folders**: Separate assets by application context
-- **Type folders**: Organize by asset type (fonts, images, icons)
+### Overrides
 
-### Override System
+A brand file replaces the default file of the same path. For each brand, the build takes the files of `source/default/<app>/` first and then the files of `source/<brand>/<app>/` over them.
 
-The build system automatically resolves assets by checking for brand-specific versions first, then falling back to defaults. This priority order ensures brand customization while avoiding duplication:
+Add a file to a brand only when it differs from the default one. A logo that every brand shares belongs in `source/default/`, once, and a brand with a logo of its own adds a file with the same subfolder and the same name to its folder.
 
-1. **Brand-specific asset**: `source/[brand]/[app]/[type]/file.ext`
-2. **Default asset**: `source/default/[app]/[type]/file.ext`
+## Naming
 
-Only add brand-specific versions when they actually differ from defaults. For example, if all brands use the same logo, place it in `source/default/` rather than duplicating it in each brand folder.
+A name in `source/` is made of lowercase letters, digits and hyphens, with a lowercase extension. Each platform renames the file from there: the web keeps the hyphens, iOS and Android get underscores.
 
-### Naming Conventions
+✅ **Separate words with hyphens:** `hero-background.jpg`.
 
-Consistent naming conventions are crucial for the build system to correctly process and distribute assets across platforms. Use these conventions in your **source files**—the build system automatically applies platform-specific naming (such as snake_case for iOS/Android) during distribution.
+✅ **Name a file after what it shows or does:** `illustration-onboarding.svg`, not `image1.svg`.
 
-**Do:**
+✅ **Put the color mode at the end of the name:** `comp-gallery-light.png` and `comp-gallery-dark.png`.
 
-- ✅ Use lowercase letters
-- ✅ Use hyphens to separate words: `hero-background.jpg`
-- ✅ Be descriptive: `illustration-onboarding-step-1.svg`
-- ✅ Include variant suffixes: `logo-light.svg`, `logo-dark.svg`
-- ✅ Include resolution variants: `hero-image.png`, `hero-image@2x.png`, `hero-image@3x.png`
+✅ **End a variant with its indicator:** `hero-image.png`, `hero-image@2x.png`, `hero-image@3x.png`.
 
-**Don't:**
+❌ **Do not use spaces, capitals or underscores:** `Hero Background.jpg` and `hero_background.jpg` fail the source lint.
 
-- ❌ Use spaces: `Hero Background.jpg`
-- ❌ Use underscores: `hero_background.jpg`
-- ❌ Use special characters: `hero@background.jpg`
-- ❌ Use generic names: `image1.jpg`, `icon.svg`
+❌ **Do not put a dot or an indicator inside a name:** `hero.v2.png` and `hero@2x-final.png` fail the source lint.
 
-## Asset Types
+❌ **Do not put the brand in the name:** the folder says it, and a brand file has to have the name of the default file to replace it.
 
-For detailed specifications, refer to the dedicated documentation for each asset type:
+The source lint checks these rules on every pull request. Run it yourself with `pnpm assets:lint:source`.
 
-### Font Files
+## Formats
 
-Font files with proper format support for web, iOS, and Android platforms. Includes integration with Chassis Tokens typography system.
+Export the formats of the platforms that the app is built for. The build leaves a format out where the platform does not use it, and does not convert one into another.
 
-#### Recommended formats
+### Fonts
+
+Fonts go to `fonts/`, named by role, with their license beside them.
 
 <CxTable>
-| Platform | Recommended | Supported | Notes |
-|----------|-------------|-----------|-------|
-| Web | WOFF2 | WOFF | TTF and OTF are not copied to the web output |
-| iOS | TTF, OTF | TTF, OTF | WOFF and WOFF2 are not copied to iOS |
-| Android | TTF | TTF, OTF | Place in `res/font/`. WOFF and WOFF2 are not copied to Android |
+| Platform | Gets | Does not get |
+| --- | --- | --- |
+| Web | WOFF2, WOFF, and the stylesheets of the folder | TTF, OTF |
+| iOS | TTF, OTF | WOFF2, WOFF, stylesheets |
+| Android | TTF, OTF | WOFF2, WOFF, stylesheets |
 </CxTable>
 
-Go to [Font Guidelines]([[docsref:/asset-types/fonts]]) for detailed font management practices.
+See [fonts]([[docsref:/asset-types/fonts]]) for the role names and the license files.
 
-### Image Files
+### Images
 
-Bitmap graphics including photos, illustrations, and UI elements with resolution variants for different display densities.
-
-#### Recommended formats
+Images go to `images/`, in any subfolders, with the variants an app needs.
 
 <CxTable>
-| Platform | Primary | Alternatives | Use Case |
-|----------|---------|--------------|----------|
-| Web | WebP | PNG, JPG, SVG | WebP for compression, SVG for icons |
-| iOS | PNG | JPG, SVG | WebP is not copied to iOS |
-| Android | PNG | JPG, SVG | WebP is not copied to Android. Files with `@2x` and `@3x` go to density folders |
+| Platform | Gets | Does not get |
+| --- | --- | --- |
+| Web | Every format | |
+| iOS | Every format but WebP, with the indicator in the name | WebP |
+| Android | Every format but WebP, in density folders | WebP |
 </CxTable>
 
-Go to [Image Guidelines]([[docsref:/asset-types/images]]) for detailed image management practices.
+See [images]([[docsref:/asset-types/images]]) for the variants and the density folders.
 
-### Icon libraries
+### Icons
 
-Distribution of icon assets generated by Chassis Icons, including SVG sprites, icon fonts, and CSS files.
-
-#### Recommended formats
+Icons go to `icons/` as the build output of Chassis Icons. You do not export them into this repository one by one.
 
 <CxTable>
-| Platform | Primary | Alternatives | Use Case |
-|----------|---------|--------------|----------|
-| Web | SVG | Any | Every file under `icons/` is copied |
-| iOS | PDF, SVG | PNG (@2x/@3x) | PDF for Asset Catalogs. Other formats are not copied to iOS |
-| Android | SVG | — | Copied as SVG with the `ic_` prefix. Convert to vector drawables in the app; other formats are not copied to Android |
+| Platform | Gets | Does not get |
+| --- | --- | --- |
+| Web | Every file | |
+| iOS | SVG, PDF, PNG | The icon font and its stylesheets |
+| Android | SVG, with the `ic_` prefix | Every other format |
 </CxTable>
 
-Go to [Icon Guidelines]([[docsref:/asset-types/icons]]) for detailed icon management practices.
+See [icons]([[docsref:/asset-types/icons]]) for how the copy is refreshed.
 
-### Other Assets
+### Other files
 
-Additional asset types including videos, audio files, documents, and data files needed across applications.
+Any other folder under an app, such as `videos/` or `data/`, is copied to every platform in every format. See [other assets]([[docsref:/asset-types/other]]).
 
-Go to [Other Asset Guidelines]([[docsref:/asset-types/other]]) for detailed management practices.
+## Adding a file
 
-## Git Workflow
+A change to the assets is a commit on a branch, reviewed in a pull request against `develop`.
 
-Maintain a clean history and facilitate collaboration through pull requests with clear and descriptive commit messages.
-
-This repository uses [Git LFS](https://git-lfs.com) to store binary assets (fonts and images). Run `git lfs install` once on your machine before cloning or pulling to ensure LFS pointers are resolved correctly.
-
-- Use a Git GUI tool (e.g., [GitHub Desktop](https://desktop.github.com/), [SourceTree](https://www.sourcetreeapp.com/)) for visual staging and commit management
-- Create branches from `develop` for new features or asset additions (e.g., `feature/onboarding-assets`), and open pull requests against `develop`. The maintainers push the commits that passed CI to `staging`, `main` and `app/docs`
-- Stage only relevant asset files to avoid committing unrelated changes
-- Write descriptive commit messages that explain the purpose of the asset changes (e.g., "Add onboarding illustration for web")
-
-### Adding New Assets
-
-Add new assets to the appropriate source directory following the naming conventions:
+1. Create a branch from `develop`.
+2. Export the file from the design tool into its folder under `source/`.
+3. Run `pnpm assets:lint:source` to check the name, and `pnpm assets` to see the file in `dist/`.
+4. Add a changeset with `pnpm changeset`. It names the files that the change adds to `dist/`, removes from it or renames.
+5. Commit the files of `source/` and the changeset, and open a pull request against `develop`.
 
 ```bash
-# 1. Create/update asset in design tool
-# 2. Export to source directory
-# 3. Stage changes
-git add source/default/docs/images/onboarding.svg
-
-# 4. Commit with descriptive message
-git commit -m "Add onboarding illustration"
-
-# 5. Push to remote
-git push origin feature/onboarding
+git checkout -b feature/onboarding-assets develop
+pnpm assets:lint:source
+pnpm assets
+pnpm changeset
+git add source/default/docs/images/onboarding.svg .changeset
+git commit -m "feat: add the onboarding illustration"
+git push origin feature/onboarding-assets
 ```
 
-### Brand-Specific Assets
+`dist/` is not committed. Every consumer builds it from the source.
 
-Create brand overrides only when assets differ from defaults:
+## Best practices
 
-```bash
-# Add brand override
-git add source/brand-a/docs/images/onboarding.svg
-git commit -m "Add Brand A onboarding illustration"
-git push
-```
+✅ **Check the license before adding a font or a stock image:** a font keeps its license beside it as `text-license.txt`, `display-license.txt` or `code-license.txt`.
 
-### Review Process
+✅ **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them.
 
-The review process ensures that all new assets meet quality standards and adhere to guidelines.
+✅ **Commit the exported file only:** design sources, such as a `.fig` or a `.sketch` file, do not belong in `source/`. Every file of a type folder is copied to the output.
 
-1. Create pull request with assets
-2. Request review from design system team
-3. Address feedback
-4. Merge after approval
+✅ **Stage only the files of the change:** a commit with unrelated exports is hard to review and to revert.
 
-## Best Practices
+❌ **Do not copy a default file into a brand folder unchanged:** the brand gets the default file anyway, and the copy has to be kept in step by hand.
 
-Follow these common patterns for asset organization and naming to maintain consistency.
+❌ **Do not edit the icon folders by hand:** `icons/icons/` and `icons/svgs/` are replaced by the next copy from Chassis Icons.
 
-### Directory Structure
+## Next steps
 
-The directory structure provides context; filenames should be descriptive but not redundant.
-
-✅ **Correct:**
-
-```
-source/brand-a/docs/images/hero.jpg   -> Full context in path
-```
-
-❌ **Wrong:**
-
-```
-source/images/hero.jpg                -> Missing brand and app context
-source/brand-a/hero.jpg               -> Missing app folder
-source/default/brand-a-hero.jpg       -> Incorrect: brand name in filename
-```
-
-### Semantic Naming
-
-Names should describe what the asset represents, not its visual appearance.
-
-✅ **Correct:**
-
-```
-hero-background.jpg                   -> Describes purpose
-illustration-onboarding.png           -> Clear context
-button-primary.svg                    -> Semantic meaning
-```
-
-❌ **Wrong:**
-
-```
-image1.jpg                            -> Not descriptive
-My Image.png                          -> Contains spaces
-red_button.svg                        -> Describes appearance, not purpose
-```
-
-### File Duplication
-
-Only create brand-specific versions when the asset actually differs.
-
-✅ **Correct:**
-
-```
-source/default/docs/images/logo.svg   -> Single shared version
-```
-
-❌ **Wrong:**
-
-```
-source/default/docs/images/some-logo.svg
-source/brand-a/docs/images/some-logo.svg   -> Identical copy
-source/brand-b/docs/images/some-logo.svg   -> Identical copy
-```
-
-### Pre-Commit Checklist
-
-Before committing assets to the repository:
-
-- Files follow naming conventions (lowercase, hyphens, descriptive)
-- Assets are placed in correct directory structure
-- Files are optimized for size and performance
-- Resolution variants are provided where appropriate
-- Assets work in both light and dark modes (if applicable)
-- Licenses verified for distribution, and the license of a font family added beside the fonts as `text-license.txt`, `display-license.txt` or `code-license.txt`
-- No unnecessary files or design sources are included
-- Git commit message clearly describes the changes
-
-## Related Resources
-
-- [Font Assets]([[docsref:/asset-types/fonts]]) - Font guidelines
-- [Image Assets]([[docsref:/asset-types/images]]) - Image guidelines
-- [Icons]([[docsref:/asset-types/icons]]) - Icon guidelines
-- [Other Assets]([[docsref:/asset-types/other]]) - Other asset guidelines
-- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web usage
+- [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]): the rules of each type.
+- [Build system]([[docsref:/getting-started/build-system]]): the commands and what each one checks.
+- [Contributing guide]([[config:repo]]/blob/main/.github/CONTRIBUTING.md): branches, commits, changesets and reviews.

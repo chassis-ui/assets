@@ -1,923 +1,484 @@
 ---
 title: Android Applications
-description: Integrate Chassis design assets into Android applications using Kotlin and Java.
+description: Where the Android output of Chassis Assets is, how its fonts, images and icons are named, and how to copy them into the res/ folder of an app.
 toc: true
 ---
 
 <Callout type="warning" name="created-by-ai" />
 
-## Overview
+## Introduction
 
-Chassis Assets is a **multi-brand build system** that generates platform-specific assets from a single source. Define your assets once, then automatically build variants for multiple brands and applications.
+The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. In the committed configuration the Android app is `demo` and the brands are `chassis` and `example`; your own configuration has other names in the same places.
 
-### Key Benefits
+```text
+dist/android/demo/chassis/
+├── fonts/
+│   ├── text_normal.otf
+│   ├── text_license.txt
+│   └── ...
+├── images/
+│   ├── drawable/
+│   │   └── chassis_logo_shadow.png
+│   └── drawable-xhdpi/
+│       └── chassis_logo_shadow.png
+└── icons/
+    └── svgs/
+        ├── ic_arrow_right_solid.svg
+        └── ...
+```
 
-Chassis Assets enables efficient multi-brand Android development:
+<CxTable>
+| Type | What Android gets | Names |
+| --- | --- | --- |
+| Fonts | TTF and OTF files, and the license of each font | snake_case |
+| Images | Every format but WebP, in density folders | snake_case, indicator removed |
+| Icons | SVG files only | snake_case with the `ic_` prefix |
+| Any other folder | Every file | snake_case |
+</CxTable>
 
-- **Single Source, Multiple Brands**: Maintain one asset repository, build for unlimited brands/apps
-- **Automated Builds**: Generate brand-specific assets with simple CLI commands
-- **Native Android Formats**: PNG density variants, SVG icons to convert to vector drawables
-- **Automatic Naming**: Converted to Android conventions (lowercase, underscores)
-- **Density Support**: mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi
-- **CI/CD Ready**: Integrate seamlessly into automated build pipelines
+<Callout type="warning">
+The output is not a `res/` folder. The build copies files: it does not convert an SVG to a vector drawable, and it keeps the subfolders of `images/`, which `res/` does not allow. You copy the files you need into `res/`, and import the SVG files with Android Studio.
+</Callout>
 
 ## Installation
 
-Chassis Assets is a build system that generates platform-specific assets from your source files.
+An app gets the files in one of three ways: from a release archive, from a Git submodule that it builds, or from a build in a clone. The samples of this page read the output from `chassis-assets/dist/android/demo/`, with the repository in the folder `chassis-assets/` at the root of the Android project.
 
-### Clone or Add as Submodule
+### Release archive
 
-Clone the repository or add it as a Git submodule to your project:
+A release archive holds the output of one platform, one app and one brand, and needs neither Node.js nor Git LFS. From version 0.2.0 on, each [GitHub release]([[config:repo]]/releases) has one archive per job attached, named `chassis-assets-<platform>-<app>-<brand>-<version>.zip`. The archive holds the content of `dist/<platform>/<app>/<brand>/` at its top level, so unpack it into a folder named after the brand:
 
 ```bash
-# Clone standalone
-git clone https://github.com/chassis-ui/assets.git chassis-assets
+unzip "chassis-assets-android-demo-chassis-<version>.zip" -d chassis-assets-dist/chassis
+```
+
+### Git submodule
+
+A submodule pins the app to one commit of the assets and lets the app build them itself. You need Node.js 22.12 or later, pnpm, and Git LFS, which holds the fonts and the raster images.
+
+```bash
+git lfs install
+git submodule add [[config:repo]].git chassis-assets
 cd chassis-assets
-
-# Or add as Git submodule
-git submodule add https://github.com/chassis-ui/assets.git assets
-cd assets
-```
-
-### Install Dependencies
-
-```bash
-pnpm install
-```
-
-### Build Assets
-
-Generate platform-specific distributions:
-
-```bash
-# Build all assets for all platforms
-pnpm assets
-
-# Build Android assets for all brands/apps
 pnpm assets --platform android
-
-# Build Android assets for specific brand-app combination
-pnpm assets --platform android --brand chassis --app demo
 ```
 
-<Callout type="info">
-Apps are configured per platform in `package.json`. Check your `chassis.build.apps` configuration to see which apps support which platforms.
-</Callout>
+### Build from a clone
 
-## Package Structure
-
-Chassis Assets uses a **source → build → distribute** workflow. Source assets support multiple brands, and the build system generates platform-specific distributions for each brand/app combination.
-
-```
-chassis-assets/
-├── source/                     -> Source assets (multi-brand)
-│   ├── default/                -> Default/fallback brand
-│   │   ├── docs/
-│   │   └── demo/               -> Demo app assets
-│   ├── chassis/                -> Chassis brand overrides
-│   └── example/                -> Example brand overrides
-└── dist/                       -> Generated distributions
-    └── android/
-        ├── demo/
-        │   ├── chassis/        -> Built: demo app, chassis brand
-        │   │   ├── fonts/
-        │   │   │   ├── text_normal.otf
-        │   │   │   ├── display_elegant.otf
-        │   │   │   └── text_license.txt
-        │   │   ├── images/
-        │   │   │   ├── drawable/
-        │   │   │   │   └── hero_background.png
-        │   │   │   └── drawable-xhdpi/
-        │   │   │       └── hero_background.png
-        │   │   └── icons/
-        │   │       └── svgs/
-        │   │           ├── ic_menu_solid.svg
-        │   │           └── ic_search_solid.svg
-        │   └── example/        -> Built: demo app, example brand
-        │       ├── fonts/
-        │       ├── images/
-        │       └── icons/
-        └── mobile-app/
-            └── brand-a/        -> Built: custom app, custom brand
-                ├── fonts/
-                ├── images/
-                └── icons/
-```
-
-<Callout type="info">
-Each brand inherits from `default/` and can selectively override specific assets. The build system automatically merges, converts filenames to lowercase with underscores, and generates platform-optimized distributions.
-</Callout>
-
-## Using Fonts
-
-### Add Fonts to Project
-
-1. Create `res/font/` directory
-2. Copy font files:
+A clone beside the app works the same way, and suits a team that changes the assets and the app together. The build imports Node.js modules only, so it runs without `pnpm install`.
 
 ```bash
-# From your Android project directory
-# Replace 'demo/chassis' with your app and brand
-cp ../chassis-assets/dist/android/demo/chassis/fonts/*.{ttf,otf} app/src/main/res/font/
+git clone [[config:repo]].git chassis-assets
+cd chassis-assets
+pnpm assets --platform android                              # every brand and app of the platform
+pnpm assets --platform android --brand chassis --app demo   # one job
 ```
 
-<Callout type="info">
-Font filenames use semantic naming (text_normal, display_elegant) that aligns with Chassis Tokens. Different brands use different actual fonts but the same filenames for consistency.
-</Callout>
+A build with a filter keeps the rest of `dist/`; add `--clean` to remove the folders of the selected jobs first. See the [build system page]([[docsref:/getting-started/build-system]]) for every option.
 
-### Create Font Family with Tokens
+## Output layout
 
-Your token build process should generate font family XML from design tokens:
+The job folder holds one folder per type of the app. The build writes `fonts/` flat, puts `drawable/` and the density folders under `images/` and under each of its subfolders, and keeps the subfolders of `icons/`.
+
+```text
+dist/android/demo/chassis/
+├── fonts/
+│   ├── code_license.txt
+│   ├── code_normal.ttf
+│   ├── display_license.txt
+│   ├── display_normal.otf
+│   ├── text_license.txt
+│   ├── text_normal.otf
+│   ├── text_normal_italic.otf
+│   ├── text_strong.otf
+│   └── ...
+├── icons/
+│   ├── icons/
+│   │   └── ic_chassis_icons.svg
+│   └── svgs/
+│       ├── ic_arrow_right_outline.svg
+│       ├── ic_arrow_right_solid.svg
+│       └── ...
+└── images/
+    ├── drawable/
+    │   ├── chassis_logo.svg
+    │   ├── chassis_logo_shadow.png
+    │   └── ...
+    ├── drawable-xhdpi/
+    │   └── chassis_logo_shadow.png
+    ├── home/
+    │   ├── drawable/
+    │   │   └── ...
+    │   └── drawable-xhdpi/
+    │       └── ...
+    └── logo/
+        ├── drawable/
+        │   ├── chassis_logo_brand.png
+        │   ├── chassis_logo_brand.svg
+        │   └── ...
+        ├── drawable-xhdpi/
+        │   ├── chassis_logo_brand.png
+        │   └── ...
+        └── drawable-xxhdpi/
+            ├── chassis_logo_brand.png
+            └── ...
+```
+
+### Copying to res
+
+A copy script moves the files that `res/` accepts as they are: the font files and the PNG images. It lists the folders of `images/` that the app uses, because `res/` has one `drawable/` folder and the output has one per subfolder. Add this script to the Android project as `scripts/sync-assets.sh`:
+
+```bash
+#!/bin/bash
+# scripts/sync-assets.sh <brand>
+set -euo pipefail
+
+BRAND="${1:-chassis}"
+ASSETS="${ASSETS_ROOT:-chassis-assets/dist/android/demo}/$BRAND"
+SRC="app/src/$BRAND"
+
+# Fonts go to res/font/, their licenses to assets/licenses/
+mkdir -p "$SRC/res/font" "$SRC/assets/licenses"
+cp "$ASSETS"/fonts/*.otf "$ASSETS"/fonts/*.ttf "$SRC/res/font/"
+cp "$ASSETS"/fonts/*_license.txt "$SRC/assets/licenses/"
+
+# The PNG files of each folder of images/ that the app uses
+for folder in images images/home images/logo; do
+  for density in "$ASSETS/$folder"/drawable*/; do
+    ls "$density"*.png >/dev/null 2>&1 || continue
+    mkdir -p "$SRC/res/$(basename "$density")"
+    cp "$density"*.png "$SRC/res/$(basename "$density")/"
+  done
+done
+```
+
+The script writes to the source set of the brand, `app/src/<brand>/`, which [Brand switching](#brand-switching) uses; an app with one brand sets `SRC` to `app/src/main`. With release archives, set `ASSETS_ROOT` to the folder that holds the unpacked brands:
+
+```bash
+./scripts/sync-assets.sh chassis                                   # from chassis-assets/dist/
+ASSETS_ROOT=chassis-assets-dist ./scripts/sync-assets.sh chassis   # from an unpacked archive
+```
+
+When two listed folders hold a PNG of the same name in the same density folder, the folder listed last wins.
+
+## Fonts
+
+The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `text_normal.otf` or `display_strong_italic.otf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
+
+### Font resources
+
+The copy script puts the font files in `res/font/`, where each one becomes a resource named after the file: `R.font.text_normal`. The licenses go to `assets/licenses/`, because `res/font/` accepts only font files and XML, and the app still has to ship the license with the font.
+
+### Font families
+
+A font family resource groups the files of one role, so a layout asks for the role and a weight. Add `res/font/text.xml` with one entry for each file the app uses:
 
 ```xml
-<!-- res/font/text.xml -->
-<!-- AUTO-GENERATED from Chassis Tokens - Do not edit manually -->
-<font-family xmlns:android="http://schemas.android.com/apk/res/android">
-    <font
-        android:fontStyle="normal"
-        android:fontWeight="400"  <!-- Injected from token: typography.fontWeight.text.normal -->
-        android:font="@font/text_normal" />
-    <font
-        android:fontStyle="normal"
-        android:fontWeight="600"  <!-- Injected from token: typography.fontWeight.text.strong -->
-        android:font="@font/text_strong" />
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font app:font="@font/text_normal" app:fontStyle="normal" app:fontWeight="400" />
+    <font app:font="@font/text_normal_italic" app:fontStyle="italic" app:fontWeight="400" />
+    <font app:font="@font/text_strong" app:fontStyle="normal" app:fontWeight="600" />
+    <font app:font="@font/text_strong_italic" app:fontStyle="italic" app:fontWeight="600" />
 </font-family>
 ```
 
-<Callout type="warning">
-The `android:fontWeight` values must be **literal integers** in the XML (no `@integer` references allowed). Your token build should generate this file with the correct values from `typography.fontWeight.text.*` tokens. Each brand gets a separate generated XML with different weight values.
-</Callout>
+The file name does not hold the weight. `normal` and `strong` are names of [Chassis Tokens](https://chassis-ui.com/tokens/), and the number behind each one is a choice of the brand: the `400` and `600` above are examples, so take the numbers from the tokens of your brand. The attribute needs a literal number, so a brand with other weights needs its own `text.xml` in `app/src/<brand>/res/font/`.
 
-### Generate Token Constants
+### Using a font
 
-Your token build should also generate Kotlin constants:
-
-```kotlin
-// ChassisTokens.kt - AUTO-GENERATED from Chassis Tokens
-object ChassisTokens {
-    // From token: typography.fontFamily.text
-    val FONT_FAMILY_TEXT = R.font.text
-
-    // From tokens: typography.fontWeight.text.* (example values)
-    const val FONT_WEIGHT_TEXT_NORMAL = 400
-    const val FONT_WEIGHT_TEXT_STRONG = 600
-}
-```
-
-### Use Fonts in Layouts
-
-**XML:**
+A view takes the family by its resource name, and Jetpack Compose builds a `FontFamily` from the same files. Use the family in a layout:
 
 ```xml
-<!-- The font family XML includes all weights -->
 <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="Hello World"
-    android:fontFamily="@font/text" />
+    android:fontFamily="@font/text"
+    android:text="@string/title" />
 ```
 
-### Use Fonts in Code
-
-**Kotlin:**
+Use the files in Jetpack Compose:
 
 ```kotlin
-// Using resource with token values
-val typeface = ResourcesCompat.getFont(context, ChassisTokens.FONT_FAMILY_TEXT)
-textView.typeface = typeface
+val TextFamily = FontFamily(
+    Font(R.font.text_normal, FontWeight.Normal),
+    Font(R.font.text_normal_italic, FontWeight.Normal, FontStyle.Italic),
+    Font(R.font.text_strong, FontWeight.SemiBold),
+    Font(R.font.text_strong_italic, FontWeight.SemiBold, FontStyle.Italic)
+)
 
-// For API 28+ set weight programmatically with token values
-if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-    textView.typeface = Typeface.create(
-        typeface,
-        ChassisTokens.FONT_WEIGHT_TEXT_STRONG,
-        false
-    )
-}
+Text(text = "Title", fontFamily = TextFamily, fontWeight = FontWeight.SemiBold)
 ```
 
-**Java:**
+## Images
 
-```java
-// Using resource with token values
-Typeface typeface = ResourcesCompat.getFont(context, ChassisTokens.FONT_FAMILY_TEXT);
-textView.setTypeface(typeface);
+The build copies every image format but WebP and sorts the files by their indicator. See [Images]([[docsref:/asset-types/images#platform-output]]) for the source layout and the variants.
 
-Typeface typeface = ResourcesCompat.getFont(context, R.font.inter);
-textView.setTypeface(typeface);
+### Density folders
 
-// From assets
-Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/inter_regular.ttf");
-textView.setTypeface(typeface);
+The build removes the indicator from the name and writes the file to the density folder that the indicator stands for, under the folder the image is in. An image without an indicator goes to `drawable/`.
+
+<CxTable>
+| Indicator | Folder |
+| --- | --- |
+| None | `drawable/` |
+| `@1x` | `drawable-mdpi/` |
+| `@1.5x` | `drawable-hdpi/` |
+| `@2x` | `drawable-xhdpi/` |
+| `@3x` | `drawable-xxhdpi/` |
+| `@4x` | `drawable-xxxhdpi/` |
+</CxTable>
+
+The source files `images/logo/chassis-logo-brand.png`, `chassis-logo-brand@2x.png` and `chassis-logo-brand@3x.png` of the app come out as one name in three folders:
+
+```text
+dist/android/demo/chassis/images/logo/
+├── drawable/
+│   └── chassis_logo_brand.png
+├── drawable-xhdpi/
+│   └── chassis_logo_brand.png
+└── drawable-xxhdpi/
+    └── chassis_logo_brand.png
 ```
 
-## Using Images
+The build does not resize: an image has the variants that the designer exported, and no others. Android reads a file of `drawable/` as an mdpi image and scales it up on a denser screen.
 
-### Add to Drawable Resources
+### Using an image
 
-Android organizes images by density. The build system automatically:
-
-- Places images **without** resolution indicators in `drawable/` (density-independent)
-- Places images **with** resolution indicators (@2x, @3x) in density-specific folders with stripped filenames
-
-**Copy from Chassis Assets distribution:**
-
-```bash
-# From your Android project directory
-# Replace 'demo/chassis' with your app and brand
-
-# Copy density-independent images (SVGs, PNGs without @2x)
-cp -r ../chassis-assets/dist/android/demo/chassis/images/drawable app/src/main/res/
-
-# Copy density-specific images (@2x → xhdpi, @3x → xxhdpi)
-cp -r ../chassis-assets/dist/android/demo/chassis/images/drawable-xhdpi app/src/main/res/
-cp -r ../chassis-assets/dist/android/demo/chassis/images/drawable-xxhdpi app/src/main/res/
-
-# A subfolder of images/ has its own density folders: copy those too
-cp -r ../chassis-assets/dist/android/demo/chassis/images/logo/drawable* app/src/main/res/
-```
-
-### Density Folders Structure
-
-After building, your distribution contains:
-
-```
-dist/android/demo/chassis/images/
-├── drawable/               # Density-independent (SVG, or no @2x variant)
-│   ├── chassis_logo.svg
-│   └── hero_background.png
-├── drawable-xhdpi/         # @2x images (320 dpi) - resolution stripped
-│   └── hero_background.png
-└── drawable-xxhdpi/        # @3x images (480 dpi) - resolution stripped
-    └── hero_background.png
-```
-
-**In your Android project:**
-
-```
-app/src/main/res/
-├── drawable/             # Vector drawables, density-independent images
-├── drawable-mdpi/        # 160 dpi (1x)
-├── drawable-hdpi/        # 240 dpi (1.5x)
-├── drawable-xhdpi/       # 320 dpi (2x)
-├── drawable-xxhdpi/      # 480 dpi (3x)
-└── drawable-xxxhdpi/     # 640 dpi (4x)
-```
-
-<Callout type="info">
-Resolution indicators (@2x, @3x) are **automatically stripped** from filenames and the images are placed in appropriate density folders. Reference them in code without the resolution indicator: `R.drawable.hero_background`
-</Callout>
-
-### Use Images in Layouts
-
-**XML:**
+After the copy script ran, the three files are one resource, `R.drawable.chassis_logo_brand`, and Android picks the file of the screen density. Use it in a layout:
 
 ```xml
 <ImageView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:src="@drawable/hero_background"
-    android:contentDescription="@string/hero_description"
-    android:scaleType="centerCrop" />
+    android:src="@drawable/chassis_logo_brand"
+    android:contentDescription="@string/logo" />
 ```
 
-### Use Images in Code
-
-**Kotlin:**
+Use it in Jetpack Compose:
 
 ```kotlin
-// Load drawable
-val drawable = ContextCompat.getDrawable(context, R.drawable.hero_background)
-imageView.setImageDrawable(drawable)
-
-// With tint
-val icon = ContextCompat.getDrawable(context, R.drawable.icon)
-icon?.setTint(ContextCompat.getColor(context, R.color.primary))
-imageView.setImageDrawable(icon)
-
-// Using Glide for async loading
-Glide.with(context)
-    .load(R.drawable.hero_background)
-    .into(imageView)
-
-// Using Coil
-imageView.load(R.drawable.hero_background) {
-    crossfade(true)
-    placeholder(R.drawable.placeholder)
-}
+Image(
+    painter = painterResource(R.drawable.chassis_logo_brand),
+    contentDescription = stringResource(R.string.logo)
+)
 ```
 
-**Java:**
+### SVG images
 
-```java
-// Load drawable
-Drawable drawable = ContextCompat.getDrawable(context, R.drawable.hero_background);
-imageView.setImageDrawable(drawable);
+The build copies an SVG image to `drawable/` as SVG, and `res/drawable/` does not accept that format, so the copy script leaves the SVG files out. Import the ones you need with Vector Asset Studio of Android Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then the file, for example `images/drawable/chassis_logo.svg` of the job folder. Android Studio writes `res/drawable/chassis_logo.xml`.
 
-// With tint
-Drawable icon = ContextCompat.getDrawable(context, R.drawable.icon);
-DrawableCompat.setTint(icon, ContextCompat.getColor(context, R.color.primary));
-imageView.setImageDrawable(icon);
+Several images of `images/logo/` exist as both PNG and SVG with one name, such as `chassis_logo_brand.png` and `chassis_logo_brand.svg`. A resource has one file per folder, so use one of the two formats for a name, or give the vector drawable another name in the dialog.
+
+### Night images
+
+The build has no rule for dark mode: an image for a dark background is a file of its own with its own name, such as `comp_gallery_dark.png` beside `comp_gallery_light.png` in `images/home/`. To let Android choose between the two, copy them to one resource name, the dark one into a folder with the `night` qualifier:
+
+```bash
+HOME_IMAGES="chassis-assets/dist/android/demo/chassis/images/home"
+RES="app/src/main/res"
+
+mkdir -p "$RES/drawable-xhdpi" "$RES/drawable-night-xhdpi"
+cp "$HOME_IMAGES/drawable-xhdpi/comp_gallery_light.png" "$RES/drawable-xhdpi/comp_gallery.png"
+cp "$HOME_IMAGES/drawable-xhdpi/comp_gallery_dark.png" "$RES/drawable-night-xhdpi/comp_gallery.png"
 ```
 
-## Using Icons
+The app then reads `R.drawable.comp_gallery` in both modes.
 
-### Vector Drawables (Recommended)
+## Icons
 
-The build gives Android the SVG files of `icons/`, with the `ic_` prefix, under `icons/svgs/`. Import them with Android Studio's Vector Asset tool (File → New → Vector Asset → Local file), or convert them with `svg2vectordrawable`, to get Vector Drawable XML like this:
+The build keeps only the SVG files under `icons/`. It adds the `ic_` prefix to a name that does not have it, and renames the files to snake_case. See [Icons]([[docsref:/asset-types/icons#platform-output]]) for where the icons come from.
 
-**res/drawable/ic_menu.xml:**
+```text
+dist/android/demo/chassis/icons/
+├── icons/
+│   └── ic_chassis_icons.svg
+└── svgs/
+    ├── ic_arrow_right_outline.svg
+    ├── ic_arrow_right_solid.svg
+    ├── ic_bars_outline.svg
+    ├── ic_bars_solid.svg
+    └── ...
+```
+
+The files of `icons/svgs/` are the icons, one file per icon and style. `icons/icons/ic_chassis_icons.svg` is the SVG sprite of [Chassis Icons](https://chassis-ui.com/icons/), which an Android app has no use for.
+
+### Vector drawables
+
+An Android app draws an icon from a vector drawable, which you make from the SVG file with Vector Asset Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then a file of `icons/svgs/`. Keep the name that the dialog proposes, so the resource has the name of the file: `ic_arrow_right_solid.svg` becomes `res/drawable/ic_arrow_right_solid.xml`. Import the icons the app uses, not the whole folder, and import an icon again when its SVG changes.
+
+### Using an icon
+
+A vector drawable is a drawable resource like an image, and takes its color from a tint. Use it in a layout:
 
 ```xml
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="?attr/colorControlNormal">
-    <path
-        android:fillColor="@android:color/white"
-        android:pathData="M3,6h18v2H3V6zM3,11h18v2H3V11zM3,16h18v2H3V16z"/>
-</vector>
-```
-
-### Use Icons in Layouts
-
-**XML:**
-
-```xml
-<!-- ImageView -->
 <ImageView
     android:layout_width="24dp"
     android:layout_height="24dp"
-    android:src="@drawable/ic_menu"
-    android:contentDescription="@string/menu"
-    app:tint="?attr/colorPrimary" />
-
-<!-- ImageButton -->
-<ImageButton
-    android:id="@+id/menuButton"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:src="@drawable/ic_menu"
-    android:contentDescription="@string/menu"
-    android:background="?attr/selectableItemBackgroundBorderless"
+    android:src="@drawable/ic_arrow_right_solid"
+    android:contentDescription="@string/next"
     app:tint="?attr/colorOnSurface" />
 ```
 
-### Use Icons in Code
-
-**Kotlin:**
+Use it in Jetpack Compose:
 
 ```kotlin
-// Set icon
-val icon = ContextCompat.getDrawable(context, R.drawable.ic_menu)
-imageView.setImageDrawable(icon)
-
-// With tint
-imageView.setImageResource(R.drawable.ic_menu)
-ImageViewCompat.setImageTintList(
-    imageView,
-    ColorStateList.valueOf(ContextCompat.getColor(context, R.color.primary))
+Icon(
+    painter = painterResource(R.drawable.ic_arrow_right_solid),
+    contentDescription = stringResource(R.string.next),
+    tint = MaterialTheme.colorScheme.onSurface
 )
-
-// In menu
-override fun onCreateOptionsMenu(menu: Menu): Boolean {
-    menuInflater.inflate(R.menu.main_menu, menu)
-    menu.findItem(R.id.action_search)?.setIcon(R.drawable.ic_search)
-    return true
-}
 ```
 
-### Icon Button Component
+## Other assets
 
-**Kotlin:**
+The build copies any other folder of the app whole, with its subfolders, and renames its files to snake_case; a dot inside a name becomes an underscore too. The committed `demo` app has no such folder. A source file `data/brand.tokens.json` would come out as `dist/android/<app>/<brand>/data/brand_tokens.json`.
 
-```kotlin
-// Custom IconButton
-class IconButton @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null
-) : AppCompatImageButton(context, attrs) {
+Copy such a file to `res/raw/` to read it as `R.raw.brand_tokens`, or copy the folder to `app/src/main/assets/` to keep its subfolders and read a file by its path. See [Other assets]([[docsref:/asset-types/other]]) for what the folder can hold.
 
-    init {
-        background = ContextCompat.getDrawable(
-            context,
-            R.drawable.selectable_item_background
-        )
-        val padding = resources.getDimensionPixelSize(R.dimen.icon_button_padding)
-        setPadding(padding, padding, padding, padding)
-    }
+## Brand switching
 
-    fun setIcon(@DrawableRes iconRes: Int, @ColorRes tintRes: Int? = null) {
-        setImageResource(iconRes)
-        tintRes?.let {
-            ImageViewCompat.setImageTintList(
-                this,
-                ColorStateList.valueOf(ContextCompat.getColor(context, it))
-            )
-        }
-    }
-}
+Every brand of `chassis.build.brands` has a job folder with the same file names, so an app changes brand by changing the folder it copies from. A brand file replaces the default file of the same path in the build; the names stay, and the code of the app does not change.
 
-// Usage
-val iconButton = IconButton(context)
-iconButton.setIcon(R.drawable.ic_menu, R.color.primary)
-```
+### Product flavors
 
-## Dark Mode Support
-
-### Using Night Resources
-
-Create dark mode variants:
-
-```
-res/
-├── drawable/             # Light mode
-│   └── logo_main.xml
-└── drawable-night/      # Dark mode
-    └── logo_main.xml
-```
-
-### Dynamic Color Selection
-
-**colors.xml (light):**
-
-```xml
-<resources>
-    <color name="logo_color">#000000</color>
-</resources>
-```
-
-**colors.xml (dark):**
-
-```xml
-<!-- res/values-night/colors.xml -->
-<resources>
-    <color name="logo_color">#FFFFFF</color>
-</resources>
-```
-
-### Check Theme in Code
-
-**Kotlin:**
-
-```kotlin
-fun isDarkMode(context: Context): Boolean {
-    val mode = context.resources.configuration.uiMode and
-            Configuration.UI_MODE_NIGHT_MASK
-    return mode == Configuration.UI_MODE_NIGHT_YES
-}
-
-// Use appropriate logo
-val logoRes = if (isDarkMode(context)) {
-    R.drawable.logo_light
-} else {
-    R.drawable.logo_dark
-}
-imageView.setImageResource(logoRes)
-```
-
-## Multi-Brand Automation
-
-Chassis Assets is built for **automated multi-brand workflows**. This section covers build automation, CI/CD integration, and runtime brand management—the core functionality that makes managing multiple brands from a single source possible.
-
-### Build Assets for Multiple Brands
-
-The core workflow: build brand-specific assets, then copy them to your Android project.
-
-**Build assets for a specific brand:**
-
-```bash
-cd chassis-assets
-pnpm assets --platform android --brand chassis --app demo
-```
-
-**Create a sync script for automation:**
-
-```bash
-#!/bin/bash
-# scripts/sync-assets.sh
-
-BRAND="${1:-chassis}"
-APP="${2:-demo}"
-CHASSIS_ASSETS_PATH="../chassis-assets"
-PROJECT_PATH="./app/src/main"
-
-echo "Building and syncing assets for $BRAND-$APP..."
-
-# Build assets
-echo "Building Chassis Assets..."
-(
-    cd "$CHASSIS_ASSETS_PATH" && \
-    pnpm assets --platform android --brand "$BRAND" --app "$APP"
-)
-
-# Copy fonts
-echo "Copying fonts..."
-mkdir -p "$PROJECT_PATH/res/font"
-cp -r "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/fonts/"* \
-   "$PROJECT_PATH/res/font/"
-
-# Copy images from density folders
-echo "Copying images..."
-# Copy density-independent images (drawable/)
-if [ -d "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images/drawable" ]; then
-    mkdir -p "$PROJECT_PATH/res/drawable"
-    cp -r "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images/drawable/"* \
-       "$PROJECT_PATH/res/drawable/" 2>/dev/null || true
-fi
-
-# Copy density-specific images (drawable-xhdpi/, drawable-xxhdpi/, etc.), of images/ and of its subfolders
-for density_folder in "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images"/drawable-*/ "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/images"/*/drawable-*/; do
-    if [ -d "$density_folder" ]; then
-        folder_name=$(basename "$density_folder")
-        mkdir -p "$PROJECT_PATH/res/$folder_name"
-        cp -r "$density_folder"* "$PROJECT_PATH/res/$folder_name/" 2>/dev/null || true
-    fi
-done
-
-# Convert the SVG icons to Vector Drawables, with svg2vectordrawable (npm)
-echo "Converting icons..."
-mkdir -p "$PROJECT_PATH/res/drawable"
-npx svg2vectordrawable -i "$CHASSIS_ASSETS_PATH/dist/android/$APP/$BRAND/icons/svgs" \
-   -o "$PROJECT_PATH/res/drawable" 2>/dev/null || true
-
-echo "✓ Assets synced for $BRAND-$APP"
-```
-
-**Make script executable and use:**
-
-```bash
-chmod +x scripts/sync-assets.sh
-
-# Sync specific brand
-./scripts/sync-assets.sh chassis demo
-
-# Sync multiple brands (for multi-brand projects)
-./scripts/sync-assets.sh chassis demo
-./scripts/sync-assets.sh example demo
-```
-
-### Gradle Build Integration
-
-Add asset syncing to your Gradle build process:
-
-**app/build.gradle.kts:**
-
-```kotlin
-tasks.register<Exec>("syncChassisAssets") {
-    description = "Sync Chassis Assets to Android resources"
-    group = "build"
-
-    val brand = project.findProperty("chassisBrand") ?: "chassis"
-    val app = project.findProperty("chassisApp") ?: "demo"
-
-    workingDir = File("../")
-    commandLine = listOf("./scripts/sync-assets.sh", brand.toString(), app.toString())
-}
-
-// Run before processing resources
-tasks.named("preBuild") {
-    dependsOn("syncChassisAssets")
-}
-```
-
-**Usage:**
-
-```bash
-# Build with specific brand
-./gradlew build -PchassisBrand=chassis -PchassisApp=demo
-
-# Or use default values
-./gradlew build
-```
-
-### CI/CD Integration
-
-**This is where Chassis Assets shines**: Automate building all brand variants in your CI/CD pipeline.
-
-**GitHub Actions Example:**
-
-```yaml
-# .github/workflows/build-android.yml
-name: Build Android App
-
-on:
-  push:
-    branches: [main, develop]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        brand: [chassis, example]
-        app: [demo]
-
-    steps:
-      - name: Checkout app repository
-        uses: actions/checkout@v7
-
-      - name: Checkout Chassis Assets
-        uses: actions/checkout@v7
-        with:
-          repository: chassis-ui/assets
-          path: chassis-assets
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: chassis-assets/.nvmrc
-
-      - name: Install pnpm
-        run: corepack enable
-
-      - name: Build Chassis Assets
-        working-directory: chassis-assets
-        run: |
-          pnpm install
-          pnpm assets --platform android --brand ${{ matrix.brand }} --app ${{ matrix.app }}
-
-      - name: Sync Assets to Android Project
-        run: |
-          ./scripts/sync-assets.sh ${{ matrix.brand }} ${{ matrix.app }}
-
-      - name: Set up JDK
-        uses: actions/setup-java@v6
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Build Android App
-        run: |
-          ./gradlew build \
-            -PchassisBrand=${{ matrix.brand }} \
-            -PchassisApp=${{ matrix.app }}
-```
-
-**GitLab CI Example:**
-
-```yaml
-# .gitlab-ci.yml
-variables:
-  BRAND: chassis
-  APP: demo
-
-stages:
-  - assets
-  - build
-
-build-assets:
-  stage: assets
-  image: node:24
-  script:
-    - git clone https://github.com/chassis-ui/assets.git chassis-assets
-    - cd chassis-assets
-    - corepack enable
-    - pnpm install
-    - pnpm assets --platform android --brand $BRAND --app $APP
-  artifacts:
-    paths:
-      - chassis-assets/dist/android/
-    expire_in: 1 hour
-
-build-android:
-  stage: build
-  image: gradle:8.5-jdk17
-  dependencies:
-    - build-assets
-  script:
-    - ./scripts/sync-assets.sh $BRAND $APP
-    - ./gradlew build -PchassisBrand=$BRAND -PchassisApp=$APP
-  parallel:
-    matrix:
-      - BRAND: [chassis, example]
-```
-
-### Development Workflow
-
-**Watch Mode for Development:**
-
-Create a watch script to automatically rebuild and sync assets during development:
-
-```bash
-#!/bin/bash
-# scripts/watch-assets.sh
-
-BRAND="${1:-chassis}"
-APP="${2:-demo}"
-CHASSIS_PATH="../chassis-assets"
-
-echo "Watching Chassis Assets for changes..."
-echo "Brand: $BRAND, App: $APP"
-
-# Install fswatch if not available
-# brew install fswatch (macOS)
-# apt install inotify-tools (Linux - use inotifywait instead)
-
-fswatch -o "$CHASSIS_PATH/source/" | while read change
-do
-    echo "Changes detected, rebuilding assets..."
-    (
-        cd "$CHASSIS_PATH" && \
-        pnpm assets --platform android --brand "$BRAND" --app "$APP"
-    )
-    ./scripts/sync-assets.sh "$BRAND" "$APP"
-    echo "Assets synced at $(date)"
-done
-```
-
-### Gradle Product Flavors for Multi-Brand
-
-Configure Android product flavors for build-time brand selection:
-
-**app/build.gradle.kts:**
+A product flavor per brand gives each brand its own source set, `app/src/<brand>/`, which is where the copy script writes. Name the flavors after the brands in `app/build.gradle.kts`:
 
 ```kotlin
 android {
     flavorDimensions += "brand"
 
     productFlavors {
-        create("chassis") {
-            dimension = "brand"
-            applicationIdSuffix = ".chassis"
-            versionNameSuffix = "-chassis"
-        }
-
-        create("example") {
-            dimension = "brand"
-            applicationIdSuffix = ".example"
-            versionNameSuffix = "-example"
-        }
-    }
-}
-
-// Sync assets per flavor
-android.applicationVariants.all {
-    val brand = flavorName
-    val syncTask = tasks.register<Exec>("sync${name.capitalize()}Assets") {
-        workingDir = File("../")
-        commandLine = listOf("./scripts/sync-assets.sh", brand, "demo")
-    }
-
-    preBuildProvider.configure {
-        dependsOn(syncTask)
+        create("chassis") { dimension = "brand" }
+        create("example") { dimension = "brand" }
     }
 }
 ```
 
-**Build commands:**
+`./gradlew assembleChassisDebug` then builds the app with the files of `app/src/chassis/`, and `./gradlew assembleExampleDebug` with those of `app/src/example/`. Put the vector drawables and the `text.xml` that differ by brand in the same source sets, and the ones that all brands share in `app/src/main/res/`.
 
-```bash
-# Build specific brand flavor
-./gradlew assembleChassis
-./gradlew assembleExample
+### Gradle task
 
-# Build all flavors
-./gradlew assemble
-```
-
-### Runtime Brand Switching
-
-For apps that need to switch brands at runtime (e.g., white-label apps), implement a brand manager:
+A Gradle task runs the copy script before every build, so the source sets follow the output. Add one task per brand to `app/build.gradle.kts`:
 
 ```kotlin
-object BrandManager {
-    private var currentBrand = "chassis"
-
-    fun setBrand(brand: String) {
-        currentBrand = brand
-        // Notify observers
+listOf("chassis", "example").forEach { brand ->
+    val sync = tasks.register<Exec>("sync${brand.replaceFirstChar { it.uppercase() }}Assets") {
+        workingDir = rootDir
+        commandLine("scripts/sync-assets.sh", brand)
     }
 
-    fun getDrawableRes(context: Context, name: String): Int {
-        val resourceName = "${currentBrand}_${name}"
-        return context.resources.getIdentifier(
-            resourceName,
-            "drawable",
-            context.packageName
-        )
-    }
+    tasks.named("preBuild") { dependsOn(sync) }
 }
-
-// Usage
-val logoRes = BrandManager.getDrawableRes(context, "logo_main")
-imageView.setImageResource(logoRes)
 ```
 
-**Resource Organization for Runtime Switching:**
+The task copies; it does not build the assets. Run `pnpm assets --platform android` in `chassis-assets/` after a change to `source/` or after moving the submodule.
 
+An app that holds every brand in one APK and switches at run time cannot use the names as they are, since the brands share them: it needs a script that adds the brand to each name while copying.
+
+## Continuous integration
+
+A workflow builds the Android jobs, runs the copy script for each brand, then builds the app. The build needs only Node.js, so the workflow runs it with `node`, which is what `pnpm assets` does, and installs nothing in `chassis-assets/`. This workflow is for GitHub Actions, with the assets as a submodule:
+
+```yaml
+name: Android
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Fetch the Git LFS files of the assets
+        run: git -C chassis-assets lfs pull
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: chassis-assets/.nvmrc
+
+      - name: Build the Android assets
+        working-directory: chassis-assets
+        run: node packages/assets/build/cli.js build --platform android
+
+      - name: Copy the assets
+        run: |
+          ./scripts/sync-assets.sh chassis
+          ./scripts/sync-assets.sh example
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build the app
+        run: ./gradlew assemble
 ```
-res/
-└── drawable/
-    ├── chassis_logo_main.png
-    ├── chassis_hero_image.png
-    ├── example_logo_main.png
-    └── example_hero_image.png
-```
 
-<Callout type="info">
-**Build-time vs Runtime**: Most apps use **build-time brand selection** (separate APKs per brand using product flavors). Use runtime switching only if you need one APK that can switch between brands dynamically.
-</Callout>
+With release archives the workflow needs neither the submodule nor Node.js: it downloads the archive of each brand, unpacks it as in [Release archive](#release-archive), and runs the copy script with `ASSETS_ROOT`.
 
-## Best Practices
+## Best practices
 
-Follow these recommendations for optimal multi-brand Android asset integration.
+✅ **Copy by a script:** keep the list of the `images/` folders the app uses in `scripts/sync-assets.sh`, so a new file of `source/` reaches `res/` with the next build.
 
-**Multi-Brand Workflows:**
+✅ **Keep the licenses:** ship the `<role>_license.txt` files of `fonts/` with the app, from `assets/licenses/`.
 
-- ✅ **Automate everything**: Use CI/CD matrix builds for all brand variants
-- ✅ **Single source of truth**: Maintain assets in Chassis Assets, not in app repos
-- ✅ **Build-time over runtime**: Prefer product flavors per brand (simpler, faster)
-- ✅ **Use Gradle integration**: Automate asset syncing in your build process
-- ✅ **Test all brands**: CI/CD should build and test every brand variant
-- ✅ **Organize resources**: Use brand prefixes for runtime switching (`chassis_logo`, `example_logo`)
+✅ **Name flavors after brands:** a flavor named as the brand in `chassis.build.brands` maps `dist/android/<app>/<brand>/` to `app/src/<brand>/` without a table of names.
 
-**Asset Management:**
+✅ **Ask for the variants:** the build does not resize, so an image that has only a `drawable/` file needs `@2x` and `@3x` exports in `source/`.
 
-- ✅ Use Vector Drawables for icons and simple graphics
-- ✅ Provide density-specific PNG variants for photos
-- ✅ Use `contentDescription` for accessibility
-- ✅ Support dark mode with night resources
-- ✅ Use image loading libraries (Glide/Coil) for large images
-- ✅ Test on multiple device densities
+✅ **Pin the assets:** use a submodule commit or the archive of one version, so a build of the app is repeatable.
 
-**Don't:**
+❌ **Do not edit the copies:** a file under `app/src/<brand>/res/` that the script wrote is replaced by the next run. Change the file in `source/` and build again.
 
-- ❌ Manually copy assets for each build
-- ❌ Commit generated `dist/` assets to version control
-- ❌ Hardcode brand-specific asset names (use Brand Manager or product flavors)
-- ❌ Skip automation—multi-brand without automation is unsustainable
-- ❌ Duplicate assets across brand repos—use Chassis Assets inheritance
-- ❌ Put launcher icons in drawable folders (use mipmap)
-- ❌ Load large bitmaps on UI thread
-- ❌ Use PNG for simple icons (use Vector Drawables instead)
-- ❌ Ignore content descriptions for accessibility
+❌ **Do not rename in the app:** the names of `dist/android/` are the same for every brand. A renamed copy breaks that for the next brand.
+
+❌ **Do not use WebP in `source/`:** the Android build leaves WebP images out. Export PNG for an image that Android needs.
+
+❌ **Do not commit `dist/`:** it is build output. Commit the submodule pointer, or name the version of the archive.
 
 ## Troubleshooting
 
-### Fonts not appearing
+### Git LFS pointers
 
-**Check:**
+The build stops with `<count> source file(s) are Git LFS pointers, not files`, followed by the first of them. The clone or the submodule was made without Git LFS, so the fonts and the raster images are text files of a few lines. Install Git LFS, run `git lfs pull` in `chassis-assets/`, and build again.
 
-1. Font files are in `res/font/` directory
-2. Filenames are lowercase with underscores
-3. Font family XML references correct font files
-4. Font resource is referenced correctly in layouts
+### Unknown brand
 
-### Images pixelated or blurry
+The build stops with `Unknown brand "<name>". Configured: <brands>`. The value of `--brand` is not in `chassis.build.brands` of `package.json`; `--app` and `--platform` fail the same way. Use a configured name, or add the brand to the configuration.
 
-**Solutions:**
+### Copy script fails
 
-1. Provide appropriate density variants
-2. Ensure images are in correct density folders
-3. Use `scaleType="fitCenter"` or `centerCrop`
-4. Check image dimensions match expected size × density
+The copy script stops at a `cp` line with `No such file or directory`. The job folder is missing, because the Android build did not run or `ASSETS_ROOT` points elsewhere, or the brand has no file of that extension in `fonts/`. Run `pnpm assets --platform android`, check the path, and remove the pattern that matches nothing from the script.
 
-### Vector Drawable not displaying
+### SVG file in res
 
-**Check:**
+Gradle fails on a file of `res/drawable/` with `The file name must end with .xml or .png`. An SVG of `images/` or `icons/` was copied as it is, and `res/` does not accept SVG. Remove the file and import it with Vector Asset Studio, as in [SVG images](#svg-images).
 
-1. XML is valid and well-formed
-2. `viewportWidth` and `viewportHeight` are set
-3. Paths use correct attributes (`pathData`, `fillColor`)
-4. Compatible with target Android version (API 21+)
-5. Use AppCompat for backward compatibility
+### Duplicate resources
 
-### App icon not showing
+Gradle fails with `Duplicate resources` and names two files of one folder, such as `chassis_logo_brand.png` and `chassis_logo_brand.xml`. The image exists as PNG and as SVG in `images/logo/`, and both were added to `res/drawable/`. Keep one of them, or import the SVG under another name.
 
-**Check:**
+### Image is missing
 
-1. Icons are in `mipmap-*` folders (not `drawable-*`)
-2. All required densities are provided
-3. `AndroidManifest.xml` references correct icon
-4. For adaptive icons, both foreground and background are defined
+An image of `source/` is not in the job folder. The Android build leaves WebP images out, and an image with an indicator is in a density folder under the subfolder of the image, not in `drawable/`. Search for the snake_case name with `find dist/android/demo/chassis/images -name '<name>*'`, and export a WebP image as PNG.
 
-### Large APK size
+### Image looks blurry
 
-**Solutions:**
+An image is soft on a dense screen. It has only a file in `drawable/`, which Android scales up. Add the `@2x` and `@3x` variants to `source/`, build, and run the copy script.
 
-1. Use WebP format instead of PNG
-2. Remove unused density variants
-3. Use Vector Drawables instead of PNG for icons
-4. Enable resource shrinking in build.gradle:
+### Icon is not found
 
-```groovy
-android {
-    buildTypes {
-        release {
-            shrinkResources true
-            minifyEnabled true
-        }
-    }
-}
-```
+The compiler reports `Unresolved reference` for an icon such as `R.drawable.ic_arrow_right`. The name of an icon ends with its style, and the vector drawable exists only after the import: check the name with `ls dist/android/demo/chassis/icons/svgs`, and import `ic_arrow_right_solid.svg` or `ic_arrow_right_outline.svg`.
 
-## Related Resources
+## Next steps
 
-- [Font Assets]([[docsref:/asset-types/fonts]]) - Font management
-- [Image Assets]([[docsref:/asset-types/images]]) - Image optimization
-- [Icon Assets]([[docsref:/asset-types/icons]]) - Icon guidelines
-- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) - iOS integration
-- [Web Applications]([[docsref:/use-in-project/web-applications]]) - Web integration
+- [Build System]([[docsref:/getting-started/build-system]]): the commands, their options and the configuration of brands and apps.
+- [Fonts]([[docsref:/asset-types/fonts]]), [Images]([[docsref:/asset-types/images]]), [Icons]([[docsref:/asset-types/icons]]) and [Other assets]([[docsref:/asset-types/other]]): where each type goes in `source/` and how it is named.
+- [iOS Applications]([[docsref:/use-in-project/ios-applications]]) and [Web Applications]([[docsref:/use-in-project/web-applications]]): the same files on the other platforms.
+- [Add custom fonts](https://developer.android.com/develop/ui/views/text-and-emoji/fonts-in-xml), [Vector Asset Studio](https://developer.android.com/studio/write/vector-asset-studio) and [product flavors](https://developer.android.com/build/build-variants) in the Android documentation.

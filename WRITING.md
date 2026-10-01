@@ -224,11 +224,11 @@ toc: true
 
 Optional fields and their accepted values:
 
-| Field      | Values                                     | Effect                                                                               |
-| ---------- | ------------------------------------------ | ------------------------------------------------------------------------------------ |
-| `added`    | `version` (string), `show_badge` (boolean) | Marks the version that introduced the page's subject.                                |
-| `aliases`  | A path or a list of paths                  | Redirects old URLs to the page.                                                      |
-| `sections` | List of `{title, description, slug}`       | Renders the cards of an index page. Used by `getting-started/introduction.mdx` only. |
+| Field      | Values                                    | Effect                                                                               |
+| ---------- | ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `added`    | `version` (string), `showBadge` (boolean) | Marks the version that introduced the page's subject.                                |
+| `aliases`  | A path or a list of paths                 | Redirects old URLs to the page.                                                      |
+| `sections` | List of `{title, description, slug}`      | Renders the cards of an index page. Used by `getting-started/introduction.mdx` only. |
 
 `description` follows the body rules for behavior over benefits — see [§3](#3-describe-behavior-not-benefits). Start with what the page covers, not with "Comprehensive guide to" or "Learn how to".
 

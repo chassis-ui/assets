@@ -11,9 +11,8 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
           <span class="font-normal d-block">From Design</span> to Production
         </h2>
         <p class="section-body md:font-lg lg:font-xl m-0">
-          Run one command to transform source assets into platform-specific distributions. The build
-          script handles file naming, resolution variants, and folder structure for web, iOS, and
-          Android.
+          Run one command to copy the source into the output of each platform. The build takes care
+          of the file names, the resolution variants and the folders of the web, iOS and Android.
         </p>
       </header>
     </div>
@@ -23,8 +22,8 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
         <FeatureCard icon="cx-number-one">
           <Fragment slot="title">Structure Source Folders</Fragment>
           <Fragment slot="body">
-            Organize assets under <code>source/</code> using brand/app/type hierarchy. Files in default/
-            apply to all brands. Brand-specific folders override defaults when building.
+            Put the files under <code>source/</code>, by brand, app and type. The files of default/
+            go to every brand, and a brand folder holds the files that replace them.
           </Fragment>
           <Code
             noToolbar
@@ -33,14 +32,14 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
             code={`source/
 ├── default/
 │   └── demo/
-│       ├── Hero Img.png
-│       └── Hero Img@2x.png
-├── chassis/
-│   └── demo/
-│       └── Brand Logo.svg
+│       └── images/
+│           ├── brand-logo.svg
+│           ├── hero-img.png
+│           └── hero-img@2x.png
 └── example/
     └── demo/
-        └── Brand Logo.svg`}
+        └── images/
+            └── brand-logo.svg`}
           />
         </FeatureCard>
       </div>
@@ -49,14 +48,14 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
         <FeatureCard icon="cx-number-two">
           <Fragment slot="title">Run Build Command</Fragment>
           <Fragment slot="body">
-            Execute pnpm assets to build all platforms, or use --brand, --app, --platform flags to
-            filter output. Build script copies, renames, and organizes files per platform.
+            Run pnpm assets to build every job, or use the --brand, --app and --platform options to
+            build a part. The build copies, renames and sorts the files for each platform.
           </Fragment>
           <Code
             noToolbar
             lang="bash"
             containerClass="border-top border-subtle pt-md mt-auto"
-            code={`# Build all platforms
+            code={`# Build every job
 pnpm assets
 
 # Build specific brand
@@ -75,23 +74,23 @@ pnpm assets --brand chassis --app demo`}
         <FeatureCard icon="cx-number-three">
           <Fragment slot="title">Integrate Build Output</Fragment>
           <Fragment slot="body">
-            Generated <code>dist/</code> folder contains platform-specific asset bundles. Copy relevant
-            folders into your web, iOS, or Android projects, or sync via CI/CD.
+            The <code>dist/</code> folder has one folder per platform, app and brand. Copy the folder
+            of your job into your web, iOS or Android project, or build it in CI.
           </Fragment>
           <Code
             noToolbar
             lang="text"
             containerClass="border-top border-subtle pt-md mt-auto"
             code={`dist/
-├── ios/chassis-demo/
+├── ios/demo/example/images/
 │   ├── brand_logo.svg
 │   ├── hero_img.png
 │   └── hero_img@2x.png
-└── android/chassis-demo/
+└── android/demo/example/images/
     ├── drawable/
     │   ├── brand_logo.svg
     │   └── hero_img.png
-    └── drawable_xhdpi/
+    └── drawable-xhdpi/
         └── hero_img.png`}
           />
         </FeatureCard>
