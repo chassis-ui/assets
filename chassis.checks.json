@@ -48,8 +48,7 @@
             "pattern": "images/figma/components/*/{light,dark}/*{,@2x}.png",
             "except": [
               "images/figma/components/*/*/card-orientation-top-*.png",
-              "images/figma/components/*/*/list-item-text-basic-*.png",
-              "images/figma/components/*/*/meta-1-*.png"
+              "images/figma/components/*/*/list-item-text-basic-*.png"
             ]
           }
         ]

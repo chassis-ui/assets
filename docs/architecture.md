@@ -273,8 +273,9 @@ changeset that says what breaks.
 - `icons/icons/chassis-icons.json` of the icon package is copied to the web output with the
   rest of the package.
 - A collision after renaming warns and the file renamed last wins.
-- Eighteen screenshots under `images/figma/components/` are Figma export copies of another
-  screenshot, `meta-1-1.png` and `meta-1-2x-1.png` beside `meta-1.png`, in both modes and
+- Eight screenshots under `images/figma/components/` are Figma export copies of another
+  screenshot, `card-orientation-top-1.png` and `card-orientation-top-2x-1.png` beside
+  `card-orientation-top.png`, in both modes and
   without `@2x`. No page of `chassis-figma` reads them. The contract check requires both
   modes for them, and not the `@2x`: they are the `except` patterns of the screenshot set in
   `chassis.checks.json`.
