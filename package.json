@@ -40,6 +40,7 @@
     "clean": "pnpm site:clean && rm -rf dist || true",
     "dev": "pnpm assets:site && pnpm astro:dev",
     "test": "pnpm -C packages/assets test",
+    "test:ios": "packages/assets/test/native/ios/check.sh",
     "test:golden": "node packages/assets/build/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet",
     "assets": "node packages/assets/build/cli.js build",
     "assets:analyze": "node packages/assets/build/cli.js analyze",

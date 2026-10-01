@@ -134,6 +134,7 @@ pnpm assets:site                              # The output the Chassis sites rea
 | `--dry-run`            | Print the jobs and their file counts, write nothing                                                 |
 | `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                  |
 | `--vector-drawables`   | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
+| `--asset-catalog`      | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                |
 | `--quiet`              | Print errors only                                                                                   |
 | `--help`, `-h`         | Print the options                                                                                   |
 | `--version`, `-v`      | Print the version                                                                                   |
@@ -146,6 +147,7 @@ A full build removes `dist/` first; a filtered build keeps it. A filter value th
 | ------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `pnpm test`               | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files              |                                                               |
 | `pnpm test:golden`        | Writes `packages/assets/test/golden/` again, after an intended change to the output                             |                                                               |
+| `pnpm test:ios`           | Compiles the asset catalogs of an output with `actool`, after `pnpm assets --asset-catalog`. Needs Xcode        | A folder, default `dist`                                      |
 | `pnpm assets:analyze`     | Sizes, types, largest files and files with the same content, of `source/` and of an existing output             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet` |
 | `pnpm assets:validate`    | Checks an existing output against `source/` and the configuration                                               | `--out`, `--cwd`                                              |
 | `pnpm assets:contract`    | Checks that each output has the files of its contracts in `chassis.checks.json`                                 | `--out`, `--cwd`                                              |

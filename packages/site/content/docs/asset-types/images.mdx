@@ -8,7 +8,7 @@ toc: true
 
 Images are the files under `images/` of an app: logos, illustrations, photos, screenshots and backgrounds. The build copies them to every platform with the name the platform expects, and keeps the subfolders of `images/`.
 
-An image has the variants the designer exported. The build does not resize or re-encode a file. It reads the `@2x` or `@3x` indicator of a name, and on Android it sorts the variants into density folders.
+An image has the variants the designer exported. The build does not resize or re-encode a file. It reads the `@2x` or `@3x` indicator of a name, and on Android it sorts the variants into density folders. With the `--asset-catalog` option it sorts the variants of iOS into the image sets of an asset catalog.
 
 ## Source layout
 
@@ -137,5 +137,37 @@ On Android the indicator of a name chooses the density folder, and a file withou
 </CxTable>
 
 The density folders are written inside each subfolder of `images/`, so `images/logo/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`.
+
+### Asset catalog
+
+A build with `pnpm assets --asset-catalog` writes the images of an iOS job as an asset catalog, `Assets.xcassets` in place of `images/`. The files of one base name are one image set, each variant in the slot of its indicator, and a subfolder is a folder of the catalog:
+
+```text
+dist/ios/demo/chassis/
+├── Assets.xcassets/
+│   ├── Contents.json
+│   ├── chassis_logo.imageset/
+│   │   ├── Contents.json
+│   │   └── chassis_logo.svg
+│   ├── chassis_logo_shadow.imageset/
+│   │   ├── Contents.json
+│   │   ├── chassis_logo_shadow.png
+│   │   └── chassis_logo_shadow@2x.png
+│   ├── home/
+│   └── logo/
+│       ├── Contents.json
+│       ├── chassis_icon_brand.imageset/
+│       │   ├── Contents.json
+│       │   ├── chassis_icon_brand.png
+│       │   ├── chassis_icon_brand@2x.png
+│       │   └── chassis_icon_brand@3x.png
+│       └── ...
+└── images/
+    └── logo/
+        ├── chassis_icon_brand.svg
+        └── ...
+```
+
+An image set holds the raster variants of a name, or one SVG or PDF where the name has no raster. A file without a place in an image set stays in `images/`: here the SVG logos, which have PNG variants of the same name. The [build system page]([[docsref:/getting-started/build-system#asset-catalog]]) has the rules of the option.
 
 See the [web]([[docsref:/use-in-project/web-applications#images]]), [iOS]([[docsref:/use-in-project/ios-applications#images]]), and [Android]([[docsref:/use-in-project/android-applications#images]]) docs for how an app uses these files.

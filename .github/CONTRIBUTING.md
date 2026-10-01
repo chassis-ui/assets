@@ -155,11 +155,13 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 
 ## What a pull request needs
 
-- **Passing CI**: `.github/workflows/ci.yml` runs four jobs on `develop` and on pull requests.
+- **Passing CI**: `.github/workflows/ci.yml` runs five jobs on `develop` and on pull requests.
   Lint: `pnpm lint:prettier`, `pnpm site:lint` and `pnpm check:astro`. Assets: the build as a
   site runs it, with nothing installed, then `pnpm assets:lint`, `pnpm assets:lint:source`,
   `pnpm assets:typecheck`, `pnpm test`, `pnpm assets` and `pnpm assets:verify`. Site:
-  `pnpm site:build`. Audit: `pnpm check:pnpm`. The commands above run the same checks locally.
+  `pnpm site:build`. Audit: `pnpm check:pnpm`. Native iOS, on a macOS runner: a build of the
+  iOS jobs with `--asset-catalog`, then `pnpm test:ios`, which compiles the catalogs with
+  `actool` and needs Xcode. The commands above run the same checks locally.
 - **A changeset** for a change to `source/` or to `packages/assets/build/`. The Changeset job
   fails a pull request without one. A change that only touches the site, the documents, the
   tests or the tooling needs none.

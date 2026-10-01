@@ -17,7 +17,7 @@ dist/ios/<app>/<brand>/
 └── images/
 ```
 
-The build copies, renames and sorts the files. It does not write an asset catalog, does not turn an SVG into a PDF and does not resize an image: an image has the variants the designer exported. This page says what you do with the files in Xcode.
+The build copies, renames and sorts the files. It writes an asset catalog only with the `--asset-catalog` option, does not turn an SVG into a PDF and does not resize an image: an image has the variants the designer exported. This page says what you do with the files in Xcode.
 
 ## Installation
 
@@ -201,7 +201,40 @@ The iOS output has no WebP file. An image that exists only as WebP in `source/` 
 
 ### Asset catalog
 
-The build does not write `Assets.xcassets` or a `Contents.json`: you make the image sets in Xcode. Drag the variants of an image into the asset catalog together, and Xcode makes one image set named after the file and puts each variant in the slot of its indicator: `chassis_logo_shadow.png` in **1x**, `chassis_logo_shadow@2x.png` in **2x**. A slot stays empty when the designer exported no variant for it, and iOS scales the nearest one.
+The default build does not write `Assets.xcassets` or a `Contents.json`. With the `--asset-catalog` option it does, and needs nothing installed for it:
+
+```bash
+pnpm assets --platform ios --asset-catalog
+```
+
+The images move from `images/` into `Assets.xcassets`, the files of one name into one image set, each variant in the slot of its indicator:
+
+```text
+dist/ios/demo/chassis/
+├── Assets.xcassets/
+│   ├── Contents.json
+│   ├── chassis_logo.imageset/
+│   │   ├── Contents.json
+│   │   └── chassis_logo.svg
+│   ├── chassis_logo_shadow.imageset/
+│   │   ├── Contents.json
+│   │   ├── chassis_logo_shadow.png
+│   │   └── chassis_logo_shadow@2x.png
+│   ├── home/
+│   └── logo/
+├── fonts/
+├── icons/
+└── images/
+    └── logo/
+        ├── chassis_icon_brand.svg
+        └── ...
+```
+
+Add `Assets.xcassets` to the project with **File → Add Files to…**, with the app target checked. An SVG without a PNG of its name is an image set of one file with **Preserve Vector Data** set. A subfolder is a folder of the catalog with **Provides Namespace** set, so an image of `logo/` is named `logo/chassis_icon_brand`.
+
+A file without a place in an image set stays in `images/`, and the build warns about the number of them. In the committed configuration these are the SVG logos of `images/logo/`, which have PNG variants of the same name. The build does not fill the **Dark** row of an image set and does not put the icons into the catalog. The release archives are built without the option.
+
+Without the option, you make the image sets in Xcode. Drag the variants of an image into the asset catalog together, and Xcode makes one image set named after the file and puts each variant in the slot of its indicator: `chassis_logo_shadow.png` in **1x**, `chassis_logo_shadow@2x.png` in **2x**. A slot stays empty when the designer exported no variant for it, and iOS scales the nearest one.
 
 An SVG goes into an image set of its own, with **Scales** set to **Single Scale** and **Preserve Vector Data** checked. A logo that the output has as SVG and as PNG, such as `logo/chassis_icon_brand.svg` beside `logo/chassis_icon_brand.png`, needs one of the two: both would make an image set of the same name.
 
@@ -209,7 +242,7 @@ A name is unique within its folder only: the output has `images/chassis_logo_bla
 
 ### Use the images
 
-The name of an image set is the output name without the indicator and the extension. Use it in UIKit:
+The name of an image set is the output name without the indicator and the extension. In a catalog of `--asset-catalog`, an image of a subfolder has the folder before its name, as in `logo/chassis_icon_brand`. Use the name in UIKit:
 
 ```swift
 import UIKit

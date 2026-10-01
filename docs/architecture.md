@@ -76,6 +76,9 @@ For each job, in order:
    `vectorDrawables`: each SVG under `icons/` of the job is written as a vector drawable
    beside itself and removed (`convertVectorDrawables()`, `convertFolder()`). See
    "Vector drawables".
+7. **Catalog**, only with `--asset-catalog` and only for a processor that has
+   `assetCatalog`: the images of `images/` of the job move into `Assets.xcassets`, one image
+   set per base name (`writeAssetCatalog()`, `writeCatalog()`). See "Asset catalog".
 
 Before the jobs, `validateConfiguration()` checks that brands and apps are configured, that
 the default brand folder exists and that every platform has a processor, and `planJobs()`
@@ -100,6 +103,7 @@ jobs with their file counts.
 | `packages/assets/build/processors/android.js` | The Android processor: snake_case names, `ic_` prefix under `icons/`, indicator removed, density folders, fonts `.ttf` and `.otf`, icons `.svg`, every image format, `processImage()`.                                                                                                                                                                                                                        |
 | `packages/assets/build/processors/index.js`   | The registry `platformProcessors`, `getProcessor()`, `getPlatformNames()`. A platform of `chassis.build.apps` must be a key here.                                                                                                                                                                                                                                                                             |
 | `packages/assets/build/vector-drawables.js`   | The conversion of `--vector-drawables`: `loadConverter()`, which imports `svg2vectordrawable` when it is called and says how to install it when it is missing, `drawsSomething()` and `convertFolder()`. The one module that uses a package.                                                                                                                                                                  |
+| `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                              |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -170,6 +174,7 @@ on the fixture, which has its own configuration.
 | `--dry-run`                      | Print the jobs and their file counts, write nothing.                                                                                                                                                                            |
 | `--allow-lfs-pointers`           | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                    |
 | `--vector-drawables`             | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                            |
+| `--asset-catalog`                | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`. Off by default.                                                                                                                           |
 | `--quiet`, `--help`, `--version` | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
 | `pnpm assets:site`               | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
 | `pnpm assets:analyze [filters]`  | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
@@ -202,7 +207,7 @@ the roadmap.
 
 - Names: snake_case, lowercase; `@2x` and `@3x` kept.
 - `fonts/`: `.ttf`, `.otf` and the `.txt` license files.
-- `images/`: every format except `.webp`.
+- `images/`: every format except `.webp`. With `--asset-catalog`, in the image sets of `Assets.xcassets` (roadmap 6.3, D10).
 - `icons/`: `.svg`, `.pdf` and `.png`. The icon font and its stylesheets are left out.
 - Other folders: every file.
 
@@ -242,6 +247,40 @@ default, and the default output is the same file for file with and without the c
   passes on either output. The release archives are built without the option.
 - Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
   has read the drawables.
+
+### Asset catalog
+
+`pnpm assets --asset-catalog` is off by default, and the default output is the same file for
+file with and without the code. It needs no package: a catalog is folders and JSON.
+
+- The processor says what is written: `assetCatalog: { type: 'images', name: 'Assets.xcassets' }`
+  on iOS, nothing on the web and Android. The catalog is beside the type folders,
+  `dist/ios/<app>/<brand>/Assets.xcassets/`.
+- After the rename pass, the files of `images/` are moved, not copied: the catalog is in
+  place of the folder, as the vector drawable is in place of the SVG.
+- The files of one folder with one base name are one image set, `<base>.imageset/`, with a
+  `Contents.json` of the three slots `1x`, `2x` and `3x`, an empty slot without a file. A
+  name without an indicator, or with `@1x`, is the `1x` slot.
+- A base name without a raster and with an SVG or a PDF is an image set of that one file,
+  with `preserves-vector-representation`.
+- A subfolder is a folder of the catalog with `provides-namespace`, since a name is unique
+  within its folder only: `images/logo/x@2x.png` is `Assets.xcassets/logo/x.imageset/x@2x.png`,
+  named `logo/x`. The image sets of `images/` itself have no namespace.
+- A file without a place in an image set stays in `images/`, with one warning per job: a
+  vector beside rasters of its name (the rasters are what the designer exported for an app),
+  an indicator other than `@1x`, `@2x`, `@3x`, a second file for a slot (PNG before JPEG, no
+  indicator before `@1x`, SVG before PDF), and any other format. `images/` is removed when
+  nothing stays.
+- Not part of it: appearances (the build has no rule that pairs `*_light` and `*_dark`),
+  and the icons, which stay files under `icons/`.
+- An image set is removed before it is written, and the rename pass leaves the catalog of an
+  earlier build alone, so a build into an existing output writes the same catalog.
+- The validator takes the path in the catalog for the source file, and the catalog for the
+  type folder when nothing stays in it, so `pnpm assets:verify` passes on either output. The
+  release archives are built without the option.
+- Compiled: `packages/assets/test/native/ios/check.sh`, `pnpm test:ios`, runs `actool` on
+  the catalogs of an output and checks that every image set is in the compiled catalog. The
+  Native iOS job of CI runs it on a macOS runner, as `chassis-tokens` does for its catalog.
 
 ## Checks
 
@@ -373,3 +412,5 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
   (roadmap session 4.2).
 - 2026-10-01: `--vector-drawables`, the first optional feature, and the first package the
   build loads, only with its option (roadmap 6.2).
+- 2026-10-01: `--asset-catalog`, with a check that compiles the catalogs on a macOS runner
+  (roadmap 6.3).

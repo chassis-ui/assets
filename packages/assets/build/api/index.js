@@ -252,6 +252,7 @@ export class ChassisAssets {
    * @param {boolean|null} [options.clean] - Whether to clean the output first; null decides by the filters
    * @param {boolean} [options.quiet] - Print errors only
    * @param {boolean} [options.vectorDrawables] - Write the SVG icons of Android as vector drawables
+   * @param {boolean} [options.assetCatalog] - Write the images of iOS as an asset catalog
    * @returns {Promise<import('../types.js').BuildStats>} The statistics of the run
    */
   async build(options = {}) {
@@ -261,7 +262,8 @@ export class ChassisAssets {
       platforms = [],
       clean = null,
       quiet = false,
-      vectorDrawables = false
+      vectorDrawables = false,
+      assetCatalog = false
     } = options
     return generateAssets({
       brands,
@@ -270,6 +272,7 @@ export class ChassisAssets {
       clean,
       quiet,
       vectorDrawables,
+      assetCatalog,
       cwd: this.cwd,
       out: this.out
     })

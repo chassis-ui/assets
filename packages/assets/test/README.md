@@ -60,12 +60,29 @@ keeps Prettier out of them.
 | `validate.test.js`         | `DistValidator`: passes on `golden/`, and fails, naming the problem, on a copy with a file, a job or a type folder missing, an empty folder, or a name against the rules. Hidden files are left out of the naming check (T13).                                                                                                  |
 | `api.test.js`              | `ChassisAssets`: the configuration, the combinations, the inventory, the statistics, `validate()` and `build()`.                                                                                                                                                                                                                |
 | `vector-drawables.test.js` | The `vectorDrawables` option: `convertFolder()` with the real converter, and a build of a copy of the fixture with real SVG icons, where only the icons of the Android jobs change, a file without a shape stays with a warning, a file that is no SVG fails the build, and the validator passes on the output.                 |
+| `asset-catalog.test.js`    | The `assetCatalog` option: `planImageSets()`, the `Contents.json` files and `writeCatalog()`, and a build of the fixture, where only the images of the iOS jobs move, a file without a place in an image set stays with a warning, a second build writes the same catalog, and the validator passes on the output.              |
 | `asset-types.test.js`      | The extension lists and `isMetadataFile()` that the validator uses.                                                                                                                                                                                                                                                             |
 | `contract.test.js`         | The consumer contracts of `build/contract.js`: the pattern expansion, the files and the sets of a contract with their exceptions, and `checkContracts()` on the contracts of the fixture's `chassis.checks.json` and on outputs in temporary folders.                                                                           |
 | `lint-source.test.js`      | The source lint: the naming rules of the design-guidelines page as a table, the names `lint.allow` of `chassis.checks.json` keeps, and `lintSource()` on the fixture, whose names break the rules on purpose, and on copies that add a pointer or an unread brand.                                                              |
 | `cli.test.js`              | `node build/build-assets.js`, `analyze-assets.js` and `validate-assets.js` on their own, and `cli.js` as the `pnpm assets*` scripts run it: every flag, the output and the exit codes.                                                                                                                                          |
 | `root.test.js`             | `findRoot()`, `resolveRoot()` and `buildVersion()`: the repository root from a folder below it, a given `cwd`, and the version of the build.                                                                                                                                                                                    |
 | `helpers.js`               | The paths, temporary folders and the file-by-file comparison.                                                                                                                                                                                                                                                                   |
+
+## Compiling the asset catalogs
+
+The files of the fixture are lines of text, which the asset compiler of Xcode does not take,
+so the catalogs of a real build are compiled instead:
+
+```sh
+pnpm assets --platform ios --asset-catalog
+pnpm test:ios
+```
+
+`test:ios` is `packages/assets/test/native/ios/check.sh`. It runs `actool` on every
+`*.xcassets` folder under `dist/`, or under the folder it is given, fails on a warning, and
+checks that the compiled catalog has every image set by its name. It needs Xcode, not the
+command line tools alone; `DEVELOPER_DIR` selects an Xcode that `xcode-select` does not. The
+Native iOS job of CI runs it on a macOS runner.
 
 ## Writing the baseline again
 

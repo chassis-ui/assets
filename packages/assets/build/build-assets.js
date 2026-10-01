@@ -13,6 +13,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import { writeCatalog } from './asset-catalog.js'
 import { platformProcessors } from './processors/index.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
 import { convertFolder, loadConverter } from './vector-drawables.js'
@@ -40,6 +41,8 @@ Options:
                          (also CHASSIS_ALLOW_LFS_POINTERS=1 in the environment)
   --vector-drawables     Write the SVG icons of Android as vector drawables, .xml in
                          place of .svg. Needs \`pnpm install\`
+  --asset-catalog        Write the images of iOS as an asset catalog, Assets.xcassets
+                         in place of images/
   --quiet                Print errors only
   --help, -h             Print this help
   --version, -v          Print the version
@@ -54,7 +57,8 @@ let run = {
   outDir: path.join(process.cwd(), 'dist'),
   dryRun: false,
   allowLfsPointers: false,
-  vectorDrawables: false
+  vectorDrawables: false,
+  assetCatalog: false
 }
 
 /** Statistics of the run. @type {BuildStats} */
@@ -81,6 +85,7 @@ function emptyStats() {
     filesRenamed: 0,
     directoriesCreated: 0,
     filesConverted: 0,
+    imageSets: 0,
     errors: [],
     warnings: [],
     lfsPointers: [],
@@ -169,6 +174,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     dryRun: false,
     allowLfsPointers: false,
     vectorDrawables: false,
+    assetCatalog: false,
     help: false,
     version: false
   }
@@ -205,6 +211,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.allowLfsPointers = true
     } else if (arg === '--vector-drawables') {
       options.vectorDrawables = true
+    } else if (arg === '--asset-catalog') {
+      options.assetCatalog = true
     } else if (arg === '--quiet') {
       options.quiet = true
     } else if (arg === '--help' || arg === '-h') {
@@ -557,6 +565,8 @@ function renameFilesRecursively(processor, folderPath, parentDir = '') {
     const stat = fs.statSync(itemPath)
 
     if (stat.isDirectory()) {
+      // The asset catalog of an earlier build has its names already
+      if (item === processor.assetCatalog?.name) return
       renameFilesRecursively(processor, itemPath, currentDirName)
     } else {
       const newName = processor.renameFile
@@ -770,6 +780,32 @@ async function convertVectorDrawables(processor, destPath, convert) {
   )
 }
 
+/**
+ * Move the images a processor names in `assetCatalog` into an asset catalog, in the output
+ * of one job. A file without a place in an image set stays in its folder, with a warning
+ * for the job.
+ * @param {Processor} processor - The platform processor
+ * @param {string} destPath - The output folder of the job
+ */
+function writeAssetCatalog(processor, destPath) {
+  const catalog = processor.assetCatalog
+  if (!catalog) return
+
+  const typeDir = path.join(destPath, catalog.type)
+  const { sets, left } = writeCatalog(typeDir, path.join(destPath, catalog.name))
+  stats.imageSets += sets
+  if (sets > 0) {
+    logger.log(`🗂️  Wrote ${sets} image sets to ${catalog.name}`)
+  }
+  cleanupEmptyDirectories(typeDir)
+  if (left.length > 0) {
+    const first = left.slice(0, 3).map((file) => path.relative(typeDir, file))
+    stats.warnings.push(
+      `${left.length} file(s) have no place in an image set and stay in ${path.relative(run.cwd, typeDir)}: ${first.join(', ')}${left.length > 3 ? ', …' : ''}`
+    )
+  }
+}
+
 // Re-export platform processors for backward compatibility
 export { platformProcessors }
 
@@ -792,7 +828,8 @@ export async function generateAssets(options = {}) {
     outDir: path.resolve(cwd, options.out || 'dist'),
     dryRun: options.dryRun || false,
     allowLfsPointers: options.allowLfsPointers || process.env.CHASSIS_ALLOW_LFS_POINTERS === '1',
-    vectorDrawables: options.vectorDrawables || false
+    vectorDrawables: options.vectorDrawables || false,
+    assetCatalog: options.assetCatalog || false
   }
   config = loadConfig(cwd)
 
@@ -824,6 +861,12 @@ export async function generateAssets(options = {}) {
     } else if (!run.dryRun) {
       convert = await loadConverter()
     }
+  }
+
+  if (run.assetCatalog && !jobs.some((job) => platformProcessors[job.platform].assetCatalog)) {
+    stats.warnings.push(
+      '--asset-catalog changes nothing: no selected job has a platform with an asset catalog'
+    )
   }
 
   /** @param {Job} job */
@@ -862,6 +905,7 @@ export async function generateAssets(options = {}) {
     const before = stats.filesProcessed
     processAssets(processor, [defaultAppPath, brandAppPath], destPath, defaultAppPath)
     if (convert) await convertVectorDrawables(processor, destPath, convert)
+    if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor, destPath)
     stats.jobs.push({ ...job, files: stats.filesProcessed - before })
   }
 
@@ -881,6 +925,9 @@ export async function generateAssets(options = {}) {
     logger.log(`📁 ${stats.directoriesCreated} directories created`)
     if (run.vectorDrawables) {
       logger.log(`🎨 ${stats.filesConverted} files converted to vector drawables`)
+    }
+    if (run.assetCatalog) {
+      logger.log(`🗂️  ${stats.imageSets} image sets written to asset catalogs`)
     }
   }
 

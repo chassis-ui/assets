@@ -36,6 +36,8 @@
  * @property {boolean} [allowLfsPointers] - Copy Git LFS pointer files instead of failing
  * @property {boolean} [vectorDrawables] - Write the files a processor names in
  *   `vectorDrawables` as vector drawables. Needs the package `svg2vectordrawable`
+ * @property {boolean} [assetCatalog] - Move the images a processor names in `assetCatalog`
+ *   into an asset catalog
  */
 
 /**
@@ -54,6 +56,7 @@
  * @property {number} directoriesCreated
  * @property {number} filesConverted - Files written as vector drawables, with
  *   `vectorDrawables`
+ * @property {number} imageSets - Image sets written to asset catalogs, with `assetCatalog`
  * @property {string[]} errors
  * @property {string[]} warnings
  * @property {string[]} lfsPointers - Source files that are Git LFS pointers
@@ -87,6 +90,15 @@
  */
 
 /**
+ * An asset catalog that takes the images of one type folder, which an option of the build
+ * turns on.
+ * @typedef {Object} Catalog
+ * @property {string} type - The type folder whose images move into the catalog, such as `images`
+ * @property {string} name - The folder of the catalog in the output of a job, such as
+ *   `Assets.xcassets`
+ */
+
+/**
  * A platform processor of `build/processors/`: the platform's names and filters.
  * @typedef {Object} Processor
  * @property {string} name - The platform, a key of `platformProcessors`
@@ -104,6 +116,8 @@
  *   an image to, under the folder of the image. The build reads it to find collisions
  * @property {Conversion} [vectorDrawables] - What `--vector-drawables` converts for the
  *   platform. Without it the option leaves the platform as it is
+ * @property {Catalog} [assetCatalog] - What `--asset-catalog` writes for the platform.
+ *   Without it the option leaves the platform as it is
  */
 
 /**

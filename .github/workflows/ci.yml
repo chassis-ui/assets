@@ -119,6 +119,45 @@ jobs:
       - name: Verify distribution
         run: pnpm assets:verify
 
+  # The asset catalogs of a build with --asset-catalog, compiled with actool, the asset
+  # compiler of Xcode, as chassis-tokens compiles its own. Needs no install: the build and a
+  # shell script. release.yml does not wait for it, the archives are built without the option
+  native-ios:
+    name: Native iOS
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: List Git LFS objects
+        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
+
+      - name: Cache Git LFS objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-ids') }}
+          restore-keys: lfs-
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          # Nothing is installed, so there is no pnpm store to cache
+          package-manager-cache: false
+
+      - name: Build the iOS jobs with asset catalogs
+        run: node packages/assets/build/cli.js build --platform ios --asset-catalog --quiet
+
+      - name: Compile the asset catalogs
+        run: packages/assets/test/native/ios/check.sh
+
   # The same build as Vercel: the docs assets, then Astro and Pagefind
   site:
     name: Site

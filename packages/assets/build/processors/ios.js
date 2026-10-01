@@ -24,6 +24,12 @@ const iosProcessor = {
   excludedImageFormats: ['.webp'],
 
   /**
+   * What `--asset-catalog` writes: the files of `images/` move into an asset catalog, one
+   * image set per base name
+   */
+  assetCatalog: { type: 'images', name: 'Assets.xcassets' },
+
+  /**
    * Transform filename to snake_case (lowercase with underscores)
    * @param {string} fileName - Original filename
    * @returns {string} Transformed filename in snake_case

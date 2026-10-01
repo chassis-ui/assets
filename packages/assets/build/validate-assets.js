@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import ChassisAssets from './api/index.js'
+import { catalogPath } from './asset-catalog.js'
 import { shouldIgnoreFile } from './build-assets.js'
 import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
 import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
@@ -197,6 +198,12 @@ class DistValidator {
 
           const distAssetTypes = this.getAssetTypesInDist(distPath)
 
+          // An output built with `--asset-catalog` has the catalog in place of the folder
+          const catalog = platformProcessors[platform]?.assetCatalog
+          if (catalog && distAssetTypes.includes(catalog.name)) {
+            distAssetTypes.push(catalog.type)
+          }
+
           // Check if all source asset types exist in dist
           for (const assetType of sourceAssetTypes) {
             if (!distAssetTypes.includes(assetType)) {
@@ -384,7 +391,16 @@ class DistValidator {
                 ? path.join(distPath, sourceFile.assetType, sourceFile.subFolder, transformedName)
                 : expectedDistPath
 
+              // An image of an output built with `--asset-catalog` is in its image set
+              const catalog = platformProcessors[platform]?.assetCatalog
+              const inCatalog =
+                catalog?.type === sourceFile.assetType &&
+                fs.existsSync(
+                  path.join(distPath, catalogPath(catalog, sourceFile.subFolder, transformedName))
+                )
+
               if (
+                !inCatalog &&
                 !fs.existsSync(fullDistPath) &&
                 !fs.existsSync(this.convertedPath(fullDistPath, platform, sourceFile.assetType))
               ) {
