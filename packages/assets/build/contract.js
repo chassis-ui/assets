@@ -1,12 +1,26 @@
 /**
  * Chassis Assets Consumer Contract
  *
- * The files that the rest of the ecosystem reads from the docs output,
- * `dist/web/docs/chassis/`, as data, each with the code that reads it. The roadmap's
- * "consumer contract" lists them in prose. Checked against the sources of `chassis-website`
- * at `d83a1d6` and of `@chassis-ui/docs` 0.6.1 on 2026-09-30.
+ * Checks that the output of a job has the files its consumers read by name. The contracts
+ * are data of the repository, not of the build: `contracts` in `chassis.checks.json` beside
+ * `package.json`, by job, each with who reads the files, and the files. A repository
+ * without that file has no contract, and the check passes.
  *
- * `checkContract(options)` returns the files an output lacks; the command-line entry at the
+ *     "contracts": {
+ *       "web/docs/chassis": [
+ *         {
+ *           "reader": "the layouts of the site",
+ *           "files": ["images/favicon{,-16x16,-32x32}.png"],
+ *           "sets": [{ "pattern": "images/shots/*\/{light,dark}/*{,@2x}.png", "except": [] }]
+ *         }
+ *       ]
+ *     }
+ *
+ * `files` have to be there. A `set` is a pattern with `*` and `{a,b}`: when the output has
+ * a file that matches it, it has to have the same file with every other alternative too,
+ * and it has to have at least one such file.
+ *
+ * `checkContracts(options)` returns the files each job lacks; the command-line entry at the
  * bottom prints them and exits 1 when one is missing.
  *
  * @module contract
@@ -14,15 +28,10 @@
 
 import fs from 'fs'
 import path from 'path'
+import { CHECKS_FILE, loadConfig } from './build-assets.js'
 import { isEntry, resolveRoot } from './root.js'
 
-/** @import { ContractEntry, ContractProblem, Job } from './types.js' */
-
-/**
- * The job whose output the sites read, and copy to `/static/`.
- * @type {Job}
- */
-export const CONTRACT_JOB = { platform: 'web', app: 'docs', brand: 'chassis' }
+/** @import { ContractEntry, ContractProblem, ContractSet } from './types.js' */
 
 /**
  * Write out the alternatives of a pattern: `a-{b,c}.svg` gives `a-b.svg` and `a-c.svg`.
@@ -39,108 +48,95 @@ export function expand(pattern) {
     .flatMap((alternative) => expand(pattern.replace(whole, alternative)))
 }
 
+/** @param {string} text */
+const quote = (text) => text.replace(/[$()*+\-.?[\\\]^{|}]/g, '\\$&')
+
 /**
- * The files that a site reads by name, with who reads them. Paths are relative to the
- * output of `CONTRACT_JOB`.
- * @type {ContractEntry[]}
+ * Compile a pattern of a set: `*` is any run of characters inside one folder or name, as
+ * short as the rest of the pattern allows, and `{a,b}` is one of its alternatives.
+ * @param {string} pattern
+ * @returns {{ regex: RegExp, parts: Array<string | string[] | null> }} The parts of the
+ *   pattern in order: a literal, the alternatives of a group, or null for a `*`
  */
-export const CONTRACT = [
-  {
-    reader: 'Navigation.astro and Footer.astro of @chassis-ui/docs',
-    files: ['images/site-logo.svg']
-  },
-  {
-    reader: 'Favicons.astro of @chassis-ui/docs, and the aliases of the website',
-    files: ['images/{favicon,favicon-16x16,favicon-32x32,apple-touch-icon}.png']
-  },
-  {
-    reader: 'the manifest.json of each site',
-    files: ['images/android-chrome-{192x192,512x512}.png']
-  },
-  {
-    reader: 'BaseLayout.astro of @chassis-ui/docs, which fails the build of a site without it',
-    files: ['images/social-image.png']
-  },
-  {
-    reader: 'the home page of every site, which fails the build of a site without it',
-    files: ['icons/cx-sprite.svg']
-  },
-  {
-    reader: 'GalleryImage.astro of the website and ResponsiveImage.astro of chassis-tokens',
-    files: ['images/home/comp-gallery-{light,dark}{,-small}{,@2x}.{png,webp}']
-  },
-  {
-    reader: 'FigmaSection.astro of the website',
-    files: ['images/home/figma-{docs,library,tokens}-{light,dark}{,@2x}.webp']
-  },
-  {
-    reader: 'IconsSection.astro and TokensSection.astro of the website',
-    files: ['images/home/icon-library-{light,dark}.svg', 'images/home/tokens-{scheme,visual}.svg']
-  },
-  {
-    reader: 'BrandingSection.astro of the website',
-    files: ['images/logo/chassis-{logo,icon}-{brand,white}-banner.svg']
+export function compilePattern(pattern) {
+  /** @type {Array<string | string[] | null>} */
+  const parts = []
+  let source = ''
+  for (const token of pattern.split(/(\*|\{[^{}]*\})/).filter(Boolean)) {
+    if (token === '*') {
+      parts.push(null)
+      source += '([^/]*?)'
+    } else if (token.startsWith('{')) {
+      const alternatives = token.slice(1, -1).split(',')
+      parts.push(alternatives)
+      // The longest first, so that `{,@2x}` takes `@2x` where it is
+      const sorted = [...alternatives].sort((a, b) => b.length - a.length)
+      source += `(${sorted.map(quote).join('|')})`
+    } else {
+      parts.push(token)
+      source += quote(token)
+    }
   }
-]
+  return { regex: new RegExp(`^${source}$`), parts }
+}
 
 /**
- * The screenshots of the Figma components, which `ExampleImage.astro` and `CxVariant.astro`
- * of chassis-figma read by the name of the component, the mode and the image.
- */
-export const SCREENSHOT = /^images\/figma\/components\/([^/]+)\/(light|dark)\/([^/@]+)(@2x)?\.png$/
-const SCREENSHOT_READER = 'ExampleImage.astro and CxVariant.astro of chassis-figma'
-
-/**
- * The name of a Figma export copy: the name of another screenshot, then an export number,
- * `-1`, or `-2x-1` for a copy of the `@2x` file. `meta-1-2x-3` is a copy of `meta-1`.
- */
-const EXPORT_COPY = /^(.+?)(?:-2x)?-\d+$/
-
-/**
- * Find the files of the consumer contract that an output does not have. Pure.
+ * The files a set lacks. Pure.
  *
- * A screenshot is read in two modes and at two densities (`ResponsiveImage.astro` writes a
- * `srcset` of the file and its `@2x`), so a screenshot that the output has in one of them
- * has to be there in all four. A Figma export copy, a screenshot's name with an export number
- * after it, is read by no page: it has to be there in both modes, and needs no `@2x`. The
- * output has to hold screenshots.
- * @param {string[]} paths - The files of the docs output, relative to it, with forward slashes
+ * Every file of the output that matches the pattern, and none of the exceptions, is read
+ * with each alternative of each `{a,b}` in place of its own, so all of them have to be
+ * there. A set that no file matches lacks the pattern itself.
+ * @param {string[]} paths - The files of the output, relative to it, with forward slashes
+ * @param {string | ContractSet} set - A pattern, or a pattern with exceptions
+ * @returns {string[]} The missing paths, each once
+ */
+export function missingFromSet(paths, set) {
+  const { pattern, except = [] } = typeof set === 'string' ? { pattern: set } : set
+  const { regex, parts } = compilePattern(pattern)
+  const exceptions = except.map((glob) => compilePattern(glob).regex)
+  const has = new Set(paths)
+  /** @type {Set<string>} */
+  const missing = new Set()
+  let matched = false
+
+  for (const file of paths) {
+    const match = regex.exec(file)
+    if (!match || exceptions.some((exception) => exception.test(file))) continue
+    matched = true
+    // The file with its own wildcards, and the alternatives left as a pattern to expand
+    let group = 0
+    const variants = parts
+      .map((part) => {
+        if (typeof part === 'string') return part
+        group++
+        return part === null ? match[group] : `{${part.join(',')}}`
+      })
+      .join('')
+    for (const variant of expand(variants)) {
+      if (!has.has(variant)) missing.add(variant)
+    }
+  }
+
+  if (!matched) missing.add(pattern)
+  return [...missing]
+}
+
+/**
+ * Find the files of the contracts of one job that its output does not have. Pure.
+ * @param {string[]} paths - The files of the output of the job, relative to it, with
+ *   forward slashes
+ * @param {ContractEntry[]} entries - The contracts of the job
  * @returns {ContractProblem[]} The missing files, sorted by path
  */
-export function missingFromContract(paths) {
+export function missingFromContract(paths, entries) {
   const has = new Set(paths)
-  const missing = CONTRACT.flatMap(({ reader, files }) =>
-    files
+  const missing = entries.flatMap(({ reader, files = [], sets = [] }) => [
+    ...files
       .flatMap(expand)
       .filter((file) => !has.has(file))
-      .map((file) => ({ path: file, reader }))
-  )
-
-  /** @type {Map<string, Set<string>>} The names of the screenshots of each component */
-  const components = new Map()
-  for (const file of paths) {
-    const [, component, , name] = SCREENSHOT.exec(file) ?? []
-    if (!component) continue
-    if (!components.has(component)) components.set(component, new Set())
-    components.get(component).add(name)
-  }
-  /** @type {Set<string>} */
-  const screenshots = new Set()
-  for (const [component, names] of components) {
-    for (const name of names) {
-      const [, original] = EXPORT_COPY.exec(name) ?? []
-      const densities = original && names.has(original) ? '' : '{,@2x}'
-      screenshots.add(`${component}/{light,dark}/${name}${densities}.png`)
-    }
-  }
-  if (screenshots.size === 0) {
-    missing.push({ path: 'images/figma/components/', reader: SCREENSHOT_READER })
-  }
-  for (const screenshot of screenshots) {
-    for (const file of expand(`images/figma/components/${screenshot}`)) {
-      if (!has.has(file)) missing.push({ path: file, reader: SCREENSHOT_READER })
-    }
-  }
+      .map((file) => ({ path: file, reader })),
+    ...sets.flatMap((set) => missingFromSet(paths, set).map((file) => ({ path: file, reader })))
+  ])
   return missing.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
 }
 
@@ -159,54 +155,83 @@ function listFiles(dir) {
 }
 
 /**
- * Check the docs output of a build against the contract.
+ * Check the output of a build against the contracts of `chassis.checks.json`.
  * @param {{ cwd?: string, out?: string }} [options] - The repository root and the output folder
- * @returns {{ dir: string, files: number, missing: ContractProblem[] }}
- *   `dir` is the folder checked, relative to `cwd`
+ * @returns {Array<{ job: string, dir: string, files: number, missing: ContractProblem[] }>}
+ *   One result per job that has a contract. `dir` is the folder checked, relative to
+ *   `cwd`; `files` is 0 when it does not exist
+ * @throws {Error} When a contract is not of the shape above, or names a job that the
+ *   configuration does not build
  */
-export function checkContract(options = {}) {
+export function checkContracts(options = {}) {
   const cwd = resolveRoot(options.cwd)
-  const { platform, app, brand } = CONTRACT_JOB
-  const dir = path.resolve(cwd, options.out || 'dist', platform, app, brand)
-  const relative = path.relative(cwd, dir) || '.'
-  if (!fs.existsSync(dir)) {
-    return {
-      dir: relative,
-      files: 0,
-      missing: [{ path: '', reader: 'every Chassis site, through `chassis-docs vendor`' }]
+  const config = loadConfig(cwd)
+  /** @type {Map<string, ContractEntry[]>} */
+  const jobs = new Map()
+
+  for (const entry of config.contracts) {
+    const [platform, app, brand, ...rest] = String(entry.job ?? '').split('/')
+    if (!platform || !app || !brand || rest.length > 0 || !entry.reader) {
+      throw new Error(
+        `A contract of ${CHECKS_FILE} needs a job, as <platform>/<app>/<brand>, and "reader": ${JSON.stringify(entry)}`
+      )
     }
+    if (!config.brands.includes(brand) || !config.apps[app]?.includes(platform)) {
+      throw new Error(
+        `The contract of ${entry.reader} names the job ${entry.job}, which chassis.build of package.json does not build`
+      )
+    }
+    jobs.set(entry.job, [...(jobs.get(entry.job) ?? []), entry])
   }
-  const paths = listFiles(dir)
-  return { dir: relative, files: paths.length, missing: missingFromContract(paths) }
+
+  return [...jobs].map(([job, entries]) => {
+    const dir = path.resolve(cwd, options.out || 'dist', job)
+    const relative = path.relative(cwd, dir) || '.'
+    if (!fs.existsSync(dir)) {
+      const readers = [...new Set(entries.map((entry) => entry.reader))].join(', ')
+      return { job, dir: relative, files: 0, missing: [{ path: '', reader: readers }] }
+    }
+    const paths = listFiles(dir)
+    return { job, dir: relative, files: paths.length, missing: missingFromContract(paths, entries) }
+  })
 }
 
 /**
- * Print the result of `checkContract()`.
- * @param {ReturnType<typeof checkContract>} result
- * @returns {boolean} Whether the output keeps the contract
+ * Print the results of `checkContracts()`.
+ * @param {ReturnType<typeof checkContracts>} results
+ * @returns {boolean} Whether every output keeps its contracts
  */
-export function printContract(result) {
-  if (result.missing.length === 0) {
-    console.log(`✅ Consumer contract: ${result.dir}/ has every file the sites read`)
+export function printContracts(results) {
+  if (results.length === 0) {
+    console.log(`✅ Consumer contract: none in ${CHECKS_FILE}, nothing to check`)
     return true
   }
-  if (result.files === 0) {
-    console.error(`❌ Consumer contract: ${result.dir}/ does not exist. Run \`pnpm assets:site\``)
-    return false
+  let ok = true
+  for (const { job, dir, files, missing } of results) {
+    if (missing.length === 0) {
+      console.log(`✅ Consumer contract: ${dir}/ has every file its consumers read`)
+    } else if (files === 0) {
+      ok = false
+      const [platform, app, brand] = job.split('/')
+      console.error(
+        `❌ Consumer contract: ${dir}/ does not exist. Run \`pnpm assets --platform ${platform} --app ${app} --brand ${brand}\``
+      )
+    } else {
+      ok = false
+      console.error(`❌ Consumer contract: ${missing.length} file(s) missing from ${dir}/`)
+      for (const { path: file, reader } of missing) {
+        console.error(`   - ${file}, read by ${reader}`)
+      }
+    }
   }
-  console.error(
-    `❌ Consumer contract: ${result.missing.length} file(s) missing from ${result.dir}/`
-  )
-  for (const { path: file, reader } of result.missing) {
-    console.error(`   - ${file}, read by ${reader}`)
-  }
-  return false
+  return ok
 }
 
 const HELP = `Usage: pnpm assets:contract [options]
 
-Checks that <out>/web/docs/chassis/ has every file the Chassis sites read from it. Exits 1
-and names the files and their readers when one is missing.
+Checks that the output of each job named in \`contracts\` of chassis.checks.json has the
+files its consumers read. Exits 1 and names the files and their readers when one is missing.
+Passes when no contract is configured.
 
 Options:
   --out <dir>            Output folder to read, default dist
@@ -232,7 +257,12 @@ export function cli(argv = process.argv.slice(2)) {
       process.exit(2)
     }
   }
-  process.exit(printContract(checkContract(options)) ? 0 : 1)
+  try {
+    process.exit(printContracts(checkContracts(options)) ? 0 : 1)
+  } catch (error) {
+    console.error(`❌ ${/** @type {Error} */ (error).message}`)
+    process.exit(1)
+  }
 }
 
 // Only run if this file is executed directly (not imported)

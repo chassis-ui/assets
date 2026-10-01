@@ -189,6 +189,11 @@ describe('loadConfig()', () => {
       brands: ['alpha', 'beta'],
       apps: { site: ['web'], mobile: ['ios', 'android'] },
       brandFolder: 'default',
+      contracts: [
+        expect.objectContaining({ job: 'web/site/alpha', files: expect.any(Array) }),
+        expect.objectContaining({ job: 'web/site/alpha', sets: expect.any(Array) })
+      ],
+      lintAllow: [],
       name: 'chassis-assets-fixture',
       version: '0.0.0-fixture'
     })
@@ -197,7 +202,13 @@ describe('loadConfig()', () => {
   test('defaults the fallback brand folder to default', () => {
     const dir = tempDir()
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'x' }))
-    expect(loadConfig(dir)).toMatchObject({ brands: [], apps: {}, brandFolder: 'default' })
+    expect(loadConfig(dir)).toMatchObject({
+      brands: [],
+      apps: {},
+      brandFolder: 'default',
+      contracts: [],
+      lintAllow: []
+    })
   })
 })
 

@@ -56,6 +56,7 @@ A pnpm workspace. Run every command from the root.
 source/                   -> The assets, as source/<brand>/<app>/<type>/
 dist/                     -> The build output, as dist/<platform>/<app>/<brand>/. Not committed
 package.json              -> The `chassis` configuration and the commands
+chassis.checks.json       -> What the checks verify: the consumer contracts, the names the lint keeps
 packages/assets/          -> @chassis-ui/assets: the build in build/, its tests in test/
 packages/site/            -> The documentation site, built with Astro
 build/                    -> Scripts of the repository: releases and the site's checks
@@ -146,7 +147,7 @@ A full build removes `dist/` first; a filtered build keeps it. A filter value th
 | `pnpm test:golden`        | Writes `packages/assets/test/golden/` again, after an intended change to the output                             |                                                               |
 | `pnpm assets:analyze`     | Sizes, types, largest files and files with the same content, of `source/` and of an existing output             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet` |
 | `pnpm assets:validate`    | Checks an existing output against `source/` and the configuration                                               | `--out`, `--cwd`                                              |
-| `pnpm assets:contract`    | Checks that `dist/web/docs/chassis/` has every file the Chassis sites read                                      | `--out`, `--cwd`                                              |
+| `pnpm assets:contract`    | Checks that each output has the files of its contracts in `chassis.checks.json`                                 | `--out`, `--cwd`                                              |
 | `pnpm assets:verify`      | The validator, then the contract check                                                                          | `--out`, `--cwd`                                              |
 | `pnpm assets:lint:source` | The names and the layout of `source/` against the naming conventions of the design guidelines, and LFS pointers | `--cwd`, `--allow-lfs-pointers`                               |
 | `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                     |                                                               |
@@ -199,6 +200,13 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
 - `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone, as `chassis` is.
 - `build.apps` maps each app to its platforms: `web`, `ios` or `android`.
 
+What the checks verify is in [chassis.checks.json](chassis.checks.json), beside `package.json`. The build does not read it, and the file is optional:
+
+- `contracts` lists, for a job, the files that a consumer reads by name from its output. `pnpm assets:contract` checks them.
+- `lint.allow` lists the source files that break a naming rule and are kept, each with the reason. `pnpm assets:lint:source` warns about them instead of failing.
+
+A team that adopts the repository changes `source/`, the `chassis` block of `package.json` and this file, which it fills with its own lists or deletes. The build in `packages/assets/build/` names no brand, app or file. The [build system page](https://chassis-ui.com/assets/docs/getting-started/build-system/#configuration) has the schema of both.
+
 The build writes one job per brand, app and platform: the files of `source/default/<app>/`, replaced by those of `source/<brand>/<app>/`, with the processing of the platform, into `dist/<platform>/<app>/<brand>/`.
 
 ## What consumers rely on
@@ -215,7 +223,7 @@ Every Chassis site vendors this repository as the submodule `vendor/assets`, pin
 | `icons/cx-sprite.svg`                         | The sprite of the home page icons                                                                                                      |
 | `images/figma/components/<component>/<mode>/` | The screenshots that the pages of chassis-figma read by name                                                                           |
 
-The full list, with the code that reads each file, is `CONTRACT` in [packages/assets/build/contract.js](packages/assets/build/contract.js).
+The full list, with the code that reads each file, is `contracts` in [chassis.checks.json](chassis.checks.json).
 
 ## Branches and CI
 

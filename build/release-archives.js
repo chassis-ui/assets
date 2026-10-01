@@ -4,15 +4,17 @@
  * Release Archives Script
  *
  * Writes one archive per platform, app and brand of an existing build, for the GitHub
- * release of a version: chassis-assets-<platform>-<app>-<brand>-<version>.zip, with the
- * content of dist/<platform>/<app>/<brand>/ at its top level.
+ * release of a version: <prefix>-<platform>-<app>-<brand>-<version>.zip, with the content
+ * of dist/<platform>/<app>/<brand>/ at its top level.
  *
  * Usage:
- *   node build/release-archives.js [--out <dir>] [--to <dir>]
+ *   node build/release-archives.js [--out <dir>] [--to <dir>] [--prefix <name>]
  *
  * --out is the build output to read, `dist` by default. --to is the folder the archives are
- * written to, `.cache/release` by default; archives already in it are removed. Needs the
- * `zip` command. Fails when the build output has no job.
+ * written to, `.cache/release` by default; archives already in it are removed. --prefix is
+ * the start of the names, by default the name of the root package.json without its scope
+ * and without `-workspace`: `chassis-assets` here. Needs the `zip` command. Fails when the
+ * build output has no job.
  *
  * Copyright 2025-2026 Ozgur Gunes
  * Licensed under MIT
@@ -40,11 +42,13 @@ async function main() {
   const out = path.resolve(option('--out', 'dist'))
   const to = path.resolve(option('--to', '.cache/release'))
   const pkg = JSON.parse(await fs.readFile(path.resolve('packages/assets/package.json'), 'utf8'))
+  const root = JSON.parse(await fs.readFile(path.resolve('package.json'), 'utf8'))
+  const prefix = option('--prefix', root.name.replace(/^@[^/]+\//, '').replace(/-workspace$/, ''))
 
   await fs.mkdir(to, { recursive: true })
 
   for (const name of await fs.readdir(to)) {
-    if (name.startsWith('chassis-assets-') && name.endsWith('.zip')) {
+    if (name.startsWith(`${prefix}-`) && name.endsWith('.zip')) {
       await fs.rm(path.join(to, name))
     }
   }
@@ -54,7 +58,7 @@ async function main() {
   for (const platform of await folders(out)) {
     for (const app of await folders(path.join(out, platform))) {
       for (const brand of await folders(path.join(out, platform, app))) {
-        const name = `chassis-assets-${platform}-${app}-${brand}-${pkg.version}.zip`
+        const name = `${prefix}-${platform}-${app}-${brand}-${pkg.version}.zip`
 
         // -X leaves out the extra file attributes, -x the files macOS adds to a folder
         execFileSync('zip', ['-q', '-r', '-X', path.join(to, name), '.', '-x', '*.DS_Store'], {

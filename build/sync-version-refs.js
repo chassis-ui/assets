@@ -21,17 +21,19 @@ const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-.]+)?$/
 
 /**
  * The files that show the version, each with the pattern of the reference and its text
- * for a version. A file without a match fails the run, so a reference cannot go stale
- * unnoticed.
+ * for a version. A required file without a match fails the run, so a reference cannot go
+ * stale unnoticed. The badge of the README is not required: a repository may have none.
  */
 const REFERENCES = [
   {
     file: 'packages/site/config.yml',
+    required: true,
     pattern: /^current_version:(\s*)"[^"]*"/m,
     replace: (version, spacing) => `current_version:${spacing}"${version}"`
   },
   {
     file: 'README.md',
+    required: false,
     pattern:
       /\[!\[Version: [^\]]*\]\(https:\/\/img\.shields\.io\/badge\/Version-[^)]*-blue\.svg\)\]/,
     // shields.io reads a dash as a separator, and a doubled dash as a dash
@@ -52,10 +54,15 @@ async function readVersion() {
   return pkg.version
 }
 
-async function syncReference({ file, pattern, replace }, version) {
+async function syncReference({ file, required, pattern, replace }, version) {
   const original = await fs.readFile(file, 'utf8')
 
   if (!pattern.test(original)) {
+    if (!required) {
+      console.log(`ℹ️  No version badge in ${file}, nothing to update there`)
+      return false
+    }
+
     console.error(`❌ No version reference in ${file}`)
     process.exit(1)
   }

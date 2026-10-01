@@ -2,12 +2,13 @@
  * Chassis Assets Verify
  *
  * Checks an existing output: the validator (`validate-assets.js`), then the consumer
- * contract (`contract.js`). Run it after a full build; CI does.
+ * contracts of `chassis.checks.json` (`contract.js`), if there are any. Run it after a full
+ * build; CI does.
  *
  * @module verify
  */
 
-import { checkContract, printContract } from './contract.js'
+import { checkContracts, printContracts } from './contract.js'
 import { isEntry } from './root.js'
 import DistValidator from './validate-assets.js'
 
@@ -19,14 +20,14 @@ import DistValidator from './validate-assets.js'
 export async function verify(options = {}) {
   const valid = await new DistValidator(options).runValidation()
   console.log('')
-  const contract = printContract(checkContract(options))
+  const contract = printContracts(checkContracts(options))
   return { valid, contract }
 }
 
 const HELP = `Usage: pnpm assets:verify [options]
 
-Runs the validator, then the consumer contract check, on an existing output. Exits 1 when
-either fails.
+Runs the validator, then the check of the consumer contracts of chassis.checks.json, on an
+existing output. Exits 1 when either fails.
 
 Options:
   --out <dir>            Output folder to read, default dist

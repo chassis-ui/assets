@@ -249,17 +249,49 @@ describe('pnpm assets:lint:source', () => {
 })
 
 describe('pnpm assets:contract and assets:verify', () => {
-  test('the contract check exits 1 on an output without the docs job', () => {
-    const { code, stderr } = run(CONTRACT_CLI, ['--out', '../golden'])
-    expect(code).toBe(1)
-    expect(stderr).toContain('../golden/web/docs/chassis/ does not exist')
+  /** The golden output without a file of the fixture's contract, in a temporary folder. */
+  function brokenOutput() {
+    const out = tempDir()
+    fs.cpSync(GOLDEN, out, { recursive: true })
+    fs.rmSync(path.join(out, 'web/site/alpha/images/hero-banner.png'))
+    return out
+  }
+
+  test('the contract check exits 0 on the golden output, by the contracts of chassis.checks.json', () => {
+    const { code, stdout } = run(CONTRACT_CLI, ['--out', '../golden'])
+    expect(code).toBe(0)
+    expect(stdout).toContain('../golden/web/site/alpha/ has every file its consumers read')
   })
 
-  test('verify runs the validator and the contract check, and exits 1 when one fails', () => {
-    const { code, stdout, stderr } = run(VERIFY_CLI, ['--out', '../golden'])
+  test('the contract check exits 1 on an output without a file, and names it and its reader', () => {
+    const { code, stderr } = run(CONTRACT_CLI, ['--out', brokenOutput()])
     expect(code).toBe(1)
+    expect(stderr).toContain('images/hero-banner.png, read by the layout of the fixture site')
+  })
+
+  test('the contract check exits 0 in a repository without chassis.checks.json', () => {
+    const root = tempDir()
+    fs.writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ chassis: { build: { brands: ['alpha'], apps: { site: ['web'] } } } })
+    )
+    const { code, stdout } = run(CONTRACT_CLI, ['--cwd', root])
+    expect(code).toBe(0)
+    expect(stdout).toContain('nothing to check')
+  })
+
+  test('verify runs the validator and the contract check, and exits 0 when both pass', () => {
+    const { code, stdout } = run(VERIFY_CLI, ['--out', '../golden'])
+    expect(code).toBe(0)
     expect(stdout).toContain('Overall: 8/8 checks passed')
-    expect(stderr).toContain('Verify failed: the consumer contract')
+    expect(stdout).toContain('Verify passed')
+  })
+
+  test('verify exits 1 when the contract check fails', () => {
+    const { code, stderr } = run(VERIFY_CLI, ['--out', brokenOutput()])
+    expect(code).toBe(1)
+    expect(stderr).toContain('Verify failed')
+    expect(stderr).toContain('the consumer contract')
   })
 
   test('an unknown option exits 2', () => {
@@ -280,14 +312,11 @@ describe('cli.js', () => {
   test.each([
     ['analyze', ['--quiet', '--out', '../golden']],
     ['validate', ['--out', '../golden']],
+    ['contract', ['--out', '../golden']],
+    ['verify', ['--out', '../golden']],
     ['lint-source', ['--help']]
   ])('%s runs its module', (command, args) => {
     expect(cli(command, ...args).code).toBe(0)
-  })
-
-  test('contract and verify exit 1 on the fixture, which is not the docs output', () => {
-    expect(cli('contract', '--out', '../golden').code).toBe(1)
-    expect(cli('verify', '--out', '../golden').code).toBe(1)
   })
 
   test('--version prints the version of the build', () => {

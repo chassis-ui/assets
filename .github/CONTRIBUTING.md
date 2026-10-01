@@ -32,7 +32,8 @@ are the public API. Before 1.0, a change that breaks one of them is a `minor` bu
 summary starts with `**Breaking.**`. Everything else is a `patch`.
 
 The [consumer contract](../ref/ROADMAP.md#the-consumer-contract) is not for a version to
-break: `pnpm assets:contract` checks it on every commit.
+break. It is `contracts` in `chassis.checks.json`, and `pnpm assets:contract`
+checks it on every commit.
 
 ### Release a version
 
@@ -61,7 +62,8 @@ the checks of CI passed on the commit, it builds every brand, app and platform, 
 `pnpm assets:verify`, and creates the tag and the GitHub release with the changelog entry as
 its text and the archives attached:
 `chassis-assets-<platform>-<app>-<brand>-<version>.zip`, which holds the content of
-`dist/<platform>/<app>/<brand>/`. A version without a changelog entry is not released.
+`dist/<platform>/<app>/<brand>/`. The start of the name is the name of the root
+`package.json` without `-workspace`. A version without a changelog entry is not released.
 
 The push to `app/docs` is what the sites receive: `chassis-docs sync-submodules` moves their
 `vendor/assets` to the tip of that branch.

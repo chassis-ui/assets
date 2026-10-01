@@ -3,8 +3,8 @@
  *
  * Checks `source/` against the rules of the design-guidelines page: names of lowercase
  * letters, digits and hyphens, a resolution indicator only at the end of a name, every file
- * in a type folder of an app, and no Git LFS pointer in place of a file. The known oddities
- * that the roadmap keeps are warnings, not errors.
+ * in a type folder of an app, and no Git LFS pointer in place of a file. A name that
+ * `lint.allow` of `chassis.checks.json` keeps, with its reason, is a warning, not an error.
  *
  * `lintSource(options)` reads the files and returns the problems; the command-line entry at
  * the bottom prints them and exits 1 on an error.
@@ -28,28 +28,11 @@ const EXTENSION = /^\.[a-z0-9]+$/
 /** A resolution indicator at the end of a name: `@2x`, `@3x`, `@1.5x`. */
 const INDICATOR = /@\d+(?:\.\d+)?x$/
 
-/**
- * Files that break a rule and stay, each with the reason. The lint warns about them.
- * Paths are relative to `source/`, with `*` for one folder.
- * @type {Array<{ pattern: string, reason: string }>}
- */
-export const KNOWN_ODDITIES = [
-  {
-    pattern: '*/*/other/default.tokens.json',
-    reason:
-      'a Figma variables export, kept by D7 of the roadmap; the web output is default-tokens.json'
-  },
-  {
-    pattern: '*/*/icons/icons/chassis-icons.min.css',
-    reason:
-      'part of the build output of @chassis-ui/icons, copied as it is; the web output is chassis-icons-min.css'
-  }
-]
-
 const HELP = `Usage: pnpm assets:lint:source [options]
 
 Checks the names and the layout of source/ against the rules of the design-guidelines page.
-Exits 1 when a file breaks a rule. The known oddities are printed as warnings.
+Exits 1 when a file breaks a rule. A name that \`lint.allow\` of chassis.checks.json keeps
+is printed as a warning, with its reason.
 
 Options:
   --cwd <dir>            Repository root, default the nearest folder upward whose
@@ -60,7 +43,7 @@ Options:
 `
 
 /**
- * Whether a path relative to `source/` matches a pattern of `KNOWN_ODDITIES`.
+ * Whether a path relative to `source/` matches a pattern of `lint.allow`.
  * @param {string} file - With forward slashes
  * @param {string} pattern - With forward slashes, `*` for one folder
  * @returns {boolean}
@@ -182,7 +165,7 @@ export function lintSource(options = {}) {
 
   const files = listSource(sourceDir)
   for (const file of files) {
-    const oddity = KNOWN_ODDITIES.find((known) => matchesPattern(file, known.pattern))
+    const oddity = config.lintAllow.find((known) => matchesPattern(file, known.pattern))
     for (const message of checkName(file)) {
       if (oddity) warnings.push({ file, message: `${message}. Kept: ${oddity.reason}` })
       else errors.push({ file, message })

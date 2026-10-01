@@ -194,11 +194,11 @@ Run the validation and the consumer contract check together on an existing `dist
 # The validator, then the consumer contract
 pnpm assets:verify
 
-# The consumer contract alone, after pnpm assets:site
+# The consumer contracts alone
 pnpm assets:contract
 ```
 
-The consumer contract is the list of files that the Chassis sites read by name from `dist/web/docs/chassis/`: the logo, the favicons, the social image, `icons/cx-sprite.svg`, the home page images, the brand banners and the Figma component screenshots. It lives in `build/contract.js`, each file with the code that reads it. A screenshot has to be there in the light and dark mode and at `1x` and `@2x`. The check exits with 1 and names each missing file and its reader.
+A consumer contract is a list of files that a consumer reads by name from the output of one job. The contracts are in `chassis.checks.json`, see [Checks file](#checks-file). The check exits with 1 and names each missing file and its reader. A repository without contracts has nothing to check, and `pnpm assets:verify` is the validator alone.
 
 ### Lint the Source
 
@@ -216,11 +216,11 @@ pnpm assets:lint:source
 - ✅ No Git LFS pointer in place of a file; `--allow-lfs-pointers` checks the names only
 - ⚠️ A folder under `source/` that is not the default folder or a configured brand, and an app folder that is not configured, which the build does not read
 
-The command exits with 1 on an error and suggests a name that keeps the rules. A few files that break a rule on purpose, such as the build output of `@chassis-ui/icons`, are printed as warnings.
+The command exits with 1 on an error and suggests a name that keeps the rules. A file that breaks a rule on purpose is listed in `chassis.checks.json` with the reason, see [Checks file](#checks-file), and is printed as a warning.
 
 ## Configuration
 
-All build configuration is defined in the `chassis` key of `package.json`.
+All build configuration is defined in the `chassis` key of `package.json`. What the checks verify is in a file of its own, see [Checks file](#checks-file).
 
 ```json
 {
@@ -277,6 +277,69 @@ Build-specific configuration.
 </CxTable>
 
 **Supported platforms:** `web`, `ios`, `android`
+
+### Checks file
+
+What the checks verify is in `chassis.checks.json`, beside `package.json`. The build does not read it. The file is optional: without it there is no contract to check and no name the source lint keeps.
+
+#### contracts
+
+For a job, `<platform>/<app>/<brand>`, the files that a consumer reads by name from its output. `pnpm assets:contract` checks them.
+
+<CxTable>
+| Property | Type | Description |
+|----------|------|-------------|
+| `reader` | string | Who reads the files, printed when one is missing |
+| `files` | string[] | Paths that have to be there, relative to the output of the job. `{a,b}` stands for each alternative |
+| `sets` | array | Patterns of files that are read together, with `*` and `{a,b}`. When the output has a file that matches, it has to have that file with every other alternative too. An entry is a pattern, or `{ "pattern": …, "except": [ … ] }` to leave files out |
+</CxTable>
+
+**Example:**
+
+```json
+{
+  "contracts": {
+    "web/docs/chassis": [
+      {
+        "reader": "the layout of the site",
+        "files": ["images/site-logo.svg", "images/favicon{,-16x16,-32x32}.png"]
+      },
+      {
+        "reader": "the gallery of the site",
+        "sets": ["images/gallery/*/{light,dark}/*{,@2x}.png"]
+      }
+    ]
+  }
+}
+```
+
+The set of the example says that every image of the gallery is there in the light and the dark mode, each at `1x` and `@2x`.
+
+#### lint.allow
+
+The files of `source/` that break a naming rule and are kept. `pnpm assets:lint:source` prints a warning for them instead of an error.
+
+<CxTable>
+| Property | Type | Description |
+|----------|------|-------------|
+| `pattern` | string | The path of the file, relative to `source/`, with `*` for one folder |
+| `reason` | string | Why the name is kept, printed with the warning |
+</CxTable>
+
+**Example:**
+
+```json
+{
+  "lint": {
+    "allow": [
+      {
+        "pattern": "*/*/icons/icons/chassis-icons.min.css",
+        "reason": "part of the build output of @chassis-ui/icons, copied as it is"
+      }
+    ]
+  }
+}
+```
 
 ### Examples
 

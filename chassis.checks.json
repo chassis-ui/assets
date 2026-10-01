@@ -1,0 +1,71 @@
+{
+  "contracts": {
+    "web/docs/chassis": [
+      {
+        "reader": "Navigation.astro and Footer.astro of @chassis-ui/docs",
+        "files": ["images/site-logo.svg"]
+      },
+      {
+        "reader": "Favicons.astro of @chassis-ui/docs, and the aliases of the website",
+        "files": ["images/{favicon,favicon-16x16,favicon-32x32,apple-touch-icon}.png"]
+      },
+      {
+        "reader": "the manifest.json of each site",
+        "files": ["images/android-chrome-{192x192,512x512}.png"]
+      },
+      {
+        "reader": "BaseLayout.astro of @chassis-ui/docs, which fails the build of a site without it",
+        "files": ["images/social-image.png"]
+      },
+      {
+        "reader": "the home page of every site, which fails the build of a site without it",
+        "files": ["icons/cx-sprite.svg"]
+      },
+      {
+        "reader": "GalleryImage.astro of the website and ResponsiveImage.astro of chassis-tokens",
+        "files": ["images/home/comp-gallery-{light,dark}{,-small}{,@2x}.{png,webp}"]
+      },
+      {
+        "reader": "FigmaSection.astro of the website",
+        "files": ["images/home/figma-{docs,library,tokens}-{light,dark}{,@2x}.webp"]
+      },
+      {
+        "reader": "IconsSection.astro and TokensSection.astro of the website",
+        "files": [
+          "images/home/icon-library-{light,dark}.svg",
+          "images/home/tokens-{scheme,visual}.svg"
+        ]
+      },
+      {
+        "reader": "BrandingSection.astro of the website",
+        "files": ["images/logo/chassis-{logo,icon}-{brand,white}-banner.svg"]
+      },
+      {
+        "reader": "ExampleImage.astro and CxVariant.astro of chassis-figma",
+        "sets": [
+          "images/figma/components/*/{light,dark}/*.png",
+          {
+            "pattern": "images/figma/components/*/{light,dark}/*{,@2x}.png",
+            "except": [
+              "images/figma/components/*/*/card-orientation-top-*.png",
+              "images/figma/components/*/*/list-item-text-basic-*.png",
+              "images/figma/components/*/*/meta-1-*.png"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "lint": {
+    "allow": [
+      {
+        "pattern": "*/*/other/default.tokens.json",
+        "reason": "a Figma variables export, kept by D7 of the roadmap; the web output is default-tokens.json"
+      },
+      {
+        "pattern": "*/*/icons/icons/chassis-icons.min.css",
+        "reason": "part of the build output of @chassis-ui/icons, copied as it is; the web output is chassis-icons-min.css"
+      }
+    ]
+  }
+}

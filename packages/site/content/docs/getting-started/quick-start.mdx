@@ -175,18 +175,22 @@ When adopting Chassis Assets for your organization, customize the package metada
 
 ### Update Package Metadata
 
-Modify the package metadata in `package.json` to reflect your organization's details:
+Adopting the repository changes `source/`, the root `package.json` and `chassis.checks.json`. The build in `packages/assets/build/` names no brand, app or file of yours, so there is nothing to change in it.
+
+Modify the metadata of the root `package.json` to reflect your organization's details. The release archives take their name from it: `acme-assets-workspace` gives `acme-assets-<platform>-<app>-<brand>-<version>.zip`.
 
 ```json
 {
-  "name": "@your-org/chassis-assets",
+  "name": "acme-assets-workspace",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/chassis-assets.git"
+    "url": "https://github.com/your-org/acme-assets.git"
   },
   ...
 }
 ```
+
+The package that carries the version is `packages/assets/package.json`. It is private and never published, so its name can stay. When you rename it, rename it in the changesets of `.changeset/` too.
 
 ### Configure Brands & Apps
 
@@ -210,6 +214,8 @@ Define your specific brands and applications in the `chassis` configuration obje
 ```
 
 See the [Configuration]([[docsref:/getting-started/build-system#configuration]]) documentation for detailed information on configuring brands, apps, and build options.
+
+What the checks verify is in `chassis.checks.json`, beside `package.json`: `contracts`, the files your consumers read by name, and `lint.allow`, the source files that break a naming rule on purpose. The lists of this repository are those of the Chassis sites; replace them with yours, or delete the file. See [Checks file]([[docsref:/getting-started/build-system#checks-file]]).
 
 ### Update Git Remote URL
 
@@ -271,6 +277,7 @@ Key directories in the Chassis Assets repository:
 | `packages/site/` | Documentation website |
 | `docs/` | The architecture document of the build |
 | `package.json` | The `chassis` configuration and the commands |
+| `chassis.checks.json` | What the checks verify: the consumer contracts and the names the source lint keeps |
 </CxTable>
 
 ### Common Commands

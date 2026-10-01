@@ -21,7 +21,7 @@ build/                The site's checks and the version script
 A pnpm workspace, as `chassis-tokens` (roadmap D3). `source/`, `dist/` and the configuration
 stay at the root, where the designer and the consumers find them. The build runs from the
 root scripts with `node packages/assets/build/cli.js <command>`, never through
-`pnpm --filter`, and imports Node.js modules only: `pnpm install --ignore-workspace`, which
+`pnpm --filter` or a package name, and imports Node.js modules only: `pnpm install --ignore-workspace`, which
 is what `chassis-docs vendor` runs in a site, installs the root package and none of the
 build's or the site's packages, and `pnpm assets:site` works with nothing installed at all
 (Principle 8). CI builds that way first, in the Assets job.
@@ -94,9 +94,9 @@ jobs with their file counts.
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
-| `packages/assets/build/contract.js`           | The consumer contract as data, `CONTRACT`, each file with the code that reads it; `missingFromContract()` (pure) and `checkContract({ cwd, out })` over `dist/web/docs/chassis/`. The CLI entry is `pnpm assets:contract`.                                                                                                                                                                                    |
+| `packages/assets/build/contract.js`           | The check of the consumer contracts, which are data of the repository: `contracts` of `chassis.checks.json`. `expand()`, `missingFromSet()` and `missingFromContract()` (pure), and `checkContracts({ cwd, out })` over the output of each job that has a contract. It names no job and no file itself. The CLI entry is `pnpm assets:contract`.                                                              |
 | `packages/assets/build/verify.js`             | `verify({ cwd, out })`: the validator, then the contract check. `pnpm assets:verify`.                                                                                                                                                                                                                                                                                                                         |
-| `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`, `KNOWN_ODDITIES`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. `pnpm assets:lint:source`.                                                                                                                                                                       |
+| `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. A name of `lint.allow` of `chassis.checks.json` is a warning. `pnpm assets:lint:source`.                                                                                                                           |
 | `packages/assets/build/root.js`               | `findRoot()`, `resolveRoot(cwd)`, `buildVersion()`, `isEntry()`: the repository root of a run, the version of the build, and whether a module was started or imported.                                                                                                                                                                                                                                        |
 | `packages/assets/build/cli.js`                | The entry of the root scripts and of `bin`: `build`, `analyze`, `validate`, `contract`, `verify`, `lint-source`, each the `cli(argv)` of its module. Every module still runs on its own, `node packages/assets/build/build-assets.js`.                                                                                                                                                                        |
 | `packages/assets/build/types.js`              | The shared JSDoc types: `BuildConfig`, `BuildOptions`, `Job`, `BuildStats`, `Processor` and the problems of the checks. Exports nothing at run time. `tsconfig.json` checks `packages/assets/build/` against them with `checkJs`.                                                                                                                                                                             |
@@ -130,6 +130,21 @@ the build-system page describes; it may add `processImage()` as Android does.
   and builds from `default` alone.
 - `build.apps`: each app with the platforms it is built for. The jobs are every brand times
   every app times the app's platforms: six today.
+
+`chassis.checks.json`, beside `package.json`, holds what the checks verify. It is optional,
+`loadConfig()` reads it with the configuration, and the build uses none of it:
+
+- `contracts`: for a job, `<platform>/<app>/<brand>`, the files a consumer reads by name from
+  its output, as a list of entries with `reader`, `files` and `sets`. Read by
+  `pnpm assets:contract`. The entries of this repository are those of the Chassis sites: the
+  roadmap's consumer contract, as data.
+- `lint.allow`: the source files that break a naming rule and are kept, each with `pattern`
+  and `reason`. Read by `pnpm assets:lint:source`.
+
+Nothing in `packages/assets/build/` names a brand, an app or a file of this repository
+(roadmap Principle 9). A team that adopts the repository changes `source/`, the root
+`package.json` and `chassis.checks.json`; the build, the checks and their tests stay as they are, and the tests run
+on the fixture, which has its own configuration.
 
 ## The command line
 
@@ -261,9 +276,10 @@ changeset that says what breaks.
 - Eighteen screenshots under `images/figma/components/` are Figma export copies of another
   screenshot, `meta-1-1.png` and `meta-1-2x-1.png` beside `meta-1.png`, in both modes and
   without `@2x`. No page of `chassis-figma` reads them. The contract check requires both
-  modes for them, and not the `@2x` (`EXPORT_COPY` in `packages/assets/build/contract.js`).
+  modes for them, and not the `@2x`: they are the `except` patterns of the screenshot set in
+  `chassis.checks.json`.
 - `source/default/docs/other/default.tokens.json` and the two `icons/icons/chassis-icons.min.css`
-  break the naming rules; `pnpm assets:lint:source` warns about them (`KNOWN_ODDITIES`).
+  break the naming rules; `pnpm assets:lint:source` warns about them (`lint.allow` of `chassis.checks.json`).
 - The copy of `@chassis-ui/icons` under `icons/` is made by hand, so it is as new as its
   last refresh: 0.3.1, on 2026-10-01. See "Refreshing the icons".
 - Chassis CSS builds the URL of a named icon from `$icon-url-prefix`, `/static/icons/svgs/`
@@ -311,3 +327,6 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 - 2026-10-01: every command has `--help`, the README is written from `package.json` and the
   help texts, and `build/build-site.js`, which nothing called, is deleted (roadmap session
   4.1).
+- 2026-10-01: the consumer contracts and the names the source lint keeps are data of
+  `chassis.checks.json`, and the build names nothing of this
+  repository (roadmap session 3.3).

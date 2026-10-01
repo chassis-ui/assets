@@ -1,0 +1,14 @@
+{
+  "contracts": {
+    "web/site/alpha": [
+      {
+        "reader": "the layout of the fixture site",
+        "files": ["images/hero-banner.png", "fonts/text.{woff,woff2}"]
+      },
+      {
+        "reader": "the logo component of the fixture site",
+        "sets": ["images/logo/mark{,@2x,@3x}.png"]
+      }
+    ]
+  }
+}

@@ -52,7 +52,7 @@ jobs:
         run: pnpm check:astro
 
   # The build's lint, source lint, type check and tests, then a full build of every brand,
-  # app and platform, verified: the validator and the consumer contract
+  # app and platform, verified: the validator and the consumer contracts of chassis.checks.json
   assets:
     name: Assets
     runs-on: ubuntu-latest

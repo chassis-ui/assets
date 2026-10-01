@@ -1,14 +1,14 @@
 /**
  * @file lint-source.test.js
  * @description The source lint of `build/lint-source.js`: the naming rules of the
- *              design-guidelines page as a table, the known oddities, and `lintSource()` on
+ *              design-guidelines page as a table, the names `lint.allow` of `chassis.checks.json` keeps, and `lintSource()` on
  *              the fixture and on copies of it that break a rule.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, afterEach, describe, expect, test, vi } from 'vitest'
-import { KNOWN_ODDITIES, checkName, lintSource, matchesPattern } from '../build/lint-source.js'
+import { checkName, lintSource, matchesPattern } from '../build/lint-source.js'
 import { FIXTURE, copyFixture, removeTempDirs } from './helpers.js'
 
 afterAll(removeTempDirs)
@@ -67,7 +67,7 @@ describe('checkName()', () => {
   })
 })
 
-describe('known oddities', () => {
+describe('matchesPattern()', () => {
   test.each([
     ['default/docs/other/default.tokens.json', '*/*/other/default.tokens.json', true],
     [
@@ -79,12 +79,6 @@ describe('known oddities', () => {
     ['default/docs/images/default.tokens.json', '*/*/other/default.tokens.json', false]
   ])('%s matches %s: %s', (file, pattern, expected) => {
     expect(matchesPattern(file, pattern)).toBe(expected)
-  })
-
-  test('each breaks a rule, so that it is worth a warning', () => {
-    for (const { pattern } of KNOWN_ODDITIES) {
-      expect(checkName(pattern.replaceAll('*', 'default')), pattern).not.toEqual([])
-    }
   })
 })
 
@@ -104,10 +98,24 @@ describe('lintSource()', () => {
     ])
   })
 
-  test('warns about a known oddity instead of failing', () => {
+  /** A copy of the fixture with a file whose name has a dot, and `lint.allow` set. */
+  function withTokensFile(allow) {
     const root = copyFixture()
     fs.mkdirSync(path.join(root, 'source/default/site/other'))
     fs.writeFileSync(path.join(root, 'source/default/site/other/default.tokens.json'), '{}')
+    fs.writeFileSync(path.join(root, 'chassis.checks.json'), JSON.stringify({ lint: { allow } }))
+    return root
+  }
+
+  test('a name that breaks a rule is an error', () => {
+    const { errors } = lintSource({ cwd: withTokensFile([]) })
+    expect(errors.map((e) => e.file)).toContain('default/site/other/default.tokens.json')
+  })
+
+  test('warns about a name of lint.allow instead of failing, with its reason', () => {
+    const root = withTokensFile([
+      { pattern: '*/*/other/default.tokens.json', reason: 'a Figma variables export' }
+    ])
     const { errors, warnings } = lintSource({ cwd: root })
     expect(errors.map((e) => e.file)).not.toContain('default/site/other/default.tokens.json')
     expect(warnings).toEqual([

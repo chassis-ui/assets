@@ -9,11 +9,14 @@
  */
 
 /**
- * The `chassis` block of `package.json`, read by `loadConfig()`.
+ * The `chassis` block of `package.json` and the data of `chassis.checks.json`, read by
+ * `loadConfig()`.
  * @typedef {Object} BuildConfig
  * @property {string[]} brands - Brands to build, `chassis.build.brands`
  * @property {Record<string, string[]>} apps - Apps with their platforms, `chassis.build.apps`
  * @property {string} brandFolder - The fallback brand folder, `chassis.defaults.brandFolder`
+ * @property {ContractEntry[]} contracts - The files consumers read, `contracts` of `chassis.checks.json`
+ * @property {LintAllowance[]} lintAllow - Names the source lint accepts, `lint.allow` of `chassis.checks.json`
  * @property {string} [name] - The package name
  * @property {string} [version] - The package version
  */
@@ -95,16 +98,34 @@
  */
 
 /**
- * An entry of the consumer contract, `contract.js`.
- * @typedef {Object} ContractEntry
- * @property {string} reader - The code that reads the files
- * @property {string[]} files - Paths relative to the docs output, with `{a,b}` alternatives
+ * A name that breaks the naming rules and is kept, `lint.allow` of `chassis.checks.json`.
+ * @typedef {Object} LintAllowance
+ * @property {string} pattern - Relative to `source/`, with `*` for one folder
+ * @property {string} reason - Why the name is kept, printed with the warning
  */
 
 /**
- * A file of the consumer contract that an output lacks.
+ * A set of a contract: files that are read together.
+ * @typedef {Object} ContractSet
+ * @property {string} pattern - With `*` and `{a,b}` alternatives
+ * @property {string[]} [except] - Patterns of files the set does not ask anything of
+ */
+
+/**
+ * A contract of `chassis.checks.json`, with the job it is listed under, checked by
+ * `contract.js`.
+ * @typedef {Object} ContractEntry
+ * @property {string} job - The output it is about, `<platform>/<app>/<brand>`
+ * @property {string} reader - The code that reads the files
+ * @property {string[]} [files] - Paths relative to the output of the job, with `{a,b}`
+ *   alternatives
+ * @property {Array<string | ContractSet>} [sets] - Patterns of files that are read together
+ */
+
+/**
+ * A file of a consumer contract that an output lacks.
  * @typedef {Object} ContractProblem
- * @property {string} path - Relative to the docs output
+ * @property {string} path - Relative to the output of the job
  * @property {string} reader - The code that reads it
  */
 

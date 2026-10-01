@@ -16,7 +16,7 @@ import path from 'path'
 import { platformProcessors } from './processors/index.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
 
-/** @import { BuildConfig, BuildOptions, BuildStats, Job, Processor } from './types.js' */
+/** @import { BuildConfig, BuildOptions, BuildStats, ContractEntry, Job, LintAllowance, Processor } from './types.js' */
 
 const LFS_POINTER_HEADER = 'version https://git-lfs.github.com/spec/v1'
 
@@ -43,7 +43,7 @@ Options:
 `
 
 /** The configuration of the run. Set by `generateAssets()`. @type {BuildConfig} */
-let config = { brands: [], apps: {}, brandFolder: 'default' }
+let config = { brands: [], apps: {}, brandFolder: 'default', contracts: [], lintAllow: [] }
 
 /** The paths and switches of the run. Set by `generateAssets()`. */
 let run = {
@@ -83,8 +83,49 @@ function emptyStats() {
   }
 }
 
+/** The file of the data that the checks read, beside `package.json`. Optional. */
+export const CHECKS_FILE = 'chassis.checks.json'
+
 /**
- * Read the `chassis` configuration of the `package.json` in `cwd`.
+ * Read `chassis.checks.json` in `cwd`: the consumer contracts, by job, and the names the
+ * source lint keeps. The build does not read them; `contract.js` and `lint-source.js` do.
+ * @param {string} cwd - The repository root
+ * @returns {{ contracts: ContractEntry[], lintAllow: LintAllowance[] }} Both empty when
+ *   there is no file
+ * @throws {Error} When the file is not JSON, or `contracts` is not an object of lists
+ */
+function loadChecks(cwd) {
+  const file = path.join(cwd, CHECKS_FILE)
+  if (!fs.existsSync(file)) return { contracts: [], lintAllow: [] }
+  let checks
+  try {
+    checks = JSON.parse(fs.readFileSync(file, 'utf-8'))
+  } catch (error) {
+    throw new Error(`${CHECKS_FILE} is not valid JSON: ${/** @type {Error} */ (error).message}`, {
+      cause: error
+    })
+  }
+  const byJob = checks.contracts ?? {}
+  if (
+    typeof byJob !== 'object' ||
+    Array.isArray(byJob) ||
+    Object.values(byJob).some((entries) => !Array.isArray(entries))
+  ) {
+    throw new Error(
+      `"contracts" of ${CHECKS_FILE} is an object with a list of contracts for each job, "<platform>/<app>/<brand>": [ … ]`
+    )
+  }
+  return {
+    contracts: Object.entries(byJob).flatMap(([job, entries]) =>
+      /** @type {Omit<ContractEntry, 'job'>[]} */ (entries).map((entry) => ({ ...entry, job }))
+    ),
+    lintAllow: checks.lint?.allow || []
+  }
+}
+
+/**
+ * Read the `chassis` configuration of the `package.json` in `cwd`, and the data of the
+ * checks in `chassis.checks.json` beside it.
  * @param {string} [cwd] - The repository root. Default: `findRoot()`
  * @returns {BuildConfig}
  */
@@ -92,10 +133,13 @@ export function loadConfig(cwd = findRoot()) {
   const file = path.join(cwd, 'package.json')
   const packageJson = JSON.parse(fs.readFileSync(file, 'utf-8'))
   const chassis = packageJson.chassis || {}
+  const checks = loadChecks(cwd)
   return {
     brands: chassis.build?.brands || [],
     apps: chassis.build?.apps || {},
     brandFolder: chassis.defaults?.brandFolder || 'default',
+    contracts: checks.contracts,
+    lintAllow: checks.lintAllow,
     name: packageJson.name,
     version: packageJson.version
   }
