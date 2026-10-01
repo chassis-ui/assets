@@ -123,7 +123,20 @@ describe('parseAnalyzerArgs()', () => {
         'y',
         '--quiet'
       ])
-    ).toEqual({ brands: ['a', 'b'], apps: [], platforms: ['web'], out: 'x', cwd: 'y', quiet: true })
+    ).toEqual({
+      brands: ['a', 'b'],
+      apps: [],
+      platforms: ['web'],
+      out: 'x',
+      cwd: 'y',
+      quiet: true,
+      help: false
+    })
+  })
+
+  test('--help and -h ask for the help', () => {
+    expect(parseAnalyzerArgs(['--help']).help).toBe(true)
+    expect(parseAnalyzerArgs(['-h']).help).toBe(true)
   })
 
   test.each([

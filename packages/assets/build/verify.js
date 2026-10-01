@@ -23,6 +23,18 @@ export async function verify(options = {}) {
   return { valid, contract }
 }
 
+const HELP = `Usage: pnpm assets:verify [options]
+
+Runs the validator, then the consumer contract check, on an existing output. Exits 1 when
+either fails.
+
+Options:
+  --out <dir>            Output folder to read, default dist
+  --cwd <dir>            Repository root, default the nearest folder upward whose
+                         package.json has a \`chassis\` block
+  --help, -h             Print this help
+`
+
 /**
  * The command line of verify: `pnpm assets:verify`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
@@ -32,8 +44,11 @@ export function cli(argv = process.argv.slice(2)) {
   for (let i = 0; i < argv.length; i++) {
     if ((argv[i] === '--out' || argv[i] === '--cwd') && argv[i + 1]) {
       options[argv[i].slice(2)] = argv[++i]
+    } else if (argv[i] === '--help' || argv[i] === '-h') {
+      console.log(HELP)
+      process.exit(0)
     } else {
-      console.error(`❌ Unknown option ${argv[i]}. Options: --out <dir>, --cwd <dir>`)
+      console.error(`❌ Unknown option ${argv[i]}. Run with --help for the options.`)
       process.exit(2)
     }
   }

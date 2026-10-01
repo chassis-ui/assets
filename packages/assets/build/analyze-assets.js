@@ -581,16 +581,33 @@ class AssetAnalyzer {
   }
 }
 
+export const HELP = `Usage: pnpm assets:analyze [options]
+
+Reports the sizes, the types, the largest files and the files with the same content of
+source/ and of an existing output, with recommendations. Changes nothing.
+
+Options:
+  --brand <name...>      Only these brands
+  --app <name...>        Only these apps
+  --platform <name...>   Only these platforms of the output
+  --out <dir>            Output folder to read, default dist
+  --cwd <dir>            Repository root, default the nearest folder upward whose
+                         package.json has a \`chassis\` block
+  --help, -h             Print this help
+  --quiet                Print nothing
+`
+
 /**
  * Parse the command line of the analyzer.
  * `--brand`, `--app` and `--platform` take one or more values; `--out` and `--cwd` one.
  * @param {string[]} [argv]
- * @returns {{ brands: string[], apps: string[], platforms: string[], out?: string, cwd?: string, quiet: boolean }}
+ * @returns {{ brands: string[], apps: string[], platforms: string[], out?: string, cwd?: string, quiet: boolean, help: boolean }}
  * @throws {Error} On an unknown option
  */
 export function parseAnalyzerArgs(argv = process.argv.slice(2)) {
   const options = {
     quiet: false,
+    help: false,
     out: undefined,
     cwd: undefined,
     brands: [],
@@ -612,8 +629,10 @@ export function parseAnalyzerArgs(argv = process.argv.slice(2)) {
       i++
     } else if (arg === '--quiet') {
       options.quiet = true
+    } else if (arg === '--help' || arg === '-h') {
+      options.help = true
     } else {
-      throw new Error(`Unknown option ${arg}`)
+      throw new Error(`Unknown option ${arg}. Run with --help for the options.`)
     }
   }
 
@@ -626,7 +645,12 @@ export function parseAnalyzerArgs(argv = process.argv.slice(2)) {
  */
 export function cli(argv = process.argv.slice(2)) {
   try {
-    const analyzer = new AssetAnalyzer(parseAnalyzerArgs(argv))
+    const options = parseAnalyzerArgs(argv)
+    if (options.help) {
+      console.log(HELP)
+      return
+    }
+    const analyzer = new AssetAnalyzer(options)
     analyzer.analyze()
   } catch (error) {
     console.error(`❌ ${error.message}`)

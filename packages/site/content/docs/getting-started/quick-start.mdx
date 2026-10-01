@@ -18,6 +18,8 @@ Before working with Chassis Assets, ensure you have the following installed and 
 - **Git LFS**: Required for font and image assets — install from [git-lfs.com](https://git-lfs.com) then run `git lfs install` once on your machine before cloning
 - **Repository Access**: Appropriate permissions to clone or fork the Chassis Assets repository
 
+The [README](https://github.com/chassis-ui/assets#readme) of the repository has the same setup, and lists every command with its options.
+
 ## Installation
 
 To get started with Chassis Assets, you can either clone the repository directly or add it as a Git submodule to your existing project. Choose the approach that best fits your workflow and project structure.
@@ -280,8 +282,13 @@ pnpm install                        # Install dependencies
 pnpm assets                         # Build all assets
 pnpm assets --brand chassis         # Build specific brand
 pnpm assets --platform web          # Build web assets only
+pnpm assets --help                  # Every option of the build
+pnpm assets:verify                  # Check the output of a full build
+pnpm test                           # Run the tests of the build
 pnpm dev                            # Start documentation site
 ```
+
+Every `pnpm assets*` command prints its options with `--help`.
 
 ### Key Concepts
 

@@ -513,15 +513,19 @@ asking, and does not break a rule that is not written down.
 
 ### Session 4.1: accurate README and one way to run things
 
-- [ ] Rewrite `README.md` from `package.json` and `pnpm assets --help`: what the repository
+- [x] Rewrite `README.md` from `package.json` and `pnpm assets --help`: what the repository
       is, the layout, every command with its flags, the configuration, Git LFS, the branch
       flow, the consumer contract in one table, the ecosystem table of the website's README,
-      and links to the site and to `docs/`.
-- [ ] One place for setup: the README's "Getting started" and the quick-start page say the
-      same things and link to each other.
-- [ ] `pnpm assets --help` lists every flag with one line each; `pnpm assets:analyze --help`
-      and `pnpm assets:validate --help` too.
-- [ ] Delete `build/build-site.js` if Phase 5 has replaced it, or document why it stays.
+      and links to the site and to `docs/`. The contributing steps name `develop` (T9).
+- [x] One place for setup: the README's "Getting started" and the quick-start page say the
+      same things and link to each other. Same prerequisites, same clone commands, the
+      build before the install.
+- [x] `pnpm assets --help` lists every flag with one line each; `pnpm assets:analyze --help`
+      and `pnpm assets:validate --help` too. `assets:contract` and `assets:verify` as well;
+      the build and the source lint had it.
+- [x] Delete `build/build-site.js` if Phase 5 has replaced it, or document why it stays.
+      Deleted: no script, workflow or document called it, and `pnpm site:build` does what
+      it did.
 
 ### Session 4.2: community files and agent rules
 
@@ -545,7 +549,7 @@ asking, and does not break a rule that is not written down.
 
 ### Exit criteria
 
-- [ ] A contributor can find, in the README or `CONTRIBUTING.md`, every command that CI runs.
+- [x] A contributor can find, in the README or `CONTRIBUTING.md`, every command that CI runs.
 - [ ] An agent reading `AGENTS.md` knows the seven principles and the checks per area.
 - [ ] Dependabot opens grouped pull requests against `develop`.
 
@@ -675,3 +679,4 @@ None is scheduled; the maintainer picks one when it is wanted.
 | 2026-10-01 | 3.1       | Made the repository a pnpm workspace, as D3 decided: the build in `packages/assets/` (`@chassis-ui/assets`, private, with Vitest and TypeScript), the site in `packages/site/` (`chassis-assets-site`, with the Astro toolchain), `source/`, `dist/` and the `chassis` block at the root, in the private `chassis-assets-workspace` with the lint tools. `packages/assets/build/cli.js` is the one entry the root scripts run with `node`; each module exports `cli(argv)` and still runs on its own. `root.js` finds the repository root upward from the working directory, and the version is that of `packages/assets/package.json`. Removed `publishConfig`, `files` and `keywords` (D2, T6) and `standard`; no resolved version changed in the lockfile. The output of a full build is identical file for file, and the site too, apart from the "View on GitHub" links, which now name `packages/site/`. Consumer path: `chassis-docs vendor` of the website builds the branch unchanged and leaves the submodule clean; `pnpm install --ignore-workspace` installs 449 packages where it installed 906 (T7), and the build runs with none. CI's Assets job builds as a consumer first. `tag-release.yml` and `change-version.js` read the version from its new place until session 3.2 replaces them. 345 tests. Next: session 3.2, or Phase 4, or 5.1. F11 is still open and this machine has Git LFS. |
 | 2026-10-01 | 3.2       | Changesets, as the website uses it: a change to `source/` or `packages/assets/build/` carries a changeset, `pnpm changeset:version` on `develop` bumps `packages/assets/package.json`, writes `packages/assets/CHANGELOG.md` and runs `build/sync-version-refs.js` for the site's `current_version` and the README badge. `build/check-changeset.js` is the Changeset job of CI on pull requests, because Changesets does not count `source/` at the root for the package. `.github/workflows/release.yml` on pushes to `main`: when `v<version>` has no tag and the four checks passed on the commit, it builds with nothing installed, verifies, and creates the tag and the GitHub release with one zip per platform, app and brand (`build/release-archives.js`, `build/release-notes.js`). `tag-release.yml` and `change-version.js` are deleted; `workflow_call` left `ci.yml`. The `[Unreleased]` section is seven changesets, and a trial `changeset:version` gave 0.2.0 with the right entry, then was reverted: the version is still 0.1.8. `.github/CONTRIBUTING.md` has "Releases". Prettier, the build's lint, the type check, 345 tests and `actionlint` pass locally; CI and the release workflow have not seen the commit. The maintainer moved `v0.1.8` to `a4b6445` (T4). Left for the maintainer: releasing 0.2.0. Next: F11 with Git LFS, then the release; or Phase 4, or 5.1.            |
 | 2026-10-01 | F11       | Refreshed the icons of the default brand, `docs` and `demo`, from `@chassis-ui/icons` 0.3.1 by the steps of `docs/architecture.md`. The copy was the output of 0.1.0. Output diff of a full build against the build before: under `icons/` of all six jobs only, 488 SVG files changed by the class on their root element, 15 added, the seven files of the icon font and its stylesheets changed for the web, and `preview.html` removed from the two web jobs. `pnpm assets:verify`, the source lint and `pnpm site:build` pass. Checked the siblings: Chassis CSS reads `/static/icons/svgs/<name>.svg` by a URL prefix and names no icon, and nothing reads the icon font from this output. A changeset, minor and breaking, for 0.2.0. Phase 1 is done but for the link check, which waits for the website's crawl of the deployed site. Next: the release of 0.2.0 by the maintainer; Phase 4, or 5.1.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 2026-10-01 | 4.1       | Rewrote `README.md` from `package.json` and the help of the commands: what the repository is and how it is distributed, setup, the layout of the workspace, of `source/` and of `dist/`, what each platform gets, every command with its options, the configuration, what consumers rely on, the branch flow, the ecosystem table of the website. The quick-start page and the README have the same setup and link to each other. `--help` for `assets:analyze`, `assets:validate`, `assets:contract` and `assets:verify`, with tests and a changeset; 350 tests. Deleted `build/build-site.js`, which nothing called. Prettier, the lints, the type check, the tests and the Astro check pass locally; CI has not seen the commit. Next: session 4.2, or 5.1; the release of 0.2.0 is the maintainer's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |

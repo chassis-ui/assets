@@ -174,6 +174,14 @@ describe('pnpm assets:analyze', () => {
     expect(stdout).toContain('Platform Distribution')
   })
 
+  test('--help prints every option and exits 0', () => {
+    const { code, stdout } = run(ANALYZE_CLI, ['--help'])
+    expect(code).toBe(0)
+    for (const flag of ['--brand', '--app', '--platform', '--out', '--cwd', '--quiet', '--help']) {
+      expect(stdout).toContain(flag)
+    }
+  })
+
   test('an unknown option exits 1', () => {
     const { code, stderr } = run(ANALYZE_CLI, ['--nope'])
     expect(code).toBe(1)
@@ -195,6 +203,18 @@ describe('pnpm assets:validate', () => {
     const { code, stdout } = run(VALIDATE_CLI, ['--out', out])
     expect(code).toBe(1)
     expect(stdout).toContain('ios/mobile/alpha: fonts/display.ttf')
+  })
+
+  test.each([
+    ['validate', VALIDATE_CLI],
+    ['contract', CONTRACT_CLI],
+    ['verify', VERIFY_CLI]
+  ])('%s --help prints every option and exits 0', (_name, entry) => {
+    const { code, stdout } = run(entry, ['--help'])
+    expect(code).toBe(0)
+    for (const flag of ['--out', '--cwd', '--help']) {
+      expect(stdout).toContain(flag)
+    }
   })
 
   test('an unknown option exits 2', () => {

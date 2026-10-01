@@ -1,234 +1,184 @@
 # Chassis Assets
 
-> Multi-platform design asset management for the Chassis Design System.
+> Fonts, images, icons and other design files of the Chassis Design System, built from one source tree into the names, formats and folders of the web, iOS and Android.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Version: 0.1.8](https://img.shields.io/badge/Version-0.1.8-blue.svg)](https://github.com/chassis-ui/assets)
+[![CI](https://github.com/chassis-ui/assets/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/chassis-ui/assets/actions/workflows/ci.yml)
 
 ## Overview
 
-Chassis Assets provides tools to copy, rename, and distribute design assets (fonts, images, icons, illustrations) across different brands, applications, and platforms.
+Chassis Assets holds the design files a designer exports, in `source/<brand>/<app>/<type>/`, and a build that copies them to `dist/<platform>/<app>/<brand>/` with the naming and the formats of each platform. The build is file-driven: add a file to `source/` and it is in the output of the next build. There is no manifest to maintain.
 
-> [!NOTE]
-> This project is part of the multi-repository Chassis Design System. It focuses exclusively on asset management, while design tokens and icon generation are handled by separate repositories.
+The repository is not published to npm. The Chassis documentation sites vendor it as a Git submodule and build it; an app takes the archive of its platform, app and brand from a [GitHub release](https://github.com/chassis-ui/assets/releases), or vendors the repository too. The [documentation site](https://chassis-ui.com/assets/docs/getting-started/introduction/) covers the asset types and how to use the output on each platform.
 
-> [!WARNING]
-> This project uses `pnpm` for package management and Node.js 24, as `.nvmrc` says. Node.js 22.12 or later works too. Run `corepack enable` once to get the pnpm version that `package.json` pins.
+## Getting started
 
-> [!WARNING]
-> This project uses [Git LFS](https://git-lfs.com) to store binary assets (fonts, images). Run `git lfs install` once on your machine before cloning or pulling.
+The [Quick Start](https://chassis-ui.com/assets/docs/getting-started/quick-start/) page of the site has the same steps, and goes on to adding assets and using them in a project.
 
-## Quick Start
+You need:
 
-### Clone Repository
+- **Node.js** 22.12 or later, see `engines` in `package.json`. The repository pins 24 in `.nvmrc`.
+- **pnpm**, the version named by `packageManager` in `package.json`. Run `corepack enable` once and pnpm is used at that version.
+- **Git LFS**, from [git-lfs.com](https://git-lfs.com). Run `git lfs install` once on your machine before cloning. Fonts and raster images are Git LFS files.
 
-Clone the repository from GitHub:
+Clone the repository, or add it to a project as a Git submodule:
 
 ```shell
-git clone git@github.com:chassis-ui/assets.git
-cd assets
+git clone https://github.com/chassis-ui/assets.git chassis-assets
+cd chassis-assets
 ```
-
-Or add it to your project as a Git submodule:
 
 ```shell
 git submodule add https://github.com/chassis-ui/assets.git assets
 cd assets
 ```
 
-### Install Dependencies
-
-```shell
-pnpm install
-```
-
-The repository is a pnpm workspace: `source/`, `dist/` and the `chassis` configuration are at
-the root, the build is in `packages/assets/` and the documentation site in `packages/site/`.
-The build needs no dependencies, so `pnpm assets` runs on a fresh clone; the install is for
-the tests, the checks and the site. A project that vendors the repository runs
-`pnpm install --ignore-workspace && pnpm assets:site`.
-
-### Generate Distribution
+Build the assets:
 
 ```shell
 pnpm assets
 ```
 
-Copies and processes design assets from the `source` directory to create platform-specific distributions in the `dist` folder. The build process handles:
-
-- **Multi-brand support**: Assets for different brands (chassis, example, etc.)
-- **Multi-platform distribution**: Web, iOS, and Android formats
-- **File naming conventions**: Automatic renaming for platform requirements (e.g., snake_case for Android)
-- **Collision detection**: Warns about filename conflicts during renaming
-- **Asset overrides**: Brand-specific assets override default assets when available
-- **System file filtering**: Automatically excludes .DS_Store and other system files
-- **Empty directory cleanup**: Removes empty folders after filtering
-- **Error handling**: Comprehensive validation with retry logic for macOS compatibility
-- **Build statistics**: Detailed reporting of processed files, renames, and warnings
-
-### Selective Builds
-
-Build only the assets you need using command-line filters:
+The build imports Node.js modules only, so it runs on a fresh clone with nothing installed. Install the dependencies to run the tests, the checks and the documentation site:
 
 ```shell
-# Build only chassis brand assets
-pnpm assets --brand chassis
-
-# Build two brands; --brand, --app and --platform each take one or more values
-pnpm assets --brand chassis example
-
-# Build only web platform assets
-pnpm assets --platform web
-
-# Build only docs app assets
-pnpm assets --app docs
-
-# Combine filters for specific builds
-pnpm assets --brand chassis --app docs --platform web
+pnpm install
 ```
 
-A filter value that is not configured fails the build and names the configured values.
+A clone made without Git LFS has pointer files in place of the fonts and the images. The build fails on them and lists them; run `git lfs pull`.
 
-More options:
+## Repository layout
 
-```shell
-pnpm assets --clean --brand chassis   # Remove the output of the selected jobs first
-pnpm assets --no-clean                # Keep the output of a full build
-pnpm assets --dry-run                 # Print the jobs and their file counts, write nothing
-pnpm assets --out build/out           # Write somewhere else than dist/
-pnpm assets --allow-lfs-pointers      # Copy Git LFS pointer files instead of failing
-pnpm assets --help                    # Every option
+A pnpm workspace. Run every command from the root.
+
+```
+source/                   -> The assets, as source/<brand>/<app>/<type>/
+dist/                     -> The build output, as dist/<platform>/<app>/<brand>/. Not committed
+package.json              -> The `chassis` configuration and the commands
+packages/assets/          -> @chassis-ui/assets: the build in build/, its tests in test/
+packages/site/            -> The documentation site, built with Astro
+build/                    -> Scripts of the repository: releases and the site's checks
+docs/architecture.md      -> How the build works, module by module
+ref/ROADMAP.md            -> Planned work on this repository
+.changeset/               -> The changesets of the next version
 ```
 
-A full build removes `dist/` first; a filtered build keeps it. A source file that is a Git
-LFS pointer fails the build, since the output would be a pointer too. Run `git lfs pull`, or
-set `CHASSIS_ALLOW_LFS_POINTERS=1` where the binaries are not needed.
-
-**Benefits:**
-
-- Faster builds during development
-- Reduced output size
-- Optimized CI/CD pipelines
-
-### Additional Commands
-
-Manage, analyze, and validate your asset distribution:
-
-```shell
-# Development workflow
-pnpm test                   # Run the tests on the fixture in packages/assets/test/fixtures/, in seconds
-pnpm test:golden            # Write packages/assets/test/golden/ again after an intended change to the build
-pnpm assets:analyze         # Analyze asset distribution (supports --brand, --app, --platform, --out)
-pnpm assets:validate        # Validate distribution integrity (supports --out)
-pnpm assets:verify          # The validator, then the consumer contract of dist/web/docs/chassis/
-pnpm assets:contract        # The consumer contract alone
-pnpm assets:lint:source     # Check the names and layout of source/ (--allow-lfs-pointers without Git LFS)
-pnpm assets:typecheck       # Type-check packages/assets/build/ from its JSDoc
-pnpm assets:lint            # Lint the build scripts and the tests
-pnpm lint:prettier          # Check formatting across the repository
-pnpm check                  # Type-check the site, then audit the dependencies
-
-# Describe a change to source/ or the build, and release a version
-pnpm changeset              # Write a changeset for the change
-pnpm changeset:version      # Bump the version and write the changelog, see .github/CONTRIBUTING.md
-pnpm release:archives       # Write the archives of a release to .cache/release/, after pnpm assets
-```
-
-### Documentation Site
-
-The documentation site is built with Astro and provides interactive guides for asset management and integration:
-
-```shell
-# Generate assets and run development server
-pnpm dev
-
-# Run development server only
-pnpm astro:dev
-
-# Generate assets and build site
-pnpm build
-
-# Build site only
-pnpm astro:build
-```
-
-## Asset Distribution Process
-
-The build system processes assets in the following structure:
+### Source
 
 ```
 source/
-├── default/              -> Default brand assets (fallback)
-│   ├── docs/             -> Documentation website assets
-│   │   ├── fonts/        -> Font files
-│   │   ├── images/       -> Images and illustrations
-│   │   └── icons/        -> Icon library
-│   └── demo/             -> Demo app assets
-└── [brand]/              -> Brand-specific overrides
-    └── [app]/            -> App-specific assets
+├── default/              -> The fallback brand, used by every brand
+│   ├── docs/             -> The app `docs`
+│   │   ├── fonts/        -> Font files, their stylesheets and their licenses
+│   │   ├── images/       -> Images, with the @2x and @3x variants the designer exported
+│   │   ├── icons/        -> The build output of @chassis-ui/icons, and cx-sprite.svg
+│   │   └── other/        -> Any other folder name is copied as it is
+│   └── demo/             -> The app `demo`
+└── <brand>/              -> The files of a brand that differ from the default
+    └── <app>/
 ```
 
-Output structure:
+A file under `source/<brand>/<app>/` replaces the file of the same path under `source/default/<app>/`. A brand needs only the files that differ.
+
+### Output
 
 ```
 dist/
-├── web/                  -> Web platform assets
-│   └── docs/             -> Docs app
-│       ├── chassis/      -> Chassis brand
-│       └── example/      -> Example brand
-├── ios/                  -> iOS platform assets
-│   └── demo/             -> Demo app
+├── web/
+│   └── docs/
+│       ├── chassis/      -> What the Chassis sites read, built by pnpm assets:site
+│       └── example/
+├── ios/
+│   └── demo/
 │       ├── chassis/
 │       └── example/
-└── android/              -> Android platform assets
-    └── demo/             -> Demo app
+└── android/
+    └── demo/
         ├── chassis/
         └── example/
 ```
 
-The Chassis documentation sites read `dist/web/docs/chassis`, which `pnpm assets:site` builds.
+What each platform gets:
 
-### Platform-Specific Processing
+| Platform | Names                                   | Fonts                           | Images                                                       | Icons            |
+| -------- | --------------------------------------- | ------------------------------- | ------------------------------------------------------------ | ---------------- |
+| Web      | kebab-case, `@2x` and `@3x` kept        | WOFF, WOFF2 and the stylesheets | Every format                                                 | Every file       |
+| iOS      | snake_case, `@2x` and `@3x` kept        | TTF and OTF                     | Every format but WebP                                        | SVG, PDF and PNG |
+| Android  | snake_case, `ic_` prefix under `icons/` | TTF and OTF                     | Every format but WebP, in density folders, indicator removed | SVG              |
 
-The build system applies intelligent transformations for each platform:
+On Android an image without an indicator goes to `drawable/`, `@2x` to `drawable-xhdpi/` and `@3x` to `drawable-xxhdpi/`, under the subfolder the image is in. The license of a font is copied with it on every platform. Files such as `.DS_Store` are left out, and two files that get the same name after renaming are reported.
 
-#### Web
+## Commands
 
-- Files renamed to **kebab-case** (lowercase with hyphens)
-- Resolution indicators (@2x, @3x) preserved in filenames
-- Font formats: WOFF/WOFF2 only (TTF/OTF excluded)
-- Image formats: All formats supported
+### Build
 
-#### iOS
+```shell
+pnpm assets                                   # Every brand, app and platform
+pnpm assets --brand chassis                   # One brand
+pnpm assets --brand chassis example           # --brand, --app and --platform take one or more values
+pnpm assets --app docs --platform web         # Filters combine
+pnpm assets:site                              # The output the Chassis sites read: --clean --brand chassis --app docs
+```
 
-- Files renamed to **snake_case** (lowercase with underscores)
-- Resolution indicators (@2x, @3x) preserved in filenames
-- Font formats: TTF/OTF only (WOFF/WOFF2 excluded)
-- Image formats: WebP excluded
-- Icon formats: SVG and PDF supported
+| Option                 | What it does                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------- |
+| `--brand <name...>`    | Only these brands                                                                             |
+| `--app <name...>`      | Only these apps                                                                               |
+| `--platform <name...>` | Only these platforms                                                                          |
+| `--clean`              | Remove the output first, of the selected jobs when filtered                                   |
+| `--no-clean`           | Keep the output even for a full build                                                         |
+| `--out <dir>`          | Output folder, default `dist`                                                                 |
+| `--cwd <dir>`          | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block |
+| `--dry-run`            | Print the jobs and their file counts, write nothing                                           |
+| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`            |
+| `--quiet`              | Print errors only                                                                             |
+| `--help`, `-h`         | Print the options                                                                             |
+| `--version`, `-v`      | Print the version                                                                             |
 
-#### Android
+A full build removes `dist/` first; a filtered build keeps it. A filter value that is not configured fails the build and names the configured values.
 
-- Files renamed to **snake_case**
-- Icons prefixed with `ic_`
-- Font formats: TTF/OTF only (WOFF/WOFF2 excluded)
-- Image formats: WebP excluded
-- Icon formats: SVG only
-- **Image organization:**
-  - Images with @2x/@3x → density folders (drawable-xhdpi/, drawable-xxhdpi/)
-  - Images without resolution indicators → drawable/ folder
-  - Resolution indicators stripped from filenames in density folders
+### Check
 
-**Additional Features:**
+| Command                   | What it does                                                                                                    | Options                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `pnpm test`               | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files              |                                                               |
+| `pnpm test:golden`        | Writes `packages/assets/test/golden/` again, after an intended change to the output                             |                                                               |
+| `pnpm assets:analyze`     | Sizes, types, largest files and files with the same content, of `source/` and of an existing output             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet` |
+| `pnpm assets:validate`    | Checks an existing output against `source/` and the configuration                                               | `--out`, `--cwd`                                              |
+| `pnpm assets:contract`    | Checks that `dist/web/docs/chassis/` has every file the Chassis sites read                                      | `--out`, `--cwd`                                              |
+| `pnpm assets:verify`      | The validator, then the contract check                                                                          | `--out`, `--cwd`                                              |
+| `pnpm assets:lint:source` | The names and the layout of `source/` against the naming conventions of the design guidelines, and LFS pointers | `--cwd`, `--allow-lfs-pointers`                               |
+| `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                     |                                                               |
+| `pnpm assets:typecheck`   | TypeScript over `packages/assets/build/`, from its JSDoc                                                        |                                                               |
+| `pnpm lint:prettier`      | Formatting, across the repository                                                                               |                                                               |
+| `pnpm check`              | The types of the site, then `pnpm audit`                                                                        |                                                               |
 
-- Case-insensitive filesystem handling (macOS compatibility)
-- Collision detection with warnings for duplicate target filenames
-- Automatic filtering of system files (.DS_Store, Thumbs.db, hidden files)
-- Empty directory cleanup after processing
+Every `pnpm assets*` command prints its options with `--help`. [docs/architecture.md](docs/architecture.md#checks-per-changed-area) says which checks to run for which change.
+
+### Documentation site
+
+```shell
+pnpm dev                # Build the docs assets and run the site at http://localhost:4325/assets/
+pnpm site:build         # Build the docs assets, the site and its search index into _site/
+pnpm astro:dev          # Run the site without building the assets
+pnpm astro:build        # Build the site without the assets and the search index
+pnpm site:lint          # ESLint, Stylelint, unused Sass variables and Prettier over the site
+```
+
+### Release
+
+```shell
+pnpm changeset              # Describe a change to source/ or to the build
+pnpm changeset:version      # Bump the version and write the changelog
+pnpm release:archives       # Write the archives of a release to .cache/release/, after pnpm assets
+```
+
+See [Releases](.github/CONTRIBUTING.md#releases) and the [changelog](packages/assets/CHANGELOG.md).
 
 ## Configuration
 
-The `chassis` key in the root `package.json` defines the build configuration for asset distribution:
+The `chassis` block of the root `package.json` names the brands and, for each app, its platforms:
 
 ```json
 "chassis": {
@@ -245,60 +195,48 @@ The `chassis` key in the root `package.json` defines the build configuration for
 }
 ```
 
-### Configuration Details
+- `defaults.brandFolder` is the folder of `source/` that every brand falls back to.
+- `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone, as `chassis` is.
+- `build.apps` maps each app to its platforms: `web`, `ios` or `android`.
 
-#### `defaults`
+The build writes one job per brand, app and platform: the files of `source/default/<app>/`, replaced by those of `source/<brand>/<app>/`, with the processing of the platform, into `dist/<platform>/<app>/<brand>/`.
 
-- **`brandFolder`**: Default source folder for assets (fallback when brand-specific assets don't exist)
+## What consumers rely on
 
-#### `build.apps`
+Every Chassis site vendors this repository as the submodule `vendor/assets`, pinned to a commit of the `app/docs` branch, and builds it with the two commands below. A change that breaks a row breaks the sites; `pnpm assets:contract` checks the files on every commit.
 
-Maps applications to their target platforms:
+| Consumers rely on                             | Detail                                                                                                                                 |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| The `app/docs` branch                         | `chassis-docs sync-submodules` moves the submodule of a site to its tip                                                                |
+| Git LFS                                       | `git lfs pull` gives the real fonts and images                                                                                         |
+| `pnpm install --ignore-workspace`             | Installs the root package only. The build needs none of it                                                                             |
+| `pnpm assets:site`                            | Writes `dist/web/docs/chassis/`, which a site copies to `/static/`                                                                     |
+| `images/` of that folder                      | `site-logo.svg`, the favicons, `apple-touch-icon.png`, `social-image.png`, the home page images under `home/`, the logos under `logo/` |
+| `icons/cx-sprite.svg`                         | The sprite of the home page icons                                                                                                      |
+| `images/figma/components/<component>/<mode>/` | The screenshots that the pages of chassis-figma read by name                                                                           |
 
-- **`docs`**: Documentation website assets → `web` platform
-- **`demo`**: Demo application assets → `ios` and `android` platforms
+The full list, with the code that reads each file, is `CONTRACT` in [packages/assets/build/contract.js](packages/assets/build/contract.js).
 
-### Platform Support
+## Branches and CI
 
-- **`web`**: Web applications and documentation sites
-- **`ios`**: iOS mobile applications
-- **`android`**: Android mobile applications
+Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, Assets, Site and Audit, and Changeset on pull requests. The commit that passed is then pushed to `staging`, `main` and `app/docs`, which accept only a commit with those checks. A push to `main` with a new version creates its tag and its GitHub release, see [Releases](.github/CONTRIBUTING.md#releases).
 
-### Brand and App Processing
+## Chassis ecosystem
 
-For each brand-app-platform combination:
-
-1. Copy assets from `source/default/[app]/` as the base
-2. Override with brand-specific assets from `source/[brand]/[app]/` if they exist
-3. Apply platform-specific processing (naming conventions, file transformations)
-4. Output to `dist/[platform]/[app]/[brand]/`
-
-## Chassis Ecosystem
-
-This project is part of the Chassis Design System's multi-repository architecture:
-
-| Project                                                  | Description                                           |
-| -------------------------------------------------------- | ----------------------------------------------------- |
-| [chassis-website](https://github.com/chassis-ui/website) | Main website and shared documentation package         |
-| [chassis-css](https://github.com/chassis-ui/css)         | CSS framework and component library                   |
-| [chassis-tokens](https://github.com/chassis-ui/tokens)   | Design token generation and management                |
-| [chassis-icons](https://github.com/chassis-ui/icons)     | Icon library and build toolkit                        |
-| **chassis-assets**                                       | **Multi-platform asset management (this repository)** |
-| [chassis-figma](https://github.com/chassis-ui/figma)     | Figma component documentation                         |
-| [chassis-react](https://github.com/chassis-ui/react)     | React components                                      |
-
-All documentation sites share the `@chassis-ui/docs` package for consistent layouts, components, and styling.
+| Project                                                  | What it is                                                          | Docs                                       |
+| -------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------ |
+| [chassis-website](https://github.com/chassis-ui/website) | chassis-ui.com and `@chassis-ui/docs`, which every site is built on | [chassis-ui.com](https://chassis-ui.com)   |
+| [chassis-tokens](https://github.com/chassis-ui/tokens)   | Design tokens, published as `@chassis-ui/tokens`                    | [/tokens/](https://chassis-ui.com/tokens/) |
+| [chassis-css](https://github.com/chassis-ui/css)         | The CSS framework, published as `@chassis-ui/css`                   | [/css/](https://chassis-ui.com/css/)       |
+| [chassis-icons](https://github.com/chassis-ui/icons)     | The icon library, published as `@chassis-ui/icons`                  | [/icons/](https://chassis-ui.com/icons/)   |
+| **chassis-assets**                                       | This repository: fonts, images and other assets. Not on npm         | [/assets/](https://chassis-ui.com/assets/) |
+| [chassis-figma](https://github.com/chassis-ui/figma)     | Documentation of the Figma libraries                                | [/figma/](https://chassis-ui.com/figma/)   |
+| [chassis-react](https://github.com/chassis-ui/react)     | React components, published as `@chassis-ui/react`                  | Not yet routed on chassis-ui.com           |
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch from `main`: `git checkout -b feature/my-feature`
-3. Make your changes
-4. Build and test: `pnpm assets && pnpm test`
-5. Commit your changes: `git commit -m "feat: add my feature"`
-6. Push to the branch: `git push origin feature/my-feature`
-7. Open a pull request against `main`. CI runs on it.
+Branch from `develop` and open a pull request against `develop`. Before that, run the checks of what you changed, see [Checks per changed area](docs/architecture.md#checks-per-changed-area), and add a changeset when you changed `source/` or the build. [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) covers changesets and releases.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) file for details.
+MIT License. See [LICENSE](LICENSE).
