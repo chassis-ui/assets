@@ -230,6 +230,8 @@ describe('parseArgs()', () => {
     brands: [],
     apps: [],
     platforms: [],
+    types: [],
+    include: [],
     clean: null,
     quiet: false,
     cwd: undefined,
@@ -261,6 +263,10 @@ describe('parseArgs()', () => {
     [['--vector-drawables'], { vectorDrawables: true }],
     [['--asset-catalog'], { assetCatalog: true }],
     [['--res'], { res: true }],
+    [
+      ['--type', 'images', 'icons', '--include', 'images/home/**'],
+      { types: ['images', 'icons'], include: ['images/home/**'] }
+    ],
     [['--optimize'], { optimize: true }],
     [['--webp', '--avif'], { webp: true, avif: true }],
     [['--help'], { help: true }],

@@ -25,6 +25,7 @@ Each command is a script of the root `package.json`, and each `pnpm assets*` com
 | --- | --- |
 | `pnpm assets` | Builds every job of the configuration into `dist/` |
 | `pnpm assets:site` | Builds the web output of the configured docs app for the `chassis` brand, which the Chassis sites read |
+| `pnpm assets:lfs` | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include` |
 | `pnpm assets:validate` | Checks an existing output against the source and the configuration |
 | `pnpm assets:contract` | Checks that an existing output has the files its consumers read by name |
 | `pnpm assets:verify` | Runs the validator, then the contract check |
@@ -44,6 +45,8 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 | `--brand <name...>` | Only these brands |
 | `--app <name...>` | Only these apps |
 | `--platform <name...>` | Only these platforms |
+| `--type <name...>` | Only these type folders of an app, such as `images` and `icons` |
+| `--include <pattern...>` | Only the files that match a pattern, by their path in the folder of the app, such as `"images/home/**"` |
 | `--clean` | Remove the output first, of the selected jobs when filtered |
 | `--no-clean` | Keep the output even for a full build |
 | `--out <dir>` | Output folder, `dist` by default |
@@ -72,6 +75,39 @@ pnpm assets --brand chassis --app docs --platform web
 ```
 
 A value that the configuration does not have fails the build and names the configured values. Filters that match no job together, such as an app with a platform it is not built for, fail the build too.
+
+### File filters
+
+The `--type` and `--include` options build a part of a job: the build reads only the files of an app that match, and writes them where a full build does, with the same names. Use them when you read a part of the output, to fetch and copy that part only.
+
+```bash
+pnpm assets --type images icons
+pnpm assets --brand chassis --app docs --include "images/home/**" "icons/cx-sprite.svg"
+```
+
+`--type` names type folders. `--include` takes patterns of paths as they are in `source/`, relative to the folder of the app, so with the source names and not the names of a platform. A file has to pass both options when both are given.
+
+<CxTable>
+| Pattern | Matches |
+| --- | --- |
+| `icons/cx-sprite.svg` | That file |
+| `images/home` | Every file under the folder, at any depth |
+| `images/*` | The files of `images/` itself, not of its subfolders |
+| `images/**/*.svg` | The SVG files of `images/`, at any depth |
+| `images/home/hero-{light,dark}{,@2x}.png` | Four files: `{a,b}` is one of its alternatives, an empty one too |
+</CxTable>
+
+Quote a pattern, or the shell expands it. A build with a file filter keeps the rest of `dist/`, as a build with any filter does. Filters that match no file fail the build. Filters that match no file of one job among several warn, and that job gets no folder. The validator checks a full build, so `pnpm assets:verify` fails on an output of a part.
+
+A file that the filters leave out is not read, so it may be a Git LFS pointer. `pnpm assets:lfs` takes the same filters and prints the paths of `source/` that the build reads, separated by commas, which is the value `git lfs pull --include` takes. A folder whose files are all read is one path. In a clone made without the Git LFS files, fetch the files of a build and run it:
+
+```bash
+FILTERS=(--brand chassis --app docs --include "images/home/**" "icons/cx-sprite.svg")
+git lfs pull --include "$(node packages/assets/build/cli.js lfs "${FILTERS[@]}")"
+pnpm assets "${FILTERS[@]}"
+```
+
+The first command runs the script with `node`, since `pnpm` prints the name of a script before its output; `pnpm --silent assets:lfs` prints the paths alone too.
 
 ### Cleaning
 
@@ -492,7 +528,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 
 ### generateAssets
 
-`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `filesOptimized`, `bytesSaved`, `filesGenerated`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif`.
+`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `filesOptimized`, `bytesSaved`, `filesGenerated`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif`.
 
 ### ChassisAssets
 
@@ -508,7 +544,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 | `getCombinations()` | Every job, as brand, app and platform |
 | `assetsExist(brand, app)` | Whether the source has files for the brand and the app |
 | `getAssetInventory(brand, app)` | The source files of the brand and the app, by type |
-| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `clean`, `quiet`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif` |
+| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif` |
 | `getStats()` | The numbers of brands, apps, jobs, source files and output files |
 | `validate()` | The errors and the warnings of the configuration and the source |
 </CxTable>
@@ -581,7 +617,7 @@ One test builds the fixture and compares the result, file by file, with the comm
 
 ### Build fails on pointers
 
-The build stops with `<count> source file(s) are Git LFS pointers, not files: <files>`. The clone has no Git LFS files, so a font or an image is a pointer of a few lines. Install Git LFS, run `git lfs pull`, and build again. Pass `--allow-lfs-pointers` only where the binaries are not needed.
+The build stops with `<count> source file(s) are Git LFS pointers, not files: <files>`. The clone has no Git LFS files, so a font or an image is a pointer of a few lines. Install Git LFS, run `git lfs pull`, and build again. Pass `--allow-lfs-pointers` only where the binaries are not needed. With `--type` or `--include`, fetch the files of the filters only, see [File filters](#file-filters).
 
 ### Unknown brand
 

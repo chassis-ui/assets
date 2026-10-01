@@ -29,6 +29,9 @@
  * @property {string[]} [brands] - Only these brands
  * @property {string[]} [apps] - Only these apps
  * @property {string[]} [platforms] - Only these platforms
+ * @property {string[]} [types] - Only these type folders of an app
+ * @property {string[]} [include] - Only the files that match one of these patterns, by
+ *   their path in the folder of the app in `source/`
  * @property {boolean|null} [clean] - true removes the output first, false keeps it,
  *   null (default) removes it for a full build and keeps it for a filtered one
  * @property {boolean} [quiet] - Print errors only

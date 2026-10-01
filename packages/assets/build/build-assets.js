@@ -14,6 +14,7 @@
 import fs from 'fs'
 import path from 'path'
 import { writeCatalog } from './asset-catalog.js'
+import { createFileFilter } from './filters.js'
 import { IMAGE_FORMATS, loadEncoders, optimizeJob, resolveSettings } from './optimize.js'
 import { platformProcessors } from './processors/index.js'
 import { writeRes } from './res-layout.js'
@@ -33,6 +34,10 @@ Options:
   --brand <name...>      Only these brands
   --app <name...>        Only these apps
   --platform <name...>   Only these platforms
+  --type <name...>       Only these type folders, such as images and icons
+  --include <pattern...> Only the files that match a pattern, by their path in the
+                         folder of the app, such as "images/home/**". \`pnpm assets:lfs\`
+                         prints the Git LFS paths of the same filters
   --clean                Remove the output first (of the selected jobs when filtered)
   --no-clean             Keep the output even for a full build
   --out <dir>            Output folder, default dist
@@ -72,7 +77,8 @@ let run = {
   assetCatalog: false,
   res: false,
   optimize: false,
-  formats: /** @type {string[]} */ ([])
+  formats: /** @type {string[]} */ ([]),
+  filter: createFileFilter()
 }
 
 /** Statistics of the run. @type {BuildStats} */
@@ -186,6 +192,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
     brands: [],
     apps: [],
     platforms: [],
+    types: [],
+    include: [],
     clean: null, // null = auto-detect, true = force clean, false = no clean
     quiet: false,
     cwd: undefined,
@@ -213,8 +221,14 @@ export function parseArgs(argv = process.argv.slice(2)) {
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
-    if (arg === '--brand' || arg === '--app' || arg === '--platform') {
-      const key = { '--brand': 'brands', '--app': 'apps', '--platform': 'platforms' }[arg]
+    if (['--brand', '--app', '--platform', '--type', '--include'].includes(arg)) {
+      const key = {
+        '--brand': 'brands',
+        '--app': 'apps',
+        '--platform': 'platforms',
+        '--type': 'types',
+        '--include': 'include'
+      }[arg]
       const parsed = values(i)
       if (parsed.list.length === 0) throw new Error(`${arg} needs at least one value`)
       options[key].push(...parsed.list)
@@ -513,6 +527,35 @@ function removeDirectory(dirPath) {
   }
 }
 
+/**
+ * The files of `source/` that a job reads: the files of the app in the default brand and
+ * in the brand, that the platform keeps and the filter passes. The build copies these; a
+ * brand file and the default file it replaces are both listed.
+ * @param {BuildConfig} config
+ * @param {Job} job
+ * @param {ReturnType<typeof createFileFilter>} filter
+ * @param {string} cwd - The repository root
+ * @returns {string[]} Paths
+ */
+export function listSourceFiles(config, job, filter, cwd) {
+  const processor = platformProcessors[job.platform]
+  const files = []
+  for (const brand of new Set([config.brandFolder, job.brand])) {
+    const appDir = path.join(cwd, 'source', brand, job.app)
+    if (!fs.existsSync(appDir)) continue
+    for (const entry of fs.readdirSync(appDir, { recursive: true, withFileTypes: true })) {
+      if (!entry.isFile()) continue
+      const file = path.join(entry.parentPath, entry.name)
+      const parts = path.relative(appDir, file).split(path.sep)
+      if (parts.some(shouldIgnoreFile)) continue
+      const type =
+        parts.length > 1 && ['fonts', 'images', 'icons'].includes(parts[0]) ? parts[0] : null
+      if (keepsFile(processor, type, entry.name) && filter.file(parts.join('/'))) files.push(file)
+    }
+  }
+  return files
+}
+
 // Platform Processors
 
 /**
@@ -643,8 +686,16 @@ function renameFilesRecursively(processor, folderPath, parentDir = '') {
  * @param {string} destPath - Destination path to copy to
  * @param {string} dirName - Current directory name
  * @param {string|null} rootDir - Root asset type directory (fonts, images, icons)
+ * @param {string} relative - The path of `srcPath` in the folder of the app, '' for the app
  */
-function copyFilesWithProcessor(processor, srcPath, destPath, dirName, rootDir = null) {
+function copyFilesWithProcessor(
+  processor,
+  srcPath,
+  destPath,
+  dirName,
+  rootDir = null,
+  relative = ''
+) {
   if (!fs.existsSync(srcPath)) return
 
   // Track the root directory (fonts, images, icons, etc.)
@@ -662,18 +713,22 @@ function copyFilesWithProcessor(processor, srcPath, destPath, dirName, rootDir =
     const itemSrcPath = path.join(srcPath, item)
     const itemDestPath = path.join(destPath, item)
     const stat = fs.statSync(itemSrcPath)
+    const itemRelative = relative ? `${relative}/${item}` : item
 
     if (stat.isDirectory()) {
-      if (!run.dryRun && !fs.existsSync(itemDestPath)) {
+      // A type folder that `--type` leaves out is not read
+      if (relative === '' && !run.filter.type(item)) return
+      // With a filter a folder is made when a file of it is copied: most have none
+      if (!run.dryRun && !run.filter.active && !fs.existsSync(itemDestPath)) {
         fs.mkdirSync(itemDestPath, { recursive: true })
         stats.directoriesCreated++
       }
-      copyFilesWithProcessor(processor, itemSrcPath, itemDestPath, item, currentRoot)
+      copyFilesWithProcessor(processor, itemSrcPath, itemDestPath, item, currentRoot, itemRelative)
       return
     }
 
-    // Apply platform-specific filtering
-    if (!keepsFile(processor, currentRoot, item)) {
+    // Apply platform-specific filtering, then the filters of the run
+    if (!keepsFile(processor, currentRoot, item) || !run.filter.file(itemRelative)) {
       return
     }
 
@@ -711,6 +766,11 @@ function copyFile(processor, currentRoot, itemSrcPath, destPath, item) {
   if (run.dryRun) {
     stats.filesProcessed++
     return
+  }
+
+  if (run.filter.active && !fs.existsSync(destPath)) {
+    fs.mkdirSync(destPath, { recursive: true })
+    stats.directoriesCreated++
   }
 
   // Use processor-specific image handling if available
@@ -922,7 +982,8 @@ export async function generateAssets(options = {}) {
     assetCatalog: options.assetCatalog || false,
     res: options.res || false,
     optimize: options.optimize || false,
-    formats: Object.keys(IMAGE_FORMATS).filter((format) => options[format])
+    formats: Object.keys(IMAGE_FORMATS).filter((format) => options[format]),
+    filter: createFileFilter(options)
   }
   config = loadConfig(cwd)
 
@@ -939,7 +1000,10 @@ export async function generateAssets(options = {}) {
   // Determine if we should clean the output
   // Auto-detect: Clean only for full builds, keep for selective builds
   const isSelectiveBuild =
-    filters.brands.length > 0 || filters.apps.length > 0 || filters.platforms.length > 0
+    filters.brands.length > 0 ||
+    filters.apps.length > 0 ||
+    filters.platforms.length > 0 ||
+    run.filter.active
   const clean = options.clean === undefined ? null : options.clean
   const shouldClean = clean !== null ? clean : !isSelectiveBuild
 
@@ -1009,7 +1073,8 @@ export async function generateAssets(options = {}) {
     logger.log(`\n🔨 Processing: ${brand} - ${app} - ${platform}`)
     logger.log(`📁 Output: ${path.relative(run.cwd, destPath)}`)
 
-    if (!run.dryRun) {
+    // With a filter the folder of a job is made with its first file: a job may have none
+    if (!run.dryRun && !run.filter.active) {
       fs.mkdirSync(destPath, { recursive: true })
       stats.directoriesCreated++
     }
@@ -1026,6 +1091,19 @@ export async function generateAssets(options = {}) {
     if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor, destPath)
     if (run.res && !run.dryRun) writeResLayout(processor, destPath)
     stats.jobs.push({ ...job, files: stats.filesProcessed - before })
+  }
+
+  // A filter that matches nothing is a mistake in the filter; one that matches nothing in
+  // one job of several is the filter of another app
+  if (run.filter.active && stats.lfsPointers.length === 0) {
+    const empty = stats.jobs.filter((job) => job.files === 0)
+    if (empty.length === stats.jobs.length) {
+      stats.errors.push('The filters select no file. Check --type and --include.')
+    } else {
+      empty.forEach((job) =>
+        stats.warnings.push(`The filters select no file of ${job.platform}/${job.app}/${job.brand}`)
+      )
+    }
   }
 
   // Print summary

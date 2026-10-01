@@ -34,6 +34,11 @@ export const COMMANDS = {
     script: 'pnpm assets:verify',
     about: 'The validator, then the contract check'
   },
+  lfs: {
+    module: './lfs-include.js',
+    script: 'pnpm assets:lfs',
+    about: 'Print the Git LFS paths a build reads, for git lfs pull --include'
+  },
   'lint-source': {
     module: './lint-source.js',
     script: 'pnpm assets:lint:source',

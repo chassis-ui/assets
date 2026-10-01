@@ -45,6 +45,7 @@
     "assets": "node packages/assets/build/cli.js build",
     "assets:analyze": "node packages/assets/build/cli.js analyze",
     "assets:lint": "eslint build packages/assets/build packages/assets/test --cache --cache-location .cache/.eslintcache",
+    "assets:lfs": "node packages/assets/build/cli.js lfs",
     "assets:lint:source": "node packages/assets/build/cli.js lint-source",
     "assets:typecheck": "pnpm -C packages/assets typecheck",
     "assets:contract": "node packages/assets/build/cli.js contract",

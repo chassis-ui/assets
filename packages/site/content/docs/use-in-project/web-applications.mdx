@@ -65,6 +65,16 @@ pnpm assets:site
 pnpm assets --brand example --app docs --platform web
 ```
 
+A project that reads a few files of the output does not have to fetch and build all of it. The `--include` option builds the files that match a pattern, and `pnpm assets:lfs` prints the Git LFS paths of the same patterns, so `git lfs pull` fetches those files only:
+
+```bash
+FILTERS=(--brand chassis --app docs --include "images/home/**" "icons/cx-sprite.svg")
+git lfs pull --include "$(node packages/assets/build/cli.js lfs "${FILTERS[@]}")"
+pnpm assets --clean "${FILTERS[@]}"
+```
+
+A pattern is a path of `source/` in the folder of the app. The [build system page]([[docsref:/getting-started/build-system#file-filters]]) has the patterns and the `--type` option.
+
 <Callout type="warning">
 The fonts and the raster images are Git LFS files. A checkout without Git LFS holds pointer files in their place, and the build fails and lists them. Install Git LFS from [git-lfs.com](https://git-lfs.com) and run `git lfs pull` in the submodule.
 </Callout>

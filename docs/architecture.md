@@ -117,6 +117,8 @@ jobs with their file counts.
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
+| `packages/assets/build/filters.js`            | The file filters, `--type` and `--include`: `compileInclude()`, `createFileFilter()` and `coverPaths()`, all pure.                                                                                                                                                                                                                                                                                            |
+| `packages/assets/build/lfs-include.js`        | `lfsInclude(options)`: the paths of `source/` that a build with the same filters reads, by `listSourceFiles()` of the build, as the shortest list `git lfs pull --include` takes. `pnpm assets:lfs`.                                                                                                                                                                                                          |
 | `packages/assets/build/contract.js`           | The check of the consumer contracts, which are data of the repository: `contracts` of `chassis.checks.json`. `expand()`, `missingFromSet()` and `missingFromContract()` (pure), and `checkContracts({ cwd, out })` over the output of each job that has a contract. It names no job and no file itself. The CLI entry is `pnpm assets:contract`.                                                              |
 | `packages/assets/build/verify.js`             | `verify({ cwd, out })`: the validator, then the contract check. `pnpm assets:verify`.                                                                                                                                                                                                                                                                                                                         |
 | `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. A name of `lint.allow` of `chassis.checks.json` is a warning. `pnpm assets:lint:source`.                                                                                                                           |
@@ -171,32 +173,34 @@ on the fixture, which has its own configuration.
 
 ## The command line
 
-| Command                          | What it does                                                                                                                                                                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm assets`                    | Every job. Removes `dist/` first.                                                                                                                                                                                               |
-| `--brand <name…>`                | Only these brands. One or more values. Keeps `dist/`.                                                                                                                                                                           |
-| `--app <name…>`                  | Only these apps.                                                                                                                                                                                                                |
-| `--platform <name…>`             | Only these platforms.                                                                                                                                                                                                           |
-| `--clean`                        | Remove the output first: all of `dist/` without filters, the folders of the selected jobs with filters.                                                                                                                         |
-| `--no-clean`                     | Keep `dist/` even without filters.                                                                                                                                                                                              |
-| `--out <dir>`                    | Write to another folder than `dist/`. The analyzer and the validator take it too.                                                                                                                                               |
-| `--cwd <dir>`                    | The repository root, where `package.json` and `source/` are. Default: the nearest folder upward whose `package.json` has a `chassis` block.                                                                                     |
-| `--dry-run`                      | Print the jobs and their file counts, write nothing.                                                                                                                                                                            |
-| `--allow-lfs-pointers`           | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                    |
-| `--vector-drawables`             | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                            |
-| `--asset-catalog`                | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`. Off by default.                                                                                                                           |
-| `--res`                          | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`. Off by default.                                                                                                              |
-| `--optimize`                     | Write the images again under their names where that makes them smaller. Off by default. Needs `pnpm install`.                                                                                                                   |
-| `--webp`, `--avif`               | Write the PNG and JPEG images in a second format: WebP beside the file on the web and in place of it on Android, AVIF beside the file on the web. Off by default. Need `pnpm install`.                                          |
-| `--quiet`, `--help`, `--version` | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
-| `pnpm assets:site`               | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
-| `pnpm assets:analyze [filters]`  | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
-| `pnpm assets:validate`           | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules. Exit code 1 when a check fails. |
-| `pnpm assets:verify`             | `assets:validate`, then the consumer contract of `dist/web/docs/chassis/`. Exit code 1 when either fails.                                                                                                                       |
-| `pnpm assets:contract`           | The consumer contract alone. Run it after `pnpm assets:site`.                                                                                                                                                                   |
-| `pnpm assets:lint:source`        | The names and the layout of `source/`, Git LFS pointers. `--allow-lfs-pointers` without Git LFS. Exit code 1 on an error; the known oddities are warnings.                                                                      |
-| `pnpm assets:typecheck`          | `tsc -p tsconfig.json` in `packages/assets/`: `build/` against its JSDoc, with `checkJs`. No TypeScript file.                                                                                                                   |
-| `pnpm test`                      | Vitest over `packages/assets/test/`, on the fixture in `packages/assets/test/fixtures/`, into temporary folders. Needs no Git LFS files. See `packages/assets/test/README.md`.                                                  |
+| Command                                  | What it does                                                                                                                                                                                                                    |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm assets`                            | Every job. Removes `dist/` first.                                                                                                                                                                                               |
+| `--brand <name…>`                        | Only these brands. One or more values. Keeps `dist/`.                                                                                                                                                                           |
+| `--app <name…>`                          | Only these apps.                                                                                                                                                                                                                |
+| `--platform <name…>`                     | Only these platforms.                                                                                                                                                                                                           |
+| `--clean`                                | Remove the output first: all of `dist/` without filters, the folders of the selected jobs with filters.                                                                                                                         |
+| `--no-clean`                             | Keep `dist/` even without filters.                                                                                                                                                                                              |
+| `--out <dir>`                            | Write to another folder than `dist/`. The analyzer and the validator take it too.                                                                                                                                               |
+| `--cwd <dir>`                            | The repository root, where `package.json` and `source/` are. Default: the nearest folder upward whose `package.json` has a `chassis` block.                                                                                     |
+| `--dry-run`                              | Print the jobs and their file counts, write nothing.                                                                                                                                                                            |
+| `--allow-lfs-pointers`                   | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                    |
+| `--vector-drawables`                     | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                            |
+| `--asset-catalog`                        | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`. Off by default.                                                                                                                           |
+| `--res`                                  | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`. Off by default.                                                                                                              |
+| `--optimize`                             | Write the images again under their names where that makes them smaller. Off by default. Needs `pnpm install`.                                                                                                                   |
+| `--webp`, `--avif`                       | Write the PNG and JPEG images in a second format: WebP beside the file on the web and in place of it on Android, AVIF beside the file on the web. Off by default. Need `pnpm install`.                                          |
+| `--quiet`, `--help`, `--version`         | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
+| `pnpm assets:site`                       | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
+| `pnpm assets:analyze [filters]`          | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
+| `pnpm assets:validate`                   | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules. Exit code 1 when a check fails. |
+| `pnpm assets:verify`                     | `assets:validate`, then the consumer contract of `dist/web/docs/chassis/`. Exit code 1 when either fails.                                                                                                                       |
+| `--type <name…>`, `--include <pattern…>` | Only these type folders, only the files that match a pattern. A filtered build keeps `dist/`. See "File filters".                                                                                                               |
+| `pnpm assets:lfs [filters]`              | The Git LFS paths a build with the same filters reads, separated by commas, for `git lfs pull --include`.                                                                                                                       |
+| `pnpm assets:contract`                   | The consumer contract alone. Run it after `pnpm assets:site`.                                                                                                                                                                   |
+| `pnpm assets:lint:source`                | The names and the layout of `source/`, Git LFS pointers. `--allow-lfs-pointers` without Git LFS. Exit code 1 on an error; the known oddities are warnings.                                                                      |
+| `pnpm assets:typecheck`                  | `tsc -p tsconfig.json` in `packages/assets/`: `build/` against its JSDoc, with `checkJs`. No TypeScript file.                                                                                                                   |
+| `pnpm test`                              | Vitest over `packages/assets/test/`, on the fixture in `packages/assets/test/fixtures/`, into temporary folders. Needs no Git LFS files. See `packages/assets/test/README.md`.                                                  |
 
 A filter value that is not configured, or filters that together select no job, fail the build and name the configured values.
 
@@ -261,6 +265,43 @@ default, and the default output is the same file for file with and without the c
   passes on either output. The release archives are built without the option.
 - Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
   has read the drawables.
+
+### File filters
+
+`--type` and `--include` build a part of a job (roadmap 6.6, D13). Without them the build
+is as it was.
+
+- Why both: a site reads a few megabytes of the docs job, and the type folders do not
+  separate that part. `images/` of the docs app is 50 MB, of which `images/figma/`, read by
+  one site, is 43 MB. `--type` alone would save a site next to nothing.
+- A pattern is a path of `source/`, relative to the folder of the app: the names a
+  designer sees, and the paths Git LFS has. `*` stays in one folder, `**` is any run of
+  folders, `{a,b}` is one of its alternatives, as in the contracts, and a pattern whose last
+  name has no `*` also matches what is under the folder it names (`compileInclude()`).
+- The filter is applied while copying, after the filter of the platform, so every later
+  step works on the files that are there. A file that is left out is not read: a Git LFS
+  pointer among them does not fail the build.
+- A filtered build is a selective build: it keeps `dist/` unless `--clean` is given. With a
+  filter the folders of the output are made with their first file, so a job or a folder
+  without a file is not written.
+- Filters that select no file fail the build; filters that select no file of one job among
+  several warn.
+- `pnpm assets:lfs` prints what the same filters read, from `listSourceFiles()`, which
+  applies the ignore list, the filter of the platform and the file filters as the copy
+  does; a test compares its count with a dry run. `coverPaths()` names a folder whose files
+  are all read once, as `<folder>/**`, and any other file by its path, so the value stays
+  short and names no file the build does not read. Git LFS reads `*` across folders, so
+  a pattern of the build cannot be handed to it as it is.
+- The validator and the contract check are for a full build and fail on an output of a
+  part.
+- The scripts of the consumer path are unchanged: `pnpm assets:site` takes the options
+  after its own, `pnpm assets:site --include …`, and `assets:lfs` runs with `node`, with
+  nothing installed.
+- On this repository: the docs job of the `chassis` brand with
+  `--include "images/*" images/home images/logo icons/cx-sprite.svg`, the files the website
+  reads, is 133 files and 7.4 MB where the job is 3,827 files, and fetches 92 Git LFS
+  objects, 6.5 MB, where a full pull fetches 3,426, 70 MB. Run in a clone made with
+  `GIT_LFS_SKIP_SMUDGE=1`: the build fails on 92 pointers before the pull and passes after.
 
 ### Optimization and formats
 
@@ -511,6 +552,7 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 - 2026-10-01: `--asset-catalog`, with a check that compiles the catalogs on a macOS runner
   (roadmap 6.3).
 - 2026-10-01: `--res`, the Android `res/` layout (roadmap 6.4).
+- 2026-10-01: `--type` and `--include`, and `pnpm assets:lfs` (roadmap 6.6).
 - 2026-10-01: `--optimize`, `--webp` and `--avif`, with the settings in `chassis.optimize`
   (roadmap 6.5). `isEntry()` compares real paths: a build started through a linked folder
   did nothing and exited with 0.

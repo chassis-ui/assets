@@ -249,6 +249,8 @@ export class ChassisAssets {
    * @param {string[]} [options.brands] - Only these brands
    * @param {string[]} [options.apps] - Only these apps
    * @param {string[]} [options.platforms] - Only these platforms
+   * @param {string[]} [options.types] - Only these type folders
+   * @param {string[]} [options.include] - Only the files that match one of these patterns
    * @param {boolean|null} [options.clean] - Whether to clean the output first; null decides by the filters
    * @param {boolean} [options.quiet] - Print errors only
    * @param {boolean} [options.vectorDrawables] - Write the SVG icons of Android as vector drawables
@@ -264,6 +266,8 @@ export class ChassisAssets {
       brands = [],
       apps = [],
       platforms = [],
+      types = [],
+      include = [],
       clean = null,
       quiet = false,
       vectorDrawables = false,
@@ -277,6 +281,8 @@ export class ChassisAssets {
       brands,
       apps,
       platforms,
+      types,
+      include,
       clean,
       quiet,
       vectorDrawables,

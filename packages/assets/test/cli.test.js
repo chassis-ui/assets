@@ -58,6 +58,8 @@ describe('pnpm assets', () => {
       '--brand',
       '--app',
       '--platform',
+      '--type',
+      '--include',
       '--clean',
       '--no-clean',
       '--out',

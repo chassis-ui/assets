@@ -122,45 +122,48 @@ pnpm assets --app docs --platform web         # Filters combine
 pnpm assets:site                              # The output the Chassis sites read: --clean --brand chassis --app docs
 ```
 
-| Option                 | What it does                                                                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `--brand <name...>`    | Only these brands                                                                                                                     |
-| `--app <name...>`      | Only these apps                                                                                                                       |
-| `--platform <name...>` | Only these platforms                                                                                                                  |
-| `--clean`              | Remove the output first, of the selected jobs when filtered                                                                           |
-| `--no-clean`           | Keep the output even for a full build                                                                                                 |
-| `--out <dir>`          | Output folder, default `dist`                                                                                                         |
-| `--cwd <dir>`          | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block                                         |
-| `--dry-run`            | Print the jobs and their file counts, write nothing                                                                                   |
-| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                                                    |
-| `--vector-drawables`   | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install`                                   |
-| `--asset-catalog`      | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                                                  |
-| `--res`                | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`                                     |
-| `--optimize`           | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install` |
-| `--webp`               | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install`                |
-| `--avif`               | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install`                                                            |
-| `--quiet`              | Print errors only                                                                                                                     |
-| `--help`, `-h`         | Print the options                                                                                                                     |
-| `--version`, `-v`      | Print the version                                                                                                                     |
+| Option                   | What it does                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `--brand <name...>`      | Only these brands                                                                                                                     |
+| `--app <name...>`        | Only these apps                                                                                                                       |
+| `--platform <name...>`   | Only these platforms                                                                                                                  |
+| `--type <name...>`       | Only these type folders of an app, such as `images` and `icons`                                                                       |
+| `--include <pattern...>` | Only the files that match a pattern, by their path in the folder of the app, such as `"images/home/**"`                               |
+| `--clean`                | Remove the output first, of the selected jobs when filtered                                                                           |
+| `--no-clean`             | Keep the output even for a full build                                                                                                 |
+| `--out <dir>`            | Output folder, default `dist`                                                                                                         |
+| `--cwd <dir>`            | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block                                         |
+| `--dry-run`              | Print the jobs and their file counts, write nothing                                                                                   |
+| `--allow-lfs-pointers`   | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                                                    |
+| `--vector-drawables`     | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install`                                   |
+| `--asset-catalog`        | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                                                  |
+| `--res`                  | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`                                     |
+| `--optimize`             | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install` |
+| `--webp`                 | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install`                |
+| `--avif`                 | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install`                                                            |
+| `--quiet`                | Print errors only                                                                                                                     |
+| `--help`, `-h`           | Print the options                                                                                                                     |
+| `--version`, `-v`        | Print the version                                                                                                                     |
 
 A full build removes `dist/` first; a filtered build keeps it. A filter value that is not configured fails the build and names the configured values.
 
 ### Check
 
-| Command                   | What it does                                                                                                    | Options                                                       |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `pnpm test`               | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files              |                                                               |
-| `pnpm test:golden`        | Writes `packages/assets/test/golden/` again, after an intended change to the output                             |                                                               |
-| `pnpm test:ios`           | Compiles the asset catalogs of an output with `actool`, after `pnpm assets --asset-catalog`. Needs Xcode        | A folder, default `dist`                                      |
-| `pnpm assets:analyze`     | Sizes, types, largest files and files with the same content, of `source/` and of an existing output             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet` |
-| `pnpm assets:validate`    | Checks an existing output against `source/` and the configuration                                               | `--out`, `--cwd`                                              |
-| `pnpm assets:contract`    | Checks that each output has the files of its contracts in `chassis.checks.json`                                 | `--out`, `--cwd`                                              |
-| `pnpm assets:verify`      | The validator, then the contract check                                                                          | `--out`, `--cwd`                                              |
-| `pnpm assets:lint:source` | The names and the layout of `source/` against the naming conventions of the design guidelines, and LFS pointers | `--cwd`, `--allow-lfs-pointers`                               |
-| `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                     |                                                               |
-| `pnpm assets:typecheck`   | TypeScript over `packages/assets/build/`, from its JSDoc                                                        |                                                               |
-| `pnpm lint:prettier`      | Formatting, across the repository                                                                               |                                                               |
-| `pnpm check`              | The types of the site, then `pnpm audit`                                                                        |                                                               |
+| Command                   | What it does                                                                                                    | Options                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `pnpm test`               | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files              |                                                                  |
+| `pnpm test:golden`        | Writes `packages/assets/test/golden/` again, after an intended change to the output                             |                                                                  |
+| `pnpm test:ios`           | Compiles the asset catalogs of an output with `actool`, after `pnpm assets --asset-catalog`. Needs Xcode        | A folder, default `dist`                                         |
+| `pnpm assets:analyze`     | Sizes, types, largest files and files with the same content, of `source/` and of an existing output             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet`    |
+| `pnpm assets:validate`    | Checks an existing output against `source/` and the configuration                                               | `--out`, `--cwd`                                                 |
+| `pnpm assets:lfs`         | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include`                 | `--brand`, `--app`, `--platform`, `--type`, `--include`, `--cwd` |
+| `pnpm assets:contract`    | Checks that each output has the files of its contracts in `chassis.checks.json`                                 | `--out`, `--cwd`                                                 |
+| `pnpm assets:verify`      | The validator, then the contract check                                                                          | `--out`, `--cwd`                                                 |
+| `pnpm assets:lint:source` | The names and the layout of `source/` against the naming conventions of the design guidelines, and LFS pointers | `--cwd`, `--allow-lfs-pointers`                                  |
+| `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                     |                                                                  |
+| `pnpm assets:typecheck`   | TypeScript over `packages/assets/build/`, from its JSDoc                                                        |                                                                  |
+| `pnpm lint:prettier`      | Formatting, across the repository                                                                               |                                                                  |
+| `pnpm check`              | The types of the site, then `pnpm audit`                                                                        |                                                                  |
 
 Every `pnpm assets*` command prints its options with `--help`. [docs/architecture.md](docs/architecture.md#checks-per-changed-area) says which checks to run for which change.
 
