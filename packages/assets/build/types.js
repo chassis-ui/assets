@@ -15,6 +15,8 @@
  * @property {string[]} brands - Brands to build, `chassis.build.brands`
  * @property {Record<string, string[]>} apps - Apps with their platforms, `chassis.build.apps`
  * @property {string} brandFolder - The fallback brand folder, `chassis.defaults.brandFolder`
+ * @property {unknown} [optimize] - The settings of `--optimize`, `--webp` and `--avif`,
+ *   `chassis.optimize`, as written. `resolveSettings()` checks them when an option is given
  * @property {ContractEntry[]} contracts - The files consumers read, `contracts` of `chassis.checks.json`
  * @property {LintAllowance[]} lintAllow - Names the source lint accepts, `lint.allow` of `chassis.checks.json`
  * @property {string} [name] - The package name
@@ -39,6 +41,28 @@
  * @property {boolean} [assetCatalog] - Move the images a processor names in `assetCatalog`
  *   into an asset catalog
  * @property {boolean} [res] - Move the files a processor names in `res` into a `res/` folder
+ * @property {boolean} [optimize] - Write the images again under their names where that makes
+ *   them smaller. Needs the packages `sharp` and `svgo`
+ * @property {boolean} [webp] - Write the PNG and JPEG images as WebP too, where a processor
+ *   takes the format in `imageFormats`. Needs the package `sharp`
+ * @property {boolean} [avif] - The same for AVIF
+ */
+
+/**
+ * The settings of `--optimize`, `--webp` and `--avif`: `chassis.optimize` of `package.json`
+ * over the defaults of `optimize.js`.
+ * @typedef {Object} OptimizeSettings
+ * @property {string[]} types - The type folders whose files are optimized and converted
+ * @property {{ quality: number|null }} png - null compresses a PNG again without a loss; a
+ *   number reduces its colors to a palette at that quality
+ * @property {{ quality: number|null }} jpeg - null leaves a JPEG as it is; a number encodes
+ *   it again at that quality
+ * @property {false | { precision: number|null }} svg - false leaves an SVG as it is. A
+ *   `precision` of null minifies it and keeps its shapes; a number rounds the coordinates to
+ *   that many decimals and rewrites the paths
+ * @property {{ quality: number, lossless: boolean }} webp - `lossless` encodes a PNG without
+ *   a loss; `quality` is of a JPEG, and of a PNG without `lossless`
+ * @property {{ quality: number, lossless: boolean }} avif - The same for AVIF
  */
 
 /**
@@ -59,6 +83,9 @@
  *   `vectorDrawables`
  * @property {number} imageSets - Image sets written to asset catalogs, with `assetCatalog`
  * @property {number} resourceFiles - Files moved into `res/` folders, with `res`
+ * @property {number} filesOptimized - Files written again under their names, with `optimize`
+ * @property {number} bytesSaved - What the optimized files lost in size, in bytes
+ * @property {number} filesGenerated - Files written in a second format, with `webp` and `avif`
  * @property {string[]} errors
  * @property {string[]} warnings
  * @property {string[]} lfsPointers - Source files that are Git LFS pointers
@@ -133,6 +160,10 @@
  *   platform. Without it the option leaves the platform as it is
  * @property {Catalog} [assetCatalog] - What `--asset-catalog` writes for the platform.
  *   Without it the option leaves the platform as it is
+ * @property {Record<string, 'beside' | 'replace'>} [imageFormats] - The formats of `--webp`
+ *   and `--avif` the platform takes: `beside` writes the file next to the image, `replace`
+ *   writes it in place of the image when it is smaller. Without a format its option leaves
+ *   the platform as it is
  * @property {ResLayout} [res] - What `--res` writes for the platform. Without it the option
  *   leaves the platform as it is
  */

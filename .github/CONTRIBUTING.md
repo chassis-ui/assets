@@ -220,8 +220,8 @@ git push origin develop:app/docs
 ```
 
 The push to `main` runs `.github/workflows/release.yml`. When the version has no tag yet and
-the checks of CI passed on the commit, it builds every brand, app and platform, runs
-`pnpm assets:verify`, and creates the tag and the GitHub release with the changelog entry as
+the checks of CI passed on the commit, it builds every brand, app and platform with
+`--optimize`, runs `pnpm assets:verify`, and creates the tag and the GitHub release with the changelog entry as
 its text and the archives attached:
 `chassis-assets-<platform>-<app>-<brand>-<version>.zip`, which holds the content of
 `dist/<platform>/<app>/<brand>/`. The start of the name is the name of the root
@@ -230,8 +230,8 @@ its text and the archives attached:
 The push to `app/docs` is what the sites receive: `chassis-docs sync-submodules` moves their
 `vendor/assets` to the tip of that branch.
 
-To see the archives before a release, run `pnpm assets && pnpm release:archives`. It writes
-them to `.cache/release/`.
+To see the archives before a release, run
+`pnpm assets --optimize && pnpm release:archives`. It writes them to `.cache/release/`.
 
 ### Prereleases
 

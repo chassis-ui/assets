@@ -3,6 +3,7 @@ import path from 'path'
 import ChassisAssets from './api/index.js'
 import { catalogPath } from './asset-catalog.js'
 import { shouldIgnoreFile } from './build-assets.js'
+import { formatName } from './optimize.js'
 import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
 import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
 import { resourcePath } from './res-layout.js'
@@ -381,14 +382,20 @@ class DistValidator {
                 )
               }
 
+              // An output built with `--webp` has the image in the format, under its name
+              const folder = path.dirname(androidDistPath)
+              const present = [transformedName, ...this.replacedNames(transformedName, platform)]
               if (
-                !fs.existsSync(androidDistPath) &&
-                !this.inRes(
-                  distPath,
-                  platform,
-                  sourceFile.assetType,
-                  transformedName,
-                  path.basename(path.dirname(androidDistPath))
+                !present.some(
+                  (name) =>
+                    fs.existsSync(path.join(folder, name)) ||
+                    this.inRes(
+                      distPath,
+                      platform,
+                      sourceFile.assetType,
+                      name,
+                      path.basename(folder)
+                    )
                 )
               ) {
                 missingFiles++
@@ -417,8 +424,13 @@ class DistValidator {
 
               const converted = this.convertedPath(transformedName, platform, sourceFile.assetType)
 
+              const replaced = this.replacedNames(transformedName, platform).some((name) =>
+                fs.existsSync(path.join(path.dirname(fullDistPath), name))
+              )
+
               if (
                 !inCatalog &&
+                !replaced &&
                 !this.inRes(distPath, platform, sourceFile.assetType, transformedName) &&
                 !this.inRes(distPath, platform, sourceFile.assetType, converted) &&
                 !fs.existsSync(fullDistPath) &&
@@ -622,6 +634,21 @@ class DistValidator {
 
     // Use processor's renameFile method
     return processor.renameFile(filename, isIcon)
+  }
+
+  /**
+   * The names a file can have in an output that was built with `--webp` or `--avif`, on a
+   * platform that writes the format in place of the image.
+   * @param {string} fileName - The name of the file in the output
+   * @param {string} platform - Platform name
+   * @returns {string[]} The names, none for a file or a platform that keeps its format
+   */
+  replacedNames(fileName, platform) {
+    const formats = platformProcessors[platform]?.imageFormats ?? {}
+    return Object.keys(formats)
+      .filter((format) => formats[format] === 'replace')
+      .map((format) => formatName(fileName, format))
+      .filter((name) => name !== null)
   }
 
   /**

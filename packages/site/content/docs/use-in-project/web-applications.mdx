@@ -36,7 +36,7 @@ Chassis Assets is not published to npm. A web application gets the output from a
 
 ### Release archive
 
-The release workflow attaches one archive per platform, app and brand to each GitHub release, from version 0.2.0 on. The archive of a job is named `chassis-assets-<platform>-<app>-<brand>-<version>.zip` and holds the content of `dist/<platform>/<app>/<brand>/` at its top level.
+The release workflow attaches one archive per platform, app and brand to each GitHub release, from version 0.2.0 on. The archive of a job is named `chassis-assets-<platform>-<app>-<brand>-<version>.zip` and holds the content of `dist/<platform>/<app>/<brand>/` at its top level. Its images are optimized: the archives are built with `--optimize`, which keeps every name and every visible pixel.
 
 Download the archive of your job from the [releases]([[config:repo]]/releases) of the repository and extract it into the folder your application serves static files from:
 
@@ -235,7 +235,7 @@ The build copies the license of each role beside its fonts, as `<role>-license.t
 
 ## Images
 
-The `images/` folder holds every image of the source, in the same subfolders, with kebab-case names and the indicator kept. An image has the formats and the variants the designer exported: the build writes no `@2x` file and no WebP file of its own.
+The `images/` folder holds every image of the source, in the same subfolders, with kebab-case names and the indicator kept. An image has the formats and the variants the designer exported: the default build writes no `@2x` file and no WebP file of its own.
 
 ```text
 dist/web/docs/chassis/images/
@@ -274,7 +274,7 @@ An image with `@2x` and `@3x` variants goes into `srcset`, one variant per pixel
 
 ### Formats
 
-An image that the designer exported as WebP and as PNG goes into a `<picture>` element, with the PNG as the fallback. Use it only for an image that has both files in the output:
+An image that the output has as WebP and as PNG goes into a `<picture>` element, with the PNG as the fallback. In the default output these are the images the designer exported in both formats, so use the element only for an image that has both files. A build with `pnpm assets --webp` writes a WebP beside every PNG and JPEG, and `--avif` an AVIF; both need `pnpm install`, see the [build system page]([[docsref:/getting-started/build-system#image-formats]]).
 
 ```html
 <picture>
@@ -452,7 +452,7 @@ The commands of this job were run in a project with the submodule; the workflow 
 
 ❌ **Do not edit `dist/`:** a full `pnpm assets` removes it first, and `--clean` removes the folders of the selected jobs. Change the file in `source/` and build again.
 
-❌ **Do not expect a file the designer did not export:** the build copies. An image without an `@2x` or a `.webp` file in `source/` has none in the output.
+❌ **Do not expect a file the designer did not export:** the default build copies. An image without an `@2x` file in `source/` has none in the output, and one without a `.webp` file has one only in a build with `--webp`.
 
 ## Troubleshooting
 

@@ -239,6 +239,9 @@ describe('parseArgs()', () => {
     vectorDrawables: false,
     assetCatalog: false,
     res: false,
+    optimize: false,
+    webp: false,
+    avif: false,
     help: false,
     version: false
   }
@@ -258,6 +261,8 @@ describe('parseArgs()', () => {
     [['--vector-drawables'], { vectorDrawables: true }],
     [['--asset-catalog'], { assetCatalog: true }],
     [['--res'], { res: true }],
+    [['--optimize'], { optimize: true }],
+    [['--webp', '--avif'], { webp: true, avif: true }],
     [['--help'], { help: true }],
     [['-h'], { help: true }],
     [['--version'], { version: true }],

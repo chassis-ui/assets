@@ -122,23 +122,26 @@ pnpm assets --app docs --platform web         # Filters combine
 pnpm assets:site                              # The output the Chassis sites read: --clean --brand chassis --app docs
 ```
 
-| Option                 | What it does                                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `--brand <name...>`    | Only these brands                                                                                   |
-| `--app <name...>`      | Only these apps                                                                                     |
-| `--platform <name...>` | Only these platforms                                                                                |
-| `--clean`              | Remove the output first, of the selected jobs when filtered                                         |
-| `--no-clean`           | Keep the output even for a full build                                                               |
-| `--out <dir>`          | Output folder, default `dist`                                                                       |
-| `--cwd <dir>`          | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block       |
-| `--dry-run`            | Print the jobs and their file counts, write nothing                                                 |
-| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                  |
-| `--vector-drawables`   | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
-| `--asset-catalog`      | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                |
-| `--res`                | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`   |
-| `--quiet`              | Print errors only                                                                                   |
-| `--help`, `-h`         | Print the options                                                                                   |
-| `--version`, `-v`      | Print the version                                                                                   |
+| Option                 | What it does                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `--brand <name...>`    | Only these brands                                                                                                                     |
+| `--app <name...>`      | Only these apps                                                                                                                       |
+| `--platform <name...>` | Only these platforms                                                                                                                  |
+| `--clean`              | Remove the output first, of the selected jobs when filtered                                                                           |
+| `--no-clean`           | Keep the output even for a full build                                                                                                 |
+| `--out <dir>`          | Output folder, default `dist`                                                                                                         |
+| `--cwd <dir>`          | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block                                         |
+| `--dry-run`            | Print the jobs and their file counts, write nothing                                                                                   |
+| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                                                    |
+| `--vector-drawables`   | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install`                                   |
+| `--asset-catalog`      | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                                                  |
+| `--res`                | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`                                     |
+| `--optimize`           | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install` |
+| `--webp`               | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install`                |
+| `--avif`               | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install`                                                            |
+| `--quiet`              | Print errors only                                                                                                                     |
+| `--help`, `-h`         | Print the options                                                                                                                     |
+| `--version`, `-v`      | Print the version                                                                                                                     |
 
 A full build removes `dist/` first; a filtered build keeps it. A filter value that is not configured fails the build and names the configured values.
 
@@ -178,7 +181,7 @@ pnpm site:lint:vnu      # The Nu Html Checker over _site/, after a build; skippe
 ```shell
 pnpm changeset              # Describe a change to source/ or to the build
 pnpm changeset:version      # Bump the version and write the changelog
-pnpm release:archives       # Write the archives of a release to .cache/release/, after pnpm assets
+pnpm release:archives       # Write the archives of a release to .cache/release/, after pnpm assets --optimize
 ```
 
 See [Releases](.github/CONTRIBUTING.md#releases) and the [changelog](packages/assets/CHANGELOG.md).
@@ -205,6 +208,7 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
 - `defaults.brandFolder` is the folder of `source/` that every brand falls back to.
 - `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone, as `chassis` is.
 - `build.apps` maps each app to its platforms: `web`, `ios` or `android`.
+- `optimize`, optional, holds the settings of `--optimize`, `--webp` and `--avif`, such as `"jpeg": { "quality": 80 }`. Without it the options change no visible pixel. It turns nothing on.
 
 What the checks verify is in [chassis.checks.json](chassis.checks.json), beside `package.json`. The build does not read it, and the file is optional:
 

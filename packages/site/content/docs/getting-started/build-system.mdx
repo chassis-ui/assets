@@ -6,13 +6,13 @@ toc: true
 
 ## Introduction
 
-The build copies the files of `source/<brand>/<app>/<type>/` to `dist/<platform>/<app>/<brand>/`. On the way it leaves out the formats a platform does not use, renames each file for the platform, and sorts Android image variants into density folders. It does not resize, convert or re-encode a file.
+The build copies the files of `source/<brand>/<app>/<type>/` to `dist/<platform>/<app>/<brand>/`. On the way it leaves out the formats a platform does not use, renames each file for the platform, and sorts Android image variants into density folders. By default it does not resize, convert or re-encode a file: the options of [Optimization](#optimization) and [Image formats](#image-formats) do the last two.
 
 This page is the reference of the build: its commands and options, the `chassis` block that configures it, the rules of each platform, the checks that read its output, and the library behind the commands.
 
 ## Prerequisites
 
-The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only. Run `pnpm install` for the tests, the type check, the documentation site and the `--vector-drawables` option.
+The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only. Run `pnpm install` for the tests, the type check, the documentation site and the options that use a package: `--vector-drawables`, `--optimize`, `--webp` and `--avif`.
 
 Run every command from the repository root. A clone needs its Git LFS files, see [Build fails on pointers](#build-fails-on-pointers).
 
@@ -53,6 +53,9 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 | `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
 | `--asset-catalog` | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/` |
 | `--res` | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/` |
+| `--optimize` | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install` |
+| `--webp` | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install` |
+| `--avif` | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install` |
 | `--quiet` | Print errors only |
 | `--help`, `-h` | Print the options |
 | `--version`, `-v` | Print the version |
@@ -108,6 +111,56 @@ The files of one base name are one image set, with the `Contents.json` that Xcod
 
 A file without a place in an image set stays in `images/`, and the build warns once per job with the number of such files. These are an SVG or a PDF beside a raster of its name, a variant with another indicator than `@1x`, `@2x` or `@3x`, a second file for one slot, and any format but PNG, JPEG, SVG and PDF. The build does not pair a light and a dark image, and the icons of `icons/` stay files.
 
+### Optimization
+
+The `--optimize` option writes each image of `images/` again under its own name, when that makes the file smaller. It is off by default: the files of `source/` are what the designer exported, and the default build copies them as they are.
+
+```bash
+pnpm install
+pnpm assets --optimize
+```
+
+Without settings the option changes no pixel that anyone sees. What it does to a format:
+
+<CxTable>
+| Format | Without settings | With a setting of `chassis.optimize` |
+| --- | --- | --- |
+| PNG | Compressed again, every pixel kept | `png.quality` reduces the colors to a palette |
+| JPEG | Left as it is: a JPEG cannot be encoded again without a loss | `jpeg.quality` encodes it again |
+| SVG | Comments, metadata and white space removed, the shapes kept | `svg.precision` rounds the coordinates and rewrites the paths |
+| WebP, GIF and any other | Left as it is | |
+</CxTable>
+
+A file keeps its name on every platform, so nothing that reads the output changes. A file that would not get smaller stays as it was copied. The ids of an SVG and the symbols of a sprite are kept, since a page refers to them from outside the file. A file with the extension of an image that is no image fails the build, which names the file.
+
+The option uses the packages `sharp` and `svgo`, which the build loads only with it. Without the packages the build stops before it removes anything and names `pnpm install` as the fix. The [chassis.optimize](#chassisoptimize) block has the settings.
+
+The archives of a release are built with this option, and with no other: an archive has the files and the names of a default build, with smaller PNG and SVG images.
+
+### Image formats
+
+The `--webp` and `--avif` options write each PNG and JPEG image of `images/` in a second format. Both are off by default, and both use the package `sharp`.
+
+```bash
+pnpm install
+pnpm assets --webp          # WebP for the web and Android
+pnpm assets --webp --avif   # and AVIF for the web
+```
+
+Where the file is written depends on the platform:
+
+<CxTable>
+| Platform | `--webp` | `--avif` |
+| --- | --- | --- |
+| Web | `hero.webp` beside `hero.png`, for a `<picture>` element to choose from | `hero.avif` beside `hero.png` |
+| Android | `hero.webp` in place of `hero.png`, when it is smaller: a resource has one file per name | Nothing |
+| iOS | Nothing | Nothing |
+</CxTable>
+
+A WebP of a PNG is lossless without settings, so on Android the image is the same and the file is smaller. A WebP of a JPEG and every AVIF are encoded with the quality of [chassis.optimize](#chassisoptimize). An SVG, a GIF and a WebP of the source get no second format.
+
+A file of `source/` wins over the one the build would write: when the designer exported `hero.webp` beside `hero.png`, that WebP is copied and none is written. With `--optimize`, the second format is written from the source image, not from the optimized one.
+
 ### Res folder
 
 The `--res` option moves the files of an Android job that the `res/` folder of an app takes into one, `dist/android/<app>/<brand>/res/`. It is off by default, needs nothing installed, and leaves the output of every other platform as it is.
@@ -158,6 +211,41 @@ The `chassis` block of the root `package.json` names what is built. What the che
 | `brands` | Array of strings | The brands to build. A brand needs no folder in `source/`: without one it gets the default files |
 | `apps` | Object | Each app, with the array of platforms it is built for: `web`, `ios`, `android` |
 </CxTable>
+
+### chassis.optimize
+
+`optimize` holds the settings of `--optimize`, `--webp` and `--avif`. The block is optional, each key is optional, and it turns nothing on: only the options do. A block that is not valid fails a build with one of the three options, before the output is removed.
+
+```json
+{
+  "chassis": {
+    "optimize": {
+      "types": ["images"],
+      "png": { "quality": null },
+      "jpeg": { "quality": null },
+      "svg": { "precision": null },
+      "webp": { "quality": 80, "lossless": true },
+      "avif": { "quality": 60, "lossless": false }
+    }
+  }
+}
+```
+
+These are the values without a block.
+
+<CxTable>
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `types` | Array of strings | The type folders whose files are optimized and written in a second format. Add `"icons"` for the icons of a brand of your own |
+| `png.quality` | 1 to 100, or `null` | `null` compresses a PNG again and keeps every pixel. A number reduces its colors to a palette, which is smaller and not the same image |
+| `jpeg.quality` | 1 to 100, or `null` | `null` leaves a JPEG as it is. A number encodes it again at that quality |
+| `svg` | Object, or `false` | `false` leaves an SVG as it is |
+| `svg.precision` | 0 to 8, or `null` | `null` keeps the shapes. A number rounds the coordinates to that many decimals and rewrites the paths, which is much smaller and changes pixels at the edge of a shape |
+| `webp.lossless`, `avif.lossless` | Boolean | Whether the format of a PNG is written without a loss. A JPEG is always written with `quality` |
+| `webp.quality`, `avif.quality` | 1 to 100 | The quality of the format of a JPEG, and of a PNG without `lossless` |
+</CxTable>
+
+The settings are in `package.json` and not in options of the command, so that every build of a commit writes the same files. There is no setting for a single file: to choose the bytes of one image, commit that image as the designer exported it, in the format it is wanted in.
 
 ### Jobs
 
@@ -365,7 +453,7 @@ Name the platform in an app of the `chassis` block, and build it with `pnpm asse
 
 A processor may also place an image itself with `processImage()`, as the Android processor does for the density folders. It returns `true` when it wrote the file, and `false` to let the build copy it. Such a processor also has `imageFolder(fileName)`, which returns the folder the image goes to, so that the build can warn about two images that meet there.
 
-A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`. A processor with `assetCatalog` takes part in the `--asset-catalog` option. The property names the type folder and the folder of the catalog, as the iOS processor does with `{ type: 'images', name: 'Assets.xcassets' }`. A processor with `res` takes part in the `--res` option. The property names the folder, and for the fonts and the drawables the type folders, the folder of `res/` and the formats it takes.
+A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`. A processor with `assetCatalog` takes part in the `--asset-catalog` option. The property names the type folder and the folder of the catalog, as the iOS processor does with `{ type: 'images', name: 'Assets.xcassets' }`. A processor with `res` takes part in the `--res` option. The property names the folder, and for the fonts and the drawables the type folders, the folder of `res/` and the formats it takes. A processor with `imageFormats` takes part in `--webp` and `--avif`: the property says for each format whether the file is written `beside` the image or to `replace` it, as the web processor does with `{ webp: 'beside', avif: 'beside' }` and the Android processor with `{ webp: 'replace' }`.
 
 ## Library
 
@@ -404,7 +492,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 
 ### generateAssets
 
-`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog` and `res`.
+`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `filesOptimized`, `bytesSaved`, `filesGenerated`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif`.
 
 ### ChassisAssets
 
@@ -420,7 +508,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 | `getCombinations()` | Every job, as brand, app and platform |
 | `assetsExist(brand, app)` | Whether the source has files for the brand and the app |
 | `getAssetInventory(brand, app)` | The source files of the brand and the app, by type |
-| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `clean`, `quiet`, `vectorDrawables`, `assetCatalog` and `res` |
+| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `clean`, `quiet`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif` |
 | `getStats()` | The numbers of brands, apps, jobs, source files and output files |
 | `validate()` | The errors and the warnings of the configuration and the source |
 </CxTable>

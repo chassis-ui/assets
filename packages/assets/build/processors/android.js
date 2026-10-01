@@ -31,6 +31,12 @@ const androidProcessor = {
   vectorDrawables: { type: 'icons', from: '.svg', to: '.xml' },
 
   /**
+   * What `--webp` writes: the file in place of the image when it is smaller, since a
+   * resource has one file per name
+   */
+  imageFormats: { webp: 'replace' },
+
+  /**
    * What `--res` writes: the font files move to `res/font/`, and the images and the icons
    * in a format `res/` takes move to `res/drawable/` and the density folders
    */

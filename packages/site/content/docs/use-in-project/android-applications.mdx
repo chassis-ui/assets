@@ -528,6 +528,8 @@ With release archives the workflow needs neither the submodule nor Node.js: it d
 
 ❌ **Do not rename in the app:** the names of `dist/android/` are the same for every brand. A renamed copy breaks that for the next brand.
 
+✅ **Build with `--webp` for smaller images:** the option, which needs `pnpm install`, writes a lossless WebP in place of each PNG that it makes smaller, under the same resource name.
+
 ❌ **Do not keep one image as PNG and as WebP in `res/`:** the Android output has both when the designer exported both, and a resource has one file per folder. Remove the extension the app does not use from the copy script.
 
 ❌ **Do not commit `dist/`:** it is build output. Commit the submodule pointer, or name the version of the archive.

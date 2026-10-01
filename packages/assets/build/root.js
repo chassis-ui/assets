@@ -53,5 +53,12 @@ export function buildVersion() {
  * @returns {boolean}
  */
 export function isEntry(moduleUrl) {
-  return Boolean(process.argv[1]) && moduleUrl === `file://${process.argv[1]}`
+  if (!process.argv[1]) return false
+  // By the real paths: a folder reached through a link, or a path with a space, is the
+  // same file under another spelling
+  try {
+    return fs.realpathSync(fileURLToPath(moduleUrl)) === fs.realpathSync(process.argv[1])
+  } catch {
+    return false
+  }
 }

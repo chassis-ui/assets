@@ -8,7 +8,7 @@ toc: true
 
 Images are the files under `images/` of an app: logos, illustrations, photos, screenshots and backgrounds. The build copies them to every platform with the name the platform expects, and keeps the subfolders of `images/`.
 
-An image has the variants the designer exported. The build does not resize or re-encode a file. It reads the `@2x` or `@3x` indicator of a name, and on Android it sorts the variants into density folders. With the `--asset-catalog` option it sorts the variants of iOS into the image sets of an asset catalog.
+An image has the variants the designer exported. The build does not resize a file, and by default it does not re-encode one. It reads the `@2x` or `@3x` indicator of a name, and on Android it sorts the variants into density folders. With the `--asset-catalog` option it sorts the variants of iOS into the image sets of an asset catalog.
 
 ## Source layout
 
@@ -41,6 +41,8 @@ The build copies an image of any format. One format is the exception: iOS does n
 </CxTable>
 
 Export a WebP image in a second format, PNG or JPG, when an iOS app needs it too. The web and the Android output then hold both files. A page chooses between them with a `<picture>` element, and an Android app copies the one it uses to `res/`.
+
+The designer does not have to export the WebP: a build with the `--webp` option writes one from each PNG and JPG, beside the file on the web and in place of it on Android, and `--avif` writes an AVIF for the web. A WebP of `source/` is kept over the one the build would write. A build with `--optimize` writes a PNG or an SVG again under its name when that makes it smaller, without a change to the image. The [build system page]([[docsref:/getting-started/build-system#optimization]]) has the options and their settings.
 
 PNG, JPG and WebP files are Git LFS files. SVG files are text and are committed as they are.
 

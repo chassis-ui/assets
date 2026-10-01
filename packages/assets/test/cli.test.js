@@ -67,6 +67,9 @@ describe('pnpm assets', () => {
       '--vector-drawables',
       '--asset-catalog',
       '--res',
+      '--optimize',
+      '--webp',
+      '--avif',
       '--quiet',
       '--help',
       '--version'

@@ -8,8 +8,8 @@ breaks without being told; the docs it links to explain the rest.
 Chassis Assets holds the fonts, images, icons and other design files of the Chassis Design
 System, and a build that copies them from `source/<brand>/<app>/<type>/` to
 `dist/<platform>/<app>/<brand>/` with the names and the formats of the web, iOS and Android.
-The build is file-driven and copies only: it does not convert, resize or optimize. It is a pnpm
-workspace:
+The build is file-driven and by default copies only: it does not convert, resize or optimize
+unless an option asks for it. It is a pnpm workspace:
 
 ```
 source/                # the assets, as source/<brand>/<app>/<type>/; fonts and rasters are Git LFS files

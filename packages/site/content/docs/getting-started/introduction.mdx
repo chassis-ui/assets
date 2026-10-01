@@ -17,7 +17,7 @@ aliases:
 
 Chassis Assets holds the design files of a design system: fonts, images, icons and anything else an app ships. A designer exports a file into `source/<brand>/<app>/<type>/`, and the build copies it to `dist/<platform>/<app>/<brand>/` with the name, the format and the folder that each platform expects.
 
-The build is file-driven. A file added to `source/` is in the output of the next build, and no list of assets has to be kept beside the files. The build copies, renames and sorts into folders. It does not resize, convert or re-encode a file.
+The build is file-driven. A file added to `source/` is in the output of the next build, and no list of assets has to be kept beside the files. The build copies, renames and sorts into folders. By default it does not resize, convert or re-encode a file; optimized images and WebP or AVIF files are options of the build.
 
 The repository is meant to be owned by the team that adopts it. The brands and apps it ships with, those of the Chassis sites, are a configuration that you replace with your own.
 

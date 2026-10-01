@@ -72,14 +72,19 @@ For each job, in order:
 4. **Rename** every file in the output folder with the processor's `renameFile()`
    (`renameFilesRecursively()`). The copy keeps the source name; the rename pass runs after.
 5. **Remove empty folders** left by the filters (`cleanupEmptyDirectories()`).
-6. **Convert**, only with `--vector-drawables` and only for a processor that has
+6. **Optimize**, only with `--optimize`, `--webp` or `--avif`: the images of the type folders
+   of `chassis.optimize` are written again under their names where that makes them smaller,
+   and in the second formats the processor takes in `imageFormats` (`optimizeImages()`,
+   `optimizeJob()`). Before the next steps, so that they move and convert the files it
+   wrote. See "Optimization and formats".
+7. **Convert**, only with `--vector-drawables` and only for a processor that has
    `vectorDrawables`: each SVG under `icons/` of the job is written as a vector drawable
    beside itself and removed (`convertVectorDrawables()`, `convertFolder()`). See
    "Vector drawables".
-7. **Catalog**, only with `--asset-catalog` and only for a processor that has
+8. **Catalog**, only with `--asset-catalog` and only for a processor that has
    `assetCatalog`: the images of `images/` of the job move into `Assets.xcassets`, one image
    set per base name (`writeAssetCatalog()`, `writeCatalog()`). See "Asset catalog".
-8. **Res**, only with `--res` and only for a processor that has `res`: the fonts, the
+9. **Res**, only with `--res` and only for a processor that has `res`: the fonts, the
    images and the icons of the job that `res/` takes move into `res/font/` and
    `res/drawable*/` (`writeResLayout()`, `writeRes()`). See "Res folder".
 
@@ -108,6 +113,7 @@ jobs with their file counts.
 | `packages/assets/build/vector-drawables.js`   | The conversion of `--vector-drawables`: `loadConverter()`, which imports `svg2vectordrawable` when it is called and says how to install it when it is missing, `drawsSomething()` and `convertFolder()`. The one module that uses a package.                                                                                                                                                                  |
 | `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                              |
 | `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                  |
+| `packages/assets/build/optimize.js`           | `--optimize`, `--webp` and `--avif`: `resolveSettings()`, which checks `chassis.optimize` over `OPTIMIZE_DEFAULTS`, `loadEncoders()`, which imports `sharp` and `svgo` when it is called and says how to install them when they are missing, `svgOptions()`, `formatName()`, which the validator reads, and `optimizeJob()`.                                                                                  |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -180,6 +186,8 @@ on the fixture, which has its own configuration.
 | `--vector-drawables`             | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                            |
 | `--asset-catalog`                | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`. Off by default.                                                                                                                           |
 | `--res`                          | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`. Off by default.                                                                                                              |
+| `--optimize`                     | Write the images again under their names where that makes them smaller. Off by default. Needs `pnpm install`.                                                                                                                   |
+| `--webp`, `--avif`               | Write the PNG and JPEG images in a second format: WebP beside the file on the web and in place of it on Android, AVIF beside the file on the web. Off by default. Need `pnpm install`.                                          |
 | `--quiet`, `--help`, `--version` | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
 | `pnpm assets:site`               | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
 | `pnpm assets:analyze [filters]`  | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
@@ -253,6 +261,56 @@ default, and the default output is the same file for file with and without the c
   passes on either output. The release archives are built without the option.
 - Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
   has read the drawables.
+
+### Optimization and formats
+
+`pnpm assets --optimize`, `--webp` and `--avif` are off by default, and the default output
+is the same file for file with and without the code (roadmap 6.5, D12).
+
+- The packages are `sharp` for the rasters and `svgo` for SVG, `optionalDependencies` of
+  `packages/assets/package.json`, loaded by `loadEncoders()` when an option is given and
+  before the output is removed. Without them the build fails there, names the option and
+  `pnpm install`, and the output stays. A warning in place of the error would let a build
+  pass with images that are not what was asked for.
+- The settings are `chassis.optimize` of `package.json` over `OPTIMIZE_DEFAULTS`, checked by
+  `resolveSettings()` only when an option is given. The block turns nothing on. The options
+  of the command carry no numbers, so every build of a commit writes the same files, and
+  there is no setting per file, which would be a manifest (principle 1).
+- Without settings no visible pixel changes. A PNG is encoded again with the compression
+  level only: `effort` and `quality` of `sharp` turn the palette on, which changed 190,000
+  pixels of one screenshot of this repository. A JPEG is left alone, since it cannot be
+  encoded again without a loss. An SVG is minified without the plugins that rewrite its
+  shapes (`convertPathData`, `mergePaths`, `convertShapeToPath`, `cleanupNumericValues`);
+  `svg.precision` turns them on.
+- Three plugins of `svgo` are never used. `cleanupIds` and `removeHiddenElems` take away
+  what nothing inside the file refers to, and a sprite of `<symbol>` elements came out
+  empty with them. `convertTransform` moved an embedded image of `home/icon-css.svg`.
+- The color profile of an image is kept, and a JPEG is turned as its EXIF orientation says
+  before the metadata goes.
+- A file is written again only when the result is smaller. Only the type folders of
+  `types` are read, `images` unless the block says otherwise: the icons of the default
+  brand are the output of another project.
+- A processor names the second formats in `imageFormats`: `{ webp: 'beside', avif: 'beside' }`
+  on the web, `{ webp: 'replace' }` on Android, nothing on iOS. `beside` always writes the
+  file. `replace` writes it when it is smaller than the image, optimized or not, and removes
+  the image, since an Android resource has one file per name.
+- A second format is written from the source image. A file of `source/` under its name is
+  kept, which the collision tracker of the run knows; a file of an earlier build under the
+  name is written again or removed. Of a PNG and a JPEG with one name, the PNG gets it.
+- One content is encoded once in a run, by its hash: the brands of an app share most files.
+- A file that the encoder cannot read is an error of the build, with the name of the file.
+- The validator takes the name in the second format for an image of Android, so
+  `pnpm assets:verify` passes on either output.
+- The release archives are built with `--optimize`, and without `--webp` and `--avif`: an
+  app that takes an archive runs no build, so the archive is where it gets the smaller
+  images, and the option keeps every name and every visible pixel. A second format changes
+  names on Android and adds weight on the web. So `release.yml` installs the packages of
+  the build, and the files of an archive are not byte for byte those of a default build.
+- On this repository, on the maintainer's machine: `--optimize` writes 6,924 files again in
+  9 seconds and saves 30 MB, every PNG with the pixels of its source and every SVG drawn as
+  before; `--webp` takes 30 seconds, the WebP files of the web are 36 MB beside 88 MB of
+  PNG, and the images of an Android job go from 26.5 MB to 13.1 MB; `--avif` takes 64
+  seconds and writes 32 MB.
 
 ### Res folder
 
@@ -359,9 +417,10 @@ steps are in `.github/CONTRIBUTING.md`, "Releases".
   `packages/assets/package.json`, writes `packages/assets/CHANGELOG.md` with the entries of
   `.changeset/changelog.js` and deletes the changesets, then `build/sync-version-refs.js`.
 - `.github/workflows/release.yml` runs on a push to `main`. When `v<version>` has no tag,
-  it reads the results of Lint, Assets, Site and Audit on the commit, builds every job,
-  verifies the output, and creates the tag and the GitHub release with one
-  `chassis-assets-<platform>-<app>-<brand>-<version>.zip` per job. It installs nothing.
+  it reads the results of Lint, Assets, Site and Audit on the commit, builds every job
+  with `--optimize`, verifies the output, and creates the tag and the GitHub release with one
+  `chassis-assets-<platform>-<app>-<brand>-<version>.zip` per job. It installs the packages
+  of the build only, for `sharp` and `svgo`.
 - Nothing is published to npm (roadmap D2). `@chassis-ui/assets` is private.
 
 The tags before this pipeline were made by `tag-release.yml`, which tagged `app/docs` when
@@ -452,3 +511,6 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 - 2026-10-01: `--asset-catalog`, with a check that compiles the catalogs on a macOS runner
   (roadmap 6.3).
 - 2026-10-01: `--res`, the Android `res/` layout (roadmap 6.4).
+- 2026-10-01: `--optimize`, `--webp` and `--avif`, with the settings in `chassis.optimize`
+  (roadmap 6.5). `isEntry()` compares real paths: a build started through a linked folder
+  did nothing and exited with 0.

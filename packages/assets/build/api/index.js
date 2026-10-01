@@ -254,6 +254,9 @@ export class ChassisAssets {
    * @param {boolean} [options.vectorDrawables] - Write the SVG icons of Android as vector drawables
    * @param {boolean} [options.assetCatalog] - Write the images of iOS as an asset catalog
    * @param {boolean} [options.res] - Write the fonts, images and icons of Android as a res/ folder
+   * @param {boolean} [options.optimize] - Write the images again where that makes them smaller
+   * @param {boolean} [options.webp] - Write the PNG and JPEG images as WebP too
+   * @param {boolean} [options.avif] - Write the PNG and JPEG images of the web as AVIF too
    * @returns {Promise<import('../types.js').BuildStats>} The statistics of the run
    */
   async build(options = {}) {
@@ -265,7 +268,10 @@ export class ChassisAssets {
       quiet = false,
       vectorDrawables = false,
       assetCatalog = false,
-      res = false
+      res = false,
+      optimize = false,
+      webp = false,
+      avif = false
     } = options
     return generateAssets({
       brands,
@@ -276,6 +282,9 @@ export class ChassisAssets {
       vectorDrawables,
       assetCatalog,
       res,
+      optimize,
+      webp,
+      avif,
       cwd: this.cwd,
       out: this.out
     })

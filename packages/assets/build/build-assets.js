@@ -14,6 +14,7 @@
 import fs from 'fs'
 import path from 'path'
 import { writeCatalog } from './asset-catalog.js'
+import { IMAGE_FORMATS, loadEncoders, optimizeJob, resolveSettings } from './optimize.js'
 import { platformProcessors } from './processors/index.js'
 import { writeRes } from './res-layout.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
@@ -44,6 +45,13 @@ Options:
                          place of .svg. Needs \`pnpm install\`
   --asset-catalog        Write the images of iOS as an asset catalog, Assets.xcassets
                          in place of images/
+  --optimize             Write the images again under their names where that makes them
+                         smaller, with the settings of \`chassis.optimize\`. Needs
+                         \`pnpm install\`
+  --webp                 Write the PNG and JPEG images as WebP too: beside the file on
+                         the web, in place of it on Android. Needs \`pnpm install\`
+  --avif                 Write the PNG and JPEG images of the web as AVIF too. Needs
+                         \`pnpm install\`
   --res                  Write the fonts, images and icons of Android as a res/ folder,
                          res/font/ and res/drawable*/
   --quiet                Print errors only
@@ -62,7 +70,9 @@ let run = {
   allowLfsPointers: false,
   vectorDrawables: false,
   assetCatalog: false,
-  res: false
+  res: false,
+  optimize: false,
+  formats: /** @type {string[]} */ ([])
 }
 
 /** Statistics of the run. @type {BuildStats} */
@@ -91,6 +101,9 @@ function emptyStats() {
     filesConverted: 0,
     imageSets: 0,
     resourceFiles: 0,
+    filesOptimized: 0,
+    bytesSaved: 0,
+    filesGenerated: 0,
     errors: [],
     warnings: [],
     lfsPointers: [],
@@ -153,6 +166,7 @@ export function loadConfig(cwd = findRoot()) {
     brands: chassis.build?.brands || [],
     apps: chassis.build?.apps || {},
     brandFolder: chassis.defaults?.brandFolder || 'default',
+    optimize: chassis.optimize,
     contracts: checks.contracts,
     lintAllow: checks.lintAllow,
     name: packageJson.name,
@@ -181,6 +195,9 @@ export function parseArgs(argv = process.argv.slice(2)) {
     vectorDrawables: false,
     assetCatalog: false,
     res: false,
+    optimize: false,
+    webp: false,
+    avif: false,
     help: false,
     version: false
   }
@@ -221,6 +238,12 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.assetCatalog = true
     } else if (arg === '--res') {
       options.res = true
+    } else if (arg === '--optimize') {
+      options.optimize = true
+    } else if (arg === '--webp') {
+      options.webp = true
+    } else if (arg === '--avif') {
+      options.avif = true
     } else if (arg === '--quiet') {
       options.quiet = true
     } else if (arg === '--help' || arg === '-h') {
@@ -789,6 +812,42 @@ async function convertVectorDrawables(processor, destPath, convert) {
 }
 
 /**
+ * Optimize the images of the output of one job, and write them in the formats of `--webp`
+ * and `--avif` that the processor takes.
+ * @param {Processor} processor - The platform processor
+ * @param {string} destPath - The output folder of the job
+ * @param {{ settings: import('./types.js').OptimizeSettings, encoders: import('./optimize.js').Encoders }} tools
+ */
+async function optimizeImages(processor, destPath, tools) {
+  const formats = Object.fromEntries(
+    run.formats
+      .filter((format) => processor.imageFormats?.[format])
+      .map((format) => [
+        format,
+        /** @type {'beside'|'replace'} */ (processor.imageFormats?.[format])
+      ])
+  )
+  if (!run.optimize && Object.keys(formats).length === 0) return
+
+  const { optimized, saved, generated, failed } = await optimizeJob(destPath, {
+    ...tools,
+    optimize: run.optimize,
+    formats,
+    fromSource: (file) =>
+      collisionTracker.seen(path.dirname(file), path.basename(file)) !== undefined
+  })
+  stats.filesOptimized += optimized
+  stats.bytesSaved += saved
+  stats.filesGenerated += generated
+  if (optimized > 0) logger.log(`🗜️  Optimized ${optimized} files`)
+  if (generated > 0)
+    logger.log(`🖼️  Wrote ${generated} files in ${Object.keys(formats).join(', ')}`)
+  failed.forEach(({ file, message }) =>
+    stats.errors.push(`Failed to read the image ${path.relative(run.cwd, file)}: ${message}`)
+  )
+}
+
+/**
  * Move the images a processor names in `assetCatalog` into an asset catalog, in the output
  * of one job. A file without a place in an image set stays in its folder, with a warning
  * for the job.
@@ -861,7 +920,9 @@ export async function generateAssets(options = {}) {
     allowLfsPointers: options.allowLfsPointers || process.env.CHASSIS_ALLOW_LFS_POINTERS === '1',
     vectorDrawables: options.vectorDrawables || false,
     assetCatalog: options.assetCatalog || false,
-    res: options.res || false
+    res: options.res || false,
+    optimize: options.optimize || false,
+    formats: Object.keys(IMAGE_FORMATS).filter((format) => options[format])
   }
   config = loadConfig(cwd)
 
@@ -892,6 +953,26 @@ export async function generateAssets(options = {}) {
       )
     } else if (!run.dryRun) {
       convert = await loadConverter()
+    }
+  }
+
+  // The settings are checked and the packages are loaded before anything is removed
+  let imageTools = null
+  if (run.optimize || run.formats.length > 0) {
+    const settings = resolveSettings(config.optimize)
+    for (const format of run.formats) {
+      if (!jobs.some((job) => platformProcessors[job.platform].imageFormats?.[format])) {
+        stats.warnings.push(
+          `--${format} changes nothing: no selected job has a platform that takes the format`
+        )
+      }
+    }
+    if (!run.dryRun) {
+      const encoders = await loadEncoders(settings, {
+        optimize: run.optimize,
+        formats: run.formats
+      })
+      imageTools = { settings, encoders }
     }
   }
 
@@ -940,6 +1021,7 @@ export async function generateAssets(options = {}) {
     const processor = platformProcessors[platform]
     const before = stats.filesProcessed
     processAssets(processor, [defaultAppPath, brandAppPath], destPath, defaultAppPath)
+    if (imageTools) await optimizeImages(processor, destPath, imageTools)
     if (convert) await convertVectorDrawables(processor, destPath, convert)
     if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor, destPath)
     if (run.res && !run.dryRun) writeResLayout(processor, destPath)
@@ -968,6 +1050,14 @@ export async function generateAssets(options = {}) {
     }
     if (run.res) {
       logger.log(`🗂️  ${stats.resourceFiles} files moved to res/ folders`)
+    }
+    if (run.optimize) {
+      logger.log(
+        `🗜️  ${stats.filesOptimized} files optimized, ${Math.round(stats.bytesSaved / 1024)} KB saved`
+      )
+    }
+    if (run.formats.length > 0) {
+      logger.log(`🖼️  ${stats.filesGenerated} files written in ${run.formats.join(', ')}`)
     }
   }
 

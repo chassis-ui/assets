@@ -6,6 +6,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
 import { afterAll, describe, expect, test } from 'vitest'
 import { buildVersion, findRoot, isEntry, resolveRoot } from '../build/root.js'
 import { FIXTURE, ROOT, read, removeTempDirs, tempDir } from './helpers.js'
@@ -74,5 +75,15 @@ describe('buildVersion()', () => {
 describe('isEntry()', () => {
   test('a module that is imported is not the entry', () => {
     expect(isEntry(new URL('../build/root.js', import.meta.url).href)).toBe(false)
+  })
+
+  test('a module started through a link to its folder is the entry', () => {
+    const link = path.join(tempDir(), 'build')
+    fs.symlinkSync(path.join(ROOT, 'build'), link)
+    const result = spawnSync(process.execPath, [path.join(link, 'build-assets.js'), '--version'], {
+      encoding: 'utf-8'
+    })
+    expect(result.status).toBe(0)
+    expect(result.stdout).toMatch(/^\d+\.\d+\.\d+/)
   })
 })

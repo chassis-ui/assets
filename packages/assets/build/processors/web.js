@@ -23,6 +23,12 @@ const webProcessor = {
   excludedFormats: [],
 
   /**
+   * What `--webp` and `--avif` write: the file beside the image, for a `<picture>` element
+   * to choose from
+   */
+  imageFormats: { webp: 'beside', avif: 'beside' },
+
+  /**
    * Transform filename to kebab-case (lowercase with hyphens)
    * @param {string} fileName - Original filename
    * @returns {string} Transformed filename in kebab-case
