@@ -359,6 +359,8 @@ rsync -a --delete "assets/dist/ios/$APP/$BRAND/" Resources/Chassis/
 
 The fonts and a folder reference follow the copy as they are. An image set does not: it holds the files of the brand it was filled from. Keep one asset catalog per brand, with the same image set names, and add each to the target of its brand.
 
+While you work on the assets and the app together, let the build follow the source: `pnpm assets --watch --platform ios --app demo` builds the iOS jobs of the app again on every change under `source/`, and the copy is then the `rsync` line of the script alone.
+
 ### Build phase
 
 A **Run Script** build phase can run the copy on each build of a target. Put it before **Copy Bundle Resources**, and pass it the brand from a build setting of the target, here the user-defined setting `CHASSIS_BRAND`:

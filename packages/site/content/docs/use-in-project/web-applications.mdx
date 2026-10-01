@@ -65,6 +65,8 @@ pnpm assets:site
 pnpm assets --brand example --app docs --platform web
 ```
 
+While you change the assets, `pnpm assets --watch --brand chassis --app docs` keeps running and builds the job again on every change under `source/`.
+
 A project that reads a few files of the output does not have to fetch and build all of it. The `--include` option builds the files that match a pattern, and `pnpm assets:lfs` prints the Git LFS paths of the same patterns, so `git lfs pull` fetches those files only:
 
 ```bash

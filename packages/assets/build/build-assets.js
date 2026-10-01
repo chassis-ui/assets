@@ -43,6 +43,8 @@ Options:
   --out <dir>            Output folder, default dist
   --cwd <dir>            Repository root, default the nearest folder upward whose
                          package.json has a \`chassis\` block
+  --watch                Build, then build the jobs of a brand and an app again when a
+                         file of theirs under source/ changes
   --dry-run              Print the jobs and their file counts, write nothing
   --allow-lfs-pointers   Copy Git LFS pointer files instead of failing
                          (also CHASSIS_ALLOW_LFS_POINTERS=1 in the environment)
@@ -184,7 +186,7 @@ export function loadConfig(cwd = findRoot()) {
  * Parse command line arguments.
  * `--brand`, `--app` and `--platform` each take one or more values.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
- * @returns {BuildOptions & { help: boolean, version: boolean }}
+ * @returns {BuildOptions & { watch: boolean, help: boolean, version: boolean }}
  * @throws {Error} On an unknown option
  */
 export function parseArgs(argv = process.argv.slice(2)) {
@@ -199,6 +201,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     cwd: undefined,
     out: undefined,
     dryRun: false,
+    watch: false,
     allowLfsPointers: false,
     vectorDrawables: false,
     assetCatalog: false,
@@ -244,6 +247,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.clean = false
     } else if (arg === '--dry-run') {
       options.dryRun = true
+    } else if (arg === '--watch') {
+      options.watch = true
     } else if (arg === '--allow-lfs-pointers') {
       options.allowLfsPointers = true
     } else if (arg === '--vector-drawables') {
@@ -1186,7 +1191,11 @@ export function cli(argv = process.argv.slice(2)) {
     console.log(buildVersion())
     process.exit(0)
   }
-  generateAssets(options).catch((error) => {
+  // The watch is loaded when it is asked for: it imports this module
+  const started = options.watch
+    ? import('./watch.js').then(({ watchCli }) => watchCli(options))
+    : generateAssets(options)
+  started.catch((error) => {
     console.error(`💥 Build failed: ${error.message}`)
     if (process.env.DEBUG) console.error(error.stack)
     process.exit(1)

@@ -64,6 +64,7 @@ describe('pnpm assets', () => {
       '--no-clean',
       '--out',
       '--cwd',
+      '--watch',
       '--dry-run',
       '--allow-lfs-pointers',
       '--vector-drawables',

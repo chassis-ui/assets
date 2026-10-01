@@ -462,7 +462,7 @@ listOf("chassis", "example").forEach { brand ->
 }
 ```
 
-The task copies; it does not build the assets. Run `pnpm assets --platform android` in `chassis-assets/` after a change to `source/` or after moving the submodule.
+The task copies; it does not build the assets. Run `pnpm assets --platform android` in `chassis-assets/` after a change to `source/` or after moving the submodule, or leave `pnpm assets --watch --platform android` running there, which builds the Android jobs again on every change under `source/`.
 
 An app that holds every brand in one APK and switches at run time cannot use the names as they are, since the brands share them: it needs a script that adds the brand to each name while copying.
 

@@ -119,6 +119,7 @@ jobs with their file counts.
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
 | `packages/assets/build/filters.js`            | The file filters, `--type` and `--include`: `compileInclude()`, `createFileFilter()` and `coverPaths()`, all pure.                                                                                                                                                                                                                                                                                            |
 | `packages/assets/build/lfs-include.js`        | `lfsInclude(options)`: the paths of `source/` that a build with the same filters reads, by `listSourceFiles()` of the build, as the shortest list `git lfs pull --include` takes. `pnpm assets:lfs`.                                                                                                                                                                                                          |
+| `packages/assets/build/watch.js`              | The watch of `--watch`: `affectedJobs()` and `isRelevant()` (pure), `watchAssets(options, events)`, which builds, watches `source/` and builds the jobs of a change again, and `watchCli()`. Loaded by the command line when the option is given. Node.js modules only.                                                                                                                                       |
 | `packages/assets/build/contract.js`           | The check of the consumer contracts, which are data of the repository: `contracts` of `chassis.checks.json`. `expand()`, `missingFromSet()` and `missingFromContract()` (pure), and `checkContracts({ cwd, out })` over the output of each job that has a contract. It names no job and no file itself. The CLI entry is `pnpm assets:contract`.                                                              |
 | `packages/assets/build/verify.js`             | `verify({ cwd, out })`: the validator, then the contract check. `pnpm assets:verify`.                                                                                                                                                                                                                                                                                                                         |
 | `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. A name of `lint.allow` of `chassis.checks.json` is a warning. `pnpm assets:lint:source`.                                                                                                                           |
@@ -183,6 +184,7 @@ on the fixture, which has its own configuration.
 | `--no-clean`                             | Keep `dist/` even without filters.                                                                                                                                                                                              |
 | `--out <dir>`                            | Write to another folder than `dist/`. The analyzer and the validator take it too.                                                                                                                                               |
 | `--cwd <dir>`                            | The repository root, where `package.json` and `source/` are. Default: the nearest folder upward whose `package.json` has a `chassis` block.                                                                                     |
+| `--watch`                                | Build, then build the jobs of a brand and an app again when a file of theirs under `source/` changes. Runs until it is stopped.                                                                                                 |
 | `--dry-run`                              | Print the jobs and their file counts, write nothing.                                                                                                                                                                            |
 | `--allow-lfs-pointers`                   | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                    |
 | `--vector-drawables`                     | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                            |
@@ -265,6 +267,29 @@ default, and the default output is the same file for file with and without the c
   passes on either output. The release archives are built without the option.
 - Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
   has read the drawables.
+
+### Watch
+
+`pnpm assets --watch` builds, then builds again on a change under `source/` (roadmap 6.7).
+
+- One watcher of Node.js on `source/`, recursive, which Linux has since Node.js 20. No
+  package.
+- A changed path names its jobs, `affectedJobs()`: `<brand>/<app>/…` is the jobs of that
+  brand and app, and a path of the default brand is the app for every brand. Only the jobs
+  the filters of the run select are watched.
+- A job is built whole, by `generateAssets()` with the brands and the app of the change and
+  `clean`, and not file by file. The output of a job is then what a build of it writes: a
+  removed file is gone, a brand file that is removed gives way to the default file, and
+  every option, a conversion or a layout, applies as in a build. The four demo jobs of
+  this repository, 2,524 files, take 0.6 seconds.
+- The changes are collected until none came for 150 milliseconds, since a design tool
+  exports many files at once, and the builds run one after the other.
+- A change of a file of the ignore list, or of a file the file filters leave out, builds
+  nothing. Neither does a file that changed before the watch began: macOS reports what
+  happened shortly before, such as the checkout that made the files.
+- A first build that fails ends the command, as without the option. A later one is
+  reported and the watch goes on: the fix is the next change.
+- The configuration is read at the start. `--watch` does not go with `--dry-run`.
 
 ### File filters
 
@@ -553,6 +578,7 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
   (roadmap 6.3).
 - 2026-10-01: `--res`, the Android `res/` layout (roadmap 6.4).
 - 2026-10-01: `--type` and `--include`, and `pnpm assets:lfs` (roadmap 6.6).
+- 2026-10-01: `--watch` (roadmap 6.7), the last option of Phase 6.
 - 2026-10-01: `--optimize`, `--webp` and `--avif`, with the settings in `chassis.optimize`
   (roadmap 6.5). `isEntry()` compares real paths: a build started through a linked folder
   did nothing and exited with 0.

@@ -237,6 +237,7 @@ describe('parseArgs()', () => {
     cwd: undefined,
     out: undefined,
     dryRun: false,
+    watch: false,
     allowLfsPointers: false,
     vectorDrawables: false,
     assetCatalog: false,
@@ -263,6 +264,7 @@ describe('parseArgs()', () => {
     [['--vector-drawables'], { vectorDrawables: true }],
     [['--asset-catalog'], { assetCatalog: true }],
     [['--res'], { res: true }],
+    [['--watch'], { watch: true }],
     [
       ['--type', 'images', 'icons', '--include', 'images/home/**'],
       { types: ['images', 'icons'], include: ['images/home/**'] }

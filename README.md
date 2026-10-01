@@ -133,6 +133,7 @@ pnpm assets:site                              # The output the Chassis sites rea
 | `--no-clean`             | Keep the output even for a full build                                                                                                 |
 | `--out <dir>`            | Output folder, default `dist`                                                                                                         |
 | `--cwd <dir>`            | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block                                         |
+| `--watch`                | Build, then build the jobs of a brand and an app again when a file of theirs under `source/` changes                                  |
 | `--dry-run`              | Print the jobs and their file counts, write nothing                                                                                   |
 | `--allow-lfs-pointers`   | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                                                    |
 | `--vector-drawables`     | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install`                                   |

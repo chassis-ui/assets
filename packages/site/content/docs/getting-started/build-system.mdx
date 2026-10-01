@@ -51,6 +51,7 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 | `--no-clean` | Keep the output even for a full build |
 | `--out <dir>` | Output folder, `dist` by default |
 | `--cwd <dir>` | Repository root, by default the nearest folder upward whose `package.json` has a `chassis` block |
+| `--watch` | Build, then build the jobs of a brand and an app again when a file of theirs under `source/` changes |
 | `--dry-run` | Print the jobs and their file counts, write nothing |
 | `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same |
 | `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
@@ -121,6 +122,20 @@ pnpm assets --clean --brand chassis --app docs # removes the folders of the sele
 ```
 
 With filters, `--clean` removes the folders of the selected jobs only. The output of the other jobs stays.
+
+### Watch
+
+The `--watch` option builds once, then keeps running and builds again when a file under `source/` changes. Use it while you export from a design tool, with the filters of the jobs you look at:
+
+```bash
+pnpm assets --watch --platform ios --app demo
+```
+
+A change builds the jobs it belongs to, and no other. A file of a brand builds the jobs of that brand and its app. A file of the default brand builds the jobs of its app for every brand, since every brand gets it. Changes that come together, as an export of many files does, are one build.
+
+A job is built whole, into a folder that is removed first, so a file you delete from `source/` is gone from the output and the output of a job is always what a build of it writes. Every other option of the build applies to each of these builds. A build that fails prints its error, and the watch goes on. Hidden files and the other files the build ignores start no build. Stop the watch with <kbd>Ctrl</kbd> + <kbd>C</kbd>.
+
+The watch reads `package.json` when it starts: after a change to the `chassis` block, start it again.
 
 ### Vector drawables
 
