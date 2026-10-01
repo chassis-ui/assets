@@ -63,10 +63,14 @@ For each job, in order:
 3. **Place images** for Android. `androidProcessor.processImage()` puts a file with a
    resolution indicator (`@2x`) into a density folder and a file without one into `drawable/`,
    in both cases under the folder the file came from.
+   While copying, the build works out where each file ends up, `outputLocation()`: the
+   folder, with the density folder that `imageFolder()` of the processor names, and the name
+   after `renameFile()`. Two source files with different names that end up at one place are
+   a **collision**: the build warns and the file copied last wins
+   (`createCollisionTracker()`). A brand file over the default file of the same name is not
+   one, and the output file is counted once.
 4. **Rename** every file in the output folder with the processor's `renameFile()`
    (`renameFilesRecursively()`). The copy keeps the source name; the rename pass runs after.
-   A rename that lands on an existing name is a **collision**: the build warns and the file
-   renamed last wins (`trackRename()`).
 5. **Remove empty folders** left by the filters (`cleanupEmptyDirectories()`).
 
 Before the jobs, `validateConfiguration()` checks that brands and apps are configured, that
@@ -108,7 +112,8 @@ jobs with their file counts.
 
 The processors are the only platform knowledge. Everything else is the same for every
 platform. A new platform is a new file in `packages/assets/build/processors/` and a key in the registry, as
-the build-system page describes; it may add `processImage()` as Android does.
+the build-system page describes; it may add `processImage()` as Android does, with
+`imageFolder()` to say where an image goes.
 
 ## Configuration
 
@@ -272,7 +277,10 @@ changeset that says what breaks.
   so `chassis-figma` keeps reading them. They are not `@2x` files to the build.
 - `icons/icons/chassis-icons.json` of the icon package is copied to the web output with the
   rest of the package.
-- A collision after renaming warns and the file renamed last wins.
+- A collision of two source files on one output name warns and the file copied last wins.
+- On Android, a file with an indicator outside `images/` loses the indicator and gets no
+  density folder: `data/poster@2x.png` is `data/poster.png`. Beside a `poster.png` that is a
+  collision, and the build warns.
 - Eight screenshots under `images/figma/components/` are Figma export copies of another
   screenshot, `card-orientation-top-1.png` and `card-orientation-top-2x-1.png` beside
   `card-orientation-top.png`, in both modes and

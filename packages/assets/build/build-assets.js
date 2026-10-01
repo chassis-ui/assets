@@ -469,10 +469,13 @@ function removeDirectory(dirPath) {
 // Platform Processors
 
 /**
- * A tracker of the names the rename pass writes. Two files renamed to the same name in the
- * same folder are a collision: the file renamed last wins, and the build warns.
- * @returns {{ track: (destPath: string, oldName: string, newName: string) => string | null, clear: () => void }}
- *   `track()` returns the warning of a collision, or null
+ * A tracker of the names a build writes. Two source files with different names that get the
+ * same name in the same output folder are a collision: the file copied last wins, and the
+ * build warns. The same source name again is a brand file over the default file, not a
+ * collision.
+ * @returns {{ track: (destPath: string, oldName: string, newName: string) => string | null, seen: (destPath: string, newName: string) => string | undefined, clear: () => void }}
+ *   `track()` returns the warning of a collision, or null; `seen()` returns the source name
+ *   that an output name was written from, or undefined
  */
 export function createCollisionTracker() {
   const seen = new Map()
@@ -480,10 +483,14 @@ export function createCollisionTracker() {
     track(destPath, oldName, newName) {
       const key = path.join(destPath, newName)
       if (seen.has(key)) {
+        if (seen.get(key) === oldName) return null
         return `Filename collision: "${oldName}" → "${newName}" (conflicts with "${seen.get(key)}")`
       }
       seen.set(key, oldName)
       return null
+    },
+    seen(destPath, newName) {
+      return seen.get(path.join(destPath, newName))
     },
     clear() {
       seen.clear()
@@ -492,21 +499,32 @@ export function createCollisionTracker() {
 }
 
 /**
- * Collision detection tracker for renamed files
+ * The names every job of the run has written so far
  */
 const collisionTracker = createCollisionTracker()
 
 /**
- * Track and detect file rename collisions
- * @param {string} destPath - Destination file path
- * @param {string} oldName - Original filename
- * @param {string} newName - New filename after renaming
- * @returns {boolean} True if collision detected
+ * Where a source file ends up in the output: the folder, with the density folder of a
+ * platform that sorts its images, and the name the platform gives it.
+ * @param {Processor} processor - The platform processor
+ * @param {string|null} rootDir - The type folder the file is under (fonts, images, icons)
+ * @param {string} destPath - The output folder that mirrors the source folder of the file
+ * @param {string} fileName - The name of the source file
+ * @returns {{ folder: string, name: string }}
  */
-function trackRename(destPath, oldName, newName) {
-  const warning = collisionTracker.track(destPath, oldName, newName)
-  if (warning) stats.warnings.push(warning)
-  return warning !== null
+function outputLocation(processor, rootDir, destPath, fileName) {
+  const sortsImages =
+    rootDir === 'images' &&
+    typeof processor.processImage === 'function' &&
+    typeof processor.imageFolder === 'function'
+  const folder = sortsImages ? path.join(destPath, processor.imageFolder(fileName)) : destPath
+  const name = processor.renameFile
+    ? processor.renameFile(fileName, {
+        currentDir: path.basename(folder),
+        parentDir: path.basename(path.dirname(folder))
+      })
+    : fileName
+  return { folder, name }
 }
 
 /**
@@ -539,9 +557,6 @@ function renameFilesRecursively(processor, folderPath, parentDir = '') {
 
       if (newName !== item) {
         const newPath = path.join(folderPath, newName)
-
-        // Check for collision (warn but don't block)
-        trackRename(folderPath, item, newName)
 
         // The file may already have been renamed by an earlier operation
         if (!fs.existsSync(itemPath)) {
@@ -619,41 +634,65 @@ function copyFilesWithProcessor(processor, srcPath, destPath, dirName, rootDir =
       return
     }
 
-    if (run.dryRun) {
-      stats.filesProcessed++
+    // An output name that is taken already: by the default file this brand file replaces,
+    // or by another source file, which is a collision. Warn about the collision, and count
+    // the output file once either way.
+    const { folder, name } = outputLocation(processor, currentRoot, destPath, item)
+    const taken = collisionTracker.seen(folder, name) !== undefined
+    const warning = collisionTracker.track(folder, item, name)
+    if (warning) stats.warnings.push(warning)
+    const counted = stats.filesProcessed
+
+    copyFile(processor, currentRoot, itemSrcPath, destPath, item)
+    if (taken) stats.filesProcessed = counted
+  })
+}
+
+/**
+ * Copy one file to the output, or count it in a dry run
+ * @param {Processor} processor - The platform processor
+ * @param {string|null} currentRoot - The type folder the file is under
+ * @param {string} itemSrcPath - The source file
+ * @param {string} destPath - The output folder that mirrors the source folder of the file
+ * @param {string} item - The name of the source file
+ */
+function copyFile(processor, currentRoot, itemSrcPath, destPath, item) {
+  const itemDestPath = path.join(destPath, item)
+
+  if (run.dryRun) {
+    stats.filesProcessed++
+    return
+  }
+
+  // Use processor-specific image handling if available
+  if (
+    currentRoot === 'images' &&
+    processor.processImage &&
+    typeof processor.processImage === 'function'
+  ) {
+    const processed = processor.processImage({
+      srcPath: itemSrcPath,
+      destPath: destPath,
+      fileName: item,
+      fs: fs,
+      path: path,
+      stats: stats,
+      logger: logger
+    })
+    if (processed) {
       return
     }
+  }
 
-    // Use processor-specific image handling if available
-    if (
-      currentRoot === 'images' &&
-      processor.processImage &&
-      typeof processor.processImage === 'function'
-    ) {
-      const processed = processor.processImage({
-        srcPath: itemSrcPath,
-        destPath: destPath,
-        fileName: item,
-        fs: fs,
-        path: path,
-        stats: stats,
-        logger: logger
-      })
-      if (processed) {
-        return
-      }
-    }
-
-    try {
-      fs.copyFileSync(itemSrcPath, itemDestPath)
-      logger.log(`📄 Copied: ${path.relative(run.cwd, itemSrcPath)}`)
-      stats.filesProcessed++
-    } catch (error) {
-      const errorMsg = `Failed to copy ${itemSrcPath}: ${error.message}`
-      logger.error(`❌ ${errorMsg}`)
-      stats.errors.push(errorMsg)
-    }
-  })
+  try {
+    fs.copyFileSync(itemSrcPath, itemDestPath)
+    logger.log(`📄 Copied: ${path.relative(run.cwd, itemSrcPath)}`)
+    stats.filesProcessed++
+  } catch (error) {
+    const errorMsg = `Failed to copy ${itemSrcPath}: ${error.message}`
+    logger.error(`❌ ${errorMsg}`)
+    stats.errors.push(errorMsg)
+  }
 }
 
 /**

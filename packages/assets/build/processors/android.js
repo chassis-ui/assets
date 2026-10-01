@@ -48,6 +48,20 @@ const androidProcessor = {
   },
 
   /**
+   * The folder `processImage()` writes an image to, under the folder of the image: the
+   * density folder of its resolution indicator, or `drawable` without one
+   * @param {string} fileName - The name of the source file
+   * @returns {string} The folder name
+   * @example
+   * imageFolder('hero@2x.png') // Returns: 'drawable-xhdpi'
+   * imageFolder('hero.png') // Returns: 'drawable'
+   */
+  imageFolder(fileName) {
+    const { resolution } = extractResolutionIndicator(fileName)
+    return resolution ? this.getDensityFolder(resolution) : 'drawable'
+  },
+
+  /**
    * Transform filename to snake_case with ic_ prefix for icons
    * Note: Resolution indicators are NOT included in Android filenames
    * as they are handled by the density folder structure

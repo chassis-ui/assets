@@ -63,7 +63,8 @@ class DistValidator {
     }
 
     // Check if dist has content
-    const distContents = fs.readdirSync(this.distDir)
+    // Hidden files, such as the .DS_Store of macOS, are not platforms
+    const distContents = fs.readdirSync(this.distDir).filter((name) => !name.startsWith('.'))
     const hasContent = distContents.length > 0
 
     this.addTestResult(

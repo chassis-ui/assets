@@ -138,6 +138,14 @@ describe('Android density folders', () => {
   ])('%s → %s', (resolution, folder) => {
     expect(androidProcessor.getDensityFolder(resolution)).toBe(folder)
   })
+
+  test.each([
+    ['hero.png', 'drawable'],
+    ['hero@2x.png', 'drawable-xhdpi'],
+    ['Hero Banner@3x.png', 'drawable-xxhdpi']
+  ])('imageFolder(%s) → %s', (fileName, folder) => {
+    expect(androidProcessor.imageFolder(fileName)).toBe(folder)
+  })
 })
 
 describe('keepsFile(): the formats each platform keeps per type', () => {

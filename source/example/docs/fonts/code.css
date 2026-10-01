@@ -1,0 +1,18 @@
+/* Roboto Mono, the "code" family of the example brand. */
+/* Weights by role: normal 400, strong 700. */
+
+@font-face {
+  font-family: "Roboto Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("code-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("code-strong.woff2") format("woff2");
+}

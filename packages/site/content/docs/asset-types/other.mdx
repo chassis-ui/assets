@@ -50,7 +50,7 @@ git lfs track "*.mp4"
 Name a file in lowercase with hyphens, after what it holds: `onboarding-intro.mp4`, `country-list.json`. The build renames it for each platform, kebab-case for the web and snake_case for iOS and Android, as it does for every type.
 
 <Callout type="warning">
-Keep resolution variants under `images/`. In any other folder the Android output loses the indicator and gets no density folder, so `poster.png` and `poster@2x.png` end up with the same name.
+Keep resolution variants under `images/`. In any other folder the Android output loses the indicator and gets no density folder, so `poster.png` and `poster@2x.png` end up with the same name. The build warns about the collision, and the file copied last wins.
 </Callout>
 
 ## Adding files

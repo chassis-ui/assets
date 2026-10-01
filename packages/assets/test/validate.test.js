@@ -119,6 +119,14 @@ describe('DistValidator', () => {
     expect(ok).toBe(true)
   })
 
+  test('leaves hidden files out of the count of platform folders (F33)', async () => {
+    const out = goldenCopy()
+    fs.writeFileSync(path.join(out, '.DS_Store'), '')
+    const validator = new DistValidator({ cwd: FIXTURE, out })
+    expect(await validator.runValidation()).toBe(true)
+    expect(validator.validationResults[0].message).toBe('dist/ exists with 3 platform directories')
+  })
+
   test('fails when the output does not exist', async () => {
     const { ok, failed } = await validate(path.join(tempDir(), 'missing'))
     expect(ok).toBe(false)

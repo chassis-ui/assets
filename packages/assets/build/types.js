@@ -88,6 +88,8 @@
  * @property {(resolution: string) => string} [getDensityFolder]
  * @property {(context: ImageContext) => boolean} [processImage] - Places an image itself;
  *   true when it did
+ * @property {(fileName: string) => string} [imageFolder] - The folder `processImage()` writes
+ *   an image to, under the folder of the image. The build reads it to find collisions
  */
 
 /**

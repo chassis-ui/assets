@@ -168,7 +168,7 @@ The pages of the [fonts]([[docsref:/asset-types/fonts#platform-output]]), the [i
 
 A name is lowercased, and every space, underscore, dot inside the name or other character becomes the separator of the platform: a hyphen for the web, an underscore for iOS and Android. `Hero Banner@2x.png` is `hero-banner@2x.png` for the web and `hero_banner@2x.png` for iOS.
 
-When two files of a folder get the same name on a platform, the file copied last wins. The build warns about a collision of two renamed files, with `Filename collision: "<old name>" → "<new name>"`. Names that keep the rules of the [design guidelines]([[docsref:/getting-started/design-guidelines]]) do not collide.
+When two files of a folder get the same name on a platform, the file copied last wins, and the build warns with `Filename collision: "<name>" → "<new name>" (conflicts with "<other name>")`. A brand file over the default file of the same name is the override, not a collision. Names that keep the rules of the [design guidelines]([[docsref:/getting-started/design-guidelines]]) do not collide.
 
 ### Ignored files
 
@@ -320,7 +320,7 @@ export const platformProcessors = {
 
 Name the platform in an app of the `chassis` block, and build it with `pnpm assets --platform desktop`.
 
-A processor may also place an image itself with `processImage()`, as the Android processor does for the density folders. It returns `true` when it wrote the file, and `false` to let the build copy it.
+A processor may also place an image itself with `processImage()`, as the Android processor does for the density folders. It returns `true` when it wrote the file, and `false` to let the build copy it. Such a processor also has `imageFolder(fileName)`, which returns the folder the image goes to, so that the build can warn about two images that meet there.
 
 ## Library
 

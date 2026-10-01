@@ -181,6 +181,19 @@ describe('createCollisionTracker()', () => {
     tracker.clear()
     expect(tracker.track('/out', 'X.png', 'x.png')).toBeNull()
   })
+
+  test('the same source name again is an override, not a collision', () => {
+    const tracker = createCollisionTracker()
+    expect(tracker.track('/out', 'mark.svg', 'mark.svg')).toBeNull()
+    expect(tracker.track('/out', 'mark.svg', 'mark.svg')).toBeNull()
+  })
+
+  test('seen() returns the source name an output name was written from', () => {
+    const tracker = createCollisionTracker()
+    expect(tracker.seen('/out', 'x.png')).toBeUndefined()
+    tracker.track('/out', 'X.png', 'x.png')
+    expect(tracker.seen('/out', 'x.png')).toBe('X.png')
+  })
 })
 
 describe('loadConfig()', () => {
@@ -300,7 +313,7 @@ describe('generateAssets()', () => {
     expect(stats.errors).toEqual([])
     expect(stats.warnings).toEqual([])
     expect(stats.jobs.map((job) => `${job.platform}/${job.app}/${job.brand}`)).toHaveLength(6)
-    expect(stats.filesProcessed).toBe(listFiles(GOLDEN).length + 3)
+    expect(stats.filesProcessed).toBe(listFiles(GOLDEN).length)
   })
 
   test('a brand file overrides the default file of the same path', async () => {
@@ -366,6 +379,44 @@ describe('generateAssets()', () => {
     expect(stats.warnings[0]).toMatch(/^Filename collision: "my[ _]icon\.png" → "my-icon\.png"/)
     expect(listFiles(path.join(out, 'web/site/beta/images'))).toContain('my-icon.png')
   })
+
+  test('warns when a renamed file takes the name of a file that keeps its name (F31)', async () => {
+    const root = copyFixture()
+    fs.writeFileSync(path.join(root, 'source/default/site/images/my-icon.png'), 'one')
+    fs.writeFileSync(path.join(root, 'source/default/site/images/My Icon.png'), 'two')
+    const { out, stats } = await build({ cwd: root, apps: ['site'], brands: ['beta'] })
+    expect(stats.warnings).toHaveLength(1)
+    expect(stats.warnings[0]).toMatch(/^Filename collision: ".+" → "my-icon\.png" \(conflicts with/)
+    const images = listFiles(path.join(out, 'web/site/beta/images'))
+    expect(images.filter((file) => file === 'my-icon.png')).toHaveLength(1)
+  })
+
+  test('warns when Android drops the indicator of two variants outside images/ (F31)', async () => {
+    const root = copyFixture()
+    fs.writeFileSync(path.join(root, 'source/default/mobile/data/poster.png'), 'one')
+    fs.writeFileSync(path.join(root, 'source/default/mobile/data/poster@2x.png'), 'two')
+    const { out, stats } = await build({ cwd: root, apps: ['mobile'], brands: ['beta'] })
+    // iOS keeps the indicator, so only the Android job has a collision
+    expect(stats.warnings).toHaveLength(1)
+    expect(stats.warnings[0]).toMatch(/^Filename collision: "poster(@2x)?\.png" → "poster\.png"/)
+    expect(fs.existsSync(path.join(out, 'ios/mobile/beta/data/poster@2x.png'))).toBe(true)
+    expect(fs.existsSync(path.join(out, 'android/mobile/beta/data/poster.png'))).toBe(true)
+  })
+
+  test('warns when two Android images meet in one density folder (F31)', async () => {
+    const root = copyFixture()
+    fs.writeFileSync(path.join(root, 'source/default/mobile/images/Side Bar@2x.png'), 'one')
+    fs.writeFileSync(path.join(root, 'source/default/mobile/images/side-bar@2x.png'), 'two')
+    const { stats } = await build({ cwd: root, apps: ['mobile'], platforms: ['android'] })
+    // Once per brand
+    expect(stats.warnings).toHaveLength(2)
+    expect(stats.warnings[0]).toMatch(/→ "side_bar\.png"/)
+  })
+
+  test('counts a file that a brand overrides once (F32)', async () => {
+    const { out, stats } = await build({ brands: ['alpha'], apps: ['site'] })
+    expect(stats.jobs[0].files).toBe(listFiles(path.join(out, 'web/site/alpha')).length)
+  })
 })
 
 describe('cleaning the output (D6)', () => {
@@ -417,10 +468,11 @@ describe('dry run', () => {
     const { stats } = await build({ out, dryRun: true })
     expect(fs.existsSync(out)).toBe(false)
     expect(stats.jobs).toEqual([
-      // The files copied, an override counted twice: default, then the brand over it
-      { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 2 },
-      { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 2 },
-      { brand: 'alpha', app: 'mobile', platform: 'android', files: 14 + 2 },
+      // The files of the output: the brand has one file of its own per job, and its
+      // override of a default file is counted once (F32)
+      { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 1 },
+      { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 },
+      { brand: 'alpha', app: 'mobile', platform: 'android', files: 14 + 1 },
       { brand: 'beta', app: 'site', platform: 'web', files: 16 },
       { brand: 'beta', app: 'mobile', platform: 'ios', files: 16 },
       { brand: 'beta', app: 'mobile', platform: 'android', files: 14 }
