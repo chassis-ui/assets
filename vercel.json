@@ -4,7 +4,9 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "staging": true
+      "staging": true,
+      "develop": false,
+      "dependabot/**": false
     }
   },
   "rewrites": [{ "source": "/assets/static/(.*)", "destination": "/static/$1" }],

@@ -1,2 +1,8 @@
 packages:
   - packages/*
+
+# Our own packages install at any age. Dependabot hands its 3-day cooldown to pnpm as a minimum
+# release age when it resolves the lockfile again, which rejects a Chassis release that develop
+# already requires. See the cooldown in .github/dependabot.yml, which exempts the same packages.
+minimumReleaseAgeExclude:
+  - '@chassis-ui/*'
