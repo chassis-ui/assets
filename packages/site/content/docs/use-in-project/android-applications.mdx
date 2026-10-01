@@ -4,8 +4,6 @@ description: Where the Android output of Chassis Assets is, how its fonts, image
 toc: true
 ---
 
-<Callout type="warning" name="created-by-ai" />
-
 ## Introduction
 
 The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. In the committed configuration the Android app is `demo` and the brands are `chassis` and `example`; your own configuration has other names in the same places.
@@ -221,6 +219,8 @@ ASSETS_ROOT=chassis-assets-dist ./scripts/sync-assets.sh chassis   # from an unp
 
 When two listed folders hold a PNG of the same name in the same density folder, the folder listed last wins.
 
+The script copies and replaces files and never removes one. A file that a later build does not write again stays in `app/src/<brand>/res/`: an image that was renamed, or the PNG of an image that a build with `--webp` now writes as WebP. Delete such a file by hand, see [Duplicate resources](#duplicate-resources).
+
 ## Fonts
 
 The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `text_normal.otf` or `display_strong_italic.otf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
@@ -235,15 +235,17 @@ A font family resource groups the files of one role, so a layout asks for the ro
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
-    <font app:font="@font/text_normal" app:fontStyle="normal" app:fontWeight="400" />
-    <font app:font="@font/text_normal_italic" app:fontStyle="italic" app:fontWeight="400" />
-    <font app:font="@font/text_strong" app:fontStyle="normal" app:fontWeight="600" />
-    <font app:font="@font/text_strong_italic" app:fontStyle="italic" app:fontWeight="600" />
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    <font android:font="@font/text_normal" android:fontStyle="normal" android:fontWeight="400" />
+    <font android:font="@font/text_normal_italic" android:fontStyle="italic" android:fontWeight="400" />
+    <font android:font="@font/text_strong" android:fontStyle="normal" android:fontWeight="600" />
+    <font android:font="@font/text_strong_italic" android:fontStyle="italic" android:fontWeight="600" />
 </font-family>
 ```
 
 The file name does not hold the weight. `normal` and `strong` are names of [Chassis Tokens](https://chassis-ui.com/tokens/), and the number behind each one is a choice of the brand: the `400` and `600` above are examples, so take the numbers from the tokens of your brand. The attribute needs a literal number, so a brand with other weights needs its own `text.xml` in `app/src/<brand>/res/font/`.
+
+The attributes are in the `android:` namespace, which every view reads from API 26 on. A family that has only `app:` attributes, the namespace of AndroidX, loads in an `AppCompatTextView` and not in a plain `TextView` or any other view of the framework: the text shows in the system font, without an error. An app that supports API 25 or lower repeats each attribute with `app:` beside the `android:` one.
 
 ### Using a font
 
@@ -468,7 +470,7 @@ An app that holds every brand in one APK and switches at run time cannot use the
 
 ## Continuous integration
 
-A workflow builds the Android jobs, runs the copy script for each brand, then builds the app. The build needs only Node.js, so the workflow runs it with `node`, which is what `pnpm assets` does, and installs nothing in `chassis-assets/`. This workflow is for GitHub Actions, with the assets as a submodule:
+A workflow builds the Android jobs, runs the copy script for each brand, then builds the app. The script, the Gradle tasks and the build of the job were run on a Mac with Gradle 9.8 and Android Gradle Plugin 9.4; the workflow itself was not run on GitHub Actions. The build needs only Node.js, so the workflow runs it with `node`, which is what `pnpm assets` does, and installs nothing in `chassis-assets/`. This workflow is for GitHub Actions, with the assets as a submodule:
 
 ```yaml
 name: Android
@@ -552,7 +554,7 @@ Gradle fails on a file of `res/drawable/` with `The file name must end with .xml
 
 ### Duplicate resources
 
-Gradle fails with `Duplicate resources` and names two files of one folder, such as `chassis_logo_brand.png` and `chassis_logo_brand.xml`. The image exists as PNG and as SVG in `images/logo/`, and both were added to `res/drawable/`. Keep one of them, or import the SVG under another name.
+Gradle fails with `Duplicate resources` and names two files of one folder, such as `chassis_logo_brand.png` and `chassis_logo_brand.xml`. The image exists as PNG and as SVG in `images/logo/`, and both were added to `res/drawable/`. Keep one of them, or import the SVG under another name. The two files can also be a copy of an earlier build and one of this build: `chassis_logo_brand.png` is still in `app/src/chassis/res/drawable/` when a build with `--webp` writes `chassis_logo_brand.webp` in its place. Delete the file of the earlier build.
 
 ### Image is missing
 
