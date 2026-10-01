@@ -1,0 +1,30 @@
+{
+  "name": "@chassis-ui/assets",
+  "version": "0.1.8",
+  "private": true,
+  "description": "A multi-brand, multi-product asset management system for distributing fonts, images, icons, and other design files across web, iOS, and Android platforms.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chassis-ui/assets.git",
+    "directory": "packages/assets"
+  },
+  "bugs": {
+    "url": "https://github.com/chassis-ui/assets/issues"
+  },
+  "homepage": "https://chassis-ui.com",
+  "author": "Ozgur Gunes <o.gunes@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "vitest run --dir test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  }
+}

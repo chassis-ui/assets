@@ -13,6 +13,7 @@ import { afterAll, describe, expect, test } from 'vitest'
 import {
   ANALYZE_CLI,
   BUILD_CLI,
+  CLI,
   CONTRACT_CLI,
   FIXTURE,
   GOLDEN,
@@ -21,20 +22,26 @@ import {
   VERIFY_CLI,
   compareDirs,
   listFiles,
+  read,
   removeTempDirs,
+  ROOT,
   tempDir
 } from './helpers.js'
 
 afterAll(removeTempDirs)
 
+/** The version of the build, in `packages/assets/package.json`. */
+const VERSION = JSON.parse(read(ROOT, 'package.json')).version
+
 /**
- * Run an entry with Node.js in the fixture.
+ * Run an entry with Node.js, in the fixture unless another folder is given.
  * @param {string} entry
  * @param {string[]} args
+ * @param {string} [cwd]
  */
-function run(entry, args) {
+function run(entry, args, cwd = FIXTURE) {
   const result = spawnSync(process.execPath, [entry, ...args], {
-    cwd: FIXTURE,
+    cwd,
     encoding: 'utf-8',
     env: { ...process.env, CHASSIS_ALLOW_LFS_POINTERS: '' }
   })
@@ -65,9 +72,16 @@ describe('pnpm assets', () => {
     }
   })
 
-  test('--version prints the version of package.json in cwd', () => {
-    expect(assets('--version')).toMatchObject({ code: 0, stdout: '0.0.0-fixture\n' })
-    expect(assets('-v', '--cwd', FIXTURE).stdout).toBe('0.0.0-fixture\n')
+  test('--version prints the version of the build, not that of package.json in cwd', () => {
+    expect(assets('--version')).toMatchObject({ code: 0, stdout: `${VERSION}\n` })
+    expect(assets('-v', '--cwd', FIXTURE).stdout).toBe(`${VERSION}\n`)
+  })
+
+  test('the repository root is found from a folder below it', () => {
+    const below = path.join(FIXTURE, 'source', 'alpha', 'site')
+    const { code, stdout } = run(BUILD_CLI, ['--dry-run'], below)
+    expect(code).toBe(0)
+    expect(stdout).toContain('6 jobs')
   })
 
   test('a full build writes the golden output and exits 0', () => {
@@ -231,5 +245,54 @@ describe('pnpm assets:contract and assets:verify', () => {
   test('an unknown option exits 2', () => {
     expect(run(CONTRACT_CLI, ['--nope'])).toMatchObject({ code: 2 })
     expect(run(VERIFY_CLI, ['--nope'])).toMatchObject({ code: 2 })
+  })
+})
+
+describe('cli.js', () => {
+  const cli = (...args) => run(CLI, args)
+
+  test('build runs the build with its options', () => {
+    const out = tempDir()
+    expect(cli('build', '--out', out, '--quiet').code).toBe(0)
+    expect(compareDirs(GOLDEN, out)).toEqual({ missing: [], extra: [], changed: [] })
+  })
+
+  test.each([
+    ['analyze', ['--quiet', '--out', '../golden']],
+    ['validate', ['--out', '../golden']],
+    ['lint-source', ['--help']]
+  ])('%s runs its module', (command, args) => {
+    expect(cli(command, ...args).code).toBe(0)
+  })
+
+  test('contract and verify exit 1 on the fixture, which is not the docs output', () => {
+    expect(cli('contract', '--out', '../golden').code).toBe(1)
+    expect(cli('verify', '--out', '../golden').code).toBe(1)
+  })
+
+  test('--version prints the version of the build', () => {
+    expect(cli('--version')).toMatchObject({ code: 0, stdout: `${VERSION}\n` })
+    expect(cli('build', '--version').stdout).toBe(`${VERSION}\n`)
+  })
+
+  test('--help names every command and exits 0', () => {
+    const { code, stdout } = cli('--help')
+    expect(code).toBe(0)
+    for (const command of ['build', 'analyze', 'validate', 'contract', 'verify', 'lint-source']) {
+      expect(stdout).toContain(`  ${command} `)
+    }
+  })
+
+  test('no command prints the help and exits 2', () => {
+    const { code, stdout } = cli()
+    expect(code).toBe(2)
+    expect(stdout).toContain('Usage: chassis-assets <command>')
+  })
+
+  test('an unknown command exits 2 and names the commands', () => {
+    const { code, stderr } = cli('bulid')
+    expect(code).toBe(2)
+    expect(stderr).toContain('Unknown command bulid')
+    expect(stderr).toContain('build, analyze')
   })
 })

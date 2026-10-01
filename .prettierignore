@@ -1,8 +1,8 @@
 *.css
 *.scss
-site/config.yml
-site/src/assets
+packages/site/config.yml
+packages/site/src/assets
 /source
 pnpm-lock.yaml
-test/fixtures/source
-test/golden
+packages/assets/test/fixtures/source
+packages/assets/test/golden

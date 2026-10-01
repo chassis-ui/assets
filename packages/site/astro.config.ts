@@ -9,7 +9,7 @@ import { getSiteUrl, getDocsMarkdownConfig } from '@chassis-ui/docs'
 // https://astro.build/config
 export default defineConfig({
   site: getSiteUrl(getConfig()),
-  outDir: '../_site',
+  outDir: '../../_site',
   build: {
     assets: `static/astro`
   },
@@ -47,7 +47,7 @@ export default defineConfig({
             // Custom override `_chassis-tokens.scss` if present in `src/scss`
             // path.resolve(import.meta.dirname, 'src/scss'),
             // Framework fallback `_chassis-tokens.scss` if no override above.
-            path.resolve(import.meta.dirname, '../node_modules/@chassis-ui/css/scss/vendor')
+            path.resolve(import.meta.dirname, 'node_modules/@chassis-ui/css/scss/vendor')
           ]
         }
       }

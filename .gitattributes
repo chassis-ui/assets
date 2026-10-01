@@ -11,5 +11,5 @@
 
 # The test fixture and its golden output are one-line text stand-ins for fonts and images,
 # committed as they are, so that the tests run on a checkout without Git LFS
-test/fixtures/** !filter !diff !merge text eol=lf
-test/golden/** !filter !diff !merge text eol=lf
+packages/assets/test/fixtures/** !filter !diff !merge text eol=lf
+packages/assets/test/golden/** !filter !diff !merge text eol=lf

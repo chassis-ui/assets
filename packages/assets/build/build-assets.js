@@ -14,6 +14,7 @@
 import fs from 'fs'
 import path from 'path'
 import { platformProcessors } from './processors/index.js'
+import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
 
 /** @import { BuildConfig, BuildOptions, BuildStats, Job, Processor } from './types.js' */
 
@@ -31,7 +32,8 @@ Options:
   --clean                Remove the output first (of the selected jobs when filtered)
   --no-clean             Keep the output even for a full build
   --out <dir>            Output folder, default dist
-  --cwd <dir>            Repository root, default the working directory
+  --cwd <dir>            Repository root, default the nearest folder upward whose
+                         package.json has a \`chassis\` block
   --dry-run              Print the jobs and their file counts, write nothing
   --allow-lfs-pointers   Copy Git LFS pointer files instead of failing
                          (also CHASSIS_ALLOW_LFS_POINTERS=1 in the environment)
@@ -83,10 +85,10 @@ function emptyStats() {
 
 /**
  * Read the `chassis` configuration of the `package.json` in `cwd`.
- * @param {string} [cwd] - The repository root. Default: the working directory
+ * @param {string} [cwd] - The repository root. Default: `findRoot()`
  * @returns {BuildConfig}
  */
-export function loadConfig(cwd = process.cwd()) {
+export function loadConfig(cwd = findRoot()) {
   const file = path.join(cwd, 'package.json')
   const packageJson = JSON.parse(fs.readFileSync(file, 'utf-8'))
   const chassis = packageJson.chassis || {}
@@ -661,7 +663,7 @@ export async function generateAssets(options = {}) {
   // Reset the state of the run
   stats = emptyStats()
   collisionTracker.clear()
-  const cwd = path.resolve(options.cwd || process.cwd())
+  const cwd = resolveRoot(options.cwd)
   run = {
     cwd,
     outDir: path.resolve(cwd, options.out || 'dist'),
@@ -768,11 +770,14 @@ export async function generateAssets(options = {}) {
   return stats
 }
 
-// Only run if this file is executed directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+/**
+ * The command line of the build: `pnpm assets`. Exits the process.
+ * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
+ */
+export function cli(argv = process.argv.slice(2)) {
   let options
   try {
-    options = parseArgs()
+    options = parseArgs(argv)
   } catch (error) {
     console.error(`❌ ${error.message}`)
     process.exit(2)
@@ -782,7 +787,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(0)
   }
   if (options.version) {
-    console.log(loadConfig(options.cwd ? path.resolve(options.cwd) : process.cwd()).version)
+    console.log(buildVersion())
     process.exit(0)
   }
   generateAssets(options).catch((error) => {
@@ -791,3 +796,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1)
   })
 }
+
+// Only run if this file is executed directly (not imported)
+if (isEntry(import.meta.url)) cli()

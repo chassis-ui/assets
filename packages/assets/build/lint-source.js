@@ -15,6 +15,7 @@
 import fs from 'fs'
 import path from 'path'
 import { isLfsPointer, loadConfig, shouldIgnoreFile } from './build-assets.js'
+import { isEntry, resolveRoot } from './root.js'
 
 /** @import { LintProblem } from './types.js' */
 
@@ -51,7 +52,8 @@ Checks the names and the layout of source/ against the rules of the design-guide
 Exits 1 when a file breaks a rule. The known oddities are printed as warnings.
 
 Options:
-  --cwd <dir>            Repository root, default the working directory
+  --cwd <dir>            Repository root, default the nearest folder upward whose
+                         package.json has a \`chassis\` block
   --allow-lfs-pointers   Do not report Git LFS pointer files
                          (also CHASSIS_ALLOW_LFS_POINTERS=1 in the environment)
   --help, -h             Print this help
@@ -147,7 +149,7 @@ function listSource(dir) {
  * @throws {Error} When `source/` or `package.json` cannot be read
  */
 export function lintSource(options = {}) {
-  const cwd = path.resolve(options.cwd || process.cwd())
+  const cwd = resolveRoot(options.cwd)
   const sourceDir = path.join(cwd, 'source')
   const allowLfsPointers =
     options.allowLfsPointers || process.env.CHASSIS_ALLOW_LFS_POINTERS === '1'
@@ -193,10 +195,12 @@ export function lintSource(options = {}) {
   return { errors, warnings, files: files.length }
 }
 
-// Only run if this file is executed directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+/**
+ * The command line of the source lint: `pnpm assets:lint:source`. Exits the process.
+ * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
+ */
+export function cli(argv = process.argv.slice(2)) {
   const options = { cwd: undefined, allowLfsPointers: false }
-  const argv = process.argv.slice(2)
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--cwd' && argv[i + 1] && !argv[i + 1].startsWith('--')) {
       options.cwd = argv[++i]
@@ -236,3 +240,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1)
   }
 }
+
+// Only run if this file is executed directly (not imported)
+if (isEntry(import.meta.url)) cli()

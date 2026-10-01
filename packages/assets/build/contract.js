@@ -14,6 +14,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import { isEntry, resolveRoot } from './root.js'
 
 /** @import { ContractEntry, ContractProblem, Job } from './types.js' */
 
@@ -164,7 +165,7 @@ function listFiles(dir) {
  *   `dir` is the folder checked, relative to `cwd`
  */
 export function checkContract(options = {}) {
-  const cwd = path.resolve(options.cwd || process.cwd())
+  const cwd = resolveRoot(options.cwd)
   const { platform, app, brand } = CONTRACT_JOB
   const dir = path.resolve(cwd, options.out || 'dist', platform, app, brand)
   const relative = path.relative(cwd, dir) || '.'
@@ -202,10 +203,12 @@ export function printContract(result) {
   return false
 }
 
-// Only run if this file is executed directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+/**
+ * The command line of the contract check: `pnpm assets:contract`. Exits the process.
+ * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
+ */
+export function cli(argv = process.argv.slice(2)) {
   const options = { cwd: undefined, out: undefined }
-  const argv = process.argv.slice(2)
   for (let i = 0; i < argv.length; i++) {
     if ((argv[i] === '--out' || argv[i] === '--cwd') && argv[i + 1]) {
       options[argv[i].slice(2)] = argv[++i]
@@ -216,3 +219,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   process.exit(printContract(checkContract(options)) ? 0 : 1)
 }
+
+// Only run if this file is executed directly (not imported)
+if (isEntry(import.meta.url)) cli()

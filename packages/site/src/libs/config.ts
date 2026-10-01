@@ -47,7 +47,7 @@ export function getConfig(): Config {
 
   try {
     // Load the config from the `config.yml` file.
-    const rawConfig = load(fs.readFileSync('./site/config.yml', 'utf8'))
+    const rawConfig = load(fs.readFileSync('./config.yml', 'utf8'))
 
     // Parse the config using the config schema to validate its content and get back a fully typed config object.
     config = configSchema.parse(rawConfig)

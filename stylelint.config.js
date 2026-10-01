@@ -9,9 +9,9 @@ export default {
     '**/tests/**',
     '**/coverage/**',
     '_site/**',
-    'site/.astro/**',
-    'site/public/**',
-    'site/static/**',
+    'packages/site/.astro/**',
+    'packages/site/public/**',
+    'packages/site/static/**',
     'vendor/**'
   ],
   reportInvalidScopeDisables: true,
@@ -46,7 +46,7 @@ export default {
       }
     },
     {
-      files: ['site/**/*.scss'],
+      files: ['packages/site/**/*.scss'],
       rules: {
         'scss/dollar-variable-default': null
       }

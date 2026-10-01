@@ -4,6 +4,7 @@
 import fs from 'fs'
 import path from 'path'
 import { generateAssets, shouldIgnoreFile } from '../build-assets.js'
+import { resolveRoot } from '../root.js'
 
 /**
  * ChassisAssets class provides programmatic API for asset management.
@@ -17,7 +18,7 @@ export class ChassisAssets {
    * @param {{ cwd?: string, out?: string }} [options] - The repository root and the output folder
    */
   constructor(configPath = 'package.json', options = {}) {
-    this.cwd = path.resolve(options.cwd || process.cwd())
+    this.cwd = resolveRoot(options.cwd)
     this.out = options.out || 'dist'
     this.sourceDir = path.join(this.cwd, 'source')
     this.distDir = path.resolve(this.cwd, this.out)

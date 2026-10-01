@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
-/** The repository root. */
+/** The package of the build, `packages/assets/`. */
 export const ROOT = path.resolve(here, '..')
 
 /** The fixture: a `package.json` with the `chassis` block and a `source/` folder. */
@@ -21,6 +21,7 @@ export const FIXTURE = path.join(here, 'fixtures')
 export const GOLDEN = path.join(here, 'golden')
 
 /** The command-line entries of the build and its checks. */
+export const CLI = path.join(ROOT, 'build', 'cli.js')
 export const BUILD_CLI = path.join(ROOT, 'build', 'build-assets.js')
 export const ANALYZE_CLI = path.join(ROOT, 'build', 'analyze-assets.js')
 export const VALIDATE_CLI = path.join(ROOT, 'build', 'validate-assets.js')

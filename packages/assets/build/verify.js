@@ -8,6 +8,7 @@
  */
 
 import { checkContract, printContract } from './contract.js'
+import { isEntry } from './root.js'
 import DistValidator from './validate-assets.js'
 
 /**
@@ -22,10 +23,12 @@ export async function verify(options = {}) {
   return { valid, contract }
 }
 
-// Only run if this file is executed directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+/**
+ * The command line of verify: `pnpm assets:verify`. Exits the process.
+ * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
+ */
+export function cli(argv = process.argv.slice(2)) {
   const options = { cwd: undefined, out: undefined }
-  const argv = process.argv.slice(2)
   for (let i = 0; i < argv.length; i++) {
     if ((argv[i] === '--out' || argv[i] === '--cwd') && argv[i + 1]) {
       options[argv[i].slice(2)] = argv[++i]
@@ -49,3 +52,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       process.exit(1)
     })
 }
+
+// Only run if this file is executed directly (not imported)
+if (isEntry(import.meta.url)) cli()

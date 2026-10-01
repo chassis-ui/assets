@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { zVersionSemver, zVersionMajorMinor } from './validation'
 
 // An object containing all the data types and their associated schema. The key should match the name of the data file
-// in the `./site/data/` directory.
+// in the `./data/` directory.
 const dataDefinitions = {
   'core-team': z
     .object({
@@ -37,7 +37,7 @@ const dataDefinitions = {
 
 const data = new Map<DataType, z.infer<DataSchema>>()
 
-// A helper to get data loaded fom a yml file in the `./site/data/` directory. If the data does not match its associated
+// A helper to get data loaded fom a yml file in the `./data/` directory. If the data does not match its associated
 // schema from `dataDefinitions`, an error is thrown to indicate that the data file is invalid and some action is
 // required.
 export function getData<TType extends DataType>(
@@ -48,7 +48,7 @@ export function getData<TType extends DataType>(
     return data.get(type) as z.infer<(typeof dataDefinitions)[TType]>
   }
 
-  const dataPath = `./site/data/${type}.yml`
+  const dataPath = `./data/${type}.yml`
 
   try {
     // Load the data from the yml  file.

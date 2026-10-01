@@ -12,6 +12,5 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["build"],
-  "exclude": ["build/build-site.js", "build/html-validate.js", "build/vnu-jar.js"]
+  "include": ["build"]
 }

@@ -1,6 +1,6 @@
 # Build tests
 
-Tests for the build in `build/`. Run them from the repository root:
+Tests for the build in `packages/assets/build/`. Run them from the repository root:
 
 ```sh
 pnpm test
@@ -23,7 +23,7 @@ never touches `dist/` or `source/`.
   Only `console` is silenced where a module prints.
 - **Pure functions first.** The processors, the filters, the ignore list, the argument parser
   and the job plan are tested as tables, one row per rule of the pages in
-  `site/content/docs/`.
+  `packages/site/content/docs/`.
 
 ## The fixture
 
@@ -61,17 +61,18 @@ keeps Prettier out of them.
 | `asset-types.test.js`  | The extension lists and `isMetadataFile()` that the validator uses.                                                                                                                                                                                                                                                             |
 | `contract.test.js`     | The consumer contract of `build/contract.js`: the pattern expansion, the files every site reads, the screenshot rule and its Figma export copies, and `checkContract()` on an output in a temporary folder.                                                                                                                     |
 | `lint-source.test.js`  | The source lint: the naming rules of the design-guidelines page as a table, the known oddities, and `lintSource()` on the fixture, whose names break the rules on purpose, and on copies that add a pointer or an unread brand.                                                                                                 |
-| `cli.test.js`          | `node build/build-assets.js`, `analyze-assets.js` and `validate-assets.js` as the `pnpm assets*` scripts run them: every flag, the output and the exit codes.                                                                                                                                                                   |
+| `cli.test.js`          | `node build/build-assets.js`, `analyze-assets.js` and `validate-assets.js` on their own, and `cli.js` as the `pnpm assets*` scripts run it: every flag, the output and the exit codes.                                                                                                                                          |
+| `root.test.js`         | `findRoot()`, `resolveRoot()` and `buildVersion()`: the repository root from a folder below it, a given `cwd`, and the version of the build.                                                                                                                                                                                    |
 | `helpers.js`           | The paths, temporary folders and the file-by-file comparison.                                                                                                                                                                                                                                                                   |
 
 ## Writing the baseline again
 
 ```sh
 pnpm test:golden
-git diff --stat test/golden
+git diff --stat packages/assets/test/golden
 ```
 
-`test:golden` is `node build/build-assets.js --cwd test/fixtures --out ../golden --quiet`: a
+`test:golden` is `node packages/assets/build/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet`: a
 full build of the fixture, which removes `golden/` first. Commit the new baseline with the
 change that caused it, and say in the changeset which files of `dist/` change with it.
 

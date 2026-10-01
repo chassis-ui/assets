@@ -2,10 +2,35 @@
 
 How the build of Chassis Assets works, as it is. Every claim here points at a line of code or
 at a page of the documentation site; where the two disagree, the roadmap's findings say which
-one is corrected. This document describes; the pages in `site/content/docs/` specify.
+one is corrected. This document describes; the pages in `packages/site/content/docs/` specify.
 
 Written in session 1.1 of [the roadmap](../ref/ROADMAP.md), 2026-09-30, at `develop`
 `2bcbd96`.
+
+## The layout
+
+```
+package.json          The workspace root: the `chassis` block, the scripts, the lint tools
+source/               The assets, `<brand>/<app>/<type>/`
+dist/                 The output, not committed
+packages/assets/      `@chassis-ui/assets`: the build in `build/`, its tests in `test/`
+packages/site/        `chassis-assets-site`: the documentation site
+build/                The site's checks and the version script
+```
+
+A pnpm workspace, as `chassis-tokens` (roadmap D3). `source/`, `dist/` and the configuration
+stay at the root, where the designer and the consumers find them. The build runs from the
+root scripts with `node packages/assets/build/cli.js <command>`, never through
+`pnpm --filter`, and imports Node.js modules only: `pnpm install --ignore-workspace`, which
+is what `chassis-docs vendor` runs in a site, installs the root package and none of the
+build's or the site's packages, and `pnpm assets:site` works with nothing installed at all
+(Principle 8). CI builds that way first, in the Assets job.
+
+The repository root of a run is the nearest folder, from the working directory upward, whose
+`package.json` has a `chassis` block (`findRoot()` in `root.js`), so the build finds
+`source/` from `packages/assets/` too. `--cwd`, or the `cwd` option, names it instead and is
+taken as it is. The version is that of `packages/assets/package.json` (`buildVersion()`),
+the one place a version is written.
 
 ## The build in one picture
 
@@ -20,11 +45,11 @@ package.json                    source/                                   dist/
                                                               └─ remove empty folders
 ```
 
-One **job** is a brand, an app and a platform. `generateAssets()` in `build/build-assets.js`
+One **job** is a brand, an app and a platform. `generateAssets()` in `packages/assets/build/build-assets.js`
 loops over every brand of `chassis.build.brands`, every app of `chassis.build.apps` and every
 platform listed for that app, skips the ones the filters leave out, and runs
 `processAssets()` for each. A job writes `dist/<platform>/<app>/<brand>/`
-(`build-assets.js:504`).
+(`jobDir()`).
 
 For each job, in order:
 
@@ -60,25 +85,27 @@ jobs with their file counts.
 
 | Module                                                  | Owns                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `build/build-assets.js`                                 | The library: `loadConfig()`, `parseArgs()`, `planJobs()`, `isLfsPointer()`, `keepsFile()` (the filter of a type per platform), the configuration check, the job loop, copying, the rename pass, `createCollisionTracker()`, the ignore list, `generateAssets(options)`. `package.json` is read when `generateAssets()` runs, from `options.cwd`. Only the entry at the bottom reads `process.argv` and exits. |
-| `build/processors/shared.js`                            | `extractResolutionIndicator()`, `isAllowedFormat()`, `isExcludedFormat()`. Pure.                                                                                                                                                                                                                                                                                                                              |
-| `build/processors/web.js`                               | The web processor: kebab-case names, indicator kept, fonts limited to `.woff`, `.woff2`, `.css`, `.scss`, no image or icon filter.                                                                                                                                                                                                                                                                            |
-| `build/processors/ios.js`                               | The iOS processor: snake_case names, indicator kept, fonts `.ttf` and `.otf`, icons `.svg` and `.pdf`, images without `.webp`.                                                                                                                                                                                                                                                                                |
-| `build/processors/android.js`                           | The Android processor: snake_case names, `ic_` prefix under `icons/`, indicator removed, density folders, fonts `.ttf` and `.otf`, icons `.svg`, images without `.webp`, `processImage()`.                                                                                                                                                                                                                    |
-| `build/processors/index.js`                             | The registry `platformProcessors`, `getProcessor()`, `getPlatformNames()`. A platform of `chassis.build.apps` must be a key here.                                                                                                                                                                                                                                                                             |
-| `build/asset-types.js`                                  | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
-| `build/analyze-assets.js`                               | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
-| `build/validate-assets.js`                              | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
-| `build/contract.js`                                     | The consumer contract as data, `CONTRACT`, each file with the code that reads it; `missingFromContract()` (pure) and `checkContract({ cwd, out })` over `dist/web/docs/chassis/`. The CLI entry is `pnpm assets:contract`.                                                                                                                                                                                    |
-| `build/verify.js`                                       | `verify({ cwd, out })`: the validator, then the contract check. `pnpm assets:verify`.                                                                                                                                                                                                                                                                                                                         |
-| `build/lint-source.js`                                  | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`, `KNOWN_ODDITIES`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. `pnpm assets:lint:source`.                                                                                                                                                                       |
-| `build/types.js`                                        | The shared JSDoc types: `BuildConfig`, `BuildOptions`, `Job`, `BuildStats`, `Processor` and the problems of the checks. Exports nothing at run time. `tsconfig.json` checks `build/` against them with `checkJs`.                                                                                                                                                                                             |
-| `build/api/index.js`                                    | `ChassisAssets(configPath, { cwd, out })`: the configuration as an object, the combinations, an inventory of a brand and app, `build({ brands, apps, platforms, clean, quiet })`, `getStats()`, `validate()`.                                                                                                                                                                                                 |
-| `build/change-version.js`                               | Bumps the version in `package.json`, `README.md` and `site/config.yml`. Replaced by Changesets in roadmap session 3.2.                                                                                                                                                                                                                                                                                        |
+| `packages/assets/build/build-assets.js`                 | The library: `loadConfig()`, `parseArgs()`, `planJobs()`, `isLfsPointer()`, `keepsFile()` (the filter of a type per platform), the configuration check, the job loop, copying, the rename pass, `createCollisionTracker()`, the ignore list, `generateAssets(options)`. `package.json` is read when `generateAssets()` runs, from `options.cwd`. Only the entry at the bottom reads `process.argv` and exits. |
+| `packages/assets/build/processors/shared.js`            | `extractResolutionIndicator()`, `isAllowedFormat()`, `isExcludedFormat()`. Pure.                                                                                                                                                                                                                                                                                                                              |
+| `packages/assets/build/processors/web.js`               | The web processor: kebab-case names, indicator kept, fonts limited to `.woff`, `.woff2`, `.css`, `.scss`, no image or icon filter.                                                                                                                                                                                                                                                                            |
+| `packages/assets/build/processors/ios.js`               | The iOS processor: snake_case names, indicator kept, fonts `.ttf` and `.otf`, icons `.svg` and `.pdf`, images without `.webp`.                                                                                                                                                                                                                                                                                |
+| `packages/assets/build/processors/android.js`           | The Android processor: snake_case names, `ic_` prefix under `icons/`, indicator removed, density folders, fonts `.ttf` and `.otf`, icons `.svg`, images without `.webp`, `processImage()`.                                                                                                                                                                                                                    |
+| `packages/assets/build/processors/index.js`             | The registry `platformProcessors`, `getProcessor()`, `getPlatformNames()`. A platform of `chassis.build.apps` must be a key here.                                                                                                                                                                                                                                                                             |
+| `packages/assets/build/asset-types.js`                  | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
+| `packages/assets/build/analyze-assets.js`               | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
+| `packages/assets/build/validate-assets.js`              | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
+| `packages/assets/build/contract.js`                     | The consumer contract as data, `CONTRACT`, each file with the code that reads it; `missingFromContract()` (pure) and `checkContract({ cwd, out })` over `dist/web/docs/chassis/`. The CLI entry is `pnpm assets:contract`.                                                                                                                                                                                    |
+| `packages/assets/build/verify.js`                       | `verify({ cwd, out })`: the validator, then the contract check. `pnpm assets:verify`.                                                                                                                                                                                                                                                                                                                         |
+| `packages/assets/build/lint-source.js`                  | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`, `KNOWN_ODDITIES`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. `pnpm assets:lint:source`.                                                                                                                                                                       |
+| `packages/assets/build/root.js`                         | `findRoot()`, `resolveRoot(cwd)`, `buildVersion()`, `isEntry()`: the repository root of a run, the version of the build, and whether a module was started or imported.                                                                                                                                                                                                                                        |
+| `packages/assets/build/cli.js`                          | The entry of the root scripts and of `bin`: `build`, `analyze`, `validate`, `contract`, `verify`, `lint-source`, each the `cli(argv)` of its module. Every module still runs on its own, `node packages/assets/build/build-assets.js`.                                                                                                                                                                        |
+| `packages/assets/build/types.js`                        | The shared JSDoc types: `BuildConfig`, `BuildOptions`, `Job`, `BuildStats`, `Processor` and the problems of the checks. Exports nothing at run time. `tsconfig.json` checks `packages/assets/build/` against them with `checkJs`.                                                                                                                                                                             |
+| `packages/assets/build/api/index.js`                    | `ChassisAssets(configPath, { cwd, out })`: the configuration as an object, the combinations, an inventory of a brand and app, `build({ brands, apps, platforms, clean, quiet })`, `getStats()`, `validate()`.                                                                                                                                                                                                 |
+| `build/change-version.js`                               | Bumps the version in `packages/assets/package.json`, `README.md` and `packages/site/config.yml`. Replaced by Changesets in roadmap session 3.2.                                                                                                                                                                                                                                                               |
 | `build/build-site.js`, `html-validate.js`, `vnu-jar.js` | The site's checks. `build-site.js` is called by nothing. Roadmap session 5.1 replaces the two validators with the `chassis-docs` commands.                                                                                                                                                                                                                                                                    |
 
 The processors are the only platform knowledge. Everything else is the same for every
-platform. A new platform is a new file in `build/processors/` and a key in the registry, as
+platform. A new platform is a new file in `packages/assets/build/processors/` and a key in the registry, as
 the build-system page describes; it may add `processImage()` as Android does.
 
 ## Configuration
@@ -112,18 +139,18 @@ the build-system page describes; it may add `processImage()` as Android does.
 | `--clean`                        | Remove the output first: all of `dist/` without filters, the folders of the selected jobs with filters.                                                                                                                         |
 | `--no-clean`                     | Keep `dist/` even without filters.                                                                                                                                                                                              |
 | `--out <dir>`                    | Write to another folder than `dist/`. The analyzer and the validator take it too.                                                                                                                                               |
-| `--cwd <dir>`                    | The repository root, where `package.json` and `source/` are.                                                                                                                                                                    |
+| `--cwd <dir>`                    | The repository root, where `package.json` and `source/` are. Default: the nearest folder upward whose `package.json` has a `chassis` block.                                                                                     |
 | `--dry-run`                      | Print the jobs and their file counts, write nothing.                                                                                                                                                                            |
 | `--allow-lfs-pointers`           | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                    |
-| `--quiet`, `--help`, `--version` | Errors only; the options; the version of `package.json`.                                                                                                                                                                        |
+| `--quiet`, `--help`, `--version` | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
 | `pnpm assets:site`               | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
 | `pnpm assets:analyze [filters]`  | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
 | `pnpm assets:validate`           | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules. Exit code 1 when a check fails. |
 | `pnpm assets:verify`             | `assets:validate`, then the consumer contract of `dist/web/docs/chassis/`. Exit code 1 when either fails.                                                                                                                       |
 | `pnpm assets:contract`           | The consumer contract alone. Run it after `pnpm assets:site`.                                                                                                                                                                   |
 | `pnpm assets:lint:source`        | The names and the layout of `source/`, Git LFS pointers. `--allow-lfs-pointers` without Git LFS. Exit code 1 on an error; the known oddities are warnings.                                                                      |
-| `pnpm assets:typecheck`          | `tsc -p tsconfig.json`: `build/` against its JSDoc, with `checkJs`. No TypeScript file.                                                                                                                                         |
-| `pnpm test`                      | Vitest over `test/`, on the fixture in `test/fixtures/`, into temporary folders. Needs no Git LFS files. See `test/README.md`.                                                                                                  |
+| `pnpm assets:typecheck`          | `tsc -p tsconfig.json` in `packages/assets/`: `build/` against its JSDoc, with `checkJs`. No TypeScript file.                                                                                                                   |
+| `pnpm test`                      | Vitest over `packages/assets/test/`, on the fixture in `packages/assets/test/fixtures/`, into temporary folders. Needs no Git LFS files. See `packages/assets/test/README.md`.                                                  |
 
 A filter value that is not configured, or filters that together select no job, fail the build and name the configured values.
 
@@ -166,30 +193,30 @@ the roadmap.
 
 ## Checks
 
-| Command                                                 | Checks                                                                                                                                                                                          |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm assets:lint`                                      | ESLint over `build/` and `test/`.                                                                                                                                                               |
-| `pnpm assets:lint:source`                               | The names and the layout of `source/` against the design-guidelines page, and Git LFS pointers.                                                                                                 |
-| `pnpm assets:typecheck`                                 | TypeScript over `build/`, from JSDoc.                                                                                                                                                           |
-| `pnpm lint:prettier`                                    | Prettier over the repository.                                                                                                                                                                   |
-| `pnpm test`                                             | The unit tests, the golden test of the fixture against `test/golden/`, the analyzer, the validator, the API and the command line. `test/README.md` lists the files.                             |
-| `pnpm assets:validate`                                  | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules. |
-| `pnpm assets:verify`                                    | `assets:validate` and the consumer contract.                                                                                                                                                    |
-| `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build` | The site.                                                                                                                                                                                       |
-| CI                                                      | Lint (Prettier, the site), Assets (lint, source lint, type check, test, full build, verify), Site, Audit, on `develop` and on pull requests.                                                    |
+| Command                                                 | Checks                                                                                                                                                                                              |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm assets:lint`                                      | ESLint over `packages/assets/build/` and `packages/assets/test/`.                                                                                                                                   |
+| `pnpm assets:lint:source`                               | The names and the layout of `source/` against the design-guidelines page, and Git LFS pointers.                                                                                                     |
+| `pnpm assets:typecheck`                                 | TypeScript over `packages/assets/build/`, from JSDoc.                                                                                                                                               |
+| `pnpm lint:prettier`                                    | Prettier over the repository.                                                                                                                                                                       |
+| `pnpm test`                                             | The unit tests, the golden test of the fixture against `packages/assets/test/golden/`, the analyzer, the validator, the API and the command line. `packages/assets/test/README.md` lists the files. |
+| `pnpm assets:validate`                                  | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules.     |
+| `pnpm assets:verify`                                    | `assets:validate` and the consumer contract.                                                                                                                                                        |
+| `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build` | The site.                                                                                                                                                                                           |
+| CI                                                      | Lint (Prettier, the site), Assets (the consumer build with nothing installed, lint, source lint, type check, test, full build, verify), Site, Audit, on `develop` and on pull requests.             |
 
 ### Checks per changed area
 
 What to run before a commit, by what the commit changes. CI runs all of it.
 
-| Changed                                   | Run                                                                                                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source/`                                 | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS for the build.                                           |
-| `build/processors/` or `build-assets.js`  | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `test/golden/`. |
-| The analyzer, validator, contract or lint | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                  |
-| `test/`                                   | `pnpm assets:lint`, `pnpm test`.                                                                                                            |
-| `site/`                                   | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                    |
-| Anything                                  | `pnpm lint:prettier`.                                                                                                                       |
+| Changed                                                  | Run                                                                                                                                                         |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source/`                                                | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS for the build.                                                           |
+| `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
+| The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                                  |
+| `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
+| `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
+| Anything                                                 | `pnpm lint:prettier`.                                                                                                                                       |
 
 ## Known oddities
 
@@ -209,7 +236,7 @@ changeset that says what breaks.
 - Eighteen screenshots under `images/figma/components/` are Figma export copies of another
   screenshot, `meta-1-1.png` and `meta-1-2x-1.png` beside `meta-1.png`, in both modes and
   without `@2x`. No page of `chassis-figma` reads them. The contract check requires both
-  modes for them, and not the `@2x` (`EXPORT_COPY` in `build/contract.js`).
+  modes for them, and not the `@2x` (`EXPORT_COPY` in `packages/assets/build/contract.js`).
 - `source/default/docs/other/default.tokens.json` and the two `icons/icons/chassis-icons.min.css`
   break the naming rules; `pnpm assets:lint:source` warns about them (`KNOWN_ODDITIES`).
 - The copy of `@chassis-ui/icons` under `icons/` is behind the package: 15 SVG files of
@@ -225,8 +252,8 @@ them level with the package, on a machine with Git LFS:
 pnpm install
 for app in docs demo; do
   rm -rf source/default/$app/icons/icons source/default/$app/icons/svgs
-  cp -r node_modules/@chassis-ui/icons/icons source/default/$app/icons/icons
-  cp -r node_modules/@chassis-ui/icons/svgs source/default/$app/icons/svgs
+  cp -r packages/site/node_modules/@chassis-ui/icons/icons source/default/$app/icons/icons
+  cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/default/$app/icons/svgs
 done
 pnpm assets && pnpm assets:validate
 ```
@@ -245,3 +272,5 @@ font files are Git LFS objects, so the commit must be made where `git lfs` is in
   session 2.1).
 - 2026-09-30: the consumer contract check, `assets:verify`, the source lint and the type
   check, all in CI (roadmap session 2.2).
+- 2026-10-01: a pnpm workspace: the build in `packages/assets/`, the site in `packages/site/`,
+  `source/` and `dist/` at the root, one `cli.js` for the commands (roadmap session 3.1).

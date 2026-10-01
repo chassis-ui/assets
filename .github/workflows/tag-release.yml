@@ -38,10 +38,11 @@ jobs:
             BEFORE_SHA="HEAD~1"
           fi
 
-          # Check if package.json version changed
-          if git diff "$BEFORE_SHA" HEAD --name-only | grep -q "^package.json$"; then
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
-            PREVIOUS_VERSION=$(git show "$BEFORE_SHA":package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")
+          # The version is that of packages/assets/package.json. Before the workspace it was
+          # in the root package.json, so a push that spans the move reads the old file.
+          if git diff "$BEFORE_SHA" HEAD --name-only | grep -q "^packages/assets/package.json$"; then
+            CURRENT_VERSION=$(node -p "require('./packages/assets/package.json').version")
+            PREVIOUS_VERSION=$( (git show "$BEFORE_SHA":packages/assets/package.json 2>/dev/null || git show "$BEFORE_SHA":package.json) | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")
 
             echo "Current version: $CURRENT_VERSION"
             echo "Previous version: $PREVIOUS_VERSION"
@@ -58,7 +59,7 @@ jobs:
       - name: Get current version
         id: version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(node -p "require('./packages/assets/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   tag-release:

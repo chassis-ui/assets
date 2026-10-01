@@ -1,8 +1,8 @@
 # Site
 _site
 .astro
-site/dist
-site/public
+packages/site/dist
+packages/site/public
 
 dist/
 

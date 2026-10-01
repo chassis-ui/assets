@@ -1,15 +1,12 @@
 {
-  "name": "@chassis-ui/assets",
-  "version": "0.1.8",
-  "description": "A multi-brand, multi-product asset management system for distributing fonts, images, icons, and other design files across web, iOS, and Android platforms.",
+  "name": "chassis-assets-workspace",
+  "private": true,
+  "description": "Workspace of @chassis-ui/assets, its source files and its documentation site",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/chassis-ui/assets.git"
   },
-  "bugs": {
-    "url": "https://github.com/chassis-ui/assets/issues"
-  },
-  "homepage": "https://chassis-ui.com",
   "author": "Ozgur Gunes <o.gunes@gmail.com>",
   "license": "MIT",
   "chassis": {
@@ -32,76 +29,50 @@
       }
     }
   },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+  "bin": {
+    "chassis-assets": "packages/assets/build/cli.js"
   },
-  "keywords": [
-    "chassis",
-    "design system",
-    "design assets"
-  ],
-  "files": [
-    "source/**/*",
-    "build/**/*",
-    "!source/**/.DS_Store",
-    "!.DS_Store"
-  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "build": "pnpm site:build",
     "clean": "pnpm site:clean && rm -rf dist || true",
     "dev": "pnpm assets:site && pnpm astro:dev",
-    "test": "vitest run --dir test",
-    "test:golden": "node build/build-assets.js --cwd test/fixtures --out ../golden --quiet",
-    "assets": "node build/build-assets.js",
-    "assets:analyze": "node build/analyze-assets.js",
-    "assets:lint": "eslint build test --cache --cache-location .cache/.eslintcache",
-    "assets:lint:source": "node build/lint-source.js",
-    "assets:typecheck": "tsc -p tsconfig.json",
-    "assets:contract": "node build/contract.js",
-    "assets:verify": "node build/verify.js",
+    "test": "pnpm --filter @chassis-ui/assets test",
+    "test:golden": "node packages/assets/build/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet",
+    "assets": "node packages/assets/build/cli.js build",
+    "assets:analyze": "node packages/assets/build/cli.js analyze",
+    "assets:lint": "eslint build packages/assets/build packages/assets/test --cache --cache-location .cache/.eslintcache",
+    "assets:lint:source": "node packages/assets/build/cli.js lint-source",
+    "assets:typecheck": "pnpm --filter @chassis-ui/assets typecheck",
+    "assets:contract": "node packages/assets/build/cli.js contract",
+    "assets:verify": "node packages/assets/build/cli.js verify",
     "assets:test": "pnpm test",
-    "assets:site": "pnpm assets --clean --brand chassis --app docs",
-    "assets:validate": "node build/validate-assets.js",
+    "assets:site": "node packages/assets/build/cli.js build --clean --brand chassis --app docs",
+    "assets:validate": "node packages/assets/build/cli.js validate",
     "site": "pnpm site:build && pnpm site:lint",
     "site:build": "pnpm assets:site && pnpm astro:build && pnpm site:pagefind",
-    "site:clean": "rm -rf _site site/node_modules site/.astro site/public",
+    "site:clean": "rm -rf _site && pnpm --filter chassis-assets-site clean",
     "site:lint": "pnpm site:lint:eslint && pnpm site:lint:fusv && pnpm site:lint:stylelint && pnpm site:lint:prettier",
-    "site:lint:fusv": "find-unused-sass-variables site/src/scss/",
-    "site:lint:eslint": "eslint site --cache --cache-location .cache/.eslintcache --report-unused-disable-directives",
-    "site:lint:stylelint": "stylelint site/\"**/*.{css,scss}\" --cache --cache-location .cache/.stylelintcache",
-    "site:lint:prettier": "prettier site -c --cache",
+    "site:lint:fusv": "find-unused-sass-variables packages/site/src/scss/",
+    "site:lint:eslint": "eslint packages/site --cache --cache-location .cache/.eslintcache --report-unused-disable-directives",
+    "site:lint:stylelint": "stylelint packages/site/\"**/*.{css,scss}\" --cache --cache-location .cache/.stylelintcache",
+    "site:lint:prettier": "prettier packages/site -c --cache",
     "site:lint:html": "node build/html-validate.js",
     "site:lint:vnu": "node build/vnu-jar.js",
     "site:pagefind": "pagefind --site _site --output-subdir assets/pagefind",
-    "astro:dev": "astro dev --root site --port 4325",
-    "astro:build": "astro build --root site",
-    "astro:preview": "astro preview --root site",
+    "astro:dev": "pnpm --filter chassis-assets-site dev",
+    "astro:build": "pnpm --filter chassis-assets-site build",
+    "astro:preview": "pnpm --filter chassis-assets-site preview",
     "check": "pnpm check:astro && pnpm check:pnpm",
-    "check:astro": "astro check --root site",
+    "check:astro": "pnpm --filter chassis-assets-site check",
     "check:pnpm": "pnpm audit --audit-level moderate",
     "change-version": "node build/change-version.js",
     "lint:prettier": "prettier -c --cache ."
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
-    "@astrojs/markdown-remark": "^7.3.1",
-    "@astrojs/mdx": "^7.0.8",
-    "@astrojs/sitemap": "^3.7.4",
-    "@chassis-ui/css": "^0.5.2",
-    "@chassis-ui/docs": "^0.5.1",
-    "@chassis-ui/icons": "^0.3.1",
-    "@chassis-ui/tokens": "^0.5.3",
     "@eslint/js": "^10.0.1",
-    "@floating-ui/dom": "^1.8.0",
-    "@pagefind/component-ui": "^1.5.2",
-    "@shikijs/transformers": "^4.4.3",
-    "@stackblitz/sdk": "^1.11.1",
-    "@types/mdast": "^4.0.4",
-    "@types/node": "^22.20.4",
-    "astro": "^7.3.5",
-    "autoprefixer": "^10.6.1",
-    "clipboard": "^2.0.11",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-astro": "^2.1.1",
@@ -113,32 +84,15 @@
     "globals": "^17.12.0",
     "globby": "^16.2.4",
     "html-validate": "^11.16.1",
-    "htmlparser2": "^12.0.0",
-    "js-yaml": "^5.4.2",
-    "mdast-util-mdx-jsx": "^3.2.0",
     "pagefind": "^1.5.2",
     "picocolors": "^1.1.1",
-    "postcss": "^8.5.28",
-    "postcss-prefix-custom-properties": "^0.1.0",
     "prettier": "^3.9.9",
     "prettier-plugin-astro": "^0.14.1",
-    "rehype-autolink-headings": "^7.1.0",
-    "sass": "^1.105.0",
-    "standard": "^17.1.2",
     "stylelint": "^16.26.1",
     "stylelint-config-twbs-bootstrap": "^16.1.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0",
-    "unified": "^11.0.5",
-    "unist-util-visit": "^5.1.0",
-    "vanilla-calendar-pro": "^3.4.0",
-    "vitest": "^4.1.11",
-    "vnu-jar": "26.7.3",
-    "zod": "^4.6.5"
+    "vnu-jar": "26.7.3"
   },
-  "engines": {
-    "node": ">=22.12.0"
-  },
-  "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8",
-  "type": "module"
+  "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8"
 }

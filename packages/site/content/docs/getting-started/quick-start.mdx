@@ -42,7 +42,7 @@ cd assets
 
 ### Install Dependencies
 
-Once the repository is cloned, install the required dependencies for building and distributing assets:
+The build itself needs no dependencies: `pnpm assets` runs on a fresh clone. Install them to run the tests, the checks and the documentation site:
 
 ```bash
 # Install using pnpm
@@ -264,10 +264,11 @@ Key directories in the Chassis Assets repository:
 |-----------|---------|
 | `source/` | Source asset files organized by brand and app |
 | `dist/` | Built assets for each platform |
-| `build/` | Build scripts and configuration |
-| `test/` | The test scripts of the build |
+| `packages/assets/build/` | Build scripts |
+| `packages/assets/test/` | The tests of the build |
+| `packages/site/` | Documentation website |
 | `docs/` | The architecture document of the build |
-| `site/` | Documentation website |
+| `package.json` | The `chassis` configuration and the commands |
 </CxTable>
 
 ### Common Commands

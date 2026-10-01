@@ -15,7 +15,7 @@ export function getDocsRelativePath(docsPath: string) {
 }
 
 export function getChassisAssetsFsPath() {
-  return path.join(process.cwd(), 'dist/web/docs', 'chassis')
+  return path.join(process.cwd(), '../../dist/web/docs', 'chassis')
 }
 
 export function getChassisTokensFsPath() {

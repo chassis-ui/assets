@@ -10,8 +10,8 @@
     "**/tests/**",
     "_site/",
     "dist/",
-    "site/.astro/",
-    "site/public/",
+    "packages/site/.astro/",
+    "packages/site/public/",
     "vendor/"
   ],
   "useGitignore": true

@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
-import ChassisAssets from '../build/api/index.js'
-import { shouldIgnoreFile } from '../build/build-assets.js'
-import { platformProcessors, extractResolutionIndicator } from '../build/processors/index.js'
-import { getValidExtensions, getAllValidExtensions, isMetadataFile } from '../build/asset-types.js'
+import ChassisAssets from './api/index.js'
+import { shouldIgnoreFile } from './build-assets.js'
+import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
+import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
+import { isEntry, resolveRoot } from './root.js'
 
 /**
  * Distribution integrity validator.
@@ -14,7 +15,7 @@ class DistValidator {
    * @param {{ cwd?: string, out?: string }} [options] - The repository root and the output folder
    */
   constructor(options = {}) {
-    this.cwd = path.resolve(options.cwd || process.cwd())
+    this.cwd = resolveRoot(options.cwd)
     this.out = options.out || 'dist'
     this.sourceDir = path.join(this.cwd, 'source')
     this.distDir = path.resolve(this.cwd, this.out)
@@ -892,10 +893,12 @@ class DistValidator {
   }
 }
 
-// Run validation if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+/**
+ * The command line of the validator: `pnpm assets:validate`. Exits the process.
+ * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
+ */
+export function cli(argv = process.argv.slice(2)) {
   const options = { cwd: undefined, out: undefined }
-  const argv = process.argv.slice(2)
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--out' || argv[i] === '--cwd') {
       options[argv[i].slice(2)] = argv[++i]
@@ -909,5 +912,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     .then((ok) => process.exit(ok ? 0 : 1))
     .catch(() => process.exit(1))
 }
+
+// Run validation if this file is executed directly
+if (isEntry(import.meta.url)) cli()
 
 export default DistValidator

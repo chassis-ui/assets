@@ -88,6 +88,17 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
+      # What a site does with this repository as `vendor/assets`: `chassis-docs vendor` runs
+      # these two commands. The root package only is installed, the build needs none of it,
+      # and the checkout stays clean. The contract check then reads the docs output.
+      - name: Build as a consumer
+        run: |
+          pnpm install --ignore-workspace
+          test ! -e packages/assets/node_modules
+          pnpm assets:site
+          pnpm assets:contract
+          git diff --exit-code
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   conventions of the design-guidelines page, and Git LFS pointers.
 - `pnpm assets:typecheck`: TypeScript checks `build/` against its JSDoc, with the shared
   types in `build/types.js`.
+- `packages/assets/build/cli.js`, one entry for the build and its checks: `build`, `analyze`,
+  `validate`, `contract`, `verify` and `lint-source`. The `pnpm assets*` scripts run it with
+  `node`, so the build works with nothing installed.
 - `generateAssets(options)` takes `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`,
   `out`, `dryRun` and `allowLfsPointers`, and `ChassisAssets.build()` passes its filters on.
   The library no longer reads the command line or exits the process; the command-line entry
@@ -31,6 +34,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The repository is a pnpm workspace. The build moved from `build/` to
+  `packages/assets/build/`, its tests from `test/` to `packages/assets/test/`, and the site
+  from `site/` to `packages/site/`. `source/`, `dist/`, the `chassis` block of the root
+  `package.json` and every `pnpm assets*` command stay where they were, and the output is
+  the same file for file. A script that imports the library changes its path:
+  `build/api/index.js` is `packages/assets/build/api/index.js`.
+- `pnpm install --ignore-workspace` at the root, which a site runs before
+  `pnpm assets:site`, installs the lint tools of the root only: 449 packages where it
+  installed 906. The build uses none of them.
+- The repository root is found from the working directory upward, as the nearest folder
+  whose `package.json` has a `chassis` block, so the commands work from any folder of the
+  repository. `--cwd` names it instead.
+- The version is in `packages/assets/package.json`, and `pnpm assets --version` prints it
+  whatever `--cwd` is. The root `package.json` is private and has no version, no
+  `publishConfig`, no `files` and no `keywords`: the assets are not published to npm.
 - `text.css` and `code.css` of the default brand declare the font files that are in the
   folder, one `@font-face` per file, instead of Inter and Fira Code files that were not.
 - `--clean` with `--brand`, `--app` or `--platform` removes the output of the selected jobs
@@ -101,6 +119,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The repository is a pnpm workspace. The build moved from `build/` to
+  `packages/assets/build/`, its tests from `test/` to `packages/assets/test/`, and the site
+  from `site/` to `packages/site/`. `source/`, `dist/`, the `chassis` block of the root
+  `package.json` and every `pnpm assets*` command stay where they were, and the output is
+  the same file for file. A script that imports the library changes its path:
+  `build/api/index.js` is `packages/assets/build/api/index.js`.
+- `pnpm install --ignore-workspace` at the root, which a site runs before
+  `pnpm assets:site`, installs the lint tools of the root only: 449 packages where it
+  installed 906. The build uses none of them.
+- The repository root is found from the working directory upward, as the nearest folder
+  whose `package.json` has a `chassis` block, so the commands work from any folder of the
+  repository. `--cwd` names it instead.
+- The version is in `packages/assets/package.json`, and `pnpm assets --version` prints it
+  whatever `--cwd` is. The root `package.json` is private and has no version, no
+  `publishConfig`, no `files` and no `keywords`: the assets are not published to npm.
 - Enhanced change-version.js script with improved functionality
 - Updated and optimized documentation images for better performance
 - Improved home page images (component gallery, Figma screenshots, platforms, tokens)
@@ -114,6 +147,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The repository is a pnpm workspace. The build moved from `build/` to
+  `packages/assets/build/`, its tests from `test/` to `packages/assets/test/`, and the site
+  from `site/` to `packages/site/`. `source/`, `dist/`, the `chassis` block of the root
+  `package.json` and every `pnpm assets*` command stay where they were, and the output is
+  the same file for file. A script that imports the library changes its path:
+  `build/api/index.js` is `packages/assets/build/api/index.js`.
+- `pnpm install --ignore-workspace` at the root, which a site runs before
+  `pnpm assets:site`, installs the lint tools of the root only: 449 packages where it
+  installed 906. The build uses none of them.
+- The repository root is found from the working directory upward, as the nearest folder
+  whose `package.json` has a `chassis` block, so the commands work from any folder of the
+  repository. `--cwd` names it instead.
+- The version is in `packages/assets/package.json`, and `pnpm assets --version` prints it
+  whatever `--cwd` is. The root `package.json` is private and has no version, no
+  `publishConfig`, no `files` and no `keywords`: the assets are not published to npm.
 - Updated build path configuration
 - Modified asset build paths in build script and site configuration
 - Updated path utilities and SCSS settings for improved asset management
@@ -122,6 +170,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The repository is a pnpm workspace. The build moved from `build/` to
+  `packages/assets/build/`, its tests from `test/` to `packages/assets/test/`, and the site
+  from `site/` to `packages/site/`. `source/`, `dist/`, the `chassis` block of the root
+  `package.json` and every `pnpm assets*` command stay where they were, and the output is
+  the same file for file. A script that imports the library changes its path:
+  `build/api/index.js` is `packages/assets/build/api/index.js`.
+- `pnpm install --ignore-workspace` at the root, which a site runs before
+  `pnpm assets:site`, installs the lint tools of the root only: 449 packages where it
+  installed 906. The build uses none of them.
+- The repository root is found from the working directory upward, as the nearest folder
+  whose `package.json` has a `chassis` block, so the commands work from any folder of the
+  repository. `--cwd` names it instead.
+- The version is in `packages/assets/package.json`, and `pnpm assets --version` prints it
+  whatever `--cwd` is. The root `package.json` is private and has no version, no
+  `publishConfig`, no `files` and no `keywords`: the assets are not published to npm.
 - Reorganized documentation images
 - Renamed `chassis-social.png` to `social-image.png`
 - Replaced multiple chassis logo variants with unified `site-logo.svg`
@@ -158,6 +221,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The repository is a pnpm workspace. The build moved from `build/` to
+  `packages/assets/build/`, its tests from `test/` to `packages/assets/test/`, and the site
+  from `site/` to `packages/site/`. `source/`, `dist/`, the `chassis` block of the root
+  `package.json` and every `pnpm assets*` command stay where they were, and the output is
+  the same file for file. A script that imports the library changes its path:
+  `build/api/index.js` is `packages/assets/build/api/index.js`.
+- `pnpm install --ignore-workspace` at the root, which a site runs before
+  `pnpm assets:site`, installs the lint tools of the root only: 449 packages where it
+  installed 906. The build uses none of them.
+- The repository root is found from the working directory upward, as the nearest folder
+  whose `package.json` has a `chassis` block, so the commands work from any folder of the
+  repository. `--cwd` names it instead.
+- The version is in `packages/assets/package.json`, and `pnpm assets --version` prints it
+  whatever `--cwd` is. The root `package.json` is private and has no version, no
+  `publishConfig`, no `files` and no `keywords`: the assets are not published to npm.
 - Improved build script with validation and detailed reporting
 - Enhanced package.json configuration for asset-focused distribution
 - Updated README with clearer project scope and usage instructions

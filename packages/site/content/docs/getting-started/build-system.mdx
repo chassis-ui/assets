@@ -51,19 +51,19 @@ pnpm assets --dry-run
 pnpm assets --help
 ```
 
-| Option                 | What it does                                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `--brand <name...>`    | Only these brands. One or more values                                                               |
-| `--app <name...>`      | Only these apps                                                                                     |
-| `--platform <name...>` | Only these platforms                                                                                |
-| `--clean`              | Remove the output first: all of `dist/` without filters, the folders of the selected jobs with them |
-| `--no-clean`           | Keep `dist/` even for a full build                                                                  |
-| `--out <dir>`          | Write to another folder than `dist/`                                                                |
-| `--cwd <dir>`          | The repository root, where `package.json` and `source/` are                                         |
-| `--dry-run`            | Print the jobs and their file counts, write nothing                                                 |
-| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same         |
-| `--quiet`              | Print errors only                                                                                   |
-| `--help`, `--version`  | The options; the version of `package.json`                                                          |
+| Option                 | What it does                                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `--brand <name...>`    | Only these brands. One or more values                                                                           |
+| `--app <name...>`      | Only these apps                                                                                                 |
+| `--platform <name...>` | Only these platforms                                                                                            |
+| `--clean`              | Remove the output first: all of `dist/` without filters, the folders of the selected jobs with them             |
+| `--no-clean`           | Keep `dist/` even for a full build                                                                              |
+| `--out <dir>`          | Write to another folder than `dist/`                                                                            |
+| `--cwd <dir>`          | The repository root, where `package.json` and `source/` are. Found from the working directory upward by default |
+| `--dry-run`            | Print the jobs and their file counts, write nothing                                                             |
+| `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same                     |
+| `--quiet`              | Print errors only                                                                                               |
+| `--help`, `--version`  | The options; the version of the build                                                                           |
 
 A filter value that is not configured, or filters that together select no job, fail the build and name the configured values.
 
@@ -430,7 +430,7 @@ Quick reference for platform-specific transformations:
 
 The build system uses modular processor architecture. To add a new platform:
 
-**1. Create processor module** (`build/processors/desktop.js`):
+**1. Create processor module** (`packages/assets/build/processors/desktop.js`):
 
 ```js
 const desktopProcessor = {
@@ -456,7 +456,7 @@ const desktopProcessor = {
 export default desktopProcessor
 ```
 
-**2. Register processor** (`build/processors/index.js`):
+**2. Register processor** (`packages/assets/build/processors/index.js`):
 
 ```js
 import desktopProcessor from './desktop.js'
@@ -495,11 +495,12 @@ pnpm assets --platform desktop
 Use the Chassis Assets API for custom integrations:
 
 ```javascript
-import ChassisAssets from '../chassis-assets/build/api/index.js'
-import AssetAnalyzer from '../chassis-assets/build/analyze-assets.js'
-import { generateAssets } from '../chassis-assets/build/build-assets.js'
+import ChassisAssets from '../chassis-assets/packages/assets/build/api/index.js'
+import AssetAnalyzer from '../chassis-assets/packages/assets/build/analyze-assets.js'
+import { generateAssets } from '../chassis-assets/packages/assets/build/build-assets.js'
 
-// The repository root: where package.json and source/ are. Default: the working directory
+// The repository root: where package.json and source/ are. Default: the nearest folder,
+// from the working directory upward, whose package.json has a `chassis` block
 const cwd = new URL('../chassis-assets/', import.meta.url).pathname
 
 // Build assets programmatically
@@ -575,8 +576,8 @@ console.log('Total size:', analyzer.formatBytes(analyzer.stats.totalSize))
 For automated testing or CI/CD pipelines, use quiet mode to suppress verbose output:
 
 ```javascript
-import { generateAssets } from '../chassis-assets/build/build-assets.js'
-import AssetAnalyzer from '../chassis-assets/build/analyze-assets.js'
+import { generateAssets } from '../chassis-assets/packages/assets/build/build-assets.js'
+import AssetAnalyzer from '../chassis-assets/packages/assets/build/analyze-assets.js'
 
 // Build assets silently (only errors shown)
 await generateAssets({ quiet: true, cwd })
@@ -911,7 +912,7 @@ Follow these best practices when configuring and using the build system:
 
 ## Development Tests
 
-The tests run with [Vitest](https://vitest.dev/) against a small fixture in `test/fixtures/`: two brands, `alpha` and `beta`, two apps, `site` for the web and `mobile` for iOS and Android, and every type of asset as a one-line text file. They need no Git LFS files and write only to temporary folders, never to `dist/`.
+The tests run with [Vitest](https://vitest.dev/) against a small fixture in `packages/assets/test/fixtures/`: two brands, `alpha` and `beta`, two apps, `site` for the web and `mobile` for iOS and Android, and every type of asset as a one-line text file. They need no Git LFS files and write only to temporary folders, never to `dist/`.
 
 ```bash
 # Run every test
@@ -924,13 +925,13 @@ pnpm test:golden
 **What the tests check:**
 
 - ✅ The renaming of each platform, the resolution indicators, the Android density folders and the `ic_` prefix, and the formats each platform keeps, one row per rule of these pages
-- ✅ A build of the fixture against `test/golden/`, its committed output, file by file
+- ✅ A build of the fixture against `packages/assets/test/golden/`, its committed output, file by file
 - ✅ The brand override, cleaning with and without filters, dry runs, Git LFS pointers and rename collisions
 - ✅ The command line of the build, the analyzer and the validator: every flag and the exit codes
 - ✅ That the analyzer finds the duplicate the fixture holds, and that the validator fails on an output with a file missing and names it
 - ✅ The methods of the programmatic API
 
-`pnpm test:golden` builds the fixture into `test/golden/`. Review its diff like any other change: every file that moves or changes name there moves or changes name in `dist/` too.
+`pnpm test:golden` builds the fixture into `packages/assets/test/golden/`. Review its diff like any other change: every file that moves or changes name there moves or changes name in `dist/` too.
 
 ## Related Resources
 

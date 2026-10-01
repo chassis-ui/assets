@@ -42,6 +42,12 @@ cd assets
 pnpm install
 ```
 
+The repository is a pnpm workspace: `source/`, `dist/` and the `chassis` configuration are at
+the root, the build is in `packages/assets/` and the documentation site in `packages/site/`.
+The build needs no dependencies, so `pnpm assets` runs on a fresh clone; the install is for
+the tests, the checks and the site. A project that vendors the repository runs
+`pnpm install --ignore-workspace && pnpm assets:site`.
+
 ### Generate Distribution
 
 ```shell
@@ -110,14 +116,14 @@ Manage, analyze, and validate your asset distribution:
 
 ```shell
 # Development workflow
-pnpm test                   # Run the tests on the fixture in test/fixtures/, in seconds
-pnpm test:golden            # Write test/golden/ again after an intended change to the build
+pnpm test                   # Run the tests on the fixture in packages/assets/test/fixtures/, in seconds
+pnpm test:golden            # Write packages/assets/test/golden/ again after an intended change to the build
 pnpm assets:analyze         # Analyze asset distribution (supports --brand, --app, --platform, --out)
 pnpm assets:validate        # Validate distribution integrity (supports --out)
 pnpm assets:verify          # The validator, then the consumer contract of dist/web/docs/chassis/
 pnpm assets:contract        # The consumer contract alone
 pnpm assets:lint:source     # Check the names and layout of source/ (--allow-lfs-pointers without Git LFS)
-pnpm assets:typecheck       # Type-check build/ from its JSDoc
+pnpm assets:typecheck       # Type-check packages/assets/build/ from its JSDoc
 pnpm assets:lint            # Lint the build scripts and the tests
 pnpm lint:prettier          # Check formatting across the repository
 pnpm check                  # Type-check the site, then audit the dependencies
@@ -220,7 +226,7 @@ The build system applies intelligent transformations for each platform:
 
 ## Configuration
 
-The `chassis` key in `package.json` defines the build configuration for asset distribution:
+The `chassis` key in the root `package.json` defines the build configuration for asset distribution:
 
 ```json
 "chassis": {

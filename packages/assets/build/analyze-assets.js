@@ -11,6 +11,7 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import { shouldIgnoreFile } from './build-assets.js'
+import { isEntry, resolveRoot } from './root.js'
 
 /**
  * Asset analyzer for Chassis build system
@@ -18,7 +19,7 @@ import { shouldIgnoreFile } from './build-assets.js'
 class AssetAnalyzer {
   constructor(options = {}) {
     this.quiet = options.quiet || false
-    this.cwd = path.resolve(options.cwd || process.cwd())
+    this.cwd = resolveRoot(options.cwd)
     this.sourceDir = path.join(this.cwd, 'source')
     this.distDir = path.resolve(this.cwd, options.out || 'dist')
     this.config = this.loadConfig()
@@ -619,15 +620,21 @@ export function parseAnalyzerArgs(argv = process.argv.slice(2)) {
   return options
 }
 
-// Run analysis if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+/**
+ * The command line of the analyzer: `pnpm assets:analyze`.
+ * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
+ */
+export function cli(argv = process.argv.slice(2)) {
   try {
-    const analyzer = new AssetAnalyzer(parseAnalyzerArgs())
+    const analyzer = new AssetAnalyzer(parseAnalyzerArgs(argv))
     analyzer.analyze()
   } catch (error) {
     console.error(`❌ ${error.message}`)
     process.exit(1)
   }
 }
+
+// Run analysis if this file is executed directly
+if (isEntry(import.meta.url)) cli()
 
 export default AssetAnalyzer
