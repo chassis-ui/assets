@@ -79,6 +79,9 @@ For each job, in order:
 7. **Catalog**, only with `--asset-catalog` and only for a processor that has
    `assetCatalog`: the images of `images/` of the job move into `Assets.xcassets`, one image
    set per base name (`writeAssetCatalog()`, `writeCatalog()`). See "Asset catalog".
+8. **Res**, only with `--res` and only for a processor that has `res`: the fonts, the
+   images and the icons of the job that `res/` takes move into `res/font/` and
+   `res/drawable*/` (`writeResLayout()`, `writeRes()`). See "Res folder".
 
 Before the jobs, `validateConfiguration()` checks that brands and apps are configured, that
 the default brand folder exists and that every platform has a processor, and `planJobs()`
@@ -104,6 +107,7 @@ jobs with their file counts.
 | `packages/assets/build/processors/index.js`   | The registry `platformProcessors`, `getProcessor()`, `getPlatformNames()`. A platform of `chassis.build.apps` must be a key here.                                                                                                                                                                                                                                                                             |
 | `packages/assets/build/vector-drawables.js`   | The conversion of `--vector-drawables`: `loadConverter()`, which imports `svg2vectordrawable` when it is called and says how to install it when it is missing, `drawsSomething()` and `convertFolder()`. The one module that uses a package.                                                                                                                                                                  |
 | `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                              |
+| `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                  |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -175,6 +179,7 @@ on the fixture, which has its own configuration.
 | `--allow-lfs-pointers`           | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                    |
 | `--vector-drawables`             | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                            |
 | `--asset-catalog`                | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`. Off by default.                                                                                                                           |
+| `--res`                          | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`. Off by default.                                                                                                              |
 | `--quiet`, `--help`, `--version` | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
 | `pnpm assets:site`               | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
 | `pnpm assets:analyze [filters]`  | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
@@ -222,6 +227,7 @@ the roadmap.
   `drawable/`. Both are created under the folder the file came from, so `images/logo/x@2x.png`
   becomes `images/logo/drawable-xhdpi/x.png` (roadmap F4, D5).
 - `icons/`: `.svg` only, as SVG. With `--vector-drawables`, as vector drawables: the same folder and name, `.xml` (roadmap 6.2, D9). A PNG icon is not kept, since the build places only `images/` in density folders (D15).
+- With `--res`: the fonts in `res/font/`, the raster images and the vector drawables in `res/drawable/` and the density folders, without subfolders (roadmap 6.4, D11).
 - Other folders: every file.
 
 ### Vector drawables
@@ -241,12 +247,43 @@ default, and the default output is the same file for file with and without the c
 - A file that converts to a drawable without a `<path>` stays as SVG, with a warning:
   the SVG file of the icon font, `icons/icons/ic_chassis_icons.svg`. A file that the
   converter throws on is an error of the build.
-- The layout does not change: `icons/svgs/ic_arrow_right_solid.xml`. A `res/drawable/`
-  layout is roadmap 6.4.
+- The layout does not change: `icons/svgs/ic_arrow_right_solid.xml`. `--res` moves the
+  drawables to `res/drawable/`, see "Res folder".
 - The validator takes the converted name for the source file, so `pnpm assets:verify`
   passes on either output. The release archives are built without the option.
 - Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
   has read the drawables.
+
+### Res folder
+
+`pnpm assets --res` is off by default, and the default output is the same file for file
+with and without the code. It needs no package: the files are moved.
+
+- The processor says what is written, in `res`: the name of the folder, for the fonts the
+  type folder, the folder `font` and the formats `.ttf` and `.otf`, and for the drawables
+  the type folders `images` and `icons`, the folder `drawable` and the formats `.png`,
+  `.webp`, `.jpg`, `.jpeg`, `.gif` and `.xml`. Nothing on the web and iOS.
+- It runs last, after the conversion of `--vector-drawables`, so the vector drawables of the
+  icons are drawables like any other. Without that option the icons are SVG and stay.
+- A font moves to `res/font/`. An image moves to the folder of `res/` named as the density
+  folder it is in, an icon to `res/drawable/`. The subfolders are dropped: `res/` does not
+  nest.
+- One resource comes from one folder. When two folders have a drawable of one name, the
+  folder nearest to the type folder gets it, the first by name among equals, with every
+  density it has, so that the densities of two different images are never mixed.
+- A file without a place in `res/` stays where it is, with one warning per job: a format
+  `res/` does not take (the licenses, every SVG), a second file of one name in a folder
+  (TTF before OTF, PNG before WebP, in the order of the processor's lists), a file of a
+  folder that did not get the resource, and a name that cannot be a field of `R`: not of
+  lowercase letters, digits and underscores with a letter first, or a word of Java.
+- `res/` of a job is removed before it is written, and the rename pass leaves it alone, so
+  a build into an existing output writes the same folder.
+- The validator takes the path in `res/` for the source file, so `pnpm assets:verify`
+  passes on either output. The release archives are built without the option.
+- Not part of it: night qualifiers (the build has no rule that pairs `*_light` and
+  `*_dark`), font family XML files, and the licenses, which `res/font/` does not take.
+- Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
+  has read the folder.
 
 ### Asset catalog
 
@@ -414,3 +451,4 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
   build loads, only with its option (roadmap 6.2).
 - 2026-10-01: `--asset-catalog`, with a check that compiles the catalogs on a macOS runner
   (roadmap 6.3).
+- 2026-10-01: `--res`, the Android `res/` layout (roadmap 6.4).

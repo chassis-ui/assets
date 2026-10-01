@@ -5,6 +5,7 @@ import { catalogPath } from './asset-catalog.js'
 import { shouldIgnoreFile } from './build-assets.js'
 import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
 import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
+import { resourcePath } from './res-layout.js'
 import { isEntry, resolveRoot } from './root.js'
 
 /**
@@ -204,6 +205,12 @@ class DistValidator {
             distAssetTypes.push(catalog.type)
           }
 
+          // An output built with `--res` has `res/` in place of the folders it emptied
+          const res = platformProcessors[platform]?.res
+          if (res && distAssetTypes.includes(res.name)) {
+            distAssetTypes.push(res.font.type, ...res.drawable.types)
+          }
+
           // Check if all source asset types exist in dist
           for (const assetType of sourceAssetTypes) {
             if (!distAssetTypes.includes(assetType)) {
@@ -374,7 +381,16 @@ class DistValidator {
                 )
               }
 
-              if (!fs.existsSync(androidDistPath)) {
+              if (
+                !fs.existsSync(androidDistPath) &&
+                !this.inRes(
+                  distPath,
+                  platform,
+                  sourceFile.assetType,
+                  transformedName,
+                  path.basename(path.dirname(androidDistPath))
+                )
+              ) {
                 missingFiles++
                 const densityOrDrawable = sourceFile.hasResolution
                   ? this.getAndroidDensityFolder(sourceFile.filename)
@@ -399,8 +415,12 @@ class DistValidator {
                   path.join(distPath, catalogPath(catalog, sourceFile.subFolder, transformedName))
                 )
 
+              const converted = this.convertedPath(transformedName, platform, sourceFile.assetType)
+
               if (
                 !inCatalog &&
+                !this.inRes(distPath, platform, sourceFile.assetType, transformedName) &&
+                !this.inRes(distPath, platform, sourceFile.assetType, converted) &&
                 !fs.existsSync(fullDistPath) &&
                 !fs.existsSync(this.convertedPath(fullDistPath, platform, sourceFile.assetType))
               ) {
@@ -602,6 +622,22 @@ class DistValidator {
 
     // Use processor's renameFile method
     return processor.renameFile(filename, isIcon)
+  }
+
+  /**
+   * Whether a file is in the `res/` folder of an output that was built with `--res`.
+   * @param {string} distPath - The output of the job
+   * @param {string} platform - Platform name
+   * @param {string} assetType - Asset type (icons, images, fonts, etc)
+   * @param {string} fileName - The name of the file in the output
+   * @param {string} [folder] - The density folder of an image
+   * @returns {boolean}
+   */
+  inRes(distPath, platform, assetType, fileName, folder) {
+    const res = platformProcessors[platform]?.res
+    if (!res) return false
+    const resPath = resourcePath(res, assetType, fileName, folder)
+    return resPath !== null && fs.existsSync(path.join(distPath, resPath))
   }
 
   /**

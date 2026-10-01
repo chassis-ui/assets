@@ -37,7 +37,7 @@ dist/android/demo/chassis/
 </CxTable>
 
 <Callout type="warning">
-The output is not a `res/` folder. The build keeps the subfolders of `images/`, which `res/` does not allow, and it copies an SVG as SVG, which `res/` does not accept. You copy the files you need into `res/`. For the icons, build with `--vector-drawables` or import the SVG files with Android Studio, see [Vector drawables](#vector-drawables).
+The default output is not a `res/` folder. The build keeps the subfolders of `images/`, which `res/` does not allow, and it copies an SVG as SVG, which `res/` does not accept. You copy the files you need into `res/`, or build with `--res`, see [Res folder](#res-folder). For the icons, build with `--vector-drawables` or import the SVG files with Android Studio, see [Vector drawables](#vector-drawables).
 </Callout>
 
 ## Installation
@@ -125,9 +125,68 @@ dist/android/demo/chassis/
             └── ...
 ```
 
+### Res folder
+
+The build writes a `res/` folder itself when you give it the `--res` option. Add `--vector-drawables`, which needs the packages of the repository, to get the icons into it:
+
+```bash
+cd chassis-assets
+pnpm install
+pnpm assets --platform android --res --vector-drawables
+```
+
+The font files, the raster images and the vector drawables move into `res/`, without the subfolders they had:
+
+```text
+dist/android/demo/chassis/
+├── fonts/
+│   ├── code_license.txt
+│   ├── display_license.txt
+│   └── text_license.txt
+├── icons/
+│   └── icons/
+│       └── ic_chassis_icons.svg
+├── images/
+│   ├── drawable/
+│   │   ├── chassis_logo.svg
+│   │   └── ...
+│   ├── home/
+│   └── logo/
+└── res/
+    ├── drawable/
+    │   ├── chassis_logo_brand.png
+    │   ├── chassis_logo_shadow.png
+    │   ├── ic_arrow_right_solid.xml
+    │   └── ...
+    ├── drawable-xhdpi/
+    │   ├── chassis_logo_brand.png
+    │   ├── chassis_logo_shadow.png
+    │   └── ...
+    ├── drawable-xxhdpi/
+    │   ├── chassis_logo_brand.png
+    │   └── ...
+    └── font/
+        ├── code_normal.ttf
+        ├── text_normal.otf
+        └── ...
+```
+
+Copy the folder into the source set of the brand, and the licenses beside it:
+
+```bash
+BRAND=chassis
+ASSETS="chassis-assets/dist/android/demo/$BRAND"
+
+mkdir -p "app/src/$BRAND/assets/licenses"
+cp -R "$ASSETS/res" "app/src/$BRAND/"
+cp "$ASSETS"/fonts/*_license.txt "app/src/$BRAND/assets/licenses/"
+```
+
+What `res/` does not take stays in its folder, and the build warns about the number of such files: the licenses, the SVG images, and without `--vector-drawables` every icon. When two subfolders of `images/` hold an image of one name, the folder nearest to `images/` gets the resource and the other file stays. The release archives are built without the option, and the rest of this page describes the default output.
+
 ### Copying to res
 
-A copy script moves the files that `res/` accepts as they are: the font files and the PNG and WebP images. It lists the folders of `images/` that the app uses, because `res/` has one `drawable/` folder and the output has one per subfolder. Add this script to the Android project as `scripts/sync-assets.sh`:
+Without the option, a copy script moves the files that `res/` accepts as they are: the font files and the PNG and WebP images. It lists the folders of `images/` that the app uses, because `res/` has one `drawable/` folder and the output has one per subfolder. Add this script to the Android project as `scripts/sync-assets.sh`:
 
 ```bash
 #!/bin/bash

@@ -135,6 +135,7 @@ pnpm assets:site                              # The output the Chassis sites rea
 | `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                  |
 | `--vector-drawables`   | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
 | `--asset-catalog`      | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                |
+| `--res`                | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`   |
 | `--quiet`              | Print errors only                                                                                   |
 | `--help`, `-h`         | Print the options                                                                                   |
 | `--version`, `-v`      | Print the version                                                                                   |

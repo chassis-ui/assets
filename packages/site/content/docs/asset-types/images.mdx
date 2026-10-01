@@ -136,7 +136,7 @@ On Android the indicator of a name chooses the density folder, and a file withou
 | `@4x` | `drawable-xxxhdpi/` |
 </CxTable>
 
-The density folders are written inside each subfolder of `images/`, so `images/logo/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`.
+The density folders are written inside each subfolder of `images/`, so `images/logo/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`. A build with the `--res` option does that copy: it moves the raster images of every subfolder into `res/drawable/` and the density folders, see the [build system page]([[docsref:/getting-started/build-system#res-folder]]).
 
 ### Asset catalog
 

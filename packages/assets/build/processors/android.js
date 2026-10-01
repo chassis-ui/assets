@@ -31,6 +31,20 @@ const androidProcessor = {
   vectorDrawables: { type: 'icons', from: '.svg', to: '.xml' },
 
   /**
+   * What `--res` writes: the font files move to `res/font/`, and the images and the icons
+   * in a format `res/` takes move to `res/drawable/` and the density folders
+   */
+  res: {
+    name: 'res',
+    font: { type: 'fonts', folder: 'font', formats: ['.ttf', '.otf'] },
+    drawable: {
+      types: ['images', 'icons'],
+      folder: 'drawable',
+      formats: ['.png', '.webp', '.jpg', '.jpeg', '.gif', '.xml']
+    }
+  },
+
+  /**
    * Density folder mapping for resolution indicators
    * Maps `@1x`, `@2x`, `@3x`, etc. to Android drawable density folders
    */

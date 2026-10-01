@@ -52,6 +52,7 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 | `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same |
 | `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
 | `--asset-catalog` | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/` |
+| `--res` | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/` |
 | `--quiet` | Print errors only |
 | `--help`, `-h` | Print the options |
 | `--version`, `-v` | Print the version |
@@ -106,6 +107,21 @@ pnpm assets --asset-catalog
 The files of one base name are one image set, with the `Contents.json` that Xcode writes: `images/badge.png`, `images/badge@2x.png` and `images/badge@3x.png` become `Assets.xcassets/badge.imageset/`, each file in the slot of its indicator. An SVG or a PDF without a raster of its name is an image set of one file that keeps its vector data. A subfolder of `images/` is a folder of the catalog that provides a namespace, so `images/logo/mark@2x.png` is in `Assets.xcassets/logo/mark.imageset/` and an app names it `logo/mark`.
 
 A file without a place in an image set stays in `images/`, and the build warns once per job with the number of such files. These are an SVG or a PDF beside a raster of its name, a variant with another indicator than `@1x`, `@2x` or `@3x`, a second file for one slot, and any format but PNG, JPEG, SVG and PDF. The build does not pair a light and a dark image, and the icons of `icons/` stay files.
+
+### Res folder
+
+The `--res` option moves the files of an Android job that the `res/` folder of an app takes into one, `dist/android/<app>/<brand>/res/`. It is off by default, needs nothing installed, and leaves the output of every other platform as it is.
+
+```bash
+pnpm assets --res
+pnpm assets --res --vector-drawables   # with the icons, needs pnpm install
+```
+
+A TTF or OTF file of `fonts/` moves to `res/font/`. A PNG, WebP, JPEG or GIF file of `images/` moves to the folder of `res/` that is named as its density folder, so `images/logo/drawable-xhdpi/mark.png` becomes `res/drawable-xhdpi/mark.png`. A vector drawable of `icons/` moves to `res/drawable/`, which makes `--vector-drawables` the option that brings the icons into `res/`.
+
+The `res/` folder does not nest, so the subfolders of `images/` and `icons/` are dropped. When two folders hold an image of one name, the folder nearest to `images/` gets the resource with every density it has, and the files of the other folder stay.
+
+A file without a place in `res/` stays where it is, and the build warns once per job with the number of such files. These are the font licenses, every SVG file, a second file of a name in another format, such as `text.otf` beside `text.ttf` or a WebP beside a PNG, and a name that cannot be a resource: one that starts with a digit, or a word of Java such as `default`.
 
 ## Configuration
 
@@ -184,7 +200,7 @@ Each platform has a processor that says which formats it keeps and how a file is
 | Names | kebab-case | snake_case | snake_case |
 | Indicator `@2x`, `@3x` | Kept in the name | Kept in the name | Removed from the name |
 | `fonts/` | WOFF, WOFF2, CSS, SCSS, TXT | TTF, OTF, TXT | TTF, OTF, TXT |
-| `images/` | Every format | Every format but WebP. An asset catalog with `--asset-catalog` | Every format, in density folders |
+| `images/` | Every format | Every format but WebP. An asset catalog with `--asset-catalog` | Every format, in density folders. In `res/` with `--res` |
 | `icons/` | Every format | SVG, PDF, PNG | SVG, with the `ic_` prefix. Vector drawables with `--vector-drawables` |
 | Subfolders | Kept | Kept | Kept, with the density folders inside each |
 </CxTable>
@@ -349,7 +365,7 @@ Name the platform in an app of the `chassis` block, and build it with `pnpm asse
 
 A processor may also place an image itself with `processImage()`, as the Android processor does for the density folders. It returns `true` when it wrote the file, and `false` to let the build copy it. Such a processor also has `imageFolder(fileName)`, which returns the folder the image goes to, so that the build can warn about two images that meet there.
 
-A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`. A processor with `assetCatalog` takes part in the `--asset-catalog` option. The property names the type folder and the folder of the catalog, as the iOS processor does with `{ type: 'images', name: 'Assets.xcassets' }`.
+A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`. A processor with `assetCatalog` takes part in the `--asset-catalog` option. The property names the type folder and the folder of the catalog, as the iOS processor does with `{ type: 'images', name: 'Assets.xcassets' }`. A processor with `res` takes part in the `--res` option. The property names the folder, and for the fonts and the drawables the type folders, the folder of `res/` and the formats it takes.
 
 ## Library
 
@@ -388,7 +404,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 
 ### generateAssets
 
-`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables` and `assetCatalog`.
+`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog` and `res`.
 
 ### ChassisAssets
 
@@ -404,7 +420,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 | `getCombinations()` | Every job, as brand, app and platform |
 | `assetsExist(brand, app)` | Whether the source has files for the brand and the app |
 | `getAssetInventory(brand, app)` | The source files of the brand and the app, by type |
-| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `clean`, `quiet`, `vectorDrawables` and `assetCatalog` |
+| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `clean`, `quiet`, `vectorDrawables`, `assetCatalog` and `res` |
 | `getStats()` | The numbers of brands, apps, jobs, source files and output files |
 | `validate()` | The errors and the warnings of the configuration and the source |
 </CxTable>

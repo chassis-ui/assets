@@ -15,6 +15,7 @@ import fs from 'fs'
 import path from 'path'
 import { writeCatalog } from './asset-catalog.js'
 import { platformProcessors } from './processors/index.js'
+import { writeRes } from './res-layout.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
 import { convertFolder, loadConverter } from './vector-drawables.js'
 
@@ -43,6 +44,8 @@ Options:
                          place of .svg. Needs \`pnpm install\`
   --asset-catalog        Write the images of iOS as an asset catalog, Assets.xcassets
                          in place of images/
+  --res                  Write the fonts, images and icons of Android as a res/ folder,
+                         res/font/ and res/drawable*/
   --quiet                Print errors only
   --help, -h             Print this help
   --version, -v          Print the version
@@ -58,7 +61,8 @@ let run = {
   dryRun: false,
   allowLfsPointers: false,
   vectorDrawables: false,
-  assetCatalog: false
+  assetCatalog: false,
+  res: false
 }
 
 /** Statistics of the run. @type {BuildStats} */
@@ -86,6 +90,7 @@ function emptyStats() {
     directoriesCreated: 0,
     filesConverted: 0,
     imageSets: 0,
+    resourceFiles: 0,
     errors: [],
     warnings: [],
     lfsPointers: [],
@@ -175,6 +180,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     allowLfsPointers: false,
     vectorDrawables: false,
     assetCatalog: false,
+    res: false,
     help: false,
     version: false
   }
@@ -213,6 +219,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.vectorDrawables = true
     } else if (arg === '--asset-catalog') {
       options.assetCatalog = true
+    } else if (arg === '--res') {
+      options.res = true
     } else if (arg === '--quiet') {
       options.quiet = true
     } else if (arg === '--help' || arg === '-h') {
@@ -565,8 +573,8 @@ function renameFilesRecursively(processor, folderPath, parentDir = '') {
     const stat = fs.statSync(itemPath)
 
     if (stat.isDirectory()) {
-      // The asset catalog of an earlier build has its names already
-      if (item === processor.assetCatalog?.name) return
+      // The asset catalog or the res/ folder of an earlier build has its names already
+      if (item === processor.assetCatalog?.name || item === processor.res?.name) return
       renameFilesRecursively(processor, itemPath, currentDirName)
     } else {
       const newName = processor.renameFile
@@ -806,6 +814,29 @@ function writeAssetCatalog(processor, destPath) {
   }
 }
 
+/**
+ * Move the files a processor names in `res` into a `res/` folder, in the output of one job.
+ * A file without a place in it stays in its folder, with a warning for the job.
+ * @param {Processor} processor - The platform processor
+ * @param {string} destPath - The output folder of the job
+ */
+function writeResLayout(processor, destPath) {
+  const res = processor.res
+  if (!res) return
+
+  const { moved, left } = writeRes(destPath, res)
+  stats.resourceFiles += moved
+  if (moved > 0) {
+    logger.log(`🗂️  Moved ${moved} files to ${res.name}/`)
+  }
+  cleanupEmptyDirectories(destPath)
+  if (left.length > 0) {
+    stats.warnings.push(
+      `${left.length} file(s) have no place in ${res.name}/ and stay in ${path.relative(run.cwd, destPath)}: ${left.slice(0, 3).join(', ')}${left.length > 3 ? ', …' : ''}`
+    )
+  }
+}
+
 // Re-export platform processors for backward compatibility
 export { platformProcessors }
 
@@ -829,7 +860,8 @@ export async function generateAssets(options = {}) {
     dryRun: options.dryRun || false,
     allowLfsPointers: options.allowLfsPointers || process.env.CHASSIS_ALLOW_LFS_POINTERS === '1',
     vectorDrawables: options.vectorDrawables || false,
-    assetCatalog: options.assetCatalog || false
+    assetCatalog: options.assetCatalog || false,
+    res: options.res || false
   }
   config = loadConfig(cwd)
 
@@ -869,6 +901,10 @@ export async function generateAssets(options = {}) {
     )
   }
 
+  if (run.res && !jobs.some((job) => platformProcessors[job.platform].res)) {
+    stats.warnings.push('--res changes nothing: no selected job has a platform with a res/ folder')
+  }
+
   /** @param {Job} job */
   const jobDir = (job) => path.join(run.outDir, job.platform, job.app, job.brand)
 
@@ -906,6 +942,7 @@ export async function generateAssets(options = {}) {
     processAssets(processor, [defaultAppPath, brandAppPath], destPath, defaultAppPath)
     if (convert) await convertVectorDrawables(processor, destPath, convert)
     if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor, destPath)
+    if (run.res && !run.dryRun) writeResLayout(processor, destPath)
     stats.jobs.push({ ...job, files: stats.filesProcessed - before })
   }
 
@@ -928,6 +965,9 @@ export async function generateAssets(options = {}) {
     }
     if (run.assetCatalog) {
       logger.log(`🗂️  ${stats.imageSets} image sets written to asset catalogs`)
+    }
+    if (run.res) {
+      logger.log(`🗂️  ${stats.resourceFiles} files moved to res/ folders`)
     }
   }
 

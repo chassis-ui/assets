@@ -38,6 +38,7 @@
  *   `vectorDrawables` as vector drawables. Needs the package `svg2vectordrawable`
  * @property {boolean} [assetCatalog] - Move the images a processor names in `assetCatalog`
  *   into an asset catalog
+ * @property {boolean} [res] - Move the files a processor names in `res` into a `res/` folder
  */
 
 /**
@@ -57,6 +58,7 @@
  * @property {number} filesConverted - Files written as vector drawables, with
  *   `vectorDrawables`
  * @property {number} imageSets - Image sets written to asset catalogs, with `assetCatalog`
+ * @property {number} resourceFiles - Files moved into `res/` folders, with `res`
  * @property {string[]} errors
  * @property {string[]} warnings
  * @property {string[]} lfsPointers - Source files that are Git LFS pointers
@@ -99,6 +101,19 @@
  */
 
 /**
+ * A `res/` folder that takes the fonts, the images and the icons of a job, which an option
+ * of the build turns on.
+ * @typedef {Object} ResLayout
+ * @property {string} name - The folder in the output of a job, `res`
+ * @property {{ type: string, folder: string, formats: string[] }} font - The type folder of
+ *   the fonts, the folder of `res/` they move to, and the extensions it takes
+ * @property {{ types: string[], folder: string, formats: string[] }} drawable - The type
+ *   folders of the images and the icons, the folder of `res/` a file without a density
+ *   folder moves to, and the extensions it takes, the first one first when two files have
+ *   one name
+ */
+
+/**
  * A platform processor of `build/processors/`: the platform's names and filters.
  * @typedef {Object} Processor
  * @property {string} name - The platform, a key of `platformProcessors`
@@ -118,6 +133,8 @@
  *   platform. Without it the option leaves the platform as it is
  * @property {Catalog} [assetCatalog] - What `--asset-catalog` writes for the platform.
  *   Without it the option leaves the platform as it is
+ * @property {ResLayout} [res] - What `--res` writes for the platform. Without it the option
+ *   leaves the platform as it is
  */
 
 /**
