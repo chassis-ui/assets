@@ -4,8 +4,6 @@ description: Where the build writes the fonts, images and icons of an iOS app, a
 toc: true
 ---
 
-<Callout type="warning" name="created-by-ai" />
-
 ## Introduction
 
 The build writes the files of an iOS app to `dist/ios/<app>/<brand>/`. The names are in snake_case, and an `@2x` or `@3x` indicator stays at the end of a name, which is how UIKit finds the variant of a screen. iOS gets the TTF and OTF fonts with their licenses, every image format but WebP, and the SVG, PDF and PNG files of `icons/`.
@@ -100,7 +98,7 @@ The font files are named by role and weight, not by family: `text_normal.otf`, `
 
 ### Add the fonts
 
-Xcode has to copy the fonts into the app bundle, and iOS has to be told about them. Add the files of `dist/ios/demo/chassis/fonts/` to the project with **File → Add Files to…**, with the app target checked, then list each file under `UIAppFonts` (**Fonts provided by application**) in `Info.plist`, by its file name with the extension:
+Xcode has to copy the fonts into the app bundle, and iOS has to be told about them. Add the files of `dist/ios/demo/chassis/fonts/` to the project with **File → Add Files to…**, with the app target checked, then list each file under `UIAppFonts` (**Fonts provided by application**) in `Info.plist`, by its file name with the extension. A font that the bundle holds and the list does not name does not load:
 
 ```xml
 <key>UIAppFonts</key>
@@ -108,6 +106,7 @@ Xcode has to copy the fonts into the app bundle, and iOS has to be told about th
     <string>text_normal.otf</string>
     <string>text_strong.otf</string>
     <string>display_normal.otf</string>
+    <string>display_strong.otf</string>
     <string>code_normal.ttf</string>
 </array>
 ```
@@ -119,8 +118,10 @@ Each role has a license, `text_license.txt`, `display_license.txt` and `code_lic
 UIKit and SwiftUI load a custom font by its PostScript name, which is inside the file and is not the file name. On a Mac, read it from a file of the output:
 
 ```bash
-mdls -name com_apple_ats_name_postscript dist/ios/demo/chassis/fonts/text_normal.otf
+mdimport -t -d2 dist/ios/demo/chassis/fonts/text_normal.otf 2>&1 | grep -A 2 name_postscript
 ```
+
+The command reads the file itself, so it also answers for a file that was just built, which Spotlight has not indexed yet.
 
 The name changes when a brand changes the family of a role. To keep the app free of family names, read the name from the bundled file at run time. Add this function to the app:
 
@@ -274,7 +275,7 @@ The build has no rule for appearances: a designer who exports an image for light
 The build gives iOS the SVG, PDF and PNG files of `icons/`. In the committed configuration these are the SVG files of Chassis Icons under `icons/svgs/`, one per icon and style, such as `icons/svgs/arrow_right_solid.svg`. The [icons page]([[docsref:/asset-types/icons#platform-output]]) says where they come from.
 
 <Callout type="warning">
-`icons/icons/chassis_icons.svg` is a sprite of `<symbol>` elements, kept because it is an SVG file. An asset catalog does not show it as an image; use the files of `icons/svgs/`.
+`icons/icons/chassis_icons.svg` is a sprite of `<symbol>` elements, kept because it is an SVG file. An asset catalog takes it as one small image with every icon drawn over the others; use the files of `icons/svgs/`.
 </Callout>
 
 ### Add the icons
@@ -369,6 +370,8 @@ A **Run Script** build phase can run the copy on each build of a target. Put it 
 "$SRCROOT/scripts/sync-assets.sh" "$CHASSIS_BRAND"
 ```
 
+A target runs its scripts in a sandbox when **User Script Sandboxing** is **Yes** in its build settings, as it is in a new project, and the phase then fails with `Operation not permitted`: the script writes to `Resources/Chassis/` and to the submodule. Set it to **No** for the target.
+
 Xcode runs the phase with its own `PATH`. When it does not find `pnpm`, replace the build line of the script with the copy alone and build the assets before opening Xcode.
 
 ### Brand at run time
@@ -429,8 +432,11 @@ jobs:
       - name: Build the app
         run: |
           xcodebuild -project App.xcodeproj -scheme App \
-            -destination 'generic/platform=iOS' build
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO build
 ```
+
+`CODE_SIGNING_ALLOWED=NO` builds the app without a certificate, which is enough to check that it builds. Without it, a runner that has no development team fails with `Signing for "App" requires a development team`. The script and the `xcodebuild` line of this job were run on a Mac; the workflow itself was not run on GitHub Actions.
 
 A job that takes the archive of a release instead needs neither Node.js nor the submodule: it downloads `chassis-assets-ios-<app>-<brand>-<version>.zip` and unpacks it into the project.
 
@@ -450,7 +456,7 @@ platform :ios do
 end
 ```
 
-Run the lane with `fastlane ios build_brand brand:example`.
+Run the lane with `fastlane ios build_brand brand:example`. The lane was not run; the script it calls was.
 
 ## Best practices
 
