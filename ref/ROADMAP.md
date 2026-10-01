@@ -267,12 +267,13 @@ Every task keeps the output of `pnpm assets` identical except where it says othe
 - [x] F4, as D5 decided.
 - [x] F7, as D6 decided.
 - [x] F2, as D4 decided.
-- [ ] F11: refresh `source/default/docs/icons/` and `demo/icons/` from the current
+- [x] F11: refresh `source/default/docs/icons/` and `demo/icons/` from the current
       `@chassis-ui/icons`, keep `cx-sprite.svg`. The steps are in `docs/architecture.md`,
-      "Refreshing the icons". **Needs a machine with Git LFS**: the icon font files are LFS
-      objects, and session 1.2 ran without `git lfs`. Left for the maintainer or a session
-      with LFS. Changes the content of `dist/web/*/icons/`.
-      `dist/web/docs/chassis/images/figma/` before and after: identical.
+      "Refreshing the icons". Done on 2026-10-01, on a machine with Git LFS, from 0.3.1. The
+      copy was the output of 0.1.0, not a stale 0.3.1: 15 icons were missing, the classes of
+      the icon font were `icon-<name>` and are `cx-<name>`, and `preview.html`, which the
+      package does not ship, is gone. The 488 icons that were there keep their names and
+      drawings. Changes the content of `icons/` in all six jobs and nothing else.
 - [x] F15, as D8 decided.
 - [x] F18: a filter value that is not configured fails and names the configured values.
 - [x] F19: the validator prints each result once.
@@ -327,10 +328,11 @@ behaviour that a page states is checked against a run. Style follows `WRITING.md
 
 ### Exit criteria
 
-- [ ] D1, D4, D5, D6, D7 and D8 are decided and applied.
-- [ ] The inventory has no open row and is deleted.
-- [ ] `docs/architecture.md` describes the build as it is, and every claim points at code.
-- [ ] `pnpm assets:site` writes every file of the consumer contract, by path and name.
+- [x] D1, D4, D5, D6, D7 and D8 are decided and applied.
+- [x] The inventory has no open row and is deleted.
+- [x] `docs/architecture.md` describes the build as it is, and every claim points at code.
+- [x] `pnpm assets:site` writes every file of the consumer contract, by path and name. Checked by
+      `pnpm assets:contract` on every commit.
 
 ## Phase 2: tests and checks
 
@@ -494,8 +496,8 @@ nothing installed.
       `.github/CONTRIBUTING.md` has this section only; session 4.2 writes the rest.
 
 **Acceptance:** a release of 0.2.0 from `main` creates the tag, the release and the archives,
-and `app/docs` receives the same commit. Open: releasing is the maintainer's, and F11 may
-go into 0.2.0 first.
+and `app/docs` receives the same commit. Open: releasing is the maintainer's. F11 is in
+the changesets of 0.2.0.
 
 ### Exit criteria
 
@@ -672,3 +674,4 @@ None is scheduled; the maintainer picks one when it is wanted.
 | 2026-09-30 | 2.2       | Ported the consumer contract from `archive/rewrite-2026-09` into `build/contract.js`, checked again against the website and `chassis-figma`, with the reader of every file; narrowed the screenshot rule for 18 Figma export copies no page reads. `pnpm assets:contract` and `pnpm assets:verify` (validator, then contract). `pnpm assets:lint:source` for the naming rules of the design-guidelines page, type folders and LFS pointers; the real source has no error and three known oddities. `tsconfig.json`, `build/types.js` and `pnpm assets:typecheck`, clean. CI's Assets job runs lint, source lint, type check, tests, full build and verify. 324 tests in about three seconds. The table of checks per area waits in `docs/architecture.md` for session 4.2. Next: Phase 3 or 4, or 5.1.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 2026-10-01 | 3.1       | Made the repository a pnpm workspace, as D3 decided: the build in `packages/assets/` (`@chassis-ui/assets`, private, with Vitest and TypeScript), the site in `packages/site/` (`chassis-assets-site`, with the Astro toolchain), `source/`, `dist/` and the `chassis` block at the root, in the private `chassis-assets-workspace` with the lint tools. `packages/assets/build/cli.js` is the one entry the root scripts run with `node`; each module exports `cli(argv)` and still runs on its own. `root.js` finds the repository root upward from the working directory, and the version is that of `packages/assets/package.json`. Removed `publishConfig`, `files` and `keywords` (D2, T6) and `standard`; no resolved version changed in the lockfile. The output of a full build is identical file for file, and the site too, apart from the "View on GitHub" links, which now name `packages/site/`. Consumer path: `chassis-docs vendor` of the website builds the branch unchanged and leaves the submodule clean; `pnpm install --ignore-workspace` installs 449 packages where it installed 906 (T7), and the build runs with none. CI's Assets job builds as a consumer first. `tag-release.yml` and `change-version.js` read the version from its new place until session 3.2 replaces them. 345 tests. Next: session 3.2, or Phase 4, or 5.1. F11 is still open and this machine has Git LFS. |
 | 2026-10-01 | 3.2       | Changesets, as the website uses it: a change to `source/` or `packages/assets/build/` carries a changeset, `pnpm changeset:version` on `develop` bumps `packages/assets/package.json`, writes `packages/assets/CHANGELOG.md` and runs `build/sync-version-refs.js` for the site's `current_version` and the README badge. `build/check-changeset.js` is the Changeset job of CI on pull requests, because Changesets does not count `source/` at the root for the package. `.github/workflows/release.yml` on pushes to `main`: when `v<version>` has no tag and the four checks passed on the commit, it builds with nothing installed, verifies, and creates the tag and the GitHub release with one zip per platform, app and brand (`build/release-archives.js`, `build/release-notes.js`). `tag-release.yml` and `change-version.js` are deleted; `workflow_call` left `ci.yml`. The `[Unreleased]` section is seven changesets, and a trial `changeset:version` gave 0.2.0 with the right entry, then was reverted: the version is still 0.1.8. `.github/CONTRIBUTING.md` has "Releases". Prettier, the build's lint, the type check, 345 tests and `actionlint` pass locally; CI and the release workflow have not seen the commit. The maintainer moved `v0.1.8` to `a4b6445` (T4). Left for the maintainer: releasing 0.2.0. Next: F11 with Git LFS, then the release; or Phase 4, or 5.1.            |
+| 2026-10-01 | F11       | Refreshed the icons of the default brand, `docs` and `demo`, from `@chassis-ui/icons` 0.3.1 by the steps of `docs/architecture.md`. The copy was the output of 0.1.0. Output diff of a full build against the build before: under `icons/` of all six jobs only, 488 SVG files changed by the class on their root element, 15 added, the seven files of the icon font and its stylesheets changed for the web, and `preview.html` removed from the two web jobs. `pnpm assets:verify`, the source lint and `pnpm site:build` pass. Checked the siblings: Chassis CSS reads `/static/icons/svgs/<name>.svg` by a URL prefix and names no icon, and nothing reads the icon font from this output. A changeset, minor and breaking, for 0.2.0. Phase 1 is done but for the link check, which waits for the website's crawl of the deployed site. Next: the release of 0.2.0 by the maintainer; Phase 4, or 5.1.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |

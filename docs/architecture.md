@@ -255,8 +255,8 @@ changeset that says what breaks.
   indicator, `card-orientation-top-2x-1.png`. The web build wrote that name from
   `card-orientation-top@2x-1.png`, and session 1.2 renamed the sources to the output names,
   so `chassis-figma` keeps reading them. They are not `@2x` files to the build.
-- `icons/icons/preview.html` and `chassis-icons.json` of the icon package are copied to the
-  web output with the rest of the package.
+- `icons/icons/chassis-icons.json` of the icon package is copied to the web output with the
+  rest of the package.
 - A collision after renaming warns and the file renamed last wins.
 - Eighteen screenshots under `images/figma/components/` are Figma export copies of another
   screenshot, `meta-1-1.png` and `meta-1-2x-1.png` beside `meta-1.png`, in both modes and
@@ -264,8 +264,11 @@ changeset that says what breaks.
   modes for them, and not the `@2x` (`EXPORT_COPY` in `packages/assets/build/contract.js`).
 - `source/default/docs/other/default.tokens.json` and the two `icons/icons/chassis-icons.min.css`
   break the naming rules; `pnpm assets:lint:source` warns about them (`KNOWN_ODDITIES`).
-- The copy of `@chassis-ui/icons` under `icons/` is behind the package: 15 SVG files of
-  0.3.1 are missing, and the icon font differs. See "Refreshing the icons".
+- The copy of `@chassis-ui/icons` under `icons/` is made by hand, so it is as new as its
+  last refresh: 0.3.1, on 2026-10-01. See "Refreshing the icons".
+- Chassis CSS builds the URL of a named icon from `$icon-url-prefix`, `/static/icons/svgs/`
+  by default, so a site may read any file of `icons/svgs/` by its name. The contract check
+  names none of them, because no stylesheet of the siblings names one.
 
 ## Refreshing the icons
 
@@ -283,8 +286,10 @@ done
 pnpm assets && pnpm assets:validate
 ```
 
-Commit the result with a changeset: the web output of both brands changes, and the icon
+Commit the result with a changeset: the icon output of every job changes, and the icon
 font files are Git LFS objects, so the commit must be made where `git lfs` is installed.
+The package ships no `preview.html`, so the copy has none. Compare `dist/` before and after:
+a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 
 ## History
 
@@ -301,3 +306,5 @@ font files are Git LFS objects, so the commit must be made where `git lfs` is in
   `source/` and `dist/` at the root, one `cli.js` for the commands (roadmap session 3.1).
 - 2026-10-01: Changesets, versions made on `develop`, and a release workflow on `main` that
   attaches one archive per platform, app and brand (roadmap session 3.2).
+- 2026-10-01: the icons of the default brand are `@chassis-ui/icons` 0.3.1, where they were
+  0.1.0 (roadmap F11).

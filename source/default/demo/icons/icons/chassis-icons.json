@@ -486,5 +486,20 @@
   "x-twitter-brand": 61813,
   "x-twitter-square-brand": 61814,
   "microchip-outline": 61915,
-  "microchip-solid": 61916
+  "microchip-solid": 61916,
+  "cut-outline": 61985,
+  "cut-solid": 61986,
+  "envelope-open-outline": 61987,
+  "envelope-open-solid": 61988,
+  "envelope-outline": 62049,
+  "envelope-solid": 62050,
+  "js-brand": 62107,
+  "mdn-brand": 62108,
+  "sass-brand": 62109,
+  "css-brand": 62110,
+  "sass-alt-brand": 62111,
+  "hashtag-outline": 62112,
+  "hashtag-solid": 62113,
+  "figma-brand": 62114,
+  "figma-square-brand": 62135
 }

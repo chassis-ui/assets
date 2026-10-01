@@ -1,5 +1,5 @@
 /*!
- * Chassis Icons v0.1.0
+ * Chassis Icons v0.3.1
  * Copyright 2025 Ozgur Gunes
  * Licensed under MIT (https://github.com/chassis-ui/icons/blob/main/LICENSE)
  */
@@ -18,19 +18,20 @@ $chassis-icons-font-src:
   src: $chassis-icons-font-src;
 }
 
-.icon::before,
-[class^="icon-"]::before,
-[class*=" icon-"]::before {
-  display: inline-block;
-  font-family: $chassis-icons-font !important;
-  font-style: normal;
-  font-weight: normal !important;
-  font-variant: normal;
-  text-transform: none;
-  line-height: 1;
-  vertical-align: -.125em;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer content {
+  [class^="cx-"]::before,
+  [class*=" cx-"]::before {
+    display: inline-block;
+    font-family: $chassis-icons-font !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    vertical-align: -.125em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 $chassis-icons-map: (
@@ -522,8 +523,23 @@ $chassis-icons-map: (
   "x-twitter-square-brand": "\f176",
   "microchip-outline": "\f1db",
   "microchip-solid": "\f1dc",
+  "cut-outline": "\f221",
+  "cut-solid": "\f222",
+  "envelope-open-outline": "\f223",
+  "envelope-open-solid": "\f224",
+  "envelope-outline": "\f261",
+  "envelope-solid": "\f262",
+  "js-brand": "\f29b",
+  "mdn-brand": "\f29c",
+  "sass-brand": "\f29d",
+  "css-brand": "\f29e",
+  "sass-alt-brand": "\f29f",
+  "hashtag-outline": "\f2a0",
+  "hashtag-solid": "\f2a1",
+  "figma-brand": "\f2a2",
+  "figma-square-brand": "\f2b7",
 );
 
 @each $icon, $codepoint in $chassis-icons-map {
-  .icon-#{$icon}::before { content: $codepoint; }
+  .cx-#{$icon}::before { content: $codepoint; }
 }
