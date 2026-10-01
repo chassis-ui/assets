@@ -31,16 +31,16 @@ A brand file replaces the default file of the same path, subfolder included. The
 
 ## Formats
 
-The build copies an image of any format. One format is the exception: iOS and Android do not get WebP files.
+The build copies an image of any format. One format is the exception: iOS does not get WebP files.
 
 <CxTable>
 | Format | Web | iOS | Android |
 | --- | --- | --- | --- |
 | PNG, JPG, GIF, SVG | Copied | Copied | Copied |
-| WebP | Copied | Dropped | Dropped |
+| WebP | Copied | Dropped | Copied |
 </CxTable>
 
-Export a WebP image in a second format, PNG or JPG, when an app needs it too. The web output then holds both files, and a page chooses between them with a `<picture>` element.
+Export a WebP image in a second format, PNG or JPG, when an iOS app needs it too. The web and the Android output then hold both files. A page chooses between them with a `<picture>` element, and an Android app copies the one it uses to `res/`.
 
 PNG, JPG and WebP files are Git LFS files. SVG files are text and are committed as they are.
 
@@ -82,7 +82,7 @@ A subfolder groups images that belong together, such as `logo/` or `home/`. The 
 
 ✅ **Keep the base name the same across variants:** `hero.png`, `hero@2x.png` and `hero@3x.png` become one Android drawable in three densities. A variant with another base name becomes another image.
 
-✅ **Add a PNG or JPG beside a WebP:** iOS and Android do not get WebP files.
+✅ **Add a PNG or JPG beside a WebP:** iOS does not get WebP files.
 
 ✅ **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/logo/chassis-logo.svg` for `images/logo/chassis-logo.svg`.
 
@@ -97,7 +97,7 @@ The build copies each image to the `images/` folder of the job, in its subfolder
 | --- | --- | --- | --- |
 | Web | `dist/web/<app>/<brand>/images/` | kebab-case, indicator kept | Every format |
 | iOS | `dist/ios/<app>/<brand>/images/` | snake_case, indicator kept | Every format but WebP |
-| Android | `dist/android/<app>/<brand>/images/` | snake_case, in density folders | Every format but WebP |
+| Android | `dist/android/<app>/<brand>/images/` | snake_case, in density folders | Every format |
 </CxTable>
 
 The source file `images/home/comp-gallery-dark@2x.png` is `images/home/comp-gallery-dark@2x.png` in the web output and `images/home/comp_gallery_dark@2x.png` in the iOS output. In the Android output it is `images/home/drawable-xhdpi/comp_gallery_dark.png`:

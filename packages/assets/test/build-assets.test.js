@@ -472,10 +472,10 @@ describe('dry run', () => {
       // override of a default file is counted once (F32)
       { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 1 },
       { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 },
-      { brand: 'alpha', app: 'mobile', platform: 'android', files: 14 + 1 },
+      { brand: 'alpha', app: 'mobile', platform: 'android', files: 15 + 1 },
       { brand: 'beta', app: 'site', platform: 'web', files: 16 },
       { brand: 'beta', app: 'mobile', platform: 'ios', files: 16 },
-      { brand: 'beta', app: 'mobile', platform: 'android', files: 14 }
+      { brand: 'beta', app: 'mobile', platform: 'android', files: 15 }
     ])
   })
 

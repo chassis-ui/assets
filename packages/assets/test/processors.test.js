@@ -171,14 +171,14 @@ describe('keepsFile(): the formats each platform keeps per type', () => {
     ['android', 'fonts', 'text-license.txt', true],
     ['android', 'fonts', 'text.woff', false],
     ['android', 'fonts', 'text.scss', false],
-    // Images: every format, except WebP for the apps (D14)
+    // Images: every format, except WebP for iOS. Android gets it (D14)
     ['web', 'images', 'photo.webp', true],
     ['web', 'images', 'photo.png', true],
     ['ios', 'images', 'photo.webp', false],
     ['ios', 'images', 'photo.PNG', true],
     ['ios', 'images', 'photo.jpg', true],
     ['ios', 'images', 'logo.svg', true],
-    ['android', 'images', 'photo.webp', false],
+    ['android', 'images', 'photo.webp', true],
     ['android', 'images', 'photo.png', true],
     // Icons: everything for the web, SVG, PDF and PNG for iOS (D15), SVG for Android
     ['web', 'icons', 'icons.woff2', true],

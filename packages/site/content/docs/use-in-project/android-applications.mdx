@@ -31,7 +31,7 @@ dist/android/demo/chassis/
 | Type | What Android gets | Names |
 | --- | --- | --- |
 | Fonts | TTF and OTF files, and the license of each font | snake_case |
-| Images | Every format but WebP, in density folders | snake_case, indicator removed |
+| Images | Every format, in density folders | snake_case, indicator removed |
 | Icons | SVG files only | snake_case with the `ic_` prefix |
 | Any other folder | Every file | snake_case |
 </CxTable>
@@ -126,7 +126,7 @@ dist/android/demo/chassis/
 
 ### Copying to res
 
-A copy script moves the files that `res/` accepts as they are: the font files and the PNG images. It lists the folders of `images/` that the app uses, because `res/` has one `drawable/` folder and the output has one per subfolder. Add this script to the Android project as `scripts/sync-assets.sh`:
+A copy script moves the files that `res/` accepts as they are: the font files and the PNG and WebP images. It lists the folders of `images/` that the app uses, because `res/` has one `drawable/` folder and the output has one per subfolder. Add this script to the Android project as `scripts/sync-assets.sh`:
 
 ```bash
 #!/bin/bash
@@ -142,12 +142,12 @@ mkdir -p "$SRC/res/font" "$SRC/assets/licenses"
 cp "$ASSETS"/fonts/*.otf "$ASSETS"/fonts/*.ttf "$SRC/res/font/"
 cp "$ASSETS"/fonts/*_license.txt "$SRC/assets/licenses/"
 
-# The PNG files of each folder of images/ that the app uses
+# The PNG and WebP files of each folder of images/ that the app uses
 for folder in images images/home images/logo; do
   for density in "$ASSETS/$folder"/drawable*/; do
-    ls "$density"*.png >/dev/null 2>&1 || continue
-    mkdir -p "$SRC/res/$(basename "$density")"
-    cp "$density"*.png "$SRC/res/$(basename "$density")/"
+    target="$SRC/res/$(basename "$density")"
+    mkdir -p "$target"
+    find "$density" -maxdepth 1 \( -name '*.png' -o -name '*.webp' \) -exec cp {} "$target/" \;
   done
 done
 ```
@@ -212,7 +212,7 @@ Text(text = "Title", fontFamily = TextFamily, fontWeight = FontWeight.SemiBold)
 
 ## Images
 
-The build copies every image format but WebP and sorts the files by their indicator. See [Images]([[docsref:/asset-types/images#platform-output]]) for the source layout and the variants.
+The build copies every image format and sorts the files by their indicator. See [Images]([[docsref:/asset-types/images#platform-output]]) for the source layout and the variants.
 
 ### Density folders
 
@@ -438,7 +438,7 @@ With release archives the workflow needs neither the submodule nor Node.js: it d
 
 ❌ **Do not rename in the app:** the names of `dist/android/` are the same for every brand. A renamed copy breaks that for the next brand.
 
-❌ **Do not use WebP in `source/`:** the Android build leaves WebP images out. Export PNG for an image that Android needs.
+❌ **Do not keep one image as PNG and as WebP in `res/`:** the Android output has both when the designer exported both, and a resource has one file per folder. Remove the extension the app does not use from the copy script.
 
 ❌ **Do not commit `dist/`:** it is build output. Commit the submodule pointer, or name the version of the archive.
 
@@ -466,7 +466,7 @@ Gradle fails with `Duplicate resources` and names two files of one folder, such 
 
 ### Image is missing
 
-An image of `source/` is not in the job folder. The Android build leaves WebP images out, and an image with an indicator is in a density folder under the subfolder of the image, not in `drawable/`. Search for the snake_case name with `find dist/android/demo/chassis/images -name '<name>*'`, and export a WebP image as PNG.
+An image of `source/` is not where you look for it in the job folder. An image with an indicator is in a density folder under the subfolder of the image, not in `drawable/`, and its name is in snake_case without the indicator. Search for the name with `find dist/android/demo/chassis/images -name '<name>*'`.
 
 ### Image looks blurry
 

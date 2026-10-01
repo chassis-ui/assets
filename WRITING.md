@@ -298,7 +298,7 @@ One sentence naming what the build does to the type on each platform.
 | --- | --- | --- | --- |
 | Web | `dist/web/<app>/<brand>/images/` | kebab-case, indicator kept | Every format |
 | iOS | `dist/ios/<app>/<brand>/images/` | snake_case, indicator kept | Every format but WebP |
-| Android | `dist/android/<app>/<brand>/images/` | snake_case, in density folders | Every format but WebP |
+| Android | `dist/android/<app>/<brand>/images/` | snake_case, in density folders | Every format |
 </CxTable>
 
 ```text

@@ -37,7 +37,7 @@ This repository has one such folder: `other/` of the configured web app, with a 
 
 ## Formats
 
-The build copies a file of any format from such a folder to every platform of the app. The format rules of the known types do not apply: a WebP or a WOFF2 file in `data/` reaches iOS and Android too.
+The build copies a file of any format from such a folder to every platform of the app. The format rules of the known types do not apply: a WebP file in `data/` reaches iOS, and a WOFF2 file reaches iOS and Android.
 
 A file of a type that Git LFS tracks is stored as a Git LFS file wherever it is. A format that the repository does not track yet, such as MP4 or PDF, is committed as it is until `.gitattributes` names it:
 

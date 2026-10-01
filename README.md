@@ -102,11 +102,11 @@ dist/
 
 What each platform gets:
 
-| Platform | Names                                   | Fonts                           | Images                                                       | Icons            |
-| -------- | --------------------------------------- | ------------------------------- | ------------------------------------------------------------ | ---------------- |
-| Web      | kebab-case, `@2x` and `@3x` kept        | WOFF, WOFF2 and the stylesheets | Every format                                                 | Every file       |
-| iOS      | snake_case, `@2x` and `@3x` kept        | TTF and OTF                     | Every format but WebP                                        | SVG, PDF and PNG |
-| Android  | snake_case, `ic_` prefix under `icons/` | TTF and OTF                     | Every format but WebP, in density folders, indicator removed | SVG              |
+| Platform | Names                                   | Fonts                           | Images                                              | Icons            |
+| -------- | --------------------------------------- | ------------------------------- | --------------------------------------------------- | ---------------- |
+| Web      | kebab-case, `@2x` and `@3x` kept        | WOFF, WOFF2 and the stylesheets | Every format                                        | Every file       |
+| iOS      | snake_case, `@2x` and `@3x` kept        | TTF and OTF                     | Every format but WebP                               | SVG, PDF and PNG |
+| Android  | snake_case, `ic_` prefix under `icons/` | TTF and OTF                     | Every format, in density folders, indicator removed | SVG              |
 
 On Android an image without an indicator goes to `drawable/`, `@2x` to `drawable-xhdpi/` and `@3x` to `drawable-xxhdpi/`, under the subfolder the image is in. The license of a font is copied with it on every platform. Files such as `.DS_Store` are left out, and two files that get the same name after renaming are reported.
 

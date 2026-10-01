@@ -18,11 +18,11 @@ const androidProcessor = {
 
   /**
    * File type filters for Android platform
-   * Android keeps TTF/OTF fonts with their license files, SVG icons only, and excludes WebP images
+   * Android keeps TTF/OTF fonts with their license files, SVG icons only, and every image format
    */
   allowedFontFormats: ['.ttf', '.otf', '.txt'],
   allowedIconFormats: ['.svg'],
-  excludedImageFormats: ['.webp'],
+  excludedImageFormats: [],
 
   /**
    * Density folder mapping for resolution indicators

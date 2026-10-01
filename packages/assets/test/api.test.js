@@ -92,7 +92,7 @@ describe('ChassisAssets', () => {
       'ic_check_mark.svg',
       'ic_close.svg'
     ])
-    expect(inventory.images).toHaveLength(7)
+    expect(inventory.images).toHaveLength(8)
   })
 
   test('getStats() counts from cwd and out, not from the working directory', () => {
