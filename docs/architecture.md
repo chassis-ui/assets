@@ -77,16 +77,19 @@ For each job, in order:
    and in the second formats the processor takes in `imageFormats` (`optimizeImages()`,
    `optimizeJob()`). Before the next steps, so that they move and convert the files it
    wrote. See "Optimization and formats".
-7. **Convert**, only with `--vector-drawables` and only for a processor that has
+7. **Subset**, only with `--subset` and only for a processor that has `subset`: each WOFF
+   and WOFF2 file under `fonts/` of the job is written again under its name with the
+   characters of the ranges only (`subsetFonts()`, `subsetJob()`). See "Font subsets".
+8. **Convert**, only with `--vector-drawables` and only for a processor that has
    `vectorDrawables`: each SVG under `icons/` of the job is written as a vector drawable
    beside itself and removed (`convertVectorDrawables()`, `convertFolder()`). See
    "Vector drawables".
-8. **Catalog**, only with `--asset-catalog` and only for a processor that has
+9. **Catalog**, only with `--asset-catalog` and only for a processor that has
    `assetCatalog`: the images of `images/` of the job move into `Assets.xcassets`, one image
    set per base name (`writeAssetCatalog()`, `writeCatalog()`). See "Asset catalog".
-9. **Res**, only with `--res` and only for a processor that has `res`: the fonts, the
-   images and the icons of the job that `res/` takes move into `res/font/` and
-   `res/drawable*/` (`writeResLayout()`, `writeRes()`). See "Res folder".
+10. **Res**, only with `--res` and only for a processor that has `res`: the fonts, the
+    images and the icons of the job that `res/` takes move into `res/font/` and
+    `res/drawable*/` (`writeResLayout()`, `writeRes()`). See "Res folder".
 
 Before the jobs, `validateConfiguration()` checks that brands and apps are configured, that
 the default brand folder exists and that every platform has a processor, and `planJobs()`
@@ -114,6 +117,7 @@ jobs with their file counts.
 | `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                              |
 | `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                  |
 | `packages/assets/build/optimize.js`           | `--optimize`, `--webp` and `--avif`: `resolveSettings()`, which checks `chassis.optimize` over `OPTIMIZE_DEFAULTS`, `loadEncoders()`, which imports `sharp` and `svgo` when it is called and says how to install them when they are missing, `svgOptions()`, `formatName()`, which the validator reads, and `optimizeJob()`.                                                                                  |
+| `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()` and `subsetJob()`.                                                                                                                      |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -192,6 +196,7 @@ on the fixture, which has its own configuration.
 | `--res`                                  | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`. Off by default.                                                                                                              |
 | `--optimize`                             | Write the images again under their names where that makes them smaller. Off by default. Needs `pnpm install`.                                                                                                                   |
 | `--webp`, `--avif`                       | Write the PNG and JPEG images in a second format: WebP beside the file on the web and in place of it on Android, AVIF beside the file on the web. Off by default. Need `pnpm install`.                                          |
+| `--subset [range...]`                    | Write the WOFF and WOFF2 fonts of the web again under their names with the characters of the ranges only. Off by default. Needs `pnpm install`.                                                                                 |
 | `--quiet`, `--help`, `--version`         | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
 | `pnpm assets:site`                       | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
 | `pnpm assets:analyze [filters]`          | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
@@ -377,6 +382,49 @@ is the same file for file with and without the code (roadmap 6.5, D12).
   before; `--webp` takes 30 seconds, the WebP files of the web are 36 MB beside 88 MB of
   PNG, and the images of an Android job go from 26.5 MB to 13.1 MB; `--avif` takes 64
   seconds and writes 32 MB.
+
+### Font subsets
+
+`pnpm assets --subset` is off by default, and the default output is the same file for file
+with and without the code (roadmap 6.8, D19).
+
+- The package is `subset-font`, the subsetter of HarfBuzz as WebAssembly, an
+  `optionalDependencies` entry of `packages/assets/package.json`, loaded by
+  `loadSubsetter()` when the option is given and before the output is removed. Without it
+  the build fails there, names the option and `pnpm install`, and the output stays.
+- The ranges are the values of the option, or `ranges` of `chassis.subset` of
+  `package.json`, or `SUBSET_DEFAULTS`: `latin` and `latin-ext`. `resolveSubset()` checks
+  them only when the option is given. A range is a name of `NAMED_RANGES`, each with the
+  code points that Google Fonts gives the `unicode-range` of that name, compared with its
+  stylesheets on 2026-10-01, or a range written
+  as `U+0370-03FF`. There is no setting per file, which would be a manifest (principle 1).
+- A processor names the fonts in `subset`: `{ type: 'fonts', formats: ['.woff', '.woff2'] }`
+  on the web, nothing on iOS and Android. A browser downloads a font, so its size is paid
+  on every first visit; an app has its fonts in the bundle, and gets them whole.
+- A font keeps its name and its format, so the stylesheets of `fonts/` and every reader of
+  the output are untouched. Only `fonts/` is read: the icon font of `icons/` has its glyphs
+  in a private range and would lose them all.
+- Every layout feature of a font is kept, with the glyphs it puts in the place of the kept
+  characters: the ligatures of a code font, the tabular figures of a text font. The entries
+  of the `name` table with the trademark, the designer and the license stay
+  (`KEPT_NAME_IDS`), as a font license asks of every copy.
+- A font is written again only when the result is smaller. A font that has no character of
+  the ranges stays as it is, with a warning: a font of another script, or of symbols. The
+  subsetter is asked first how many glyphs the font draws the ranges with, so each font is
+  read twice.
+- One content is subsetted once in a run, by its hash: the brands of an app share fonts.
+- A file that the subsetter cannot read is an error of the build, with the name of the file.
+- The release archives are built without `--subset`: an archive is for every language, and
+  the option drops characters.
+- The licenses of the committed fonts, the SIL Open Font License, allow a subset. A font
+  with a Reserved Font Name may not keep that name once it is changed; whether a family
+  declares one is for its brand to check.
+- On this repository, on the maintainer's machine: `--subset` writes the 36 fonts of the two
+  web jobs again and saves 1.4 MB of 3.1 MB, in 6 seconds beyond a default build. The `text`
+  font of the default brand goes from 111 KB to 57 KB, and to 30 KB with `--subset latin`.
+  Only `fonts/` of the web jobs differs from a default build, and `pnpm assets:verify`
+  passes on the output. Each of the 36 fonts loads in a browser as a `FontFace`, draws the
+  Turkish letters and keeps the ligatures of the code font.
 
 ### Res folder
 
@@ -579,6 +627,7 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 - 2026-10-01: `--res`, the Android `res/` layout (roadmap 6.4).
 - 2026-10-01: `--type` and `--include`, and `pnpm assets:lfs` (roadmap 6.6).
 - 2026-10-01: `--watch` (roadmap 6.7), the last option of Phase 6.
+- 2026-10-01: `--subset`, with the ranges in `chassis.subset` (roadmap 6.8).
 - 2026-10-01: `--optimize`, `--webp` and `--avif`, with the settings in `chassis.optimize`
   (roadmap 6.5). `isEntry()` compares real paths: a build started through a linked folder
   did nothing and exited with 0.

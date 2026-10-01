@@ -17,6 +17,8 @@
  * @property {string} brandFolder - The fallback brand folder, `chassis.defaults.brandFolder`
  * @property {unknown} [optimize] - The settings of `--optimize`, `--webp` and `--avif`,
  *   `chassis.optimize`, as written. `resolveSettings()` checks them when an option is given
+ * @property {unknown} [subset] - The settings of `--subset`, `chassis.subset`, as written.
+ *   `resolveSubset()` checks them when the option is given
  * @property {ContractEntry[]} contracts - The files consumers read, `contracts` of `chassis.checks.json`
  * @property {LintAllowance[]} lintAllow - Names the source lint accepts, `lint.allow` of `chassis.checks.json`
  * @property {string} [name] - The package name
@@ -49,6 +51,25 @@
  * @property {boolean} [webp] - Write the PNG and JPEG images as WebP too, where a processor
  *   takes the format in `imageFormats`. Needs the package `sharp`
  * @property {boolean} [avif] - The same for AVIF
+ * @property {boolean|string[]} [subset] - Write the fonts a processor names in `subset`
+ *   again with the characters of these ranges only; true takes the ranges of
+ *   `chassis.subset`, or the defaults. Needs the package `subset-font`
+ */
+
+/**
+ * The settings of `--subset`: the ranges of the option, of `chassis.subset` of
+ * `package.json` or of the defaults of `subset-fonts.js`.
+ * @typedef {Object} SubsetSettings
+ * @property {string[]} ranges - The ranges as they are written: a name of `NAMED_RANGES`, or
+ *   a range such as `U+0370-03FF`
+ * @property {string} text - Every character of the ranges
+ */
+
+/**
+ * The fonts `--subset` writes again for a platform.
+ * @typedef {Object} FontSubset
+ * @property {string} type - The type folder whose fonts are subsetted, `fonts`
+ * @property {string[]} formats - The extensions of the fonts that are subsetted
  */
 
 /**
@@ -89,6 +110,8 @@
  * @property {number} filesOptimized - Files written again under their names, with `optimize`
  * @property {number} bytesSaved - What the optimized files lost in size, in bytes
  * @property {number} filesGenerated - Files written in a second format, with `webp` and `avif`
+ * @property {number} fontsSubsetted - Fonts written again under their names, with `subset`
+ * @property {number} fontBytesSaved - What the subsetted fonts lost in size, in bytes
  * @property {string[]} errors
  * @property {string[]} warnings
  * @property {string[]} lfsPointers - Source files that are Git LFS pointers
@@ -169,6 +192,8 @@
  *   the platform as it is
  * @property {ResLayout} [res] - What `--res` writes for the platform. Without it the option
  *   leaves the platform as it is
+ * @property {FontSubset} [subset] - The fonts `--subset` writes again for the platform.
+ *   Without it the option leaves the platform as it is
  */
 
 /**

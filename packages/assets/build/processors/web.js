@@ -29,6 +29,12 @@ const webProcessor = {
   imageFormats: { webp: 'beside', avif: 'beside' },
 
   /**
+   * What `--subset` writes again: a browser downloads a font, so a font of the web holds
+   * the characters its pages use and no more
+   */
+  subset: { type: 'fonts', formats: ['.woff', '.woff2'] },
+
+  /**
    * Transform filename to kebab-case (lowercase with hyphens)
    * @param {string} fileName - Original filename
    * @returns {string} Transformed filename in kebab-case

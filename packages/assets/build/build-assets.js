@@ -19,6 +19,7 @@ import { IMAGE_FORMATS, loadEncoders, optimizeJob, resolveSettings } from './opt
 import { platformProcessors } from './processors/index.js'
 import { writeRes } from './res-layout.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
+import { loadSubsetter, resolveSubset, subsetJob } from './subset-fonts.js'
 import { convertFolder, loadConverter } from './vector-drawables.js'
 
 /** @import { BuildConfig, BuildOptions, BuildStats, ContractEntry, Job, LintAllowance, Processor } from './types.js' */
@@ -61,6 +62,10 @@ Options:
                          \`pnpm install\`
   --res                  Write the fonts, images and icons of Android as a res/ folder,
                          res/font/ and res/drawable*/
+  --subset [range...]    Write the WOFF and WOFF2 fonts of the web again under their
+                         names with the characters of the ranges only, such as latin
+                         or U+0370-03FF. Default: \`chassis.subset\`, or latin and
+                         latin-ext. Needs \`pnpm install\`
   --quiet                Print errors only
   --help, -h             Print this help
   --version, -v          Print the version
@@ -80,6 +85,7 @@ let run = {
   res: false,
   optimize: false,
   formats: /** @type {string[]} */ ([]),
+  subset: false,
   filter: createFileFilter()
 }
 
@@ -112,6 +118,8 @@ function emptyStats() {
     filesOptimized: 0,
     bytesSaved: 0,
     filesGenerated: 0,
+    fontsSubsetted: 0,
+    fontBytesSaved: 0,
     errors: [],
     warnings: [],
     lfsPointers: [],
@@ -175,6 +183,7 @@ export function loadConfig(cwd = findRoot()) {
     apps: chassis.build?.apps || {},
     brandFolder: chassis.defaults?.brandFolder || 'default',
     optimize: chassis.optimize,
+    subset: chassis.subset,
     contracts: checks.contracts,
     lintAllow: checks.lintAllow,
     name: packageJson.name,
@@ -209,6 +218,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     optimize: false,
     webp: false,
     avif: false,
+    subset: /** @type {boolean|string[]} */ (false),
     help: false,
     version: false
   }
@@ -263,6 +273,11 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.webp = true
     } else if (arg === '--avif') {
       options.avif = true
+    } else if (arg === '--subset') {
+      // Without a value the ranges are those of the configuration
+      const parsed = values(i)
+      options.subset = parsed.list.length > 0 ? parsed.list : true
+      i = parsed.i
     } else if (arg === '--quiet') {
       options.quiet = true
     } else if (arg === '--help' || arg === '-h') {
@@ -913,6 +928,34 @@ async function optimizeImages(processor, destPath, tools) {
 }
 
 /**
+ * Write the fonts a processor names in `subset` again with the characters of the ranges
+ * only, in the output of one job. A font without a character of the ranges stays as it is,
+ * with a warning.
+ * @param {Processor} processor - The platform processor
+ * @param {string} destPath - The output folder of the job
+ * @param {{ settings: import('./types.js').SubsetSettings, subsetter: import('./subset-fonts.js').Subsetter }} tools
+ */
+async function subsetFonts(processor, destPath, tools) {
+  if (!processor.subset) return
+
+  const { subsetted, saved, kept, failed } = await subsetJob(destPath, {
+    ...tools,
+    fonts: processor.subset
+  })
+  stats.fontsSubsetted += subsetted
+  stats.fontBytesSaved += saved
+  if (subsetted > 0) logger.log(`✂️  Subsetted ${subsetted} fonts`)
+  kept.forEach((file) =>
+    stats.warnings.push(
+      `Not subsetted, the font has no character of the ranges: ${path.relative(run.cwd, file)}`
+    )
+  )
+  failed.forEach(({ file, message }) =>
+    stats.errors.push(`Failed to subset the font ${path.relative(run.cwd, file)}: ${message}`)
+  )
+}
+
+/**
  * Move the images a processor names in `assetCatalog` into an asset catalog, in the output
  * of one job. A file without a place in an image set stays in its folder, with a warning
  * for the job.
@@ -988,6 +1031,7 @@ export async function generateAssets(options = {}) {
     res: options.res || false,
     optimize: options.optimize || false,
     formats: Object.keys(IMAGE_FORMATS).filter((format) => options[format]),
+    subset: Boolean(options.subset),
     filter: createFileFilter(options)
   }
   config = loadConfig(cwd)
@@ -1045,6 +1089,22 @@ export async function generateAssets(options = {}) {
     }
   }
 
+  // The ranges are checked and the package is loaded before anything is removed
+  let fontTools = null
+  if (run.subset) {
+    const settings = resolveSubset(
+      config.subset,
+      Array.isArray(options.subset) ? options.subset : []
+    )
+    if (!jobs.some((job) => platformProcessors[job.platform].subset)) {
+      stats.warnings.push(
+        '--subset changes nothing: no selected job has a platform whose fonts are subsetted'
+      )
+    } else if (!run.dryRun) {
+      fontTools = { settings, subsetter: await loadSubsetter() }
+    }
+  }
+
   if (run.assetCatalog && !jobs.some((job) => platformProcessors[job.platform].assetCatalog)) {
     stats.warnings.push(
       '--asset-catalog changes nothing: no selected job has a platform with an asset catalog'
@@ -1092,6 +1152,7 @@ export async function generateAssets(options = {}) {
     const before = stats.filesProcessed
     processAssets(processor, [defaultAppPath, brandAppPath], destPath, defaultAppPath)
     if (imageTools) await optimizeImages(processor, destPath, imageTools)
+    if (fontTools) await subsetFonts(processor, destPath, fontTools)
     if (convert) await convertVectorDrawables(processor, destPath, convert)
     if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor, destPath)
     if (run.res && !run.dryRun) writeResLayout(processor, destPath)
@@ -1141,6 +1202,11 @@ export async function generateAssets(options = {}) {
     }
     if (run.formats.length > 0) {
       logger.log(`🖼️  ${stats.filesGenerated} files written in ${run.formats.join(', ')}`)
+    }
+    if (run.subset) {
+      logger.log(
+        `✂️  ${stats.fontsSubsetted} fonts subsetted, ${Math.round(stats.fontBytesSaved / 1024)} KB saved`
+      )
     }
   }
 

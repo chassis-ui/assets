@@ -24,11 +24,13 @@
   },
   "optionalDependencies": {
     "sharp": "^0.35.5",
+    "subset-font": "^2.9.0",
     "svg2vectordrawable": "^2.9.1",
     "svgo": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
+    "inter-ui": "^4.1.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   }

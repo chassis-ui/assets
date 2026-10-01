@@ -122,29 +122,30 @@ pnpm assets --app docs --platform web         # Filters combine
 pnpm assets:site                              # The output the Chassis sites read: --clean --brand chassis --app docs
 ```
 
-| Option                   | What it does                                                                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `--brand <name...>`      | Only these brands                                                                                                                     |
-| `--app <name...>`        | Only these apps                                                                                                                       |
-| `--platform <name...>`   | Only these platforms                                                                                                                  |
-| `--type <name...>`       | Only these type folders of an app, such as `images` and `icons`                                                                       |
-| `--include <pattern...>` | Only the files that match a pattern, by their path in the folder of the app, such as `"images/home/**"`                               |
-| `--clean`                | Remove the output first, of the selected jobs when filtered                                                                           |
-| `--no-clean`             | Keep the output even for a full build                                                                                                 |
-| `--out <dir>`            | Output folder, default `dist`                                                                                                         |
-| `--cwd <dir>`            | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block                                         |
-| `--watch`                | Build, then build the jobs of a brand and an app again when a file of theirs under `source/` changes                                  |
-| `--dry-run`              | Print the jobs and their file counts, write nothing                                                                                   |
-| `--allow-lfs-pointers`   | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                                                    |
-| `--vector-drawables`     | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install`                                   |
-| `--asset-catalog`        | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                                                  |
-| `--res`                  | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`                                     |
-| `--optimize`             | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install` |
-| `--webp`                 | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install`                |
-| `--avif`                 | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install`                                                            |
-| `--quiet`                | Print errors only                                                                                                                     |
-| `--help`, `-h`           | Print the options                                                                                                                     |
-| `--version`, `-v`        | Print the version                                                                                                                     |
+| Option                   | What it does                                                                                                                                                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--brand <name...>`      | Only these brands                                                                                                                                                                                                       |
+| `--app <name...>`        | Only these apps                                                                                                                                                                                                         |
+| `--platform <name...>`   | Only these platforms                                                                                                                                                                                                    |
+| `--type <name...>`       | Only these type folders of an app, such as `images` and `icons`                                                                                                                                                         |
+| `--include <pattern...>` | Only the files that match a pattern, by their path in the folder of the app, such as `"images/home/**"`                                                                                                                 |
+| `--clean`                | Remove the output first, of the selected jobs when filtered                                                                                                                                                             |
+| `--no-clean`             | Keep the output even for a full build                                                                                                                                                                                   |
+| `--out <dir>`            | Output folder, default `dist`                                                                                                                                                                                           |
+| `--cwd <dir>`            | Repository root, default the nearest folder upward whose `package.json` has a `chassis` block                                                                                                                           |
+| `--watch`                | Build, then build the jobs of a brand and an app again when a file of theirs under `source/` changes                                                                                                                    |
+| `--dry-run`              | Print the jobs and their file counts, write nothing                                                                                                                                                                     |
+| `--allow-lfs-pointers`   | Copy Git LFS pointer files instead of failing. Also `CHASSIS_ALLOW_LFS_POINTERS=1`                                                                                                                                      |
+| `--vector-drawables`     | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install`                                                                                                                     |
+| `--asset-catalog`        | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`                                                                                                                                    |
+| `--res`                  | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`                                                                                                                       |
+| `--optimize`             | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install`                                                                                   |
+| `--webp`                 | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install`                                                                                                  |
+| `--avif`                 | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install`                                                                                                                                              |
+| `--subset [range...]`    | Write the WOFF and WOFF2 fonts of the web again under their names with the characters of the ranges only, such as `latin` or `U+0370-03FF`. Default: `chassis.subset`, or `latin` and `latin-ext`. Needs `pnpm install` |
+| `--quiet`                | Print errors only                                                                                                                                                                                                       |
+| `--help`, `-h`           | Print the options                                                                                                                                                                                                       |
+| `--version`, `-v`        | Print the version                                                                                                                                                                                                       |
 
 A full build removes `dist/` first; a filtered build keeps it. A filter value that is not configured fails the build and names the configured values.
 
@@ -213,6 +214,7 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
 - `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone, as `chassis` is.
 - `build.apps` maps each app to its platforms: `web`, `ios` or `android`.
 - `optimize`, optional, holds the settings of `--optimize`, `--webp` and `--avif`, such as `"jpeg": { "quality": 80 }`. Without it the options change no visible pixel. It turns nothing on.
+- `subset`, optional, holds the ranges of `--subset`, such as `"ranges": ["latin", "greek"]`. Without it the option keeps `latin` and `latin-ext`. It turns nothing on.
 
 What the checks verify is in [chassis.checks.json](chassis.checks.json), beside `package.json`. The build does not read it, and the file is optional:
 

@@ -201,6 +201,8 @@ dist/web/docs/chassis/fonts/
 
 The [fonts]([[docsref:/asset-types/fonts#platform-output]]) page has the roles, the weights and what each platform gets.
 
+A font of the default output has every character of its source file. If your pages are written in a few scripts only, build with `--subset`: the same files, under the same names, hold the characters of the ranges you name and are smaller to download. See [Font subsets]([[docsref:/getting-started/build-system#font-subsets]]).
+
 ### Font stylesheets
 
 The stylesheets `text.css`, `display.css` and `code.css` of the default brand declare one `@font-face` rule per font file of their role, under the family name of the font. Link them and the declarations are done:

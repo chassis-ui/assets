@@ -73,6 +73,7 @@ describe('pnpm assets', () => {
       '--optimize',
       '--webp',
       '--avif',
+      '--subset',
       '--quiet',
       '--help',
       '--version'

@@ -259,6 +259,8 @@ export class ChassisAssets {
    * @param {boolean} [options.optimize] - Write the images again where that makes them smaller
    * @param {boolean} [options.webp] - Write the PNG and JPEG images as WebP too
    * @param {boolean} [options.avif] - Write the PNG and JPEG images of the web as AVIF too
+   * @param {boolean|string[]} [options.subset] - Write the fonts of the web again with the
+   *   characters of these ranges only; true takes the ranges of the configuration
    * @returns {Promise<import('../types.js').BuildStats>} The statistics of the run
    */
   async build(options = {}) {
@@ -275,7 +277,8 @@ export class ChassisAssets {
       res = false,
       optimize = false,
       webp = false,
-      avif = false
+      avif = false,
+      subset = false
     } = options
     return generateAssets({
       brands,
@@ -291,6 +294,7 @@ export class ChassisAssets {
       optimize,
       webp,
       avif,
+      subset,
       cwd: this.cwd,
       out: this.out
     })

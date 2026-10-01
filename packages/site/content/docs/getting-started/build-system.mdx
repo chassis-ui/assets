@@ -12,7 +12,7 @@ This page is the reference of the build: its commands and options, the `chassis`
 
 ## Prerequisites
 
-The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only. Run `pnpm install` for the tests, the type check, the documentation site and the options that use a package: `--vector-drawables`, `--optimize`, `--webp` and `--avif`.
+The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only. Run `pnpm install` for the tests, the type check, the documentation site and the options that use a package: `--vector-drawables`, `--optimize`, `--webp`, `--avif` and `--subset`.
 
 Run every command from the repository root. A clone needs its Git LFS files, see [Build fails on pointers](#build-fails-on-pointers).
 
@@ -60,6 +60,7 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 | `--optimize` | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install` |
 | `--webp` | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install` |
 | `--avif` | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install` |
+| `--subset [range...]` | Write the WOFF and WOFF2 fonts of the web again under their names with the characters of the ranges only, such as `latin` or `U+0370-03FF`. Default: `chassis.subset`, or `latin` and `latin-ext`. Needs `pnpm install` |
 | `--quiet` | Print errors only |
 | `--help`, `-h` | Print the options |
 | `--version`, `-v` | Print the version |
@@ -212,6 +213,37 @@ A WebP of a PNG is lossless without settings, so on Android the image is the sam
 
 A file of `source/` wins over the one the build would write: when the designer exported `hero.webp` beside `hero.png`, that WebP is copied and none is written. With `--optimize`, the second format is written from the source image, not from the optimized one.
 
+### Font subsets
+
+The `--subset` option writes each WOFF and WOFF2 font of a web job again under its own name, with the characters of a list of Unicode ranges only. It is off by default: a font of `source/` holds every script its designer drew, and the default build copies it whole.
+
+```bash
+pnpm install
+pnpm assets --subset                 # the ranges of chassis.subset, or latin and latin-ext
+pnpm assets --subset latin greek     # these ranges
+pnpm assets --subset U+0020-007E     # a range by its code points
+```
+
+A range is a name or a range of code points written as `U+0370-03FF`. A name stands for the code points that Google Fonts serves under it. The values of the option win over the [chassis.subset](#chassissubset) block, and without either the build keeps `latin` and `latin-ext`.
+
+<CxTable>
+| Name | Characters |
+| --- | --- |
+| `latin` | Basic Latin and Latin-1, general punctuation and the euro sign: the letters of Western European languages |
+| `latin-ext` | The letters of the other languages written in Latin letters, such as Turkish, Polish and Czech |
+| `cyrillic`, `cyrillic-ext` | Cyrillic, and its historic and less common letters |
+| `greek`, `greek-ext` | Greek, and polytonic Greek |
+| `vietnamese` | The letters and tone marks of Vietnamese |
+| `math` | Mathematical operators, arrows, and the Greek letters and the alphabets of formulas |
+| `symbols` | Arrows, geometric shapes, box drawing, dingbats and pictographs |
+</CxTable>
+
+A font keeps its name, its format and its layout features, such as the ligatures of a code font, so the stylesheets of `fonts/` and the pages that load them stay as they are. A character outside the ranges is drawn with the next font of the `font-family` list. A font that would not get smaller stays as it was copied, and so does a font that has no character of the ranges, with a warning that names it.
+
+Only the fonts of `fonts/` of a web job are written again. The TTF and OTF fonts of iOS and Android stay whole, and so does the icon font of `icons/`. A file with the extension of a font that is no font fails the build, which names the file.
+
+The option uses the package `subset-font`, which the build loads only with it. Without the package the build stops before it removes anything and names `pnpm install` as the fix. Check the license of a font before you publish a subset of it: a license may ask for another name for a changed font.
+
 ### Res folder
 
 The `--res` option moves the files of an Android job that the `res/` folder of an app takes into one, `dist/android/<app>/<brand>/res/`. It is off by default, needs nothing installed, and leaves the output of every other platform as it is.
@@ -297,6 +329,22 @@ These are the values without a block.
 </CxTable>
 
 The settings are in `package.json` and not in options of the command, so that every build of a commit writes the same files. There is no setting for a single file: to choose the bytes of one image, commit that image as the designer exported it, in the format it is wanted in.
+
+### chassis.subset
+
+`subset` holds the ranges of `--subset`. The block is optional, and it turns nothing on: only the option does. A block that is not valid fails a build with the option, before the output is removed.
+
+```json
+{
+  "chassis": {
+    "subset": {
+      "ranges": ["latin", "latin-ext"]
+    }
+  }
+}
+```
+
+These are the ranges without a block. `ranges` is an array of the names and the code point ranges that [Font subsets](#font-subsets) describes, and every font of a web job gets the same ranges.
 
 ### Jobs
 
@@ -504,7 +552,7 @@ Name the platform in an app of the `chassis` block, and build it with `pnpm asse
 
 A processor may also place an image itself with `processImage()`, as the Android processor does for the density folders. It returns `true` when it wrote the file, and `false` to let the build copy it. Such a processor also has `imageFolder(fileName)`, which returns the folder the image goes to, so that the build can warn about two images that meet there.
 
-A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`. A processor with `assetCatalog` takes part in the `--asset-catalog` option. The property names the type folder and the folder of the catalog, as the iOS processor does with `{ type: 'images', name: 'Assets.xcassets' }`. A processor with `res` takes part in the `--res` option. The property names the folder, and for the fonts and the drawables the type folders, the folder of `res/` and the formats it takes. A processor with `imageFormats` takes part in `--webp` and `--avif`: the property says for each format whether the file is written `beside` the image or to `replace` it, as the web processor does with `{ webp: 'beside', avif: 'beside' }` and the Android processor with `{ webp: 'replace' }`.
+A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`. A processor with `assetCatalog` takes part in the `--asset-catalog` option. The property names the type folder and the folder of the catalog, as the iOS processor does with `{ type: 'images', name: 'Assets.xcassets' }`. A processor with `res` takes part in the `--res` option. The property names the folder, and for the fonts and the drawables the type folders, the folder of `res/` and the formats it takes. A processor with `imageFormats` takes part in `--webp` and `--avif`: the property says for each format whether the file is written `beside` the image or to `replace` it, as the web processor does with `{ webp: 'beside', avif: 'beside' }` and the Android processor with `{ webp: 'replace' }`. A processor with `subset` takes part in `--subset`: the property names the type folder and the extensions of the fonts that are written again, as the web processor does with `{ type: 'fonts', formats: ['.woff', '.woff2'] }`.
 
 ## Library
 
@@ -543,7 +591,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 
 ### generateAssets
 
-`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `filesOptimized`, `bytesSaved`, `filesGenerated`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif`.
+`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `filesOptimized`, `bytesSaved`, `filesGenerated`, `fontsSubsetted`, `fontBytesSaved`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp`, `avif` and `subset`.
 
 ### ChassisAssets
 
@@ -559,7 +607,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 | `getCombinations()` | Every job, as brand, app and platform |
 | `assetsExist(brand, app)` | Whether the source has files for the brand and the app |
 | `getAssetInventory(brand, app)` | The source files of the brand and the app, by type |
-| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp` and `avif` |
+| `build(options)` | The result of `generateAssets()` with `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp`, `avif` and `subset` |
 | `getStats()` | The numbers of brands, apps, jobs, source files and output files |
 | `validate()` | The errors and the warnings of the configuration and the source |
 </CxTable>

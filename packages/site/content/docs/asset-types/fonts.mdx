@@ -46,6 +46,8 @@ Each platform keeps the formats it can load, and the build leaves the rest out.
 
 The build does not convert a font from one format to another. A font that is needed on the web and in an app is added in both formats.
 
+A font is copied with every character it has. A build with the `--subset` option writes the WOFF and WOFF2 files of the web again with the characters of a list of Unicode ranges only, under the same names; see [Font subsets]([[docsref:/getting-started/build-system#font-subsets]]).
+
 ## Naming
 
 A font file is named `<role>-<weight>.<ext>`, with `-italic` after the weight for an italic. The role and the weight are the names that Chassis Tokens uses for typography, so a file name says where the font is used and stays the same when the family changes.
