@@ -49,6 +49,7 @@ An app gets the files in one of three ways: from a release archive, from a Git s
 A release archive holds the output of one platform, one app and one brand, and needs neither Node.js nor Git LFS. From version 0.2.0 on, each [GitHub release]([[config:repo]]/releases) has one archive per job attached, named `chassis-assets-<platform>-<app>-<brand>-<version>.zip`. The archive holds the content of `dist/<platform>/<app>/<brand>/` at its top level, so unpack it into a folder named after the brand:
 
 ```bash
+mkdir -p chassis-assets-dist/chassis
 unzip "chassis-assets-android-demo-chassis-<version>.zip" -d chassis-assets-dist/chassis
 ```
 

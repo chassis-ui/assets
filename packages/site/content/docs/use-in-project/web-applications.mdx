@@ -4,8 +4,6 @@ description: How a web application gets the fonts, images, icons and other files
 toc: true
 ---
 
-<Callout type="warning" name="created-by-ai" />
-
 ## Introduction
 
 The web output of an app and a brand is the folder `dist/web/<app>/<brand>/`. The build copies the source files into it and renames them to kebab-case, with the `@2x` and `@3x` indicators kept. It does not convert, resize or optimize a file, so the output holds the formats and the variants the designer exported.
@@ -43,6 +41,7 @@ The release workflow attaches one archive per platform, app and brand to each Gi
 Download the archive of your job from the [releases]([[config:repo]]/releases) of the repository and extract it into the folder your application serves static files from:
 
 ```bash
+mkdir -p public/assets
 unzip "chassis-assets-web-docs-chassis-<version>.zip" -d public/assets
 ```
 
@@ -163,6 +162,8 @@ With either one, an import gives the URL of the file:
 import '@assets/fonts/text.css'
 import siteLogo from '@assets/images/site-logo.svg'
 ```
+
+Vite gives a small file, such as this logo, as a `data:` URL in place of a path. The import of the stylesheet needs a webpack that reads CSS without a rule for it; with an older one, add a rule with `css-loader`.
 
 Parcel needs no alias: it resolves a relative path to a file of the output in `url()` of a stylesheet and in `new URL('<path>', import.meta.url)` of a script.
 
@@ -436,6 +437,8 @@ jobs:
 ```
 
 A workflow that uses a release archive needs none of these steps: download the archive of the job with `gh release download` and extract it.
+
+The commands of this job were run in a project with the submodule; the workflow itself was not run on GitHub Actions.
 
 ## Best practices
 
