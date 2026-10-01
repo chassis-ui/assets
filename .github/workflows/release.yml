@@ -1,0 +1,171 @@
+name: Release
+
+# On a push to main, releases the version in packages/assets/package.json when it has no tag
+# yet: creates the tag v<version> and the GitHub release from the CHANGELOG entry of the
+# version, with one archive per platform, app and brand attached. The version and the
+# CHANGELOG are made on develop with Changesets. See "Releases" in .github/CONTRIBUTING.md.
+# Nothing is published to npm.
+#
+# The checks of ci.yml ran on this commit when it was pushed to develop, and the ruleset of
+# main requires them before the commit can reach main. This workflow does not run them
+# again. It reads their results and stops unless each one passed.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a run that may be releasing
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Detect Version
+    # A manual run on another branch stops here
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      release: ${{ steps.tag.outputs.release }}
+
+    steps:
+      # No Git LFS files: this job reads package.json only
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # A version with a prerelease part, such as 0.2.0-next.0, is a prerelease
+      - name: Read the version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./packages/assets/package.json').version")
+
+          {
+            echo "version=$VERSION"
+            echo "prerelease=$([ "${VERSION#*-}" = "$VERSION" ] && echo false || echo true)"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $VERSION"
+
+      - name: Check whether the version has a tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$VERSION" --silent 2>/dev/null; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "The tag v$VERSION exists. Nothing to release."
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "The tag v$VERSION does not exist. It will be released."
+          fi
+
+  checks:
+    name: Checks Passed
+    needs: detect
+    if: needs.detect.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      checks: read
+
+    steps:
+      - name: Read the results of CI on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUIRED: |
+            Lint
+            Assets
+            Site
+            Audit
+        run: |
+          RESULTS=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
+            --jq '.check_runs[] | select(.conclusion == "success") | .name')
+          MISSING=0
+
+          while IFS= read -r NAME; do
+            [ -z "$NAME" ] && continue
+
+            if printf '%s\n' "$RESULTS" | grep -qxF "$NAME"; then
+              echo "passed: $NAME"
+            else
+              echo "::error::The check '$NAME' has not passed on $GITHUB_SHA"
+              MISSING=1
+            fi
+          done <<< "$REQUIRED"
+
+          exit $MISSING
+
+  release:
+    name: Release
+    needs: [detect, checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # to create the GitHub release and its tag
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The same cache as ci.yml: the objects are keyed by the list of their ids
+      - name: List Git LFS objects
+        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
+
+      - name: Cache Git LFS objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-ids') }}
+          restore-keys: lfs-
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+
+      # No pnpm and no install: the build and the release scripts import Node.js modules
+      # only, and setup-node would otherwise look for pnpm, because the root package.json
+      # names it in `packageManager`.
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      # Before anything is built, so a version without a CHANGELOG entry is not released
+      - name: Release notes
+        env:
+          VERSION: ${{ needs.detect.outputs.version }}
+        run: node build/release-notes.js "$VERSION" > "$RUNNER_TEMP/release-notes.md"
+
+      - name: Build all assets
+        run: node packages/assets/build/cli.js build
+
+      # The validator, then the consumer contract
+      - name: Verify distribution
+        run: node packages/assets/build/cli.js verify
+
+      # chassis-assets-<platform>-<app>-<brand>-<version>.zip
+      - name: Archive each platform, app and brand
+        run: node build/release-archives.js --to "$RUNNER_TEMP/archives"
+
+      - name: Create the GitHub release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: 'v${{ needs.detect.outputs.version }}'
+          name: 'v${{ needs.detect.outputs.version }}'
+          body_path: ${{ runner.temp }}/release-notes.md
+          target_commitish: ${{ github.sha }}
+          files: ${{ runner.temp }}/archives/*.zip
+          fail_on_unmatched_files: true
+          prerelease: ${{ needs.detect.outputs.prerelease == 'true' }}
+          make_latest: ${{ needs.detect.outputs.prerelease == 'true' && 'false' || 'true' }}
+          draft: false

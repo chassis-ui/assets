@@ -456,32 +456,53 @@ nothing installed.
 
 ### Session 3.2: Changesets and release
 
-- [ ] Add Changesets with the configuration of `chassis-tokens`: `changedFilePatterns` on
+- [x] Add Changesets with the configuration of `chassis-tokens`: `changedFilePatterns` on
       `source/**`, `build/**`, `dist/**`; `baseBranch` `develop`; the site ignored. A
       changeset is required by CI on a pull request that changes those paths, as in the
-      `changeset` job of `chassis-tokens`.
-- [ ] `pnpm changeset:version` runs `changeset version` then `build/sync-version-refs.js`,
-      which replaces `change-version.js` and updates `site/config.yml` and the README.
-- [ ] Release workflow on pushes to `main`, as `publish-release.yml` of `chassis-tokens`:
-      runs CI as `workflow_call`, detects a new version, tags `v<version>`, writes the GitHub
-      release from the changelog entry with `build/release-notes.js`, attaches one archive
-      per platform, app and brand, `chassis-assets-<platform>-<app>-<brand>-<version>.zip`,
-      built in the run and checked with `assets:verify`. Nothing is published to npm (D2).
-- [ ] T4: move `v0.1.8` to `a4b6445` with the maintainer, record `v0.1.7`, delete
-      `tag-release.yml`.
-- [ ] `CHANGELOG.md` keeps its entries; Changesets appends above them.
-- [ ] `CONTRIBUTING.md` "Releases": `pnpm changeset`, `pnpm changeset:version` on `develop`,
+      `changeset` job of `chassis-tokens`. `changedFilePatterns` is `build/**` only: it is
+      relative to the package, `source/` is at the root, and `dist/` is not committed. So
+      the Changeset job runs `build/check-changeset.js`, which asks a changeset for a change
+      to `source/` or `packages/assets/build/` and passes a release commit. The changelog
+      entries have no commit hash, as in the website (`.changeset/changelog.js`). The
+      `[Unreleased]` section became seven changesets, a minor bump: the next version is
+      0.2.0.
+- [x] `pnpm changeset:version` runs `changeset version` then `build/sync-version-refs.js`,
+      which replaces `change-version.js` and updates `packages/site/config.yml` and the
+      badge of the README. Tried and reverted: 0.2.0, with the changelog entry above 0.1.8.
+- [x] Release workflow on pushes to `main`, as `publish-release.yml` of `chassis-tokens`:
+      detects a new version, tags `v<version>`, writes the GitHub release from the changelog
+      entry with `build/release-notes.js`, attaches one archive per platform, app and brand,
+      `chassis-assets-<platform>-<app>-<brand>-<version>.zip`, built in the run and checked
+      with `assets:verify`. Nothing is published to npm (D2). `.github/workflows/release.yml`.
+      It does not run CI as `workflow_call`: as `publish-packages.yml` of the website, it
+      reads the results of Lint, Assets, Site and Audit on the commit, which the ruleset of
+      `main` requires anyway, and stops unless each passed. A push to `main` without a new
+      version costs one job that reads `package.json`. The release job installs nothing.
+      `build/release-archives.js` writes the archives, `pnpm release:archives` locally: six
+      archives of a full build today, 16 MB for each app job and 47 MB for each web job.
+      Not run on GitHub yet: the first run is the release of 0.2.0.
+- [x] T4: move `v0.1.8` to `a4b6445` with the maintainer, record `v0.1.7`, delete
+      `tag-release.yml`. The workflow is deleted. The maintainer moved `v0.1.8` to `a4b6445`
+      on 2026-10-01. `v0.1.7` stays at `867611c`, a commit of 0.1.6, and is recorded in
+      `docs/architecture.md`, "Releases": its version commit is `992e47e`.
+- [x] `CHANGELOG.md` keeps its entries; Changesets appends above them. It moved to
+      `packages/assets/CHANGELOG.md`, where Changesets writes, without the Keep a Changelog
+      preamble, which a new entry would have been put above. The link of the home page
+      follows.
+- [x] `CONTRIBUTING.md` "Releases": `pnpm changeset`, `pnpm changeset:version` on `develop`,
       the pushes to `staging`, `main` and `app/docs`, and what a `0.x` minor may break.
+      `.github/CONTRIBUTING.md` has this section only; session 4.2 writes the rest.
 
 **Acceptance:** a release of 0.2.0 from `main` creates the tag, the release and the archives,
-and `app/docs` receives the same commit.
+and `app/docs` receives the same commit. Open: releasing is the maintainer's, and F11 may
+go into 0.2.0 first.
 
 ### Exit criteria
 
 - [x] `pnpm install --ignore-workspace && pnpm assets:site` at the root works from a fresh
       clone with Git LFS, and installs fewer packages than at the baseline.
-- [ ] Every change to `source/`, `build/` or the output has a changeset.
-- [ ] A version exists once: in `package.json`, and everywhere else by script.
+- [x] Every change to `source/`, `build/` or the output has a changeset.
+- [x] A version exists once: in `package.json`, and everywhere else by script.
 
 ## Phase 4: contributor experience
 
@@ -650,3 +671,4 @@ None is scheduled; the maintainer picks one when it is wanted.
 | 2026-09-30 | 2.1       | Replaced the three runners with Vitest: 271 tests in about three seconds, no Git LFS files needed, nothing written outside temporary folders. A fixture in `test/fixtures/` (two brands, `alpha` and `beta`, two apps, `site` and `mobile`, six jobs, every type and case the roadmap names) and its golden output in `test/golden/`, written again with `pnpm test:golden`. Table tests for the processors and the filters, one row per rule of the pages; tests of the library, the analyzer, the validator, the API and the three command lines. The tests found three bugs, fixed: the wildcards of the ignore list (F25), the analyzer's platform filter (F26), and the API's paths and categories (F27). `keepsFile()` and `createCollisionTracker()` are exported for the tests. The real build's output is identical before and after. `test/README.md` describes the suite. Next: session 2.2.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 2026-09-30 | 2.2       | Ported the consumer contract from `archive/rewrite-2026-09` into `build/contract.js`, checked again against the website and `chassis-figma`, with the reader of every file; narrowed the screenshot rule for 18 Figma export copies no page reads. `pnpm assets:contract` and `pnpm assets:verify` (validator, then contract). `pnpm assets:lint:source` for the naming rules of the design-guidelines page, type folders and LFS pointers; the real source has no error and three known oddities. `tsconfig.json`, `build/types.js` and `pnpm assets:typecheck`, clean. CI's Assets job runs lint, source lint, type check, tests, full build and verify. 324 tests in about three seconds. The table of checks per area waits in `docs/architecture.md` for session 4.2. Next: Phase 3 or 4, or 5.1.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 2026-10-01 | 3.1       | Made the repository a pnpm workspace, as D3 decided: the build in `packages/assets/` (`@chassis-ui/assets`, private, with Vitest and TypeScript), the site in `packages/site/` (`chassis-assets-site`, with the Astro toolchain), `source/`, `dist/` and the `chassis` block at the root, in the private `chassis-assets-workspace` with the lint tools. `packages/assets/build/cli.js` is the one entry the root scripts run with `node`; each module exports `cli(argv)` and still runs on its own. `root.js` finds the repository root upward from the working directory, and the version is that of `packages/assets/package.json`. Removed `publishConfig`, `files` and `keywords` (D2, T6) and `standard`; no resolved version changed in the lockfile. The output of a full build is identical file for file, and the site too, apart from the "View on GitHub" links, which now name `packages/site/`. Consumer path: `chassis-docs vendor` of the website builds the branch unchanged and leaves the submodule clean; `pnpm install --ignore-workspace` installs 449 packages where it installed 906 (T7), and the build runs with none. CI's Assets job builds as a consumer first. `tag-release.yml` and `change-version.js` read the version from its new place until session 3.2 replaces them. 345 tests. Next: session 3.2, or Phase 4, or 5.1. F11 is still open and this machine has Git LFS. |
+| 2026-10-01 | 3.2       | Changesets, as the website uses it: a change to `source/` or `packages/assets/build/` carries a changeset, `pnpm changeset:version` on `develop` bumps `packages/assets/package.json`, writes `packages/assets/CHANGELOG.md` and runs `build/sync-version-refs.js` for the site's `current_version` and the README badge. `build/check-changeset.js` is the Changeset job of CI on pull requests, because Changesets does not count `source/` at the root for the package. `.github/workflows/release.yml` on pushes to `main`: when `v<version>` has no tag and the four checks passed on the commit, it builds with nothing installed, verifies, and creates the tag and the GitHub release with one zip per platform, app and brand (`build/release-archives.js`, `build/release-notes.js`). `tag-release.yml` and `change-version.js` are deleted; `workflow_call` left `ci.yml`. The `[Unreleased]` section is seven changesets, and a trial `changeset:version` gave 0.2.0 with the right entry, then was reverted: the version is still 0.1.8. `.github/CONTRIBUTING.md` has "Releases". Prettier, the build's lint, the type check, 345 tests and `actionlint` pass locally; CI and the release workflow have not seen the commit. The maintainer moved `v0.1.8` to `a4b6445` (T4). Left for the maintainer: releasing 0.2.0. Next: F11 with Git LFS, then the release; or Phase 4, or 5.1.            |

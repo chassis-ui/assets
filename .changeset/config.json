@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+  "changelog": "./changelog.js",
+  "commit": false,
+  "fixed": [],
+  "linked": [],
+  "access": "restricted",
+  "baseBranch": "develop",
+  "changedFilePatterns": ["build/**"],
+  "updateInternalDependencies": "patch",
+  "ignore": ["chassis-assets-site"],
+  "privatePackages": { "version": true, "tag": false }
+}

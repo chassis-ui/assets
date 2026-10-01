@@ -128,8 +128,10 @@ pnpm assets:lint            # Lint the build scripts and the tests
 pnpm lint:prettier          # Check formatting across the repository
 pnpm check                  # Type-check the site, then audit the dependencies
 
-# Update version
-pnpm change-version [old_version] [new_version]
+# Describe a change to source/ or the build, and release a version
+pnpm changeset              # Write a changeset for the change
+pnpm changeset:version      # Bump the version and write the changelog, see .github/CONTRIBUTING.md
+pnpm release:archives       # Write the archives of a release to .cache/release/, after pnpm assets
 ```
 
 ### Documentation Site
