@@ -3,7 +3,7 @@
 > Fonts, images, icons and other design files of the Chassis Design System, built from one source tree into the names, formats and folders of the web, iOS and Android.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Version: 0.1.8](https://img.shields.io/badge/Version-0.1.8-blue.svg)](https://github.com/chassis-ui/assets)
+[![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-blue.svg)](https://github.com/chassis-ui/assets)
 [![CI](https://github.com/chassis-ui/assets/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/chassis-ui/assets/actions/workflows/ci.yml)
 
 ## Overview
