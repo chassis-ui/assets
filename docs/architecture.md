@@ -134,7 +134,7 @@ jobs with their file counts.
 | `build/sync-version-refs.js`                  | Copies the version of `packages/assets/package.json` to `packages/site/config.yml` and to the badge of `README.md`. The second half of `pnpm changeset:version`.                                                                                                                                                                                                                                              |
 | `build/release-notes.js`                      | Prints the entry of a version in `packages/assets/CHANGELOG.md`, for the text of the GitHub release. `pnpm release:notes`.                                                                                                                                                                                                                                                                                    |
 | `build/release-archives.js`                   | Writes one archive per platform, app and brand of an existing `dist/`, with the `zip` command. `pnpm release:archives`.                                                                                                                                                                                                                                                                                       |
-| `build/check-changeset.js`                    | Fails when the commits since a base change `source/` or `packages/assets/build/` and add no changeset. The Changeset job of CI.                                                                                                                                                                                                                                                                               |
+| `build/check-changeset.js`                    | Fails when the commits since a base change `source/` or `packages/assets/build/` and add no changeset. The Changeset job of CI, on pull requests and on pushes to `develop`.                                                                                                                                                                                                                                  |
 
 The processors are the only platform knowledge. Everything else is the same for every
 platform. A new platform is a new file in `packages/assets/build/processors/` and a key in the registry, as
@@ -493,17 +493,17 @@ file with and without the code. It needs no package: a catalog is folders and JS
 
 ## Checks
 
-| Command                                                 | Checks                                                                                                                                                                                                                    |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm assets:lint`                                      | ESLint over `packages/assets/build/` and `packages/assets/test/`.                                                                                                                                                         |
-| `pnpm assets:lint:source`                               | The names and the layout of `source/` against the design-guidelines page, and Git LFS pointers.                                                                                                                           |
-| `pnpm assets:typecheck`                                 | TypeScript over `packages/assets/build/`, from JSDoc.                                                                                                                                                                     |
-| `pnpm lint:prettier`                                    | Prettier over the repository.                                                                                                                                                                                             |
-| `pnpm test`                                             | The unit tests, the golden test of the fixture against `packages/assets/test/golden/`, the analyzer, the validator, the API and the command line. `packages/assets/test/README.md` lists the files.                       |
-| `pnpm assets:validate`                                  | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules.                           |
-| `pnpm assets:verify`                                    | `assets:validate` and the consumer contract.                                                                                                                                                                              |
-| `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build` | The site.                                                                                                                                                                                                                 |
-| CI                                                      | Lint (Prettier, the site), Assets (the consumer build with nothing installed, lint, source lint, type check, test, full build, verify), Site, Audit, on `develop` and on pull requests. Changeset, on pull requests only. |
+| Command                                                 | Checks                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm assets:lint`                                      | ESLint over `packages/assets/build/` and `packages/assets/test/`.                                                                                                                                                                                                                                                                |
+| `pnpm assets:lint:source`                               | The names and the layout of `source/` against the design-guidelines page, and Git LFS pointers.                                                                                                                                                                                                                                  |
+| `pnpm assets:typecheck`                                 | TypeScript over `packages/assets/build/`, from JSDoc.                                                                                                                                                                                                                                                                            |
+| `pnpm lint:prettier`                                    | Prettier over the repository.                                                                                                                                                                                                                                                                                                    |
+| `pnpm test`                                             | The unit tests, the golden test of the fixture against `packages/assets/test/golden/`, the analyzer, the validator, the API and the command line. `packages/assets/test/README.md` lists the files.                                                                                                                              |
+| `pnpm assets:validate`                                  | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules.                                                                                                                                  |
+| `pnpm assets:verify`                                    | `assets:validate` and the consumer contract.                                                                                                                                                                                                                                                                                     |
+| `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build` | The site.                                                                                                                                                                                                                                                                                                                        |
+| CI                                                      | Lint (Prettier, the site), Assets (the consumer build with nothing installed, lint, source lint, type check, test, full build, verify), Site, Audit (`pnpm check:pnpm` blocks, `pnpm audit` of every dependency reports), Native iOS and Changeset, on `develop` and on pull requests. Dependency Review, on pull requests only. |
 
 ### Checks per changed area
 
@@ -526,14 +526,16 @@ steps are in `.github/CONTRIBUTING.md`, "Releases".
 
 - A change to `source/` or to `packages/assets/build/` carries a changeset in `.changeset/`.
   `changeset status` sees the build only: `source/` is at the root, outside the package that
-  has the version, so `build/check-changeset.js` checks both on a pull request.
+  has the version, so `build/check-changeset.js` checks both, on a pull request against its
+  base branch and on a push to `develop` against the tip it replaced.
 - `pnpm changeset:version` runs `changeset version`, which bumps
   `packages/assets/package.json`, writes `packages/assets/CHANGELOG.md` with the entries of
   `.changeset/changelog.js` and deletes the changesets, then `build/sync-version-refs.js`.
 - `.github/workflows/release.yml` runs on a push to `main`. When `v<version>` has no tag,
   it reads the results of Lint, Assets, Site and Audit on the commit, builds every job
-  with `--optimize`, verifies the output, and creates the tag and the GitHub release with one
-  `chassis-assets-<platform>-<app>-<brand>-<version>.zip` per job. It installs the packages
+  with `--optimize`, verifies the output, and creates the tag and the GitHub release with
+  `gh release create`, with one `chassis-assets-<platform>-<app>-<brand>-<version>.zip` per
+  job. It installs the packages
   of the build only, for `sharp` and `svgo`.
 - Nothing is published to npm (roadmap D2). `@chassis-ui/assets` is private.
 

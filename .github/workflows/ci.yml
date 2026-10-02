@@ -14,8 +14,10 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same pull request supersedes the running one. A push to `develop` always
+# runs to the end: the ruleset and the release workflow read the results of that commit.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -197,25 +199,44 @@ jobs:
       - name: Build site
         run: pnpm site:build
 
-  # A pull request that changes source/ or packages/assets/build/ adds a changeset, or is
-  # the release that consumes them. Needs no install: a script that reads Git.
+  # A change to source/ or packages/assets/build/ needs a changeset; `pnpm changeset --empty`
+  # adds one that releases nothing. A pull request is compared with its base branch, a push
+  # to develop with the tip it replaced. The version commit consumes the changesets, so a
+  # change of the version passes. The job of the siblings runs `changeset status`, which
+  # cannot see source/: it is outside the package that has the version. So this one runs a
+  # script that reads Git, and needs no install.
   changeset:
     name: Changeset
-    if: github.event_name == 'pull_request'
+    # A manual run has nothing to compare with
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The history up to the base branch
+          # The script compares with an earlier commit
           fetch-depth: 0
           persist-credentials: false
 
       - name: Check for a changeset
         env:
+          EVENT: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
-        run: node build/check-changeset.js "origin/$BASE_REF"
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            SINCE="origin/$BASE_REF"
+          else
+            if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+              echo "No earlier commit to compare with"
+              exit 0
+            fi
+
+            SINCE="$BEFORE"
+          fi
+
+          node build/check-changeset.js "$SINCE"
 
   audit:
     name: Audit
@@ -238,5 +259,28 @@ jobs:
           # step would fail the job.
           package-manager-cache: false
 
-      - name: Audit dependencies
+      # Blocking: the packages that an option of the build loads, sharp, svgo and the others
+      # of optionalDependencies, which write the files of a release archive
+      - name: Audit runtime dependencies
         run: pnpm check:pnpm
+
+      # Reports only: the test, lint and site tooling writes no file of dist/
+      - name: Audit all dependencies
+        run: pnpm audit
+        continue-on-error: true
+
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate

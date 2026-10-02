@@ -164,15 +164,23 @@ jobs:
       - name: Archive each platform, app and brand
         run: node build/release-archives.js --to "$RUNNER_TEMP/archives"
 
+      # The tag is created with the release, on this commit. A prerelease is marked as one
+      # and does not become the latest release
       - name: Create the GitHub release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
-        with:
-          tag_name: 'v${{ needs.detect.outputs.version }}'
-          name: 'v${{ needs.detect.outputs.version }}'
-          body_path: ${{ runner.temp }}/release-notes.md
-          target_commitish: ${{ github.sha }}
-          files: ${{ runner.temp }}/archives/*.zip
-          fail_on_unmatched_files: true
-          prerelease: ${{ needs.detect.outputs.prerelease == 'true' }}
-          make_latest: ${{ needs.detect.outputs.prerelease == 'true' && 'false' || 'true' }}
-          draft: false
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.detect.outputs.version }}
+          PRERELEASE: ${{ needs.detect.outputs.prerelease }}
+        run: |
+          if [ "$PRERELEASE" = true ]; then
+            FLAGS=(--prerelease --latest=false)
+          else
+            FLAGS=(--latest)
+          fi
+
+          gh release create "v$VERSION" \
+            "$RUNNER_TEMP"/archives/*.zip \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            "${FLAGS[@]}"

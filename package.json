@@ -69,7 +69,7 @@
     "astro:preview": "pnpm -C packages/site preview",
     "check": "pnpm check:astro && pnpm check:pnpm",
     "check:astro": "pnpm -C packages/site check",
-    "check:pnpm": "pnpm audit --audit-level moderate",
+    "check:pnpm": "pnpm audit --prod --audit-level moderate",
     "changeset": "changeset",
     "changeset:version": "changeset version && node build/sync-version-refs.js",
     "release:archives": "node build/release-archives.js",

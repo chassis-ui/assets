@@ -14,8 +14,9 @@
  * Usage:
  *   node build/check-changeset.js <base>
  *
- * <base> is a commit or a branch, `origin/develop` for a pull request against `develop`.
- * The comparison starts at the merge base. Needs Git and the history up to the base.
+ * <base> is a commit or a branch: `origin/develop` for a pull request against `develop`,
+ * the tip that a push replaced for a push. The comparison starts at the merge base. Needs
+ * Git and the history up to the base.
  *
  * Copyright 2025-2026 Ozgur Gunes
  * Licensed under MIT

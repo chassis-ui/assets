@@ -155,16 +155,27 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 
 ## What a pull request needs
 
-- **Passing CI**: `.github/workflows/ci.yml` runs five jobs on `develop` and on pull requests.
-  Lint: `pnpm lint:prettier`, `pnpm site:lint` and `pnpm check:astro`. Assets: the build as a
-  site runs it, with nothing installed, then `pnpm assets:lint`, `pnpm assets:lint:source`,
-  `pnpm assets:typecheck`, `pnpm test`, `pnpm assets` and `pnpm assets:verify`. Site:
-  `pnpm site:build`. Audit: `pnpm check:pnpm`. Native iOS, on a macOS runner: a build of the
+- **Passing CI**: `.github/workflows/ci.yml` runs on pushes to `develop` and on pull
+  requests. Lint: `pnpm lint:prettier`, `pnpm site:lint` and `pnpm check:astro`. Assets: the
+  build as a site runs it, with nothing installed, then `pnpm assets:lint`,
+  `pnpm assets:lint:source`, `pnpm assets:typecheck`, `pnpm test`, `pnpm assets` and
+  `pnpm assets:verify`. Site: `pnpm site:build`. Native iOS, on a macOS runner: a build of the
   iOS jobs with `--asset-catalog`, then `pnpm test:ios`, which compiles the catalogs with
   `actool` and needs Xcode. The commands above run the same checks locally.
+- **A clean audit**: the Audit job runs `pnpm check:pnpm`, which is
+  `pnpm audit --prod --audit-level moderate` and fails on an advisory in a package that an
+  option of the build loads, the `optionalDependencies` of `packages/assets/package.json`. A
+  second step runs `pnpm audit` over every dependency and reports only: the tooling of the
+  tests and the site writes no file of `dist/`.
+- **No vulnerable dependency added**: on a pull request, the Dependency Review job fails
+  when the change adds a dependency with a known vulnerability of moderate severity or
+  above.
 - **A changeset** for a change to `source/` or to `packages/assets/build/`. The Changeset job
-  fails a pull request without one. A change that only touches the site, the documents, the
-  tests or the tooling needs none.
+  fails without one, on a pull request, which it compares with its base branch, and on a
+  push to `develop`, which it compares with the tip the push replaced. A change that only
+  touches the site, the documents, the tests or the tooling needs none. The release commit
+  passes: it changes the version. When a change to those paths releases nothing, such as a
+  comment in the build, `pnpm changeset --empty` adds a changeset without a bump.
 - **The golden baseline** written again and reviewed, for a change to the build that changes
   the output.
 
@@ -221,8 +232,8 @@ git push origin develop:app/docs
 
 The push to `main` runs `.github/workflows/release.yml`. When the version has no tag yet and
 the checks of CI passed on the commit, it builds every brand, app and platform with
-`--optimize`, runs `pnpm assets:verify`, and creates the tag and the GitHub release with the changelog entry as
-its text and the archives attached:
+`--optimize`, runs `pnpm assets:verify`, and creates the tag and the GitHub release with
+`gh release create`, with the changelog entry as its text and the archives attached:
 `chassis-assets-<platform>-<app>-<brand>-<version>.zip`, which holds the content of
 `dist/<platform>/<app>/<brand>/`. The start of the name is the name of the root
 `package.json` without `-workspace`. A version without a changelog entry is not released.

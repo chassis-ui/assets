@@ -165,7 +165,7 @@ A full build removes `dist/` first; a filtered build keeps it. A filter value th
 | `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                     |                                                                  |
 | `pnpm assets:typecheck`   | TypeScript over `packages/assets/build/`, from its JSDoc                                                        |                                                                  |
 | `pnpm lint:prettier`      | Formatting, across the repository                                                                               |                                                                  |
-| `pnpm check`              | The types of the site, then `pnpm audit`                                                                        |                                                                  |
+| `pnpm check`              | The types of the site, then `pnpm check:pnpm`: `pnpm audit --prod --audit-level moderate`                       |                                                                  |
 
 Every `pnpm assets*` command prints its options with `--help`. [docs/architecture.md](docs/architecture.md#checks-per-changed-area) says which checks to run for which change.
 
