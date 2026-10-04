@@ -10,11 +10,11 @@ const config = loadConfig({ root })
 export default defineConfig({
   outDir: '../../_site',
   build: {
-    assets: `static/astro`,
-    // The site is served under /assets of chassis-ui.com. Without a prefix, a script that another
-    // script imports is requested as /static/astro/…, which the main site routes by the Referer
-    // header and gets wrong. The prefix names the project; vercel.json rewrites it back.
-    assetsPrefix: '/assets'
+    // The site is served under /assets of chassis-ui.com. Astro's files are written to
+    // _site/assets/static/astro/ and requested at the same path, so the deployment, `astro
+    // preview` and the link check find them without a rewrite. Under /static/ the main site
+    // routes by the Referer header, which fails for a script that another script imports.
+    assets: 'assets/static/astro'
   },
   integrations: [chassisDocs({ config }), ...chassis({ config, root })],
   vite: {
@@ -23,9 +23,9 @@ export default defineConfig({
         build: {
           rolldownOptions: {
             output: {
-              entryFileNames: `static/astro/docs.[hash].js`,
-              chunkFileNames: 'static/astro/docs.[hash].js'
-              // assetFileNames: 'static/astro/docs.[hash][extname]'
+              entryFileNames: `assets/static/astro/docs.[hash].js`,
+              chunkFileNames: 'assets/static/astro/docs.[hash].js'
+              // assetFileNames: 'assets/static/astro/docs.[hash][extname]'
             }
           }
         }
@@ -35,7 +35,7 @@ export default defineConfig({
     build: {
       rolldownOptions: {
         output: {
-          assetFileNames: 'static/astro/docs.[hash][extname]'
+          assetFileNames: 'assets/static/astro/docs.[hash][extname]'
         }
       }
     }

@@ -9,7 +9,6 @@
       "dependabot/**": false
     }
   },
-  "rewrites": [{ "source": "/assets/static/astro/(.*)", "destination": "/static/astro/$1" }],
   "headers": [
     {
       "source": "/(.*)",
