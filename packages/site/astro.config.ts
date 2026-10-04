@@ -10,7 +10,11 @@ const config = loadConfig({ root })
 export default defineConfig({
   outDir: '../../_site',
   build: {
-    assets: `static/astro`
+    assets: `static/astro`,
+    // The site is served under /assets of chassis-ui.com. Without a prefix, a script that another
+    // script imports is requested as /static/astro/…, which the main site routes by the Referer
+    // header and gets wrong. The prefix names the project; vercel.json rewrites it back.
+    assetsPrefix: '/assets'
   },
   integrations: [chassisDocs({ config }), ...chassis({ config, root })],
   vite: {
