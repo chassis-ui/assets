@@ -684,8 +684,11 @@ asking, and does not break a rule that is not written down.
       `/static/astro/$1`. Checked on the built site: no URL of a page starts with
       `/static/astro/`, every `/assets/static/astro/` URL and every chunk that a script
       imports names a file of `_site/static/astro/`, and `chassis.min.css` is still requested
-      as `/static/css/chassis.min.css`. The check on the deployment, through `chassis-ui.com`,
-      is open.
+      as `/static/css/chassis.min.css`. Checked on production, on the home page, after the
+      push of `a50e811` to `main` on 2026-10-04: no page URL starts with `/static/astro/`,
+      the stylesheet and the four scripts answer 200 under `/assets/static/astro/`, so do the
+      two chunks they import, and `/static/css/chassis.min.css` answers 200 under `/static/`.
+      Other pages were not checked.
 - [x] A14, optional: the reusable workflows of `chassis-ui/website`. Not taken, D17,
       confirmed on 2026-10-01, and again that day after W9 was done: the required checks
       would be renamed.
