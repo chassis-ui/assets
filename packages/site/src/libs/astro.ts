@@ -73,11 +73,40 @@ export function chassis({
       name: 'chassis-sitemap-postprocess',
       hooks: {
         'astro:build:done': ({ dir }) => {
-          rebaseSitemapIndex(fileURLToPath(dir), config.baseURL)
+          const builtDir = fileURLToPath(dir)
+
+          removeRedirectsFromSitemap(builtDir)
+          rebaseSitemapIndex(builtDir, config.baseURL)
         }
       }
     }
   ]
+}
+
+/**
+ * Removes the redirect pages from the sitemaps: `/`, the pages of `aliases` in the frontmatter
+ * such as `/getting-started/`, and `/assets/docs/`.
+ *
+ * `@astrojs/sitemap` lists every page that was built, and a redirect is not a page to index.
+ * Those outside `/assets` do not exist on chassis-ui.com at all.
+ */
+function removeRedirectsFromSitemap(builtDir: string) {
+  const sitemaps = fs.readdirSync(builtDir).filter((file) => /^sitemap-\d+\.xml$/.test(file))
+
+  for (const file of sitemaps) {
+    const sitemapPath = path.join(builtDir, file)
+    const content = fs.readFileSync(sitemapPath, 'utf8')
+
+    const updated = content.replace(/<url><loc>([^<]+)<\/loc>.*?<\/url>/g, (entry, loc: string) => {
+      const page = path.join(builtDir, decodeURIComponent(new URL(loc).pathname), 'index.html')
+      const isRedirect =
+        fs.existsSync(page) && fs.readFileSync(page, 'utf8').includes('<meta http-equiv="refresh"')
+
+      return isRedirect ? '' : entry
+    })
+
+    fs.writeFileSync(sitemapPath, updated)
+  }
 }
 
 /**
