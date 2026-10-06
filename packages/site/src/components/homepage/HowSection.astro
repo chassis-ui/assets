@@ -5,8 +5,10 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
 
 <section class="home-section py-3xl md:py-6xl">
   <div class="container 2xl section-content">
-    <div class="row mb-3xl md:mb-6xl">
-      <header class="section-header col lg:col-10 xl:col-8 text-center mx-auto">
+    <div class="grid mb-3xl md:mb-6xl">
+      <header
+        class="section-header col-span-full lg:col-span-10 lg:col-start-2 xl:col-span-8 xl:col-start-3 text-center"
+      >
         <h2 class="section-title font-3xl md:font-4xl lg:font-5xl mb-xs md:mb-sm lg:mb-md">
           <span class="font-normal d-block">From Design</span> to Production
         </h2>
@@ -17,8 +19,8 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
       </header>
     </div>
 
-    <div class="section-features row row-cols-1 md:row-cols-3 g-md md:g-xl">
-      <div class="col">
+    <div class="section-features grid grid-cols-1 md:grid-cols-3 gap-md md:gap-xl">
+      <div>
         <FeatureCard icon="cx-number-one">
           <Fragment slot="title">Structure Source Folders</Fragment>
           <Fragment slot="body">
@@ -44,7 +46,7 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
         </FeatureCard>
       </div>
 
-      <div class="col">
+      <div>
         <FeatureCard icon="cx-number-two">
           <Fragment slot="title">Run Build Command</Fragment>
           <Fragment slot="body">
@@ -70,7 +72,7 @@ pnpm assets --brand chassis --app demo`}
         </FeatureCard>
       </div>
 
-      <div class="col">
+      <div>
         <FeatureCard icon="cx-number-three">
           <Fragment slot="title">Integrate Build Output</Fragment>
           <Fragment slot="body">
