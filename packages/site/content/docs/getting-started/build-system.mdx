@@ -236,7 +236,8 @@ A range is a name or a range of code points written as `U+0370-03FF`. A name sta
 | `greek`, `greek-ext` | Greek, and polytonic Greek |
 | `vietnamese` | The letters and tone marks of Vietnamese |
 | `math` | Mathematical operators, arrows, and the Greek letters and the alphabets of formulas |
-| `symbols` | Arrows, geometric shapes, box drawing, dingbats and pictographs |
+| `symbols` | Arrows, geometric shapes, dingbats and pictographs |
+| `symbols2` | Box drawing and block characters, such as the lines of a file tree in a code font |
 </CxTable>
 
 A font keeps its name, its format and its layout features, such as the ligatures of a code font, so the stylesheets of `fonts/` and the pages that load them stay as they are. A character outside the ranges is drawn with the next font of the `font-family` list. A font that would not get smaller stays as it was copied, and so does a font that has no character of the ranges, with a warning that names it.

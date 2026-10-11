@@ -119,7 +119,7 @@ jobs with their file counts.
 | `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                              |
 | `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                  |
 | `packages/assets/build/optimize.js`           | `--optimize`, `--webp` and `--avif`: `resolveSettings()`, which checks `chassis.optimize` over `OPTIMIZE_DEFAULTS`, `loadEncoders()`, which imports `sharp` and `svgo` when it is called and says how to install them when they are missing, `svgOptions()`, `formatName()`, which the validator reads, and `optimizeJob()`.                                                                                  |
-| `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()`, `fontAxes()`, `rangeFileName()` and `subsetJob()`.                                                                                     |
+| `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, the ranges that have a name, of `subset-ranges.json` beside it, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()`, `fontAxes()`, `rangeFileName()` and `subsetJob()`.                     |
 | `packages/assets/build/font-faces.js`         | The `@font-face` rules of a stylesheet, for `split` of `chassis.subset`: `findFontFaces()`, which finds the rules with the files of their `src` and the `format()` of each, and `splitFontFaces()`, which writes a rule once per range. Pure, and Node.js modules only.                                                                                                                                       |
 | `packages/assets/build/font-info.js`          | `readFont()`: the family, the weight, the italic, the axes, the version and the number of glyphs of a font file, TrueType or OpenType, also as WOFF and WOFF2, for the source lint. `fontTables()` and `axesOf()`. Node.js modules only.                                                                                                                                                                      |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
@@ -400,10 +400,14 @@ with and without the code (roadmap 6.8, D19).
   the build fails there, names the option and `pnpm install`, and the output stays.
 - The ranges are the values of the option, or `ranges` of `chassis.subset` of
   `package.json`, or `SUBSET_DEFAULTS`: `latin` and `latin-ext`. `resolveSubset()` checks
-  them only when the option is given. A range is a name of `NAMED_RANGES`, each with the
+  them only when the option is given. A range is a name of `NAMED_RANGES`, which the
+  module reads from `subset-ranges.json` beside it, data and no code, each with the
   code points that Google Fonts gives the `unicode-range` of that name, compared with its
-  stylesheets on 2026-10-01, or a range written
-  as `U+0370-03FF`. There is no setting per file, which would be a manifest (principle 1).
+  stylesheets on 2026-10-01, and `symbols2` with those of eight families on 2026-10-11, or a
+  range written as `U+0370-03FF`. `symbols2` has the box drawing and the block characters,
+  `U+2500-259F`, which `symbols` leaves out, and eight spaces that `latin` has too: a text
+  font that has the spaces gets a `symbols2` file of them with `--split`, which no page
+  loads when `latin` is named before it. There is no setting per file, which would be a manifest (principle 1).
 - A processor names the fonts in `subset`: `{ type: 'fonts', formats: ['.woff', '.woff2'] }`
   on the web, nothing on iOS and Android. A browser downloads a font, so its size is paid
   on every first visit; an app has its fonts in the bundle, and gets them whole.

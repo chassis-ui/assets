@@ -18,6 +18,7 @@ import { generateAssets } from '../build/build-assets.js'
 import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
 import {
   NAMED_RANGES,
+  RANGES_FILE,
   SUBSET_DEFAULTS,
   fontAxes,
   glyphCount,
@@ -188,9 +189,29 @@ describe('resolveSubset()', () => {
     expect(resolveSubset(undefined, ['symbols']).text).toContain(String.fromCodePoint(0x1f512))
   })
 
+  test('symbols2 has the box drawing and the block characters, which symbols leaves out', () => {
+    const { text } = resolveSubset(undefined, ['symbols2'])
+    for (const character of ['├', '│', '└', '─', '█', '░']) {
+      expect(text).toContain(character)
+      expect(resolveSubset(undefined, ['symbols']).text).not.toContain(character)
+    }
+    expect(text).toHaveLength(2 + 5 + 1 + 6 + 160)
+  })
+
   test('every name stands for ranges that are written as U+ ranges', () => {
     for (const name of Object.keys(NAMED_RANGES)) {
       expect(resolveSubset(undefined, [name]).text.length).toBeGreaterThan(0)
+    }
+  })
+
+  test('the names are those of the file of the ranges, each one a name of a file', () => {
+    const file = path.join(ROOT, 'build', RANGES_FILE)
+    expect(JSON.parse(fs.readFileSync(file, 'utf8'))).toEqual(NAMED_RANGES)
+    for (const [name, ranges] of Object.entries(NAMED_RANGES)) {
+      expect(rangeSlug(name)).toBe(name)
+      expect(ranges).toMatch(
+        /^U\+[0-9A-F]{4,6}(-[0-9A-F]{4,6})?(, U\+[0-9A-F]{4,6}(-[0-9A-F]{4,6})?)*$/
+      )
     }
   })
 
@@ -278,6 +299,7 @@ describe('resolveSubset()', () => {
 describe('rangeSlug() and rangeFileName()', () => {
   test('a range has a name of lowercase letters, digits and hyphens', () => {
     expect(rangeSlug('latin-ext')).toBe('latin-ext')
+    expect(rangeSlug('symbols2')).toBe('symbols2')
     expect(rangeSlug('U+2500-257F')).toBe('u2500-257f')
     expect(rangeSlug('u+41')).toBe('u41')
     expect(rangeSlug('U+0041, U+0061-007A')).toBe('u0041-u0061-007a')
