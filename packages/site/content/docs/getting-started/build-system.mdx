@@ -478,7 +478,9 @@ The message suggests a name that keeps the rules. A file that breaks a rule on p
 
 The lint also reads the fonts. For each `@font-face` rule of a stylesheet in `fonts/`, it opens the file the rule declares and compares the two, as a brand gets them, with its own files over those of the default brand. It fails when the file is of another family than the rule names, when its weight is not the weight of the rule or its weight axis does not hold the range of the rule, when one is italic and the other is not, and when the rule declares a file that is not in the folder. A rule that loads a font from a service is not read.
 
-It warns about a font of the default brand that a brand gets beside a family of its own, where no stylesheet of the brand declares the family of that font. The file is in the output of the brand, and nothing loads it.
+A rule declares the file of the web, and the apps get the file of the same name in another format, which no rule declares. The lint checks a rule against those files too: a rule for `text.woff2` is also the rule of `text.ttf` in the same folder, and of an `.otf` or a `.woff` file of that name. It also fails when two files of one name are not one font in two formats, and names both files with what differs: the family, the weight, the style, the axes, the version or the number of glyphs.
+
+It warns about a font of the default brand that a brand gets beside a family of its own, where no stylesheet of the brand declares the family of that font. The file is in the output of the brand, and nothing loads it. It also warns about a `format()` of a rule that is not the format of its file.
 
 ### Analyzer
 

@@ -8,8 +8,10 @@
  *
  * It also checks the fonts against the fonts page: a `@font-face` rule of a stylesheet in
  * `fonts/` names the family, the weight and the style of the file it declares, read from
- * the file. A font of the default brand that a brand gets beside a family of its own, and
- * that no stylesheet of the brand declares, is a warning.
+ * the file, and of the files of the same name in another format, which an app gets. Two
+ * files of one name are one font. A font of the default brand that a brand gets beside a
+ * family of its own, and that no stylesheet of the brand declares, is a warning, and so is a
+ * `format()` that is not the format of its file.
  *
  * `lintSource(options)` reads the files and returns the problems; the command-line entry at
  * the bottom prints them and exits 1 on an error.
@@ -43,13 +45,26 @@ const NOT_BESIDE = /^[a-z][a-z0-9+.-]*:|^\/|[?#$]/i
 /** A value of a stylesheet that is computed, which the lint cannot compare. */
 const COMPUTED = /[$#{(]/
 
+/** The extensions of the files that a `format()` of a `src` names. */
+const FORMATS = /** @type {Record<string, string[]>} */ ({
+  woff2: ['.woff2'],
+  woff: ['.woff'],
+  truetype: ['.ttf', '.otf'],
+  opentype: ['.otf', '.ttf'],
+  collection: ['.ttc', '.otc'],
+  'embedded-opentype': ['.eot'],
+  svg: ['.svg']
+})
+
 const HELP = `Usage: pnpm assets:lint:source [options]
 
 Checks the names and the layout of source/ against the rules of the design-guidelines page,
-and the fonts against the stylesheets that declare them, as the fonts page describes them.
+and the fonts against the stylesheets that declare them, as the fonts page describes them:
+a rule is checked against the file it declares and against the files of the same name in
+another format, and two files of one name have to be one font.
 Exits 1 when a file breaks a rule. A name that \`lint.allow\` of chassis.checks.json keeps
-is printed as a warning, with its reason, and so is a font of the default brand that a brand
-gets and does not declare.
+is printed as a warning, with its reason, and so are a font of the default brand that a brand
+gets and does not declare, and a format() that is not the format of its file.
 
 Options:
   --cwd <dir>            Repository root, default the nearest folder upward whose
@@ -190,6 +205,55 @@ export function checkFontFace(font, descriptors) {
 }
 
 /**
+ * What two font files of one name say otherwise of themselves. Pure.
+ * @param {FontInfo} font - A font, of `readFont()`
+ * @param {FontInfo} other - The font of the same name in another format
+ * @returns {string[]} One phrase per difference, with what the font says before what the
+ *   other says, such as `the weight 700 against 400`, empty when the two are one font
+ */
+export function compareFonts(font, other) {
+  const messages = []
+  const axes = (/** @type {FontInfo} */ { axes }) =>
+    Object.keys(axes)
+      .sort()
+      .map((tag) => `${tag} ${axes[tag].min} to ${axes[tag].max}`)
+      .join(', ') || 'none'
+
+  if (font.family !== other.family) {
+    messages.push(`the family "${font.family}" against "${other.family}"`)
+  }
+  if (font.weight !== other.weight) {
+    messages.push(`the weight ${font.weight} against ${other.weight}`)
+  }
+  if (font.italic !== other.italic) {
+    messages.push(font.italic ? 'an italic against an upright' : 'an upright against an italic')
+  }
+  if (axes(font) !== axes(other)) {
+    messages.push(`the axes ${axes(font)} against ${axes(other)}`)
+  }
+  if (font.version !== other.version) {
+    messages.push(`the version "${font.version}" against "${other.version}"`)
+  }
+  if (font.glyphs !== other.glyphs) {
+    messages.push(`${font.glyphs} glyphs against ${other.glyphs}`)
+  }
+  return messages
+}
+
+/**
+ * Whether a `format()` of a `src` is the format of the file it is written after. A format
+ * the lint does not know is the format of any file, and `-variations` after a format says
+ * nothing of the file. Pure.
+ * @param {string} format - As written in `format()`: `woff2`, `truetype`
+ * @param {string} file - The address of the file, as written in `url()`
+ * @returns {boolean}
+ */
+export function isOfFormat(format, file) {
+  const extensions = FORMATS[format.toLowerCase().replace(/-variations$/, '')]
+  return !extensions || extensions.includes(path.extname(file).toLowerCase())
+}
+
+/**
  * Every file under a folder, relative to it with forward slashes, without the files and
  * folders the build ignores.
  * @param {string} dir
@@ -267,6 +331,20 @@ function lintFonts(sourceDir, files, config) {
     const fallback = folders.get(`${config.brandFolder}/${app}`)
     const view = ofBrand && fallback ? new Map([...fallback, ...own]) : own
 
+    // The fonts the lint reads, by their path without the extension: the files of one name,
+    // in the order of the formats
+    /** @type {Map<string, string[]>} */
+    const names = new Map()
+    const formatOf = (/** @type {string} */ name) => READABLE_FORMATS.indexOf(path.extname(name))
+    const withoutExtension = (/** @type {string} */ name) =>
+      name.slice(0, name.length - path.extname(name).length)
+    for (const name of view.keys()) {
+      if (formatOf(name) === -1) continue
+      const twins = names.get(withoutExtension(name)) ?? []
+      names.set(withoutExtension(name), [...twins, name])
+    }
+    for (const twins of names.values()) twins.sort((a, b) => formatOf(a) - formatOf(b))
+
     /** @type {string[]} */
     const families = []
     for (const [name, sheet] of view) {
@@ -275,21 +353,54 @@ function lintFonts(sourceDir, files, config) {
       for (const rule of findFontFaces(css, { scss: path.extname(name) === '.scss' })) {
         const family = (rule.descriptors['font-family'] ?? '').replace(/^["']|["']$/g, '')
         if (family) families.push(family)
-        for (const { value } of rule.urls) {
+        for (const { value, format } of rule.urls) {
           if (NOT_BESIDE.test(value)) continue
-          const font = view.get(path.posix.join(path.posix.dirname(name), value))
-          if (!font) {
+          if (format && !isOfFormat(format, value)) {
+            add(warnings, sheet, `declares ${value} as format("${format}"), which the file is not`)
+          }
+          const declared = path.posix.join(path.posix.dirname(name), value)
+          if (!view.has(declared)) {
             add(errors, sheet, `declares ${value}, which is not in the fonts folder`)
             continue
           }
-          const info = infoOf(font)
-          if (info instanceof Error) {
-            add(errors, font, `is declared by ${sheet} and is no font: ${info.message}`)
-          } else if (info) {
-            for (const message of checkFontFace(info, rule.descriptors)) {
-              add(errors, font, `${message} by ${sheet}`)
+          // The declared file, then the files of its name in another format: a rule declares
+          // the file of the web, and an app gets the one beside it
+          const twins = names.get(withoutExtension(declared)) ?? []
+          for (const twin of [declared, ...twins.filter((other) => other !== declared)]) {
+            const font = view.get(twin) ?? ''
+            const info = infoOf(font)
+            if (info instanceof Error) {
+              // A file that is no font is held against the rule that declares it, and not
+              // against the rule of the file beside it
+              if (twin === declared) {
+                add(errors, font, `is declared by ${sheet} and is no font: ${info.message}`)
+              }
+            } else if (info) {
+              for (const message of checkFontFace(info, rule.descriptors)) {
+                add(errors, font, `${message} by ${sheet}`)
+              }
             }
           }
+        }
+      }
+    }
+
+    // Two files of one name are one font in two formats: each is compared with the first
+    // of the name that is read
+    for (const twins of names.values()) {
+      /** @type {{ file: string, info: FontInfo }|undefined} */
+      let first
+      for (const twin of twins) {
+        const file = view.get(twin) ?? ''
+        const info = infoOf(file)
+        if (!info || info instanceof Error) continue
+        if (!first) {
+          first = { file, info }
+          continue
+        }
+        const differences = compareFonts(info, first.info)
+        if (differences.length > 0) {
+          add(errors, file, `is another font than ${first.file}: ${differences.join(', ')}`)
         }
       }
     }

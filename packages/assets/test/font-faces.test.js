@@ -58,6 +58,7 @@ describe('findFontFaces()', () => {
     const [rule] = findFontFaces(css)
     expect(rule.urls.map((url) => url.value)).toEqual(['a.woff2', 'b.woff', 'c d.woff'])
     for (const url of rule.urls) expect(css.slice(url.start, url.end)).toBe(url.value)
+    expect(rule.urls.map((url) => url.format)).toEqual([undefined, 'woff', undefined])
   })
 
   test('reads every src of a rule, and no other declaration', () => {

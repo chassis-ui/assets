@@ -4,18 +4,22 @@
  *              design-guidelines page as a table, the names `lint.allow` of `chassis.checks.json` keeps, and `lintSource()` on
  *              the fixture and on copies of it that break a rule. The fonts of the fixture
  *              are lines of text, so the rules of the fonts are tried on copies with the
- *              fonts of the dev dependency `inter-ui`.
+ *              fonts of the dev dependency `inter-ui`, as WOFF2, and as TrueType, which
+ *              `beforeAll()` writes of them.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
-import { afterAll, afterEach, describe, expect, test, vi } from 'vitest'
+import subsetFont from 'subset-font'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import {
   checkFontFace,
   checkName,
+  compareFonts,
   declaredWeights,
   isOfFamily,
+  isOfFormat,
   lintSource,
   matchesPattern
 } from '../build/lint-source.js'
@@ -254,6 +258,96 @@ describe('checkFontFace()', () => {
   })
 })
 
+describe('compareFonts()', () => {
+  const regular = {
+    family: 'Inter',
+    weight: 400,
+    italic: false,
+    axes: {},
+    version: 'Version 4.001',
+    glyphs: 2937
+  }
+  const variable = {
+    ...regular,
+    axes: { wght: { min: 100, max: 900 }, opsz: { min: 14, max: 32 } }
+  }
+
+  test('a font is the font it is, and the order of its axes says nothing', () => {
+    expect(compareFonts(regular, { ...regular })).toEqual([])
+    expect(
+      compareFonts(variable, {
+        ...regular,
+        axes: { opsz: { min: 14, max: 32 }, wght: { min: 100, max: 900 } }
+      })
+    ).toEqual([])
+  })
+
+  test.each([
+    [{ family: 'Inter 18pt' }, 'the family "Inter 18pt" against "Inter"'],
+    [{ family: 'inter' }, 'the family "inter" against "Inter"'],
+    [{ weight: 700 }, 'the weight 700 against 400'],
+    [{ italic: true }, 'an italic against an upright'],
+    [{ axes: variable.axes }, 'the axes opsz 14 to 32, wght 100 to 900 against none'],
+    [{ version: 'Version 4.000' }, 'the version "Version 4.000" against "Version 4.001"'],
+    [{ version: '' }, 'the version "" against "Version 4.001"'],
+    [{ glyphs: 950 }, '950 glyphs against 2937']
+  ])('a font with %o: %s', (change, message) => {
+    expect(compareFonts({ ...regular, ...change }, regular)).toEqual([message])
+  })
+
+  test('says what the font is before what the other is, and names every difference', () => {
+    expect(compareFonts(regular, { ...regular, italic: true })).toEqual([
+      'an upright against an italic'
+    ])
+    expect(compareFonts(variable, { ...variable, axes: { wght: { min: 300, max: 700 } } })).toEqual(
+      ['the axes opsz 14 to 32, wght 100 to 900 against wght 300 to 700']
+    )
+    expect(
+      compareFonts(regular, {
+        family: 'Fira Code',
+        weight: 700,
+        italic: true,
+        axes: variable.axes,
+        version: 'Version 6.002',
+        glyphs: 2030
+      })
+    ).toEqual([
+      'the family "Inter" against "Fira Code"',
+      'the weight 400 against 700',
+      'an upright against an italic',
+      'the axes none against opsz 14 to 32, wght 100 to 900',
+      'the version "Version 4.001" against "Version 6.002"',
+      '2937 glyphs against 2030'
+    ])
+  })
+})
+
+describe('isOfFormat()', () => {
+  test.each([
+    ['woff2', 'text.woff2', true],
+    ['WOFF2', 'fonts/Text.WOFF2', true],
+    ['woff2-variations', 'text.woff2', true],
+    ['woff', 'text.woff', true],
+    ['truetype', 'text.ttf', true],
+    ['opentype', 'text.otf', true],
+    // A browser reads the two as one format
+    ['opentype', 'text.ttf', true],
+    ['truetype', 'text.otf', true],
+    ['collection', 'text.ttc', true],
+    ['embedded-opentype', 'text.eot', true],
+    // A format the lint does not know
+    ['future', 'text.woff2', true],
+    ['woff', 'text.woff2', false],
+    ['woff2', 'text.woff', false],
+    ['woff2', 'text.ttf', false],
+    ['truetype', 'text.woff2', false],
+    ['truetype-variations', 'text.woff2', false],
+    ['woff2', 'text', false]
+  ])('format("%s") of %s: %s', (format, file, expected) => {
+    expect(isOfFormat(format, file)).toBe(expected)
+  })
+})
+
 describe('lintSource() on fonts', () => {
   const rule = (/** @type {string} */ body) => `@font-face {\n${body}\n}\n`
   const TEXT = rule(
@@ -261,18 +355,38 @@ describe('lintSource() on fonts', () => {
   )
 
   /**
+   * Fonts of `inter-ui` with three letters, as TrueType and as WOFF2, written by
+   * `beforeAll()`: the package has its fonts as WOFF2 alone.
+   */
+  const made = /** @type {Record<string, Buffer>} */ ({})
+
+  beforeAll(async () => {
+    const inter = (/** @type {string} */ file) => fs.readFileSync(path.join(INTER, file))
+    const regular = inter('web/Inter-Regular.woff2')
+    const bold = inter('web/Inter-Bold.woff2')
+    made['regular.ttf'] = await subsetFont(regular, 'abc', { targetFormat: 'sfnt' })
+    made['regular.woff2'] = await subsetFont(regular, 'abc', { targetFormat: 'woff2' })
+    made['bold.ttf'] = await subsetFont(bold, 'abc', { targetFormat: 'sfnt' })
+    made['bold.woff2'] = await subsetFont(bold, 'abc', { targetFormat: 'woff2' })
+    made['more.woff2'] = await subsetFont(regular, 'abcd', { targetFormat: 'woff2' })
+  }, 30_000)
+
+  /**
    * A copy of the fixture with real fonts in the `fonts/` folder of an app of a brand.
    * @param {string} root - The copy
    * @param {string} folder - `<brand>/<app>`
-   * @param {Record<string, string>} files - The files: the name of a stylesheet with its
-   *   text, the name of a font with the file of `inter-ui` it is a copy of
+   * @param {Record<string, string|Buffer>} files - The files: the name of a stylesheet with
+   *   its text, the name of a font with the file of `inter-ui` it is a copy of, or with the
+   *   font itself
    */
   function fonts(root, folder, files) {
     const dir = path.join(root, 'source', folder, 'fonts')
     fs.mkdirSync(dir, { recursive: true })
     for (const [name, content] of Object.entries(files)) {
-      if (/\.s?css$/.test(name)) fs.writeFileSync(path.join(dir, name), content)
-      else fs.copyFileSync(path.join(INTER, content), path.join(dir, name))
+      fs.mkdirSync(path.dirname(path.join(dir, name)), { recursive: true })
+      if (/\.s?css$/.test(name) || Buffer.isBuffer(content)) {
+        fs.writeFileSync(path.join(dir, name), content)
+      } else fs.copyFileSync(path.join(INTER, content), path.join(dir, name))
     }
     return root
   }
@@ -356,6 +470,118 @@ describe('lintSource() on fonts', () => {
         )
       }
     ])
+  })
+
+  test('a rule is checked against the files of its name in another format', () => {
+    // The fixture has `text.ttf`, `text.otf` and `text.woff` as lines of text: a file
+    // beside the declared one that is no font is not held against the rule
+    const root = fonts(copyFixture(), 'default/site', {
+      'text.css': TEXT,
+      'text.woff2': made['regular.woff2']
+    })
+    expect(problems(root)).toEqual({ errors: [], warnings: [] })
+
+    fonts(root, 'default/site', { 'text.ttf': made['regular.ttf'] })
+    expect(problems(root)).toEqual({ errors: [], warnings: [] })
+
+    // The file an app gets is another weight than the rule of the web file says
+    fonts(root, 'default/site', { 'text.ttf': made['bold.ttf'] })
+    expect(problems(root).errors).toEqual([
+      {
+        file: 'default/site/fonts/text.ttf',
+        message: 'has the weight 700, declared with 400 by default/site/fonts/text.css'
+      },
+      {
+        file: 'default/site/fonts/text.woff2',
+        message: 'is another font than default/site/fonts/text.ttf: the weight 400 against 700'
+      }
+    ])
+  })
+
+  test('a rule that declares a format the lint does not read checks the files it reads', () => {
+    const root = fonts(copyFixture(), 'default/site', {
+      'strong.css': rule('  font-family: "Inter";\n  font-weight: 700;\n  src: url(strong.eot);'),
+      'strong.eot': 'web/Inter-Bold.woff2',
+      'strong.ttf': made['regular.ttf']
+    })
+    expect(problems(root).errors).toEqual([
+      {
+        file: 'default/site/fonts/strong.ttf',
+        message: 'has the weight 400, declared with 700 by default/site/fonts/strong.css'
+      }
+    ])
+  })
+
+  test('names two files of one name that are not one font, with what differs', () => {
+    // No rule declares them: the fonts of an app have no stylesheet
+    const root = fonts(copyFixture(), 'default/mobile', {
+      'strong.ttf': made['regular.ttf'],
+      'strong.woff2': 'web/Inter-SemiBoldItalic.woff2',
+      'nested/more.ttf': made['regular.ttf'],
+      'nested/more.woff2': made['more.woff2'],
+      'same.ttf': made['bold.ttf'],
+      'same.woff2': made['bold.woff2'],
+      // One name in two folders is two names
+      'other/same.woff2': made['regular.woff2']
+    })
+    expect(problems(root)).toEqual({
+      errors: [
+        {
+          file: 'default/mobile/fonts/nested/more.woff2',
+          message: 'is another font than default/mobile/fonts/nested/more.ttf: 15 glyphs against 12'
+        },
+        {
+          file: 'default/mobile/fonts/strong.woff2',
+          message:
+            'is another font than default/mobile/fonts/strong.ttf: the weight 600 against 400, an italic against an upright, 2901 glyphs against 12'
+        }
+      ],
+      warnings: []
+    })
+  })
+
+  test('a brand that replaces one file of a name is checked with the file it keeps', () => {
+    const root = fonts(copyFixture(), 'default/site', {
+      'text.css': TEXT,
+      'text.woff2': made['regular.woff2'],
+      'text.ttf': made['regular.ttf']
+    })
+    fonts(root, 'alpha/site', { 'text.woff2': made['bold.woff2'] })
+    expect(problems(root).errors).toEqual([
+      {
+        file: 'alpha/site/fonts/text.woff2',
+        message: 'has the weight 700, declared with 400 by default/site/fonts/text.css'
+      },
+      {
+        file: 'alpha/site/fonts/text.woff2',
+        message: 'is another font than default/site/fonts/text.ttf: the weight 700 against 400'
+      }
+    ])
+    // With every file of the name and the stylesheet, the brand has a font of its own
+    fonts(root, 'alpha/site', {
+      'text.css': TEXT.replace('400', '700'),
+      'text.ttf': made['bold.ttf']
+    })
+    expect(problems(root)).toEqual({ errors: [], warnings: [] })
+  })
+
+  test('warns about a format() that is not the format of its file', () => {
+    const root = fonts(copyFixture(), 'default/site', {
+      'text.css': rule(
+        '  font-family: "Inter";\n  src: url("text.woff2") format("truetype"),\n    url(text.ttf) format(opentype),\n    url("https://example.com/far.woff2") format("woff");'
+      ),
+      'text.woff2': made['regular.woff2'],
+      'text.ttf': made['regular.ttf']
+    })
+    expect(problems(root)).toEqual({
+      errors: [],
+      warnings: [
+        {
+          file: 'default/site/fonts/text.css',
+          message: 'declares text.woff2 as format("truetype"), which the file is not'
+        }
+      ]
+    })
   })
 
   test('a brand is checked with the files of the default brand it does not replace', () => {

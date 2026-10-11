@@ -269,9 +269,12 @@ pnpm assets && pnpm assets:verify
 
 The lint opens each font that a stylesheet declares, and fails when the rule names another
 family, weight or style than the file has: a file under the wrong role name, or a stylesheet
-that was not written again with its fonts. It warns about a font of the default brand that
-is left in the output of the brand and that no stylesheet of the brand declares; the
-variable file of a family that has none is the one such file to expect.
+that was not written again with its fonts. The `.ttf` file of a declared `.woff2` file is
+checked against the same rule, and the two against each other: the lint fails when they
+differ in the family, the weight, the style, the axes, the version or the number of glyphs,
+as they do when one of the two was not written again. It warns about a font of the default
+brand that is left in the output of the brand and that no stylesheet of the brand declares;
+the variable file of a family that has none is the one such file to expect.
 
 Then check the output:
 

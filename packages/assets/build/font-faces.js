@@ -16,8 +16,9 @@
  * @property {number} start - Where the rule starts in the stylesheet, at its `@`
  * @property {number} end - Where it ends, after its `}`
  * @property {number} open - Where its `{` is
- * @property {Array<{ value: string, start: number, end: number }>} urls - The `url()` values
- *   of its `src`, as they are written, with where each is in the stylesheet
+ * @property {Array<{ value: string, start: number, end: number, format?: string }>} urls - The
+ *   `url()` values of its `src`, as they are written, with where each is in the stylesheet,
+ *   and the `format()` after it, in lowercase, where it has one
  * @property {boolean} ranged - Whether the rule has a `unicode-range` of its own
  * @property {Record<string, string>} descriptors - The declarations of the rule, by name in
  *   lowercase, each with its value as it is written, without comments: `font-family`,
@@ -84,20 +85,21 @@ function colonOf(css, from, to, scss) {
 }
 
 /**
- * The `url()` values of a declaration value.
+ * The `url()` values of a declaration value, each with the `format()` that follows it.
  * @param {string} css
  * @param {number} from
  * @param {number} to
- * @returns {Array<{ value: string, start: number, end: number }>}
+ * @returns {Array<{ value: string, start: number, end: number, format?: string }>}
  */
 function urlsOf(css, from, to) {
   const urls = []
-  const pattern = /url\(\s*(?:"([^"\n]*)"|'([^'\n]*)'|([^)\s"']*))\s*\)/gi
+  const pattern =
+    /url\(\s*(?:"([^"\n]*)"|'([^'\n]*)'|([^)\s"']*))\s*\)(?:\s*format\(\s*["']?([\w-]+)["']?\s*\))?/gi
   const text = css.slice(from, to)
   for (const match of text.matchAll(pattern)) {
     const value = match[1] ?? match[2] ?? match[3]
     const start = from + match.index + match[0].indexOf(value, 4)
-    urls.push({ value, start, end: start + value.length })
+    urls.push({ value, start, end: start + value.length, format: match[4]?.toLowerCase() })
   }
   return urls
 }

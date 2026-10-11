@@ -1,10 +1,11 @@
 /**
- * What a font file says of itself: its family, its weight, whether it is italic, and the
- * axes of a variable font.
+ * What a font file says of itself: its family, its weight, whether it is italic, the axes of
+ * a variable font, its version and the number of its glyphs.
  *
- * The source lint compares these with the `@font-face` rule that declares the file. The
- * functions read TrueType and OpenType fonts, and the same fonts in the WOFF and the WOFF2
- * container, with Node.js modules only: `zlib` opens both containers.
+ * The source lint compares these with the `@font-face` rule that declares the file, and with
+ * the file of the same name in another format. The functions read TrueType and OpenType
+ * fonts, and the same fonts in the WOFF and the WOFF2 container, with Node.js modules only:
+ * `zlib` opens both containers.
  *
  * @module font-info
  */
@@ -21,6 +22,9 @@ import zlib from 'zlib'
  * @property {boolean} italic - Whether the font is an italic
  * @property {Record<string, { min: number, max: number }>} axes - The variation axes of the
  *   `fvar` table, by tag. A font that is not variable has none
+ * @property {string} version - The version string of the `name` table, as `Version 4.001`,
+ *   empty for a font without one
+ * @property {number} glyphs - The number of glyphs, of the `maxp` table
  */
 
 /** The formats of a font file that `readFont()` reads, by extension. */
@@ -202,12 +206,14 @@ export function axesOf(fvar) {
 }
 
 /**
- * The family of a font, from its `name` table: the typographic family, entry 16, or the
- * family, entry 1. The English entry of Windows is read first, then any entry.
+ * The entries of a `name` table that are asked for, by their number: 1 is the family, 5 the
+ * version string, 16 the typographic family. The English entry of Windows is read first,
+ * then any entry.
  * @param {Buffer} name - The table
- * @returns {string} The family, empty for a table without one
+ * @param {number[]} ids - The entries to return
+ * @returns {Record<number, string>} The entries the table has
  */
-function familyOf(name) {
+function namesOf(name, ids) {
   const count = name.readUInt16BE(2)
   const strings = name.readUInt16BE(4)
   /** @type {Record<number, { text: string, rank: number }>} */
@@ -217,7 +223,7 @@ function familyOf(name) {
     const platform = name.readUInt16BE(record)
     const language = name.readUInt16BE(record + 4)
     const id = name.readUInt16BE(record + 6)
-    if (id !== 1 && id !== 16) continue
+    if (!ids.includes(id)) continue
     const offset = strings + name.readUInt16BE(record + 10)
     const raw = name.subarray(offset, offset + name.readUInt16BE(record + 8))
     // Windows and Unicode entries are UTF-16, big-endian; the others are read as Latin
@@ -226,7 +232,7 @@ function familyOf(name) {
     const rank = platform === 3 && language === 0x409 ? 0 : wide ? 1 : 2
     if (!found[id] || rank < found[id].rank) found[id] = { text, rank }
   }
-  return (found[16] ?? found[1])?.text ?? ''
+  return Object.fromEntries(Object.entries(found).map(([id, { text }]) => [id, text]))
 }
 
 /**
@@ -236,13 +242,17 @@ function familyOf(name) {
  * @throws {Error} When the file is no font of these formats, or has no `name` table
  */
 export function readFont(font) {
-  const tables = fontTables(font, ['name', 'OS/2', 'fvar'])
+  const tables = fontTables(font, ['name', 'OS/2', 'fvar', 'maxp'])
   if (!tables.name) throw new Error('the font has no name table')
   const os2 = tables['OS/2']
+  // The typographic family, or the family where the font has no typographic one
+  const names = namesOf(tables.name, [1, 5, 16])
   return {
-    family: familyOf(tables.name),
+    family: names[16] ?? names[1] ?? '',
     weight: os2 ? os2.readUInt16BE(4) : 400,
     italic: os2 ? Boolean(os2.readUInt16BE(62) & 1) : false,
-    axes: axesOf(tables.fvar)
+    axes: axesOf(tables.fvar),
+    version: names[5] ?? '',
+    glyphs: tables.maxp ? tables.maxp.readUInt16BE(4) : 0
   }
 }

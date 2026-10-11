@@ -149,6 +149,10 @@ The rule names the family of the brand and the range of weights the file holds, 
 
 `pnpm assets:lint:source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: `DM Sans 18pt` is declared as `DM Sans`.
 
+A rule declares the file of the web, and an app gets the file of the same name in another format. The lint checks the rule against that file too: `text.ttf` beside a declared `text.woff2` has to be what the rule says. It also fails when two files of one name in a folder, such as `text-normal.ttf` and `text-normal.woff2`, are not one font in two formats: when they differ in the family, the weight, the style, the axes, the version or the number of glyphs. Write both files from the same font to keep them together.
+
+The lint warns about a `format()` that is not the format of its file, such as `format("woff")` after a `.woff2` file.
+
 A stylesheet may also load fonts from a service instead of the folder. The build copies it as it is.
 
 ### Licenses
