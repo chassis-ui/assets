@@ -18,6 +18,7 @@ import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
 import { findFontFaces, splitFontFaces } from './font-faces.js'
+import { axesOf, fontTables } from './font-info.js'
 
 /** @import { FontSubset, SubsetPart, SubsetSettings } from './types.js' */
 
@@ -243,26 +244,7 @@ export function glyphCount(sfnt) {
  * @returns {Record<string, { min: number, max: number }>}
  */
 export function fontAxes(sfnt) {
-  /** @type {Record<string, { min: number, max: number }>} */
-  const axes = {}
-  const tables = sfnt.readUInt16BE(4)
-  for (let i = 0; i < tables; i++) {
-    const record = 12 + i * 16
-    if (sfnt.toString('latin1', record, record + 4) !== 'fvar') continue
-    const table = sfnt.readUInt32BE(record + 8)
-    const first = table + sfnt.readUInt16BE(table + 4)
-    const count = sfnt.readUInt16BE(table + 8)
-    const size = sfnt.readUInt16BE(table + 10)
-    for (let axis = 0; axis < count; axis++) {
-      const at = first + axis * size
-      // The values are 16.16 fixed-point numbers: the minimum, the default, the maximum
-      axes[sfnt.toString('latin1', at, at + 4)] = {
-        min: sfnt.readInt32BE(at + 4) / 65536,
-        max: sfnt.readInt32BE(at + 12) / 65536
-      }
-    }
-  }
-  return axes
+  return axesOf(fontTables(sfnt, ['fvar']).fvar)
 }
 
 /**

@@ -215,6 +215,12 @@ pnpm assets:lint:source
 pnpm assets && pnpm assets:verify
 ```
 
+The lint opens each font that a stylesheet declares, and fails when the rule names another
+family, weight or style than the file has: a file under the wrong role name, or a stylesheet
+that was not written again with its fonts. It warns about a font of the default brand that
+is left in the output of the brand and that no stylesheet of the brand declares; the
+variable file of a family that has none is the one such file to expect.
+
 Then check the output:
 
 - The web output of the brand has the files of the default brand, name for name. This prints

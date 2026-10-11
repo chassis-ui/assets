@@ -19,6 +19,9 @@
  * @property {Array<{ value: string, start: number, end: number }>} urls - The `url()` values
  *   of its `src`, as they are written, with where each is in the stylesheet
  * @property {boolean} ranged - Whether the rule has a `unicode-range` of its own
+ * @property {Record<string, string>} descriptors - The declarations of the rule, by name in
+ *   lowercase, each with its value as it is written, without comments: `font-family`,
+ *   `font-weight`. The last of a name that is there twice
  * @property {boolean} closed - Whether its last declaration ends with a semicolon
  */
 
@@ -178,6 +181,15 @@ export function findFontFaces(css, { scss = false } = {}) {
         .filter((declaration) => declaration.name === 'src')
         .flatMap((declaration) => urlsOf(css, declaration.from, declaration.to)),
       ranged: declarations.some((declaration) => declaration.name === 'unicode-range'),
+      descriptors: Object.fromEntries(
+        declarations.map(({ name, from, to }) => [
+          name,
+          css
+            .slice(from, to)
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .trim()
+        ])
+      ),
       closed: last === ';' || last === '{' || last === ''
     })
     at = end - 1

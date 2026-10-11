@@ -65,6 +65,23 @@ describe('findFontFaces()', () => {
     expect(urls(css)).toEqual([['old.woff', 'new.woff2']])
   })
 
+  test('gives the declarations of a rule by name, without comments', () => {
+    const css = `@font-face {
+  Font-Family: "Text"; /* the family */
+  font-weight: /* light to bold */ 300 700;
+  font-style: italic;
+  font-style: normal;
+  src: url(a.woff2) format("woff2")
+}`
+    expect(findFontFaces(css)[0].descriptors).toEqual({
+      'font-family': '"Text"',
+      'font-weight': '300 700',
+      'font-style': 'normal',
+      src: 'url(a.woff2) format("woff2")'
+    })
+    expect(findFontFaces('@font-face {}')[0].descriptors).toEqual({})
+  })
+
   test('says whether a rule has a unicode-range of its own', () => {
     const css = `@font-face { src: url(a.woff2); UNICODE-RANGE: U+0041 } @font-face { src: url(b.woff2) }`
     expect(findFontFaces(css).map((rule) => rule.ranged)).toEqual([true, false])

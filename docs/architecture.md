@@ -121,6 +121,7 @@ jobs with their file counts.
 | `packages/assets/build/optimize.js`           | `--optimize`, `--webp` and `--avif`: `resolveSettings()`, which checks `chassis.optimize` over `OPTIMIZE_DEFAULTS`, `loadEncoders()`, which imports `sharp` and `svgo` when it is called and says how to install them when they are missing, `svgOptions()`, `formatName()`, which the validator reads, and `optimizeJob()`.                                                                                  |
 | `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()`, `fontAxes()`, `rangeFileName()` and `subsetJob()`.                                                                                     |
 | `packages/assets/build/font-faces.js`         | The `@font-face` rules of a stylesheet, for `split` of `chassis.subset`: `findFontFaces()`, which finds the rules with the files of their `src`, and `splitFontFaces()`, which writes a rule once per range. Pure, and Node.js modules only.                                                                                                                                                                  |
+| `packages/assets/build/font-info.js`          | `readFont()`: the family, the weight, the italic and the axes of a font file, TrueType or OpenType, also as WOFF and WOFF2, for the source lint. `fontTables()` and `axesOf()`. Node.js modules only.                                                                                                                                                                                                         |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -129,7 +130,7 @@ jobs with their file counts.
 | `packages/assets/build/watch.js`              | The watch of `--watch`: `affectedJobs()` and `isRelevant()` (pure), `watchAssets(options, events)`, which builds, watches `source/` and builds the jobs of a change again, and `watchCli()`. Loaded by the command line when the option is given. Node.js modules only.                                                                                                                                       |
 | `packages/assets/build/contract.js`           | The check of the consumer contracts, which are data of the repository: `contracts` of `chassis.checks.json`. `expand()`, `missingFromSet()` and `missingFromContract()` (pure), and `checkContracts({ cwd, out })` over the output of each job that has a contract. It names no job and no file itself. The CLI entry is `pnpm assets:contract`.                                                              |
 | `packages/assets/build/verify.js`             | `verify({ cwd, out })`: the validator, then the contract check. `pnpm assets:verify`.                                                                                                                                                                                                                                                                                                                         |
-| `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. A name of `lint.allow` of `chassis.checks.json` is a warning. `pnpm assets:lint:source`.                                                                                                                           |
+| `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. A name of `lint.allow` of `chassis.checks.json` is a warning. `checkFontFace()` (pure): a font against its `@font-face` rule. `pnpm assets:lint:source`.                                                           |
 | `packages/assets/build/root.js`               | `findRoot()`, `resolveRoot(cwd)`, `buildVersion()`, `isEntry()`: the repository root of a run, the version of the build, and whether a module was started or imported.                                                                                                                                                                                                                                        |
 | `packages/assets/build/cli.js`                | The entry of the root scripts and of `bin`: `build`, `analyze`, `validate`, `contract`, `verify`, `lint-source`, each the `cli(argv)` of its module. Every module still runs on its own, `node packages/assets/build/build-assets.js`.                                                                                                                                                                        |
 | `packages/assets/build/types.js`              | The shared JSDoc types: `BuildConfig`, `BuildOptions`, `Job`, `BuildStats`, `Processor` and the problems of the checks. Exports nothing at run time. `tsconfig.json` checks `packages/assets/build/` against them with `checkJs`.                                                                                                                                                                             |
@@ -478,6 +479,38 @@ with and without the code (roadmap 6.8, D19).
   a browser as a `FontFace`, drew the Turkish letters and kept the ligatures of the code
   font.
 
+### Fonts in the source lint
+
+`pnpm assets:lint:source` reads the fonts, after the names. The rules are those of the fonts
+page: a rule of a stylesheet names the family of its file and the weights it holds.
+
+- `lintFonts()` takes the `fonts/` folder of each app as a brand gets it: the files of the
+  brand over those of the default brand, by their path in the folder. The default brand is
+  checked alone, and each brand of the configuration that has files of its own with it. A
+  problem that two of them find is reported once.
+- For each `@font-face` rule of a stylesheet, `findFontFaces()` of `font-faces.js` gives the
+  descriptors and the `url()` values, and `readFont()` of `font-info.js` reads the family,
+  the weight class, the italic bit and the axes of the file: TrueType and OpenType, and
+  both in the WOFF and the WOFF2 container, which `zlib` of Node.js opens. No package is
+  loaded, and the lint of the 4,600 files of this repository takes a third of a second.
+- `checkFontFace()` compares them. An error: the file is of another family than
+  `font-family`; a file without a weight axis has another weight class than `font-weight`,
+  or is declared with a range; the weight axis of a file does not hold the weight or the
+  range; the file is an italic and `font-style` is not, or the other way round. A rule
+  without `font-weight` or `font-style` declares 400 and normal, as a browser reads it.
+- A cut of a family is of the family: `isOfFamily()` takes `Inter 18pt` for `Inter`, since
+  the files by weight of a family with an optical size axis name their cut. The rule would
+  take `Inter Tight` for `Inter` too, which is the price of it.
+- A rule that declares a file that is not in the folder is an error, and so is a declared
+  file that is no font. An address of a service, a value that SCSS computes and a Git LFS
+  pointer are not read.
+- A warning, and no error: a font of the default brand that is in the output of a brand,
+  of a family that no stylesheet of the brand declares. The brand replaced the family and
+  not this file. One case is known and kept, the variable code font beside the code family
+  of `sinefil`; see "Known oddities".
+- The lint reads no token and no file of another repository: a stylesheet and the font
+  beside it are compared with each other (roadmap D26).
+
 ### Res folder
 
 `pnpm assets --res` is off by default, and the default output is the same file for file
@@ -548,7 +581,7 @@ file with and without the code. It needs no package: a catalog is folders and JS
 | Command                                                 | Checks                                                                                                                                                                                                                                                                                                                           |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm assets:lint`                                      | ESLint over `packages/assets/build/` and `packages/assets/test/`.                                                                                                                                                                                                                                                                |
-| `pnpm assets:lint:source`                               | The names and the layout of `source/` against the design-guidelines page, and Git LFS pointers.                                                                                                                                                                                                                                  |
+| `pnpm assets:lint:source`                               | The names and the layout of `source/`, Git LFS pointers, and the fonts against their stylesheets.                                                                                                                                                                                                                                |
 | `pnpm assets:typecheck`                                 | TypeScript over `packages/assets/build/`, from JSDoc.                                                                                                                                                                                                                                                                            |
 | `pnpm lint:prettier`                                    | Prettier over the repository.                                                                                                                                                                                                                                                                                                    |
 | `pnpm test`                                             | The unit tests, the golden test of the fixture against `packages/assets/test/golden/`, the analyzer, the validator, the API and the command line. `packages/assets/test/README.md` lists the files.                                                                                                                              |
@@ -614,6 +647,7 @@ changeset that says what breaks.
 - A brand whose family of a role has no variable font keeps the variable file of the default
   brand in its output: `fonts/code.woff2` of `dist/web/docs/sinefil/` is the code font of
   the default brand, and `code.css` of the brand does not load it (roadmap D24).
+  `pnpm assets:lint:source` warns about it, and about `code.ttf` beside it.
 - On Android, a file with an indicator outside `images/` loses the indicator and gets no
   density folder: `data/poster@2x.png` is `data/poster.png`. Beside a `poster.png` that is a
   collision, and the build warns.

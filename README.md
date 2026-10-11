@@ -163,7 +163,7 @@ A full build removes `dist/` first; a filtered build keeps it. A filter value th
 | `pnpm assets:lfs`         | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include`                 | `--brand`, `--app`, `--platform`, `--type`, `--include`, `--cwd` |
 | `pnpm assets:contract`    | Checks that each output has the files of its contracts in `chassis.checks.json`                                 | `--out`, `--cwd`                                                 |
 | `pnpm assets:verify`      | The validator, then the contract check                                                                          | `--out`, `--cwd`                                                 |
-| `pnpm assets:lint:source` | The names and the layout of `source/` against the naming conventions of the design guidelines, and LFS pointers | `--cwd`, `--allow-lfs-pointers`                                  |
+| `pnpm assets:lint:source` | The names and the layout of `source/`, LFS pointers, and each font against the stylesheet rule that declares it | `--cwd`, `--allow-lfs-pointers`                                  |
 | `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                     |                                                                  |
 | `pnpm assets:typecheck`   | TypeScript over `packages/assets/build/`, from its JSDoc                                                        |                                                                  |
 | `pnpm lint:prettier`      | Formatting, across the repository                                                                               |                                                                  |

@@ -129,7 +129,7 @@ A brand that replaces the files of a role replaces the stylesheet and the licens
 
 A brand file replaces a default file only when the name and the extension are the same. A brand with `text-normal.otf` beside a default `text-normal.ttf` gets both files in its output. Every brand of this repository has its app fonts as TTF for that reason.
 
-A brand gets every default file that it does not replace. The code family of the `sinefil` brand has no variable font, so its web output holds `code.woff2` of the default brand, which `code.css` of the brand does not load.
+A brand gets every default file that it does not replace. The code family of the `sinefil` brand has no variable font, so its web output holds `code.woff2` of the default brand, which `code.css` of the brand does not load. `pnpm assets:lint:source` warns about such a file: a font of the default brand whose family no stylesheet of the brand declares.
 
 ### Stylesheets
 
@@ -146,6 +146,8 @@ A `.css` or `.scss` file in `fonts/` is copied to the web output like a font. Th
 ```
 
 The rule names the family of the brand and the range of weights the file holds, and loads the file from the folder the stylesheet is in. The stylesheet of a family without a variable font has one rule per file, with the numeric weight of the role. A page that links `fonts/text.css` needs no `@font-face` rule of its own.
+
+`pnpm assets:lint:source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: `Inter 18pt` is declared as `Inter`.
 
 A stylesheet may also load fonts from a service instead of the folder. The build copies it as it is.
 

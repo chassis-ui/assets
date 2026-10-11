@@ -29,7 +29,7 @@ Each command is a script of the root `package.json`, and each `pnpm assets*` com
 | `pnpm assets:validate` | Checks an existing output against the source and the configuration |
 | `pnpm assets:contract` | Checks that an existing output has the files its consumers read by name |
 | `pnpm assets:verify` | Runs the validator, then the contract check |
-| `pnpm assets:lint:source` | Checks the names and the layout of `source/` |
+| `pnpm assets:lint:source` | Checks the names and the layout of `source/`, and the fonts against their stylesheets |
 | `pnpm assets:analyze` | Reports sizes, types, the largest files and files with the same content |
 | `pnpm test` | Runs the tests of the build |
 | `pnpm clean` | Removes `dist/` and the built site |
@@ -475,6 +475,10 @@ pnpm assets:verify
 It fails on a name or a folder that is not of lowercase letters, digits and hyphens, on an indicator that is not at the end of a name, on an extension with capitals, on a file outside a type folder, and on a Git LFS pointer in place of a file. It warns about a brand or an app folder that the configuration does not name, which the build does not read.
 
 The message suggests a name that keeps the rules. A file that breaks a rule on purpose is listed in `lint.allow` of the checks file with the reason, and is printed as a warning.
+
+The lint also reads the fonts. For each `@font-face` rule of a stylesheet in `fonts/`, it opens the file the rule declares and compares the two, as a brand gets them, with its own files over those of the default brand. It fails when the file is of another family than the rule names, when its weight is not the weight of the rule or its weight axis does not hold the range of the rule, when one is italic and the other is not, and when the rule declares a file that is not in the folder. A rule that loads a font from a service is not read.
+
+It warns about a font of the default brand that a brand gets beside a family of its own, where no stylesheet of the brand declares the family of that font. The file is in the output of the brand, and nothing loads it.
 
 ### Analyzer
 
