@@ -61,6 +61,7 @@ packages/assets/          -> @chassis-ui/assets: the build in build/, its tests 
 packages/site/            -> The documentation site, built with Astro
 build/                    -> Scripts of the repository: releases and the site's checks
 docs/architecture.md      -> How the build works, module by module
+docs/fonts.md             -> How the fonts of a brand are prepared
 ref/ROADMAP.md            -> Planned work on this repository
 .changeset/               -> The changesets of the next version
 ```
@@ -89,15 +90,15 @@ dist/
 ├── web/
 │   └── docs/
 │       ├── chassis/      -> What the Chassis sites read, built by pnpm assets:site
-│       └── example/
+│       └── sinefil/
 ├── ios/
 │   └── demo/
 │       ├── chassis/
-│       └── example/
+│       └── sinefil/
 └── android/
     └── demo/
         ├── chassis/
-        └── example/
+        └── sinefil/
 ```
 
 What each platform gets:
@@ -117,7 +118,7 @@ On Android an image without an indicator goes to `drawable/`, `@2x` to `drawable
 ```shell
 pnpm assets                                   # Every brand, app and platform
 pnpm assets --brand chassis                   # One brand
-pnpm assets --brand chassis example           # --brand, --app and --platform take one or more values
+pnpm assets --brand chassis sinefil           # --brand, --app and --platform take one or more values
 pnpm assets --app docs --platform web         # Filters combine
 pnpm assets:site                              # The output the Chassis sites read: --clean --brand chassis --app docs
 ```
@@ -201,7 +202,7 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
     "brandFolder": "default"
   },
   "build": {
-    "brands": ["chassis", "example"],
+    "brands": ["chassis", "sinefil"],
     "apps": {
       "docs": ["web"],
       "demo": ["ios", "android"]

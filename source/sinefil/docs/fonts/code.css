@@ -1,0 +1,19 @@
+/* IBM Plex Mono, the "code" family of the Sinefil brand. */
+/* The family has no variable font: one file per weight. */
+/* Weights by role: normal 400, strong 700. */
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("code-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("code-strong.woff2") format("woff2");
+}

@@ -148,7 +148,7 @@ the build-system page describes; it may add `processImage()` as Android does, wi
   "chassis": {
     "defaults": { "brandFolder": "default" },
     "build": {
-      "brands": ["chassis", "example"],
+      "brands": ["chassis", "sinefil"],
       "apps": { "docs": ["web"], "demo": ["ios", "android"] }
     }
   }
@@ -222,7 +222,7 @@ the roadmap.
 - Names: kebab-case, lowercase; `@2x` and `@3x` kept. `MyFont@2x.woff2` becomes
   `my-font@2x.woff2`. A dot inside a name becomes a hyphen: `chassis-icons.min.css` becomes
   `chassis-icons-min.css`, `default.tokens.json` becomes `default-tokens.json`.
-- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare one `@font-face` per file of the folder, by the real family name, with the weight of each role. The `<role>-license.txt` files are the licenses of the families.
+- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare the variable font of their role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file; for a family without a variable font, one `@font-face` per file by weight. The files by weight, `<role>-<weight>.woff2`, are beside the variable files. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
 - `images/`, `icons/` and every other folder: every file.
 - The docs job, `dist/web/docs/chassis/`, is what every Chassis site copies to `/static/`. The
   files it reads are listed in the roadmap's consumer contract.
@@ -419,12 +419,14 @@ with and without the code (roadmap 6.8, D19).
 - The licenses of the committed fonts, the SIL Open Font License, allow a subset. A font
   with a Reserved Font Name may not keep that name once it is changed; whether a family
   declares one is for its brand to check.
-- On this repository, on the maintainer's machine: `--subset` writes the 36 fonts of the two
-  web jobs again and saves 1.4 MB of 3.1 MB, in 6 seconds beyond a default build. The `text`
-  font of the default brand goes from 111 KB to 57 KB, and to 30 KB with `--subset latin`.
-  Only `fonts/` of the web jobs differs from a default build, and `pnpm assets:verify`
-  passes on the output. Each of the 36 fonts loads in a browser as a `FontFace`, draws the
-  Turkish letters and keeps the ligatures of the code font.
+- On this repository, on the maintainer's machine, on 2026-10-11: `--subset` writes the 46
+  fonts of the two web jobs again and saves 1.6 MB of 4.1 MB. `text-normal.woff2` of the
+  default brand goes from 111 KB to 57 KB, and to 30 KB with `--subset latin`; the variable
+  `text.woff2` goes from 349 KB to 208 KB, and to 105 KB. A variable font keeps its axes:
+  the `fvar` table of each of the nine was read after the subset. With the 36 fonts of
+  session 6.8, only `fonts/` of the web jobs differed from a default build,
+  `pnpm assets:verify` passed on the output, and each font loaded in a browser as a
+  `FontFace`, drew the Turkish letters and kept the ligatures of the code font.
 
 ### Res folder
 
@@ -559,6 +561,9 @@ changeset that says what breaks.
 - `icons/icons/chassis-icons.json` of the icon package is copied to the web output with the
   rest of the package.
 - A collision of two source files on one output name warns and the file copied last wins.
+- A brand whose family of a role has no variable font keeps the variable file of the default
+  brand in its output: `fonts/code.woff2` of `dist/web/docs/sinefil/` is the code font of
+  the default brand, and `code.css` of the brand does not load it (roadmap D24).
 - On Android, a file with an indicator outside `images/` loses the indicator and gets no
   density folder: `data/poster@2x.png` is `data/poster.png`. Beside a `poster.png` that is a
   collision, and the build warns.

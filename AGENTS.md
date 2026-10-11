@@ -22,7 +22,7 @@ packages/
     test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/)
   site/                # chassis-assets-site, the Astro documentation site
 build/                 # repository scripts (releases, the site's HTML checks)
-docs/                  # architecture.md
+docs/                  # architecture.md, fonts.md
 ref/ROADMAP.md         # the plan, its principles, the decisions and the session log
 ```
 
@@ -103,7 +103,9 @@ And these:
   TypeScript.
 - **Add a changeset** (`pnpm changeset`, or a file in `.changeset/`) to a change in `source/`
   or `packages/assets/build/`. It names the files of `dist/` that are added, removed or renamed.
-- **Fonts keep their license beside them**, as `<role>-license.txt`.
+- **Fonts keep their license beside them**, as `<role>-license.txt`. A brand replaces every
+  font file of a role under the same name and extension; follow
+  [docs/fonts.md](docs/fonts.md) to add or change a font.
 
 ## Documentation
 
@@ -148,6 +150,8 @@ Read the doc of an area before working in it, rather than deriving it from the c
   the checks per area; changesets and releases
 - [docs/architecture.md](docs/architecture.md): the modules of the build, the output contract
   of every platform and the known oddities
+- [docs/fonts.md](docs/fonts.md): the font files a brand holds, and the steps that prepare
+  them
 - [packages/assets/test/README.md](packages/assets/test/README.md): the tests, the fixture and
   the golden output
 - [ref/ROADMAP.md](ref/ROADMAP.md): the plan, the principles, the decisions and the session log

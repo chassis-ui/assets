@@ -20,7 +20,7 @@ source/
 │   └── <app>/
 │       └── fonts/
 │           ├── text-normal.woff2     -> copied to the web output
-│           ├── text-normal.otf       -> copied to the iOS and Android output
+│           ├── text-normal.ttf       -> copied to the iOS and Android output
 │           ├── text.css              -> copied to the web output
 │           └── text-license.txt      -> copied to every platform
 └── <brand>/
@@ -65,14 +65,16 @@ The default brand names its fonts this way:
 source/default/demo/fonts/
 ├── code-normal.ttf
 ├── code-strong.ttf
-├── display-normal.otf
-├── display-normal-italic.otf
-├── display-strong.otf
-├── text-normal.otf
-├── text-normal-italic.otf
-├── text-strong.otf
+├── display-normal.ttf
+├── display-normal-italic.ttf
+├── display-strong.ttf
+├── text-normal.ttf
+├── text-normal-italic.ttf
+├── text-strong.ttf
 └── ...
 ```
+
+A variable font holds every weight of a role in one file, so its name has no weight: `<role>.<ext>`, and `<role>-italic.<ext>` for the italic.
 
 Which family a role holds, and which numeric weight a name stands for, is the choice of the brand. The stylesheet of the role records it for the web, see [Stylesheets](#stylesheets).
 
@@ -88,41 +90,64 @@ Put the WOFF2 file of a font in the `fonts/` folder of each web app, and the TTF
 
 Fonts are Git LFS files. Install Git LFS before adding one, so that the commit holds a pointer and not the font itself.
 
-### Brand fonts
+### Variable fonts
 
-A brand changes a font by adding a file of the same name to its own folder. The example brand of this repository replaces the display and the code font of the web app, and takes the text font from the default brand:
+A family with a variable font gets both forms in a web app: the variable file of the role, and one file per weight beside it.
 
 ```text
-source/example/docs/fonts/
-├── code-license.txt
-├── code-normal.woff2
-├── code-strong.woff2
-├── display-license.txt
-├── display-normal.woff2
-├── display-strong.woff2
-├── fonts.scss
+source/default/docs/fonts/
+├── text-italic.woff2       -> every weight, italic
+├── text-normal.woff2       -> one weight
+├── text-strong.woff2
+├── text.css                -> declares text.woff2 and text-italic.woff2
+├── text.woff2              -> every weight, upright
 └── ...
 ```
 
-A brand that replaces the files of a role replaces the stylesheet and the license of that role too, since both describe the family. The example brand has a `display.css` and a `code.css` of its own for that reason.
+The stylesheet of the role declares the variable file. The files by weight stay for a page that writes its own `@font-face` rules. A family without a variable font has the files by weight only, and its stylesheet declares those.
+
+The `demo` app of this repository, which is built for iOS and Android, holds the files by weight only.
+
+### Brand fonts
+
+A brand changes a font by adding a file of the same name to its own folder. The `sinefil` brand of this repository replaces the font of every role, in both apps:
+
+```text
+source/sinefil/docs/fonts/
+├── code-license.txt
+├── code-normal.woff2
+├── code-strong.woff2
+├── code.css
+├── display-license.txt
+├── display-normal.woff2
+├── display.css
+├── display.woff2
+└── ...
+```
+
+A brand that replaces the files of a role replaces the stylesheet and the license of that role too, since both describe the family.
+
+A brand file replaces a default file only when the name and the extension are the same. A brand with `text-normal.otf` beside a default `text-normal.ttf` gets both files in its output. Every brand of this repository has its app fonts as TTF for that reason.
+
+A brand gets every default file that it does not replace. The code family of the `sinefil` brand has no variable font, so its web output holds `code.woff2` of the default brand, which `code.css` of the brand does not load.
 
 ### Stylesheets
 
-A `.css` or `.scss` file in `fonts/` is copied to the web output like a font. The default brand has one stylesheet per role, `text.css`, `display.css` and `code.css`, each with one `@font-face` rule per font file of the role:
+A `.css` or `.scss` file in `fonts/` is copied to the web output like a font. The default brand has one stylesheet per role, `text.css`, `display.css` and `code.css`, each with one `@font-face` rule per variable file of the role:
 
 ```css
 @font-face {
   font-family: "Inter";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url("text-normal.woff2") format("woff2");
+  src: url("text.woff2") format("woff2");
 }
 ```
 
-The rule names the family of the brand and the numeric weight of the role, and loads the file from the folder the stylesheet is in. A page that links `fonts/text.css` needs no `@font-face` rule of its own.
+The rule names the family of the brand and the range of weights the file holds, and loads the file from the folder the stylesheet is in. The stylesheet of a family without a variable font has one rule per file, with the numeric weight of the role. A page that links `fonts/text.css` needs no `@font-face` rule of its own.
 
-A stylesheet may also load fonts from a service instead of the folder. `fonts.scss` of the example brand imports two families from Google Fonts.
+A stylesheet may also load fonts from a service instead of the folder. The build copies it as it is.
 
 ### Licenses
 
@@ -144,6 +169,7 @@ The rules of `fonts/` leave a few choices to the designer. These keep a font rep
 - **Add every format a platform needs:** WOFF2 for a web app, TTF or OTF for an iOS or Android app. The build drops a format a platform does not keep and does not convert one.
 - **Keep the license beside the font:** as `<role>-license.txt` in the same folder. The build copies it to every platform.
 - **Replace the stylesheet with the font:** a brand that replaces `display-*.woff2` adds its own `display.css`, or the web output declares the family of the default brand for the files of the brand.
+- **Replace every file of a role:** a brand adds a file for each default file of the role, under the same name and extension, or its output holds the default font beside its own.
 
 Avoid the habits that undo this:
 
@@ -165,12 +191,14 @@ The web output of the configured web app, for the default fonts:
 
 ```text
 dist/web/docs/chassis/fonts/
+├── ...
+├── text-italic.woff2
 ├── text-license.txt
 ├── text-normal-italic.woff2
 ├── text-normal.woff2
 ├── text-strong.woff2
 ├── text.css
-└── ...
+└── text.woff2
 ```
 
 The iOS and the Android output of the configured app hold the same files, under the same names:
@@ -178,9 +206,9 @@ The iOS and the Android output of the configured app hold the same files, under 
 ```text
 dist/ios/demo/chassis/fonts/
 ├── text_license.txt
-├── text_normal.otf
-├── text_normal_italic.otf
-├── text_strong.otf
+├── text_normal.ttf
+├── text_normal_italic.ttf
+├── text_strong.ttf
 └── ...
 ```
 

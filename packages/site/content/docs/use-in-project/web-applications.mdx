@@ -17,7 +17,7 @@ The web output of an app and a brand is the folder `dist/web/<app>/<brand>/`. Th
 | Any other folder | Every file |
 </CxTable>
 
-The committed configuration has one web app, `docs`, and the brands `chassis` and `example`. The examples of this page use the job `dist/web/docs/chassis/`; with another configuration, read the names of your own app and brand in their place.
+The committed configuration has one web app, `docs`, and the brands `chassis` and `sinefil`. The examples of this page use the job `dist/web/docs/chassis/`; with another configuration, read the names of your own app and brand in their place.
 
 ```text
 dist/web/docs/
@@ -26,7 +26,7 @@ dist/web/docs/
 │   ├── icons/
 │   ├── images/
 │   └── other/
-└── example/
+└── sinefil/
     └── ...
 ```
 
@@ -62,7 +62,7 @@ pnpm assets:site
 `pnpm install --ignore-workspace` installs the root package only, and the build needs none of it. `pnpm assets:site` is `pnpm assets --clean --brand chassis --app docs`: it removes `dist/web/docs/chassis/` and writes it again. For another job, run `pnpm assets` with the filters of that job:
 
 ```bash
-pnpm assets --brand example --app docs --platform web
+pnpm assets --brand sinefil --app docs --platform web
 ```
 
 While you change the assets, `pnpm assets --watch --brand chassis --app docs` keeps running and builds the job again on every change under `source/`.
@@ -181,7 +181,7 @@ Parcel needs no alias: it resolves a relative path to a file of the output in `u
 
 ## Fonts
 
-The `fonts/` folder holds the WOFF and WOFF2 files of the source, the stylesheets and the licenses. A font file is named by its role and its weight, not by its family, so a brand with other families has the same file names.
+The `fonts/` folder holds the WOFF and WOFF2 files of the source, the stylesheets and the licenses. A font file is named by its role and its weight, not by its family, so a brand with other families has the same file names. A variable font holds every weight of its role and is named by the role alone, `text.woff2`, with `text-italic.woff2` for the italic.
 
 ```text
 dist/web/docs/chassis/fonts/
@@ -189,13 +189,16 @@ dist/web/docs/chassis/fonts/
 ├── code-normal.woff2
 ├── code-strong.woff2
 ├── code.css
-├── display-normal-italic.woff2
+├── code.woff2
+├── display-italic.woff2
 ├── display-normal.woff2
 ├── display.css
-├── text-normal-italic.woff2
+├── display.woff2
+├── text-italic.woff2
 ├── text-normal.woff2
 ├── text-strong.woff2
 ├── text.css
+├── text.woff2
 └── ...
 ```
 
@@ -205,7 +208,7 @@ A font of the default output has every character of its source file. If your pag
 
 ### Font stylesheets
 
-The stylesheets `text.css`, `display.css` and `code.css` of the default brand declare one `@font-face` rule per font file of their role, under the family name of the font. Link them and the declarations are done:
+The stylesheets `text.css`, `display.css` and `code.css` of a brand declare the fonts of their role, under the family name of the font. A stylesheet declares the variable font of the role where the family has one, and one file per weight where it has none. Link them and the declarations are done:
 
 ```html
 <link rel="stylesheet" href="/assets/fonts/text.css" />
@@ -213,7 +216,7 @@ The stylesheets `text.css`, `display.css` and `code.css` of the default brand de
 <link rel="stylesheet" href="/assets/fonts/code.css" />
 ```
 
-Each rule reads its file by a relative URL, `url("text-normal.woff2")`, so a stylesheet works only beside the font files. The family name to use in `font-family` is in the comment at the top of each stylesheet.
+Each rule reads its file by a relative URL, `url("text.woff2")`, so a stylesheet works only beside the font files. The family name to use in `font-family` is in the comment at the top of each stylesheet.
 
 ### Own declarations
 
@@ -241,7 +244,7 @@ body {
 }
 ```
 
-The weight of a role is the choice of the brand; read it in the stylesheet of the role. Chassis Tokens owns the names of the font roles, see the [Chassis Tokens docs](https://chassis-ui.com/tokens/).
+The weight of a role is the choice of the brand; read it in the stylesheet of the role. To declare a variable font, give the rule the range of weights the file holds, such as `font-weight: 100 900`; the range is in the stylesheet of the role too. Chassis Tokens owns the names of the font roles, see the [Chassis Tokens docs](https://chassis-ui.com/tokens/).
 
 ### Licenses
 
@@ -393,7 +396,7 @@ Every brand of `chassis.build.brands` has a folder of its own beside the others,
 To ship one brand, copy the folder of that brand at build time:
 
 ```bash
-BRAND=example
+BRAND=sinefil
 mkdir -p public/assets
 cp -R vendor/assets/dist/web/docs/$BRAND/. public/assets/
 ```
@@ -410,10 +413,12 @@ export function assetUrl(brand, path) {
   return `/assets/${brand}/${path}`
 }
 
-document.querySelector('#logo').src = assetUrl('example', 'images/logo/chassis-logo-brand.svg')
+document.querySelector('#logo').src = assetUrl('sinefil', 'images/logo/chassis-logo-brand.svg')
 ```
 
-A brand folder of `source/` holds only the files that differ, and the build fills the rest from the default brand. A brand can add files too: the `example` brand adds `fonts/fonts.scss`, which only its output has.
+A brand folder of `source/` holds only the files that differ, and the build fills the rest from the default brand. The `sinefil` brand has fonts and logos of its own, and its output has the same files as the output of the default brand, under the same names.
+
+A default file that a brand does not replace stays in the output of the brand. The code family of `sinefil` has no variable font, so `fonts/code.woff2` of its output is the code font of the default brand, and `code.css` of the brand does not load it. Link the stylesheet of a role and you get the fonts of the brand.
 
 <Callout type="warning">
 A brand that replaces the font files of a role without replacing the stylesheet of that role gets the stylesheet of the default brand, which declares the family name of the default font. Add `text.css`, `display.css` or `code.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).

@@ -1,0 +1,247 @@
+# Preparing fonts
+
+How the font files of a brand are made and placed in `source/`: for a new brand, a new family
+of a role, or a new version of a family. The names and the formats are the rules of the
+[fonts page](../packages/site/content/docs/asset-types/fonts.mdx); this document is the
+procedure behind the files. Decision D24 of the [roadmap](../ref/ROADMAP.md#decisions) has the
+reasons.
+
+The build copies fonts and converts nothing by default, so every file the output needs is a
+file of `source/`, prepared once by hand.
+
+## What a brand holds
+
+A brand has the same file names as the default brand, with families of its own. A page or an
+app that reads `fonts/text.css` or `text_normal.ttf` then gets the font of the brand it was
+built for, with no change to its code.
+
+The web app, `source/<brand>/docs/fonts/`, holds for each role:
+
+| File                                                    | What it is                                                         |
+| ------------------------------------------------------- | ------------------------------------------------------------------ |
+| `<role>.woff2`, `<role>-italic.woff2`                   | The variable font, when the family has one. Every weight in a file |
+| `<role>-<weight>.woff2`, `<role>-<weight>-italic.woff2` | One file per weight of the role                                    |
+| A `.ttf` beside each `.woff2`                           | The file the WOFF2 was written from. The web output drops it       |
+| `<role>.css`                                            | Declares the variable files, or the files by weight without one    |
+| `<role>-license.txt`                                    | The license of the family                                          |
+
+The iOS and Android app, `source/<brand>/demo/fonts/`, holds the files by weight only, as
+`.ttf` and `.woff2`, with a `<role>.css` that declares the files by weight, and the licenses.
+It has no variable file.
+
+Three rules keep the brands in step:
+
+- **Every file of a role is replaced.** A brand gets each default file it has no replacement
+  for. A role with half its files replaced ships two families.
+- **Same name, same extension.** A brand file replaces a default file of the same path only.
+  The app fonts are `.ttf` in every brand; a `.otf` beside a default `.ttf` adds a file and
+  replaces none.
+- **The stylesheet and the license go with the family.** A brand that replaces the files of
+  a role adds its own `<role>.css` and `<role>-license.txt`.
+
+A family without a variable font is the one exception to the first rule: the brand has no
+`<role>.woff2`, so the file of the default brand stays in its web output, and the stylesheet
+of the brand does not load it. See the known oddities of
+[architecture.md](architecture.md#known-oddities).
+
+## The families today
+
+The roles and the weights are those of the font tokens of Chassis Tokens,
+`typography.fontFamily.<role>` and `typography.fontWeight.<role>.<weight>` in
+`source/brand-<brand>/brand-base.json` of that repository.
+
+| Brand     | Role      | Family         | Variable           | elegant | normal | strong | mass |
+| --------- | --------- | -------------- | ------------------ | ------- | ------ | ------ | ---- |
+| `default` | `text`    | Inter          | Upright and italic | 300     | 400    | 600    | 700  |
+| `default` | `display` | Archivo Narrow | Upright and italic | 400     | 500    | 600    | 700  |
+| `default` | `code`    | Fira Code      | Upright            |         | 400    | 600    |      |
+| `sinefil` | `text`    | DM Sans        | Upright and italic | 300     | 400    | 600    | 700  |
+| `sinefil` | `display` | Source Serif 4 | Upright and italic | 300     | 400    | 600    | 700  |
+| `sinefil` | `code`    | IBM Plex Mono  | None               |         | 400    | 700    |      |
+
+The `text` and `display` roles have an italic of every weight. The `code` role has none.
+
+Where the files come from:
+
+- Every family is licensed under the SIL Open Font License. The files are the downloads of
+  [Google Fonts](https://fonts.google.com), placed here on 2026-10-11: Inter 4.001, Archivo Narrow
+  3.002, Fira Code 5.002 (the variable file), DM Sans 4.004, Source Serif 4 4.004 and IBM
+  Plex Mono 2.3.
+- A family with an optical size axis has its files by weight in several cuts. The `text` role
+  takes the 18pt cut, `Inter_18pt-Regular.ttf` and `DMSans_18pt-Regular.ttf`. Source Serif 4
+  takes the files without a size in the name.
+- The files by weight of the default `code` role are Fira Code 6.002, from an earlier commit.
+  `code-strong` is the SemiBold, 600, and the tokens give the role 700; task W16 of the
+  roadmap.
+- The `.woff2` files by weight of the default brand are from an earlier commit too. They were
+  not written from the `.ttf` files beside them.
+
+## Steps
+
+The steps add or replace the fonts of one role of one brand. They need Git LFS, since fonts
+are Git LFS files, and `pnpm` for the conversion.
+
+### 1. Read the tokens
+
+Take the family and the weights of the role from the tokens of the brand. The first family of
+`typography.fontFamily.<role>` is the name the stylesheet declares, letter for letter. Each
+`typography.fontWeight.<role>.<weight>` gives the numeric weight of a file by weight.
+
+### 2. Get the files and check the license
+
+Download the family, and unpack it outside `source/`. A download of Google Fonts holds the
+variable fonts at the top, the files by weight in `static/`, and the license, `OFL.txt`.
+
+Check that the license allows embedding in an app and serving on the web. The download is
+not committed: only the files of the next step enter the repository.
+
+### 3. Copy the files by role
+
+Copy each file to `source/<brand>/docs/fonts/` under its role name. For the `text` role of
+the `sinefil` brand:
+
+| File of the download                       | Name in `fonts/`          |
+| ------------------------------------------ | ------------------------- |
+| `DMSans-VariableFont_opsz,wght.ttf`        | `text.ttf`                |
+| `DMSans-Italic-VariableFont_opsz,wght.ttf` | `text-italic.ttf`         |
+| `static/DMSans_18pt-Light.ttf`             | `text-elegant.ttf`        |
+| `static/DMSans_18pt-LightItalic.ttf`       | `text-elegant-italic.ttf` |
+| `static/DMSans_18pt-Regular.ttf`           | `text-normal.ttf`         |
+| `static/DMSans_18pt-Italic.ttf`            | `text-normal-italic.ttf`  |
+| `static/DMSans_18pt-SemiBold.ttf`          | `text-strong.ttf`         |
+| `static/DMSans_18pt-SemiBoldItalic.ttf`    | `text-strong-italic.ttf`  |
+| `static/DMSans_18pt-Bold.ttf`              | `text-mass.ttf`           |
+| `static/DMSans_18pt-BoldItalic.ttf`        | `text-mass-italic.ttf`    |
+| `OFL.txt`                                  | `text-license.txt`        |
+
+The weight in the name of a file is the weight the tokens give the role, not a fixed one:
+`display-normal` is the Medium of Archivo Narrow and the Regular of Source Serif 4.
+
+On a Mac, the names inside a file say which font it is:
+
+```shell
+mdimport -t -d2 source/sinefil/docs/fonts/text-strong.ttf 2>&1 | grep -A 2 -E 'name_(family|postscript)'
+```
+
+### 4. Write the WOFF2 files
+
+Write a `.woff2` beside each `.ttf`, with the WOFF2 encoder of Google as a package:
+
+```shell
+cd source/<brand>/docs/fonts
+for f in <role>*.ttf; do
+  pnpm --package=wawoff2@2.0.1 dlx woff2_compress.js "$f" "${f%.ttf}.woff2"
+done
+```
+
+The conversion keeps every character, every layout feature and the axes of a variable font.
+The same command on the same file gives the same bytes. Do not subset here: a file of
+`source/` is whole, and `pnpm assets --subset` writes the smaller files of a build.
+
+### 5. Write the stylesheet
+
+`<role>.css` starts with a comment that names the family and the weights by role, and has one
+`@font-face` rule per file it declares. For a family with a variable font, one rule per
+variable file, with the range of weights the file holds:
+
+```css
+/* DM Sans, the "text" family of the Sinefil brand. */
+/* A variable font: every weight from 100 to 1000, in one file per style. */
+/* Weights by role: elegant 300, normal 400, strong 600, mass 700. */
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("text.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("text-italic.woff2") format("woff2");
+}
+```
+
+The range is the `wght` axis of the file; the page of the family on Google Fonts shows it.
+For a family without a variable font, one rule per file by weight, with the weight of the
+role:
+
+```css
+/* IBM Plex Mono, the "code" family of the Sinefil brand. */
+/* The family has no variable font: one file per weight. */
+/* Weights by role: normal 400, strong 700. */
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("code-normal.woff2") format("woff2");
+}
+```
+
+### 6. Fill the app folder
+
+Copy the files by weight, as `.ttf` and `.woff2`, and the license to
+`source/<brand>/demo/fonts/`. Its `<role>.css` declares the files by weight, one rule per
+file, also for a family that has a variable font.
+
+### 7. Compare with the default brand
+
+The two folders of a brand hold the names of the default brand:
+
+```shell
+diff <(ls source/default/docs/fonts) <(ls source/<brand>/docs/fonts)
+diff <(ls source/default/demo/fonts) <(ls source/<brand>/demo/fonts)
+```
+
+The only lines the first command may print are the variable files of a family that has none,
+`code.ttf` and `code.woff2` for the `sinefil` brand. The second prints nothing.
+
+### 8. Build and check
+
+Run the checks of a change to `source/`:
+
+```shell
+pnpm assets:lint:source
+pnpm assets && pnpm assets:verify
+```
+
+Then check the output:
+
+- The web output of the brand has the files of the default brand, name for name. This prints
+  nothing:
+
+  ```shell
+  diff <(cd dist/web/docs/chassis && find . -type f | sort) <(cd dist/web/docs/<brand> && find . -type f | sort)
+  ```
+
+- The stylesheets load their fonts. Serve the web output with
+  `python3 -m http.server --directory dist/web/docs`, link `<brand>/fonts/text.css`,
+  `display.css` and `code.css` in a page, and set text in each family at the weights of the
+  roles and in italic. Every face of `document.fonts` has the status `loaded`, and no request
+  of a font fails.
+- The fonts are Git LFS files. `git check-attr filter` on a new `.ttf` and `.woff2` answers
+  `filter: lfs`.
+
+### 9. Record the change
+
+Add a changeset that names the files of `dist/` that are added, removed or renamed. A font
+that changes its family changes the PostScript name an iOS app loads it by; say so in the
+changeset. Update the table of [the families today](#the-families-today), and the pages of
+the site where they name a file that changed.
+
+## A new brand
+
+A new brand takes the steps for each of its three roles, and two more:
+
+- Add the name to `chassis.build.brands` of `package.json`.
+- Add what else differs from the default brand, such as `images/logo/`, to
+  `source/<brand>/<app>/`.
+
+The tokens of the brand are in chassis-tokens, and a site or an app builds with the brand of
+the same name in both repositories.

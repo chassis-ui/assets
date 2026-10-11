@@ -139,7 +139,7 @@ The project has one word for each concept. Using a synonym makes the reader wond
 
 **Any folder is a type.** `fonts`, `images` and `icons` have rules of their own; any other folder under an app is copied as it is. Write "any other folder", and present names such as `videos/` as examples, not as types.
 
-**Owned and customized.** Chassis Assets is meant to be owned by the team that adopts it. Don't present the committed brands and apps (`chassis`, `example`, `docs`, `demo`) as the only ones; see [§8](#8-counts-versions-and-configuration).
+**Owned and customized.** Chassis Assets is meant to be owned by the team that adopts it. Don't present the committed brands and apps (`chassis`, `sinefil`, `docs`, `demo`) as the only ones; see [§8](#8-counts-versions-and-configuration).
 
 Product names keep their spelling: Chassis Assets, Chassis Tokens, Chassis Icons, Chassis CSS, Figma, Git LFS, Node.js, npm, pnpm, Xcode, Android Studio, SwiftUI, UIKit, Jetpack Compose. Formats are uppercase in prose (WOFF2, TTF, SVG, PNG, WebP) and an extension in code (`.woff2`).
 

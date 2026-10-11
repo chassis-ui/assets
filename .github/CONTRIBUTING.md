@@ -75,6 +75,7 @@ Three things to know:
 
 - **Fonts come with their license.** A font is redistributed with the text of its license,
   `<role>-license.txt` beside the font files. The build copies it to every platform.
+  [docs/fonts.md](../docs/fonts.md) has the steps that prepare the fonts of a brand.
 - **Icons are copied, not drawn here.** `icons/icons/` and `icons/svgs/` of the default brand
   are the build output of `@chassis-ui/icons`. Do not edit a file there; refresh the copy by
   the steps of [docs/architecture.md](../docs/architecture.md#refreshing-the-icons).

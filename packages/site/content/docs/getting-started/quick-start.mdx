@@ -68,15 +68,15 @@ dist/
 │       │   ├── icons/
 │       │   ├── images/
 │       │   └── other/
-│       └── example/
+│       └── sinefil/
 ├── ios/
 │   └── demo/
 │       ├── chassis/      -> snake_case names
-│       └── example/
+│       └── sinefil/
 └── android/
     └── demo/
         ├── chassis/      -> snake_case names, density folders, ic_ prefix
-        └── example/
+        └── sinefil/
 ```
 
 `dist/` is not committed. The [build system]([[docsref:/getting-started/build-system]]) page describes every command and option.
@@ -100,7 +100,7 @@ source/
 │   │   ├── icons/
 │   │   └── other/        -> any other folder is a type too
 │   └── demo/
-└── example/              -> a brand: only the files that differ
+└── sinefil/              -> a brand: only the files that differ
     ├── docs/
     └── demo/
 ```
@@ -138,7 +138,7 @@ Name your brands and apps in the `chassis` block of `package.json`. Each app lis
       "brandFolder": "default"
     },
     "build": {
-      "brands": ["chassis", "example"],
+      "brands": ["chassis", "sinefil"],
       "apps": {
         "docs": ["web"],
         "demo": ["ios", "android"]

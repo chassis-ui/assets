@@ -6,12 +6,12 @@ toc: true
 
 ## Introduction
 
-The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. In the committed configuration the Android app is `demo` and the brands are `chassis` and `example`; your own configuration has other names in the same places.
+The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. In the committed configuration the Android app is `demo` and the brands are `chassis` and `sinefil`; your own configuration has other names in the same places.
 
 ```text
 dist/android/demo/chassis/
 ├── fonts/
-│   ├── text_normal.otf
+│   ├── text_normal.ttf
 │   ├── text_license.txt
 │   └── ...
 ├── images/
@@ -85,11 +85,11 @@ dist/android/demo/chassis/
 │   ├── code_license.txt
 │   ├── code_normal.ttf
 │   ├── display_license.txt
-│   ├── display_normal.otf
+│   ├── display_normal.ttf
 │   ├── text_license.txt
-│   ├── text_normal.otf
-│   ├── text_normal_italic.otf
-│   ├── text_strong.otf
+│   ├── text_normal.ttf
+│   ├── text_normal_italic.ttf
+│   ├── text_strong.ttf
 │   └── ...
 ├── icons/
 │   ├── icons/
@@ -165,7 +165,7 @@ dist/android/demo/chassis/
     │   └── ...
     └── font/
         ├── code_normal.ttf
-        ├── text_normal.otf
+        ├── text_normal.ttf
         └── ...
 ```
 
@@ -197,7 +197,7 @@ SRC="app/src/$BRAND"
 
 # Fonts go to res/font/, their licenses to assets/licenses/
 mkdir -p "$SRC/res/font" "$SRC/assets/licenses"
-cp "$ASSETS"/fonts/*.otf "$ASSETS"/fonts/*.ttf "$SRC/res/font/"
+find "$ASSETS/fonts" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) -exec cp {} "$SRC/res/font/" \;
 cp "$ASSETS"/fonts/*_license.txt "$SRC/assets/licenses/"
 
 # The PNG and WebP files of each folder of images/ that the app uses
@@ -223,7 +223,7 @@ The script copies and replaces files and never removes one. A file that a later 
 
 ## Fonts
 
-The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `text_normal.otf` or `display_strong_italic.otf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
+The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `text_normal.ttf` or `display_strong_italic.ttf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
 
 ### Font resources
 
@@ -442,19 +442,19 @@ android {
 
     productFlavors {
         create("chassis") { dimension = "brand" }
-        create("example") { dimension = "brand" }
+        create("sinefil") { dimension = "brand" }
     }
 }
 ```
 
-`./gradlew assembleChassisDebug` then builds the app with the files of `app/src/chassis/`, and `./gradlew assembleExampleDebug` with those of `app/src/example/`. Put the vector drawables and the `text.xml` that differ by brand in the same source sets, and the ones that all brands share in `app/src/main/res/`.
+`./gradlew assembleChassisDebug` then builds the app with the files of `app/src/chassis/`, and `./gradlew assembleSinefilDebug` with those of `app/src/sinefil/`. Put the vector drawables and the `text.xml` that differ by brand in the same source sets, and the ones that all brands share in `app/src/main/res/`.
 
 ### Gradle task
 
 A Gradle task runs the copy script before every build, so the source sets follow the output. Add one task per brand to `app/build.gradle.kts`:
 
 ```kotlin
-listOf("chassis", "example").forEach { brand ->
+listOf("chassis", "sinefil").forEach { brand ->
     val sync = tasks.register<Exec>("sync${brand.replaceFirstChar { it.uppercase() }}Assets") {
         workingDir = rootDir
         commandLine("scripts/sync-assets.sh", brand)
@@ -501,7 +501,7 @@ jobs:
       - name: Copy the assets
         run: |
           ./scripts/sync-assets.sh chassis
-          ./scripts/sync-assets.sh example
+          ./scripts/sync-assets.sh sinefil
 
       - uses: actions/setup-java@v6
         with:
