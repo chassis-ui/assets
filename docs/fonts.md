@@ -21,9 +21,13 @@ The web app, `source/<brand>/docs/fonts/`, holds for each role:
 | ------------------------------------------------------- | ------------------------------------------------------------------ |
 | `<role>.woff2`, `<role>-italic.woff2`                   | The variable font, when the family has one. Every weight in a file |
 | `<role>-<weight>.woff2`, `<role>-<weight>-italic.woff2` | One file per weight of the role                                    |
-| A `.ttf` beside each `.woff2`                           | The file the WOFF2 was written from. The web output drops it       |
+| A `.ttf` beside each `.woff2`                           | The font as TrueType. The web output drops it                      |
 | `<role>.css`                                            | Declares the variable files, or the files by weight without one    |
 | `<role>-license.txt`                                    | The license of the family                                          |
+
+The `.woff2` of a font is written from the `.ttf` beside it, by step 4. The files by weight
+of two roles of the default brand are older than that rule; see
+[the families today](#the-families-today).
 
 The iOS and Android app, `source/<brand>/demo/fonts/`, holds the files by weight only, as
 `.ttf` and `.woff2`, with a `<role>.css` that declares the files by weight, and the licenses.
@@ -48,7 +52,9 @@ of the brand does not load it. See the known oddities of
 
 The roles and the weights are those of the font tokens of Chassis Tokens,
 `typography.fontFamily.<role>` and `typography.fontWeight.<role>.<weight>` in
-`source/brand-<brand>/brand-base.json` of that repository.
+`source/brand-<brand>/brand-base.json` of that repository. The table has the weight of each
+file by weight, which is the weight of its token with one exception: `strong` of the default
+`code` role, below.
 
 | Brand     | Role      | Family         | Variable           | elegant | normal | strong | mass |
 | --------- | --------- | -------------- | ------------------ | ------- | ------ | ------ | ---- |
@@ -77,8 +83,10 @@ Where the files come from:
 - The files by weight of the default `code` role are Fira Code 6.002, from an earlier commit.
   `code-strong` is the SemiBold, 600, and the tokens give the role 700; task W16 of the
   roadmap.
-- The `.woff2` files by weight of the default brand are from an earlier commit too. They were
-  not written from the `.ttf` files beside them.
+- The `.woff2` files by weight of the `text` and the `display` role of the default brand are
+  from an earlier commit too, and were not written from the `.ttf` files beside them: a
+  `.woff2` of the `text` role names its family `Inter`, and its `.ttf` `Inter 18pt`. The two
+  of the `code` role are what step 4 writes from their `.ttf` files.
 
 ## Steps
 
@@ -139,8 +147,8 @@ done
 ```
 
 The conversion keeps every character, every layout feature and the axes of a variable font.
-The same command on the same file gives the same bytes. Do not subset here, and fix no axis: a file of
-`source/` is whole, and `pnpm assets --subset` writes the smaller files of a build.
+The same command on the same file gives the same bytes. Do not subset here, and fix no axis:
+a file of `source/` is whole, and `pnpm assets --subset` writes the smaller files of a build.
 
 ### 5. Write the stylesheet
 
@@ -199,11 +207,12 @@ file, also for a family that has a variable font.
 The two folders of a brand hold the names of the default brand:
 
 ```shell
-diff <(ls source/default/docs/fonts) <(ls source/<brand>/docs/fonts)
-diff <(ls source/default/demo/fonts) <(ls source/<brand>/demo/fonts)
+diff <(command ls source/default/docs/fonts) <(command ls source/<brand>/docs/fonts)
+diff <(command ls source/default/demo/fonts) <(command ls source/<brand>/demo/fonts)
 ```
 
-The only lines the first command may print are the variable files of a family that has none,
+`command ls` lists the names alone, also in a shell that has an alias for `ls`. The only
+lines the first command may print are the variable files of a family that has none,
 `code.ttf` and `code.woff2` for the `sinefil` brand. The second prints nothing.
 
 ### 8. Build and check
