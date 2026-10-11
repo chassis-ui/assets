@@ -30,9 +30,10 @@ const webProcessor = {
 
   /**
    * What `--subset` writes again: a browser downloads a font, so a font of the web holds
-   * the characters its pages use and no more
+   * the characters its pages use and no more. The stylesheets are those that get a rule
+   * per range, with `split` of `chassis.subset`
    */
-  subset: { type: 'fonts', formats: ['.woff', '.woff2'] },
+  subset: { type: 'fonts', formats: ['.woff', '.woff2'], stylesheets: ['.css', '.scss'] },
 
   /**
    * Transform filename to kebab-case (lowercase with hyphens)

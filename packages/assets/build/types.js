@@ -65,6 +65,18 @@
  * @property {string} text - Every character of the ranges
  * @property {Record<string, Record<string, number>>} axes - Per brand, the variation axes
  *   that are fixed at a value in each font that has them, by tag: `{ alpha: { opsz: 14 } }`
+ * @property {boolean} split - Write a font that a stylesheet declares once per range too,
+ *   and the rule of the stylesheet once per range, with its `unicode-range`
+ * @property {SubsetPart[]} parts - The ranges one by one, in the order they are named
+ */
+
+/**
+ * One range of the settings of `--subset`.
+ * @typedef {Object} SubsetPart
+ * @property {string} range - The range as it is written
+ * @property {string} slug - Its name in the name of a file: `latin`, `u2500-257f`
+ * @property {string} text - Every character of the range
+ * @property {string} unicodeRange - The value of `unicode-range` for the range
  */
 
 /**
@@ -72,6 +84,8 @@
  * @typedef {Object} FontSubset
  * @property {string} type - The type folder whose fonts are subsetted, `fonts`
  * @property {string[]} formats - The extensions of the fonts that are subsetted
+ * @property {string[]} [stylesheets] - The extensions of the stylesheets whose `@font-face`
+ *   rules are written once per range, with `split` of the settings
  */
 
 /**
@@ -115,6 +129,8 @@
  * @property {number} fontsSubsetted - Fonts written again under their names, with `subset`
  * @property {number} fontBytesSaved - What the subsetted fonts lost in size, in bytes
  * @property {number} fontAxesFixed - Subsetted fonts with an axis fixed, by `axes` of
+ *   `chassis.subset`
+ * @property {number} fontRangeFiles - Font files written for one range, by `split` of
  *   `chassis.subset`
  * @property {string[]} errors
  * @property {string[]} warnings

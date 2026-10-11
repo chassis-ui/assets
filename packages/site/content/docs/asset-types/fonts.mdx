@@ -46,7 +46,7 @@ Each platform keeps the formats it can load, and the build leaves the rest out.
 
 The build does not convert a font from one format to another. A font that is needed on the web and in an app is added in both formats.
 
-A font is copied with every character it has. A build with the `--subset` option writes the WOFF and WOFF2 files of the web again with the characters of a list of Unicode ranges only, under the same names; see [Font subsets]([[docsref:/getting-started/build-system#font-subsets]]). The same option fixes an axis of a variable font at a value, where the configuration names one for the brand.
+A font is copied with every character it has. A build with the `--subset` option writes the WOFF and WOFF2 files of the web again with the characters of a list of Unicode ranges only, under the same names; see [Font subsets]([[docsref:/getting-started/build-system#font-subsets]]). The same option fixes an axis of a variable font at a value, where the configuration names one for the brand, and writes a font once per range beside itself, with a rule per range in the stylesheets, where the configuration says so.
 
 ## Naming
 

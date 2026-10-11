@@ -66,7 +66,8 @@ Options:
                          names with the characters of the ranges only, such as latin
                          or U+0370-03FF. Default: \`chassis.subset\`, or latin and
                          latin-ext. Fixes the axes of a variable font that \`axes\` of
-                         \`chassis.subset\` names for a brand. Needs \`pnpm install\`
+                         \`chassis.subset\` names for a brand, and with its \`split\`
+                         writes a font file per range. Needs \`pnpm install\`
   --quiet                Print errors only
   --help, -h             Print this help
   --version, -v          Print the version
@@ -122,6 +123,7 @@ function emptyStats() {
     fontsSubsetted: 0,
     fontBytesSaved: 0,
     fontAxesFixed: 0,
+    fontRangeFiles: 0,
     errors: [],
     warnings: [],
     lfsPointers: [],
@@ -950,12 +952,15 @@ async function optimizeImages(processor, destPath, tools) {
 async function subsetFonts(processor, destPath, brand, tools) {
   if (!processor.subset) return
 
-  const { subsetted, saved, kept, failed, fixed } = await subsetJob(destPath, {
-    settings: tools.settings,
-    subsetter: tools.subsetter,
-    fonts: processor.subset,
-    brand
-  })
+  const { subsetted, saved, kept, failed, fixed, ranged, sheets, unsplit } = await subsetJob(
+    destPath,
+    {
+      settings: tools.settings,
+      subsetter: tools.subsetter,
+      fonts: processor.subset,
+      brand
+    }
+  )
   stats.fontsSubsetted += subsetted
   stats.fontBytesSaved += saved
   if (subsetted > 0) logger.log(`✂️  Subsetted ${subsetted} fonts`)
@@ -966,6 +971,11 @@ async function subsetFonts(processor, destPath, brand, tools) {
     tools.fixed.add(`${brand} ${tag}`)
     logger.log(`✂️  Fixed the axis ${tag} at ${wanted[tag]} in ${fonts} fonts`)
   }
+  stats.fontRangeFiles += ranged
+  if (ranged > 0) logger.log(`✂️  Wrote ${ranged} font files per range, for ${sheets} stylesheets`)
+  unsplit.forEach(({ sheet, reason }) =>
+    stats.warnings.push(`Not split by range, a rule of ${path.relative(run.cwd, sheet)}: ${reason}`)
+  )
   kept.forEach((file) =>
     stats.warnings.push(
       `Not subsetted, the font has no character of the ranges: ${path.relative(run.cwd, file)}`
@@ -1241,8 +1251,9 @@ export async function generateAssets(options = {}) {
     }
     if (run.subset) {
       const fixed = stats.fontAxesFixed > 0 ? `, an axis fixed in ${stats.fontAxesFixed}` : ''
+      const ranged = stats.fontRangeFiles > 0 ? `, ${stats.fontRangeFiles} files per range` : ''
       logger.log(
-        `✂️  ${stats.fontsSubsetted} fonts subsetted, ${Math.round(stats.fontBytesSaved / 1024)} KB saved${fixed}`
+        `✂️  ${stats.fontsSubsetted} fonts subsetted, ${Math.round(stats.fontBytesSaved / 1024)} KB saved${fixed}${ranged}`
       )
     }
   }

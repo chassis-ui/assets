@@ -215,7 +215,7 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
 - `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone, as `chassis` is.
 - `build.apps` maps each app to its platforms: `web`, `ios` or `android`.
 - `optimize`, optional, holds the settings of `--optimize`, `--webp` and `--avif`, such as `"jpeg": { "quality": 80 }`. Without it the options change no visible pixel. It turns nothing on.
-- `subset`, optional, holds the settings of `--subset`. `ranges` are the ranges, such as `["latin", "greek"]`; without it the option keeps `latin` and `latin-ext`. `axes` are the axes of a variable font that are fixed at a value for a brand, such as `{ "chassis": { "opsz": 14 } }`; without it no axis is fixed. It turns nothing on.
+- `subset`, optional, holds the settings of `--subset`. `ranges` are the ranges, such as `["latin", "greek"]`; without it the option keeps `latin` and `latin-ext`. `axes` are the axes of a variable font that are fixed at a value for a brand, such as `{ "chassis": { "opsz": 14 } }`; without it no axis is fixed. `split`, `true` or `false`, writes a font that a stylesheet declares once per range too, as `text-latin.woff2`, and the rule of the stylesheet once per range with its `unicode-range`; without it a font is one file. It turns nothing on.
 
 What the checks verify is in [chassis.checks.json](chassis.checks.json), beside `package.json`. The build does not read it, and the file is optional:
 

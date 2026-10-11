@@ -22,6 +22,8 @@ import {
   fontAxes,
   glyphCount,
   loadSubsetter,
+  rangeFileName,
+  rangeSlug,
   resolveSubset,
   subsetJob
 } from '../build/subset-fonts.js'
@@ -71,11 +73,12 @@ afterAll(removeTempDirs)
  * WOFF2 without a Latin letter; `site` has the WOFF2 as an icon font too, and `mobile` has
  * the TTF.
  * @param {Record<string, unknown>} [subset] - The `chassis.subset` block
- * @param {{ variable?: boolean }} [options] - With `variable`, `site` has the variable font
- *   too, as `fonts/variable.woff2`
+ * @param {{ variable?: boolean, sheet?: string }} [options] - With `variable`, `site` has the
+ *   variable font too, as `fonts/variable.woff2`. `sheet` is the stylesheet, where a test
+ *   reads its rules
  * @returns {string} The root
  */
-function root(subset, { variable = false } = {}) {
+function root(subset, { variable = false, sheet = '@font-face { font-family: "Text"; }\n' } = {}) {
   const dir = tempDir('chassis-assets-subset-')
   fs.writeFileSync(
     path.join(dir, 'package.json'),
@@ -94,7 +97,7 @@ function root(subset, { variable = false } = {}) {
     fs.writeFileSync(path.join(site, 'fonts', name), fonts[name])
   }
   if (variable) fs.writeFileSync(path.join(site, 'fonts/variable.woff2'), fonts['variable.woff2'])
-  fs.writeFileSync(path.join(site, 'fonts/text.css'), '@font-face { font-family: "Text"; }\n')
+  fs.writeFileSync(path.join(site, 'fonts/text.css'), sheet)
   fs.writeFileSync(path.join(site, 'fonts/text-license.txt'), 'The license of the font\n')
   fs.writeFileSync(path.join(site, 'icons/icons.woff2'), fonts['text.woff2'])
 
@@ -115,12 +118,31 @@ async function build(cwd, options = {}) {
   return { out, stats }
 }
 
+/** A stylesheet that declares the fonts of `root()`: one font in two formats, and another. */
+const SHEET = `@font-face {
+  font-family: "Text";
+  font-weight: 400;
+  src:
+    url("text.woff2") format("woff2"),
+    url("text.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Greek";
+  src: url("greek.woff2") format("woff2");
+}
+`
+
 /** The first four bytes of a font file, which name its format. */
 const signature = (/** @type {Buffer} */ font) => font.toString('latin1', 0, 4)
 
 describe('the processors', () => {
   test('the web subsets its WOFF and WOFF2 fonts, the apps keep theirs', () => {
-    expect(webProcessor.subset).toEqual({ type: 'fonts', formats: ['.woff', '.woff2'] })
+    expect(webProcessor.subset).toEqual({
+      type: 'fonts',
+      formats: ['.woff', '.woff2'],
+      stylesheets: ['.css', '.scss']
+    })
     expect(iosProcessor.subset).toBeUndefined()
     expect(androidProcessor.subset).toBeUndefined()
   })
@@ -175,7 +197,7 @@ describe('resolveSubset()', () => {
   test('names every problem of a block', () => {
     expect(() => resolveSubset([])).toThrow('chassis.subset is an object')
     expect(() => resolveSubset({ range: ['latin'], ranges: 'latin' })).toThrow(
-      /chassis\.subset is not valid:\n {2}- "range" is not a setting\. Known: ranges, axes\n {2}- "ranges" is a list/
+      /chassis\.subset is not valid:\n {2}- "range" is not a setting\. Known: ranges, axes, split\n {2}- "ranges" is a list/
     )
     expect(() => resolveSubset({ ranges: [] })).toThrow('"ranges" is a list')
     expect(() => resolveSubset({ ranges: ['latin', 'klingon'] })).toThrow(
@@ -220,12 +242,60 @@ describe('resolveSubset()', () => {
     expect(() => resolveSubset(block, ['greek'], ['alpha'])).toThrow('chassis.subset is not valid')
   })
 
+  test('a font is one file without the setting, and split is true or false', () => {
+    expect(resolveSubset().split).toBe(false)
+    expect(SUBSET_DEFAULTS.split).toBe(false)
+    expect(resolveSubset({ split: true }).split).toBe(true)
+    expect(resolveSubset({ split: false }, ['greek']).split).toBe(false)
+    expect(() => resolveSubset({ split: 'latin' })).toThrow(
+      'chassis.subset is not valid:\n  - "split" is true or false'
+    )
+  })
+
+  test('the ranges are there one by one, with their characters and their unicode-range', () => {
+    const { parts } = resolveSubset(undefined, ['latin', 'u+2192', 'U+0041-005a', 'latin'])
+    expect(parts.map((part) => part.range)).toEqual(['latin', 'u+2192', 'U+0041-005a'])
+    expect(parts.map((part) => part.slug)).toEqual(['latin', 'u2192', 'u0041-005a'])
+    expect(parts[0].unicodeRange).toBe(NAMED_RANGES.latin)
+    expect(parts[1].unicodeRange).toBe('U+2192')
+    expect(parts[2].unicodeRange).toBe('U+0041-005A')
+    expect(parts[0].text).toContain('é')
+    expect(parts[0].text).not.toContain('→')
+    expect(parts[1].text).toBe('→')
+    expect(parts[2].text).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    expect(resolveSubset().parts.map((part) => part.slug)).toEqual(['latin', 'latin-ext'])
+  })
+
   test('names a value of the option that is no range', () => {
     expect(() => resolveSubset(undefined, ['U+00FF-0041'])).toThrow(
       '--subset is not valid:\n  - "U+00FF-0041" is not a range'
     )
     expect(() => resolveSubset(undefined, ['U+110000'])).toThrow('"U+110000" is not a range')
     expect(() => resolveSubset({ ranges: ['greek'] }, ['0041'])).toThrow('"0041" is not a range')
+  })
+})
+
+describe('rangeSlug() and rangeFileName()', () => {
+  test('a range has a name of lowercase letters, digits and hyphens', () => {
+    expect(rangeSlug('latin-ext')).toBe('latin-ext')
+    expect(rangeSlug('U+2500-257F')).toBe('u2500-257f')
+    expect(rangeSlug('u+41')).toBe('u41')
+    expect(rangeSlug('U+0041, U+0061-007A')).toBe('u0041-u0061-007a')
+  })
+
+  test('the file of a range has the name of the range before its extension', () => {
+    expect(rangeFileName('text.woff2', 'latin')).toBe('text-latin.woff2')
+    expect(rangeFileName('fonts/text-italic.woff', 'u2500-257f')).toBe(
+      'fonts/text-italic-u2500-257f.woff'
+    )
+    // A build renames the files it finds in an output, and leaves these names
+    for (const range of ['latin-ext', 'U+2500-257F']) {
+      const name = rangeFileName('text-italic.woff2', rangeSlug(range))
+      expect(webProcessor.renameFile(name, { currentDir: 'fonts', parentDir: 'alpha' })).toBe(name)
+    }
+    expect(rangeFileName(path.join('a', 'TEXT.WOFF'), 'latin')).toBe(
+      path.join('a', 'TEXT-latin.WOFF')
+    )
   })
 })
 
@@ -461,7 +531,239 @@ describe('subsetJob()', () => {
 
   test('does nothing for a job without the folder', async () => {
     const result = await subsetJob(tempDir(), { fonts: web, settings, subsetter })
-    expect(result).toEqual({ subsetted: 0, saved: 0, kept: [], failed: [], fixed: {} })
+    expect(result).toEqual({
+      subsetted: 0,
+      saved: 0,
+      kept: [],
+      failed: [],
+      fixed: {},
+      ranged: 0,
+      sheets: 0,
+      unsplit: []
+    })
+  })
+})
+
+describe('subsetJob() with split', () => {
+  const web = /** @type {import('../build/types.js').FontSubset} */ (webProcessor.subset)
+  // A range of each kind: two that the font has, by name, and one that it has not
+  const settings = resolveSubset({ split: true }, ['latin', 'greek', 'U+4E00-4E10'])
+
+  /**
+   * A job folder with the font in two formats, one in a folder, and a stylesheet.
+   * @param {string} sheet - The stylesheet, `fonts/text.css`
+   */
+  function job(sheet) {
+    const dir = tempDir()
+    fs.mkdirSync(path.join(dir, 'fonts/nested'), { recursive: true })
+    fs.writeFileSync(path.join(dir, 'fonts/text.woff2'), fonts['text.woff2'])
+    fs.writeFileSync(path.join(dir, 'fonts/nested/text.woff'), fonts['text.woff'])
+    fs.writeFileSync(path.join(dir, 'fonts/other.woff2'), fonts['text.woff2'])
+    fs.writeFileSync(path.join(dir, 'fonts/text.css'), sheet)
+    return dir
+  }
+  const sheet = `@font-face {
+  font-family: "Text";
+  src: url("text.woff2") format("woff2"), url("nested/text.woff") format("woff");
+}
+`
+  const fontFiles = (/** @type {string} */ dir) =>
+    listFiles(dir).filter((file) => /\.woff2?$/.test(file))
+
+  test('writes a declared font once per range, beside itself, and keeps the font', async () => {
+    const dir = job(sheet)
+    const result = await subsetJob(dir, { fonts: web, settings, subsetter })
+    expect(fontFiles(dir)).toEqual([
+      'fonts/nested/text-greek.woff',
+      'fonts/nested/text-latin.woff',
+      'fonts/nested/text.woff',
+      'fonts/other.woff2',
+      'fonts/text-greek.woff2',
+      'fonts/text-latin.woff2',
+      'fonts/text.woff2'
+    ])
+    expect(result.ranged).toBe(4)
+    expect(result.sheets).toBe(1)
+    expect(result.subsetted).toBe(3)
+    expect(result.unsplit).toEqual([])
+    expect(result.failed).toEqual([])
+
+    const read = (/** @type {string} */ name) => fs.readFileSync(path.join(dir, 'fonts', name))
+    expect(await subsetter.glyphs(read('text-latin.woff2'), 'A')).toBeGreaterThan(0)
+    expect(await subsetter.glyphs(read('text-latin.woff2'), 'α')).toBe(0)
+    expect(await subsetter.glyphs(read('text-greek.woff2'), 'α')).toBeGreaterThan(0)
+    expect(await subsetter.glyphs(read('text-greek.woff2'), 'A')).toBe(0)
+    expect(signature(read('nested/text-latin.woff'))).toBe('wOFF')
+    // The font itself has the characters of every range, as without the setting
+    expect(await subsetter.glyphs(read('text.woff2'), 'A')).toBeGreaterThan(0)
+    expect(await subsetter.glyphs(read('text.woff2'), 'α')).toBeGreaterThan(0)
+    expect(read('text-latin.woff2').length).toBeLessThan(read('text.woff2').length)
+  })
+
+  test('writes the rule once per range, the first range last', async () => {
+    const dir = job(sheet)
+    await subsetJob(dir, { fonts: web, settings, subsetter })
+    expect(fs.readFileSync(path.join(dir, 'fonts/text.css'), 'utf-8')).toBe(`@font-face {
+  font-family: "Text";
+  src: url("text-greek.woff2") format("woff2"), url("nested/text-greek.woff") format("woff");
+  unicode-range: ${NAMED_RANGES.greek};
+}
+
+@font-face {
+  font-family: "Text";
+  src: url("text-latin.woff2") format("woff2"), url("nested/text-latin.woff") format("woff");
+  unicode-range: ${NAMED_RANGES.latin};
+}
+`)
+  })
+
+  test('a range by its code points has them in the name of its file', async () => {
+    const dir = job(sheet)
+    const byCode = resolveSubset({ split: true }, ['U+0041-005A', 'u+3b1'])
+    await subsetJob(dir, { fonts: web, settings: byCode, subsetter })
+    expect(fontFiles(dir)).toContain('fonts/text-u0041-005a.woff2')
+    expect(fontFiles(dir)).toContain('fonts/text-u3b1.woff2')
+    const css = fs.readFileSync(path.join(dir, 'fonts/text.css'), 'utf-8')
+    expect(css).toContain('url("text-u0041-005a.woff2")')
+    expect(css).toContain('unicode-range: U+0041-005A;')
+    expect(css).toContain('unicode-range: U+3B1;')
+  })
+
+  test('leaves a font that no stylesheet declares in one file', async () => {
+    const dir = job(sheet)
+    await subsetJob(dir, { fonts: web, settings, subsetter })
+    expect(fontFiles(dir).filter((file) => file.startsWith('fonts/other'))).toEqual([
+      'fonts/other.woff2'
+    ])
+  })
+
+  test('leaves a rule with a unicode-range of its own, and what it declares', async () => {
+    const own = sheet.replace('}', '  unicode-range: U+0041;\n}')
+    const dir = job(own)
+    const result = await subsetJob(dir, { fonts: web, settings, subsetter })
+    expect(result.ranged).toBe(0)
+    expect(result.sheets).toBe(0)
+    expect(result.unsplit).toEqual([])
+    expect(fs.readFileSync(path.join(dir, 'fonts/text.css'), 'utf-8')).toBe(own)
+    expect(fontFiles(dir)).toHaveLength(3)
+  })
+
+  test('leaves a rule that declares something else than a font of the folder, and names it', async () => {
+    for (const url of [
+      'missing.woff2',
+      'text.ttf',
+      'https://example.com/text.woff2',
+      '/text.woff2',
+      'text.woff2?v=2',
+      '../text.woff2'
+    ]) {
+      const other = `${sheet}@font-face { font-family: "Other"; src: url("text.woff2"), url("${url}"); }\n`
+      const dir = job(other)
+      fs.writeFileSync(path.join(dir, 'fonts/text.ttf'), fonts['text.ttf'])
+      const result = await subsetJob(dir, { fonts: web, settings, subsetter })
+      expect(result.unsplit).toEqual([
+        {
+          sheet: path.join(dir, 'fonts/text.css'),
+          reason: `declares ${url}, which is not a font of its folder`
+        }
+      ])
+      const css = fs.readFileSync(path.join(dir, 'fonts/text.css'), 'utf-8')
+      expect(css).toContain(
+        `@font-face { font-family: "Other"; src: url("text.woff2"), url("${url}"); }`
+      )
+      // The first rule is split all the same
+      expect(result.ranged).toBe(4)
+      expect(css).toContain('url("text-latin.woff2")')
+    }
+  })
+
+  test('leaves a rule whose file of a range would be a font that a rule declares', async () => {
+    const taken = `${sheet}@font-face { font-family: "Latin"; src: url("text-latin.woff2"); unicode-range: U+0041; }\n`
+    const dir = job(taken)
+    fs.writeFileSync(path.join(dir, 'fonts/text-latin.woff2'), fonts['greek.woff2'])
+    const result = await subsetJob(dir, { fonts: web, settings, subsetter })
+    expect(result.ranged).toBe(0)
+    expect(result.unsplit).toEqual([
+      {
+        sheet: path.join(dir, 'fonts/text.css'),
+        reason:
+          'the file of a range would be text-latin.woff2, which is a font that a stylesheet declares'
+      }
+    ])
+    expect(fs.readFileSync(path.join(dir, 'fonts/text.css'), 'utf-8')).toBe(taken)
+    expect(
+      fs.readFileSync(path.join(dir, 'fonts/text-latin.woff2')).equals(fonts['greek.woff2'])
+    ).toBe(true)
+  })
+
+  test('a rule of a font without a character of the ranges stays', async () => {
+    const greek = `@font-face { font-family: "Greek"; src: url("greek.woff2"); }\n`
+    const dir = job(greek)
+    fs.writeFileSync(path.join(dir, 'fonts/greek.woff2'), fonts['greek.woff2'])
+    const latin = resolveSubset({ split: true }, ['latin'])
+    const result = await subsetJob(dir, { fonts: web, settings: latin, subsetter })
+    expect(result.kept).toEqual([path.join(dir, 'fonts/greek.woff2')])
+    expect(result.ranged).toBe(0)
+    expect(fs.readFileSync(path.join(dir, 'fonts/text.css'), 'utf-8')).toBe(greek)
+  })
+
+  test('the file of a range from an earlier build is written again, not subsetted', async () => {
+    const dir = job(sheet)
+    fs.writeFileSync(path.join(dir, 'fonts/text-latin.woff2'), fonts['text.woff2'])
+    const result = await subsetJob(dir, { fonts: web, settings, subsetter })
+    expect(result.subsetted).toBe(3)
+    const latin = fs.readFileSync(path.join(dir, 'fonts/text-latin.woff2'))
+    expect(await subsetter.glyphs(latin, 'α')).toBe(0)
+  })
+
+  test('fixes the axes of the brand in the files of the ranges too', async () => {
+    const variable = `@font-face { font-family: "Variable"; src: url("variable.woff2"); }\n`
+    const dir = job(variable)
+    fs.writeFileSync(path.join(dir, 'fonts/variable.woff2'), fonts['variable.woff2'])
+    const withAxes = { ...settings, axes: { alpha: { opsz: 14 } } }
+    const result = await subsetJob(dir, {
+      fonts: web,
+      settings: withAxes,
+      subsetter,
+      brand: 'alpha'
+    })
+    expect(result.ranged).toBe(2)
+    expect(result.fixed).toEqual({ opsz: 1 })
+    for (const name of ['variable.woff2', 'variable-latin.woff2', 'variable-greek.woff2']) {
+      const font = fs.readFileSync(path.join(dir, 'fonts', name))
+      expect(Object.keys(await subsetter.axes(font))).toEqual(['wght'])
+    }
+  })
+
+  test('reads the stylesheets of the processor, SCSS among them', async () => {
+    const dir = job('')
+    fs.writeFileSync(
+      path.join(dir, 'fonts/text.scss'),
+      `// The text font\n@font-face {\n  src: url("text.woff2"); // one file\n}\n`
+    )
+    fs.writeFileSync(path.join(dir, 'fonts/text.txt'), sheet)
+    const result = await subsetJob(dir, { fonts: web, settings, subsetter })
+    expect(result.sheets).toBe(1)
+    expect(fs.readFileSync(path.join(dir, 'fonts/text.txt'), 'utf-8')).toBe(sheet)
+    expect(fs.readFileSync(path.join(dir, 'fonts/text.scss'), 'utf-8')).toContain(
+      `  src: url("text-latin.woff2"); // one file\n  unicode-range: ${NAMED_RANGES.latin};\n`
+    )
+    const none = await subsetJob(job(sheet), {
+      fonts: { type: 'fonts', formats: ['.woff2'] },
+      settings,
+      subsetter
+    })
+    expect(none.ranged).toBe(0)
+  })
+
+  test('writes one file without the setting', async () => {
+    const dir = job(sheet)
+    const whole = resolveSubset(undefined, ['latin', 'greek'])
+    const result = await subsetJob(dir, { fonts: web, settings: whole, subsetter })
+    expect(result.ranged).toBe(0)
+    expect(result.sheets).toBe(0)
+    expect(fontFiles(dir)).toHaveLength(3)
+    expect(fs.readFileSync(path.join(dir, 'fonts/text.css'), 'utf-8')).toBe(sheet)
   })
 })
 
@@ -567,6 +869,110 @@ describe('generateAssets() with subset', () => {
     expect(stats.errors).toEqual([])
   })
 
+  test('chassis.subset splits the declared fonts by range, and adds to the output only', async () => {
+    const cwd = root({ split: true }, { sheet: SHEET })
+    const whole = await build(root(undefined, { sheet: SHEET }), { subset: true })
+    const { out, stats } = await build(cwd, { subset: true })
+
+    expect(compareDirs(whole.out, out)).toEqual({
+      missing: [],
+      extra: [
+        'web/site/alpha/fonts/text-latin-ext.woff',
+        'web/site/alpha/fonts/text-latin-ext.woff2',
+        'web/site/alpha/fonts/text-latin.woff',
+        'web/site/alpha/fonts/text-latin.woff2'
+      ],
+      changed: ['web/site/alpha/fonts/text.css']
+    })
+    expect(stats.fontRangeFiles).toBe(4)
+    expect(whole.stats.fontRangeFiles).toBe(0)
+    expect(stats.fontsSubsetted).toBe(2)
+
+    const css = fs.readFileSync(path.join(out, 'web/site/alpha/fonts/text.css'), 'utf-8')
+    expect(css).toBe(`@font-face {
+  font-family: "Text";
+  font-weight: 400;
+  src:
+    url("text-latin-ext.woff2") format("woff2"),
+    url("text-latin-ext.woff") format("woff");
+  unicode-range: ${NAMED_RANGES['latin-ext']};
+}
+
+@font-face {
+  font-family: "Text";
+  font-weight: 400;
+  src:
+    url("text-latin.woff2") format("woff2"),
+    url("text-latin.woff") format("woff");
+  unicode-range: ${NAMED_RANGES.latin};
+}
+
+@font-face {
+  font-family: "Greek";
+  src: url("greek.woff2") format("woff2");
+}
+`)
+    // The icon font and the app fonts are not read
+    expect(listFiles(out).filter((file) => /-(latin|latin-ext)\.woff2?$/.test(file))).toHaveLength(
+      4
+    )
+  })
+
+  test('the split changes nothing without the option', async () => {
+    const plain = await build(root(undefined, { sheet: SHEET }))
+    const { out, stats } = await build(root({ split: true }, { sheet: SHEET }))
+    expect(compareDirs(plain.out, out)).toEqual({ missing: [], extra: [], changed: [] })
+    expect(stats.fontRangeFiles).toBe(0)
+  })
+
+  test('warns about a rule that declares something else than a font of the folder', async () => {
+    const sheet = `${SHEET}@font-face { font-family: "Far"; src: url("https://example.com/far.woff2"); }\n`
+    const { stats } = await build(root({ split: true }, { sheet }), { subset: true })
+    expect(stats.fontRangeFiles).toBe(4)
+    expect(
+      stats.warnings.some((warning) =>
+        /^Not split by range, a rule of .*text\.css: declares https:\/\/example\.com\/far\.woff2, which is not a font of its folder$/.test(
+          warning
+        )
+      )
+    ).toBe(true)
+  })
+
+  test('the validator passes on an output with the files of the ranges', async () => {
+    const cwd = root({ split: true }, { sheet: SHEET })
+    const { out } = await build(cwd, { subset: true })
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const ok = await new DistValidator({ cwd, out }).runValidation()
+    vi.restoreAllMocks()
+    expect(ok).toBe(true)
+  })
+
+  test('a second build with the split into the same output writes the same files', async () => {
+    const cwd = root({ split: true }, { sheet: SHEET })
+    const first = await build(cwd, { subset: true })
+    const copy = tempDir()
+    fs.cpSync(first.out, copy, { recursive: true })
+    const stats = await generateAssets({
+      cwd,
+      quiet: true,
+      subset: true,
+      clean: false,
+      out: first.out
+    })
+    expect(compareDirs(copy, first.out)).toEqual({ missing: [], extra: [], changed: [] })
+    expect(stats.fontsSubsetted).toBe(2)
+    expect(stats.fontRangeFiles).toBe(4)
+  })
+
+  test('a split that is not true or false fails before the output is removed', async () => {
+    const out = tempDir()
+    fs.writeFileSync(path.join(out, 'kept.txt'), 'from an earlier build')
+    await expect(
+      generateAssets({ cwd: root({ split: 'latin' }), quiet: true, subset: true, out })
+    ).rejects.toThrow('"split" is true or false')
+    expect(listFiles(out)).toEqual(['kept.txt'])
+  })
+
   test('ranges that are not valid fail before the output is removed', async () => {
     const out = tempDir()
     fs.writeFileSync(path.join(out, 'kept.txt'), 'from an earlier build')
@@ -660,6 +1066,19 @@ describe('pnpm assets --subset', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Fixed the axis opsz at 14 in 1 fonts')
     expect(result.stdout).toMatch(/3 fonts subsetted, \d+ KB saved, an axis fixed in 1\n/)
+  })
+
+  test('prints the files it wrote per range, and for how many stylesheets', () => {
+    const cwd = root({ split: true }, { sheet: SHEET })
+    const result = spawnSync(
+      process.execPath,
+      [entry, '--cwd', cwd, '--out', tempDir(), '--subset', 'latin', 'greek'],
+      { encoding: 'utf-8' }
+    )
+    expect(result.status).toBe(0)
+    // The Greek font has no Latin letter, and one file
+    expect(result.stdout).toContain('Wrote 5 font files per range, for 1 stylesheets')
+    expect(result.stdout).toMatch(/2 fonts subsetted, \d+ KB saved, 5 files per range\n/)
   })
 
   test('takes the ranges as values, before another option', async () => {

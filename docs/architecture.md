@@ -79,7 +79,9 @@ For each job, in order:
    wrote. See "Optimization and formats".
 7. **Subset**, only with `--subset` and only for a processor that has `subset`: each WOFF
    and WOFF2 file under `fonts/` of the job is written again under its name with the
-   characters of the ranges only (`subsetFonts()`, `subsetJob()`). See "Font subsets".
+   characters of the ranges only, and with `split` of `chassis.subset` once per range
+   beside itself, with the stylesheets of the folder (`subsetFonts()`, `subsetJob()`). See
+   "Font subsets".
 8. **Convert**, only with `--vector-drawables` and only for a processor that has
    `vectorDrawables`: each SVG under `icons/` of the job is written as a vector drawable
    beside itself and removed (`convertVectorDrawables()`, `convertFolder()`). See
@@ -117,7 +119,8 @@ jobs with their file counts.
 | `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                              |
 | `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                  |
 | `packages/assets/build/optimize.js`           | `--optimize`, `--webp` and `--avif`: `resolveSettings()`, which checks `chassis.optimize` over `OPTIMIZE_DEFAULTS`, `loadEncoders()`, which imports `sharp` and `svgo` when it is called and says how to install them when they are missing, `svgOptions()`, `formatName()`, which the validator reads, and `optimizeJob()`.                                                                                  |
-| `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()`, `fontAxes()` and `subsetJob()`.                                                                                                        |
+| `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()`, `fontAxes()`, `rangeFileName()` and `subsetJob()`.                                                                                     |
+| `packages/assets/build/font-faces.js`         | The `@font-face` rules of a stylesheet, for `split` of `chassis.subset`: `findFontFaces()`, which finds the rules with the files of their `src`, and `splitFontFaces()`, which writes a rule once per range. Pure, and Node.js modules only.                                                                                                                                                                  |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -222,7 +225,7 @@ the roadmap.
 - Names: kebab-case, lowercase; `@2x` and `@3x` kept. `MyFont@2x.woff2` becomes
   `my-font@2x.woff2`. A dot inside a name becomes a hyphen: `chassis-icons.min.css` becomes
   `chassis-icons-min.css`, `default.tokens.json` becomes `default-tokens.json`.
-- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare the variable font of their role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file; for a family without a variable font, one `@font-face` per file by weight. The files by weight, `<role>-<weight>.woff2`, are beside the variable files. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
+- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare the variable font of their role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file; for a family without a variable font, one `@font-face` per file by weight. The files by weight, `<role>-<weight>.woff2`, are beside the variable files. A build with `--subset` and `split` of `chassis.subset` adds a file per range beside each declared font, `<name>-<range>.woff2`, and writes the rules of the stylesheets once per range. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
 - `images/`, `icons/` and every other folder: every file.
 - The docs job, `dist/web/docs/chassis/`, is what every Chassis site copies to `/static/`. The
   files it reads are listed in the roadmap's consumer contract.
@@ -417,6 +420,31 @@ with and without the code (roadmap 6.8, D19).
 - A font keeps its name and its format, so the stylesheets of `fonts/` and every reader of
   the output are untouched. Only `fonts/` is read: the icon font of `icons/` has its glyphs
   in a private range and would lose them all.
+- `split` of `chassis.subset` writes a font in a file per range too (roadmap D27, which
+  takes back a part of D19). `planSplit()` reads the stylesheets that the processor names in
+  `subset.stylesheets`, `.css` and `.scss`, with `findFontFaces()` of `font-faces.js`. A
+  `@font-face` rule is split when it has no `unicode-range` of its own and every `url()` of
+  its `src` is a font of the folder that is subsetted. Each font of such a rule is
+  subsetted once per range of `parts` of the settings, with the axes of the brand, and
+  written as `<name>-<range>.<extension>` where it has a character of the range;
+  `splitFontFaces()` writes the rule once per range, with every descriptor it had, the file
+  names of the range and its `unicode-range`. The font itself stays, with every range, and
+  so does a font that no rule declares: the output gets files and loses none, and the
+  validator passes.
+- The name of a range in a file name is `rangeSlug()`: the name, or `u2500-257f` for
+  `U+2500-257F`. `rangeFileName()` joins it with a hyphen and not with a dot, which no
+  source name could collide with: a build renames the files it finds in an output, and a
+  dot inside a name becomes a hyphen in the next build into the same folder. So a name can
+  be the name of a font of the folder. A rule whose range file would be a font that a rule
+  declares is not split, with a warning; a font that no rule declares is written over.
+- The rules of the first range are written last. A browser reads the rules of a family
+  from the last to the first, so a character of two ranges, such as the combining marks of
+  `latin` and `latin-ext`, is drawn with the file of the range that is named first.
+- The file of a range that an earlier build left in the folder is not read as a font: it is
+  written again from its font. A build into the same output writes the same files.
+- A rule that declares something else than a font of the folder stays as it is, with a
+  warning that names the stylesheet. The warning is the only sign of a rule that is not
+  split, so it is not left out.
 - Every layout feature of a font is kept, with the glyphs it puts in the place of the kept
   characters: the ligatures of a code font, the tabular figures of a text font. The entries
   of the `name` table with the trademark, the designer and the license stay
@@ -438,10 +466,14 @@ with and without the code (roadmap 6.8, D19).
   `text.woff2` goes from 349 KB to 136 KB, and to 69 KB, with its optical size fixed, where
   it was 208 KB and 105 KB with the axis. The `fvar` table of each of the nine variable
   fonts was read after the subset: `text.woff2` and `text-italic.woff2` of the `chassis`
-  brand have the weight axis only, and the seven others the axes of their source. With the
-  36 fonts of session 6.8, only `fonts/` of the web jobs differed from a default build,
-  `pnpm assets:verify` passed on the output, and each font loaded in a browser as a
-  `FontFace`, drew the Turkish letters and kept the ligatures of the code font.
+  brand have the weight axis only, and the seven others the axes of their source. With
+  `split` and the ranges `latin`, `latin-ext` and `U+2500-257F`, 25 files are written for
+  the six stylesheets of the two brands, and `text.woff2` of `chassis`, 136 KB, is
+  `text-latin.woff2` of 69 KB and `text-latin-ext.woff2` of 90 KB: a page in English loads
+  the first alone. With the 36 fonts of session 6.8, only `fonts/` of the web jobs differed
+  from a default build, `pnpm assets:verify` passed on the output, and each font loaded in
+  a browser as a `FontFace`, drew the Turkish letters and kept the ligatures of the code
+  font.
 
 ### Res folder
 

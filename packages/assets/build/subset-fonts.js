@@ -4,7 +4,9 @@
  * `--subset` writes a font again under its name with the characters of a list of Unicode
  * ranges only, where a processor says so. The ranges are those of the option, or of
  * `chassis.subset` of `package.json`, or `SUBSET_DEFAULTS`. A variable font keeps its axes,
- * but those that `axes` of `chassis.subset` fixes at a value for the brand of the job.
+ * but those that `axes` of `chassis.subset` fixes at a value for the brand of the job. With
+ * `split` of `chassis.subset`, a font that a stylesheet of its folder declares is written
+ * once per range too, beside itself, and the stylesheet gets a rule per range.
  *
  * The module uses the package `subset-font`, and loads it when the option is given, never
  * at import time: the default build needs nothing installed.
@@ -15,8 +17,9 @@
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
+import { findFontFaces, splitFontFaces } from './font-faces.js'
 
-/** @import { FontSubset, SubsetSettings } from './types.js' */
+/** @import { FontSubset, SubsetPart, SubsetSettings } from './types.js' */
 
 /** The package that subsets a font. */
 export const SUBSET_PACKAGE = 'subset-font'
@@ -44,10 +47,11 @@ export const NAMED_RANGES = {
 
 /**
  * The settings without a `chassis.subset` block and without a value of the option: the
- * characters of the languages that are written in Latin letters, and no axis fixed.
- * @type {{ ranges: string[], axes: Record<string, Record<string, number>> }}
+ * characters of the languages that are written in Latin letters, no axis fixed, and a font
+ * in one file.
+ * @type {{ ranges: string[], axes: Record<string, Record<string, number>>, split: boolean }}
  */
-export const SUBSET_DEFAULTS = { ranges: ['latin', 'latin-ext'], axes: {} }
+export const SUBSET_DEFAULTS = { ranges: ['latin', 'latin-ext'], axes: {}, split: false }
 
 /**
  * The entries of the `name` table that are kept beside the names of the family: the
@@ -100,6 +104,32 @@ function axesProblems(axes, brands) {
 }
 
 /**
+ * The name of a range in the name of a file: `latin`, and `u2500-257f` for `U+2500-257F`.
+ * @param {string} range - A range as it is written
+ * @returns {string}
+ */
+export function rangeSlug(range) {
+  return range
+    .toLowerCase()
+    .replace(/u\+/g, 'u')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+/**
+ * The name of the file that holds one range of a font: `text-latin.woff2` for `text.woff2`.
+ * The name is one that a platform keeps: a build renames the files of an output that it
+ * finds there, and a dot inside a name would become a hyphen in the next build.
+ * @param {string} name - The name of the font, or its path, or the `url()` value of it
+ * @param {string} slug - The name of the range, of `rangeSlug()`
+ * @returns {string}
+ */
+export function rangeFileName(name, slug) {
+  const extension = path.posix.extname(name)
+  return `${name.slice(0, name.length - extension.length)}-${slug}${extension}`
+}
+
+/**
  * The settings of a run: the ranges of the option, or those of `chassis.subset`, or the
  * defaults, checked, with the characters they stand for, and the axes of the block.
  * @param {unknown} [given] - The `subset` block of the `chassis` configuration
@@ -131,16 +161,25 @@ export function resolveSubset(given, ranges = [], brands) {
   ) {
     errors.push('"ranges" is a list of range names or U+ ranges, such as ["latin", "U+2190-21FF"]')
   }
-  // The axes are a setting of the block only, so a problem of theirs is one of the block
+  // The axes and the split are settings of the block only: a problem of theirs is one of it
   const axesErrors = block.axes === undefined ? [] : axesProblems(block.axes, brands)
+  if (block.split !== undefined && typeof block.split !== 'boolean') {
+    axesErrors.push('"split" is true or false')
+  }
 
   const names = ranges.length > 0 ? ranges : errors.length === 0 && fromBlock
   const list = /** @type {string[]} */ (names || SUBSET_DEFAULTS.ranges)
+  const textOf = (/** @type {Set<number>} */ set) =>
+    String.fromCodePoint(...[...set].sort((a, b) => a - b))
   /** @type {Set<number>} */
   const codePoints = new Set()
+  /** @type {SubsetPart[]} */
+  const parts = []
   for (const name of list) {
-    const written = NAMED_RANGES[name] ?? name
-    for (const part of written.split(',').map((range) => range.trim())) {
+    const written = (NAMED_RANGES[name] ?? name).split(',').map((range) => range.trim())
+    /** @type {Set<number>} */
+    const own = new Set()
+    for (const part of written) {
       const match = RANGE.exec(part)
       const first = match ? parseInt(match[1], 16) : NaN
       const last = match?.[2] ? parseInt(match[2], 16) : first
@@ -150,7 +189,18 @@ export function resolveSubset(given, ranges = [], brands) {
         )
         break
       }
-      for (let codePoint = first; codePoint <= last; codePoint++) codePoints.add(codePoint)
+      for (let codePoint = first; codePoint <= last; codePoint++) own.add(codePoint)
+    }
+    own.forEach((codePoint) => codePoints.add(codePoint))
+    // A range that is named twice is one file
+    const slug = rangeSlug(name)
+    if (!parts.some((part) => part.slug === slug)) {
+      parts.push({
+        range: name,
+        slug,
+        text: textOf(own),
+        unicodeRange: written.map((range) => range.toUpperCase()).join(', ')
+      })
     }
   }
 
@@ -160,8 +210,12 @@ export function resolveSubset(given, ranges = [], brands) {
   }
   return {
     ranges: list,
-    text: String.fromCodePoint(...[...codePoints].sort((a, b) => a - b)),
-    axes: /** @type {Record<string, Record<string, number>>} */ (block.axes ?? SUBSET_DEFAULTS.axes)
+    text: textOf(codePoints),
+    axes: /** @type {Record<string, Record<string, number>>} */ (
+      block.axes ?? SUBSET_DEFAULTS.axes
+    ),
+    split: block.split ?? SUBSET_DEFAULTS.split,
+    parts
   }
 }
 
@@ -297,19 +351,102 @@ export async function loadSubsetter() {
 }
 
 /**
+ * What `split` does in the fonts folder of a job, read before a font is written: the rules
+ * of its stylesheets that are written per range, and the fonts they declare.
+ * @typedef {Object} SplitPlan
+ * @property {Array<{ file: string, css: string, scss: boolean, rules: Map<number, string[]> }>} sheets
+ *   The stylesheets, each with the rules that are split, by where a rule starts, and the
+ *   font files of the rule in the order of its `url()` values
+ * @property {Set<string>} declared - The font files that a rule to split declares
+ * @property {Set<string>} rangeFiles - The files of the ranges, whether they are written or
+ *   not: no font of the folder to subset
+ * @property {Array<{ sheet: string, reason: string }>} unsplit - The rules that stay as
+ *   they are, each with the stylesheet and why: it declares something else than a font of
+ *   the folder, or the file of a range has the name of a font that a rule declares
+ */
+
+/** An address that names no file beside the stylesheet: a scheme, a root, a query. */
+const NOT_BESIDE = /^[a-z][a-z0-9+.-]*:|^\/|[?#$]/i
+
+/**
+ * Read the stylesheets of a fonts folder, and say which of their `@font-face` rules are
+ * written once per range. A rule is split when it has no `unicode-range` of its own and
+ * every `url()` of its `src` is a font of the folder.
+ * @param {string[]} fontFiles - The fonts of the folder that are subsetted
+ * @param {string[]} sheetFiles - The stylesheets of the folder
+ * @param {SubsetPart[]} parts - The ranges
+ * @returns {SplitPlan}
+ */
+function planSplit(fontFiles, sheetFiles, parts) {
+  const fontSet = new Set(fontFiles)
+  /** @type {SplitPlan} */
+  const plan = { sheets: [], declared: new Set(), rangeFiles: new Set(), unsplit: [] }
+  /** @type {Set<string>} */
+  const named = new Set()
+
+  for (const file of sheetFiles) {
+    const css = fs.readFileSync(file, 'utf-8')
+    const scss = path.extname(file).toLowerCase() === '.scss'
+    /** @type {Map<number, string[]>} */
+    const rules = new Map()
+    for (const rule of findFontFaces(css, { scss })) {
+      const files = rule.urls.map(({ value }) =>
+        NOT_BESIDE.test(value) ? '' : path.join(path.dirname(file), value)
+      )
+      files.filter((font) => fontSet.has(font)).forEach((font) => named.add(font))
+      if (rule.ranged || rule.urls.length === 0) continue
+      const other = files.findIndex((font) => !fontSet.has(font))
+      if (other !== -1) {
+        const reason = `declares ${rule.urls[other].value}, which is not a font of its folder`
+        plan.unsplit.push({ sheet: file, reason })
+        continue
+      }
+      rules.set(rule.start, files)
+    }
+    plan.sheets.push({ file, css, scss, rules })
+  }
+
+  // The file of a range must not take the name of a font that a rule declares
+  for (const sheet of plan.sheets) {
+    for (const [start, files] of sheet.rules) {
+      const names = files.flatMap((font) => parts.map((part) => rangeFileName(font, part.slug)))
+      const taken = names.find((name) => named.has(name))
+      if (taken) {
+        const reason = `the file of a range would be ${path.basename(taken)}, which is a font that a stylesheet declares`
+        plan.unsplit.push({ sheet: sheet.file, reason })
+        sheet.rules.delete(start)
+        continue
+      }
+      files.forEach((font) => plan.declared.add(font))
+      names.forEach((name) => plan.rangeFiles.add(name))
+    }
+  }
+  plan.sheets = plan.sheets.filter((sheet) => sheet.rules.size > 0)
+  return plan
+}
+
+/**
  * Subset the fonts of the output of one job. A font is written again under its name only
  * when the result is smaller. A font that has none of the characters stays as it is: it is
  * a font of another script, or of symbols. With a brand, the axes that the settings fix for
  * it are fixed in each font that has them, and a font without them is subsetted as it is.
+ *
+ * With `split` of the settings, a font that a stylesheet of the folder declares is written
+ * once per range too, as `<name>-<range>.<extension>` beside itself, where it has a
+ * character of the range, and the stylesheet gets its rule once per range, with the
+ * `unicode-range` of each. The rules of the first range are the last ones: a browser reads
+ * the rules of a family from the last to the first, so a character of two ranges is drawn
+ * with the file of the range that is named first.
  * @param {string} jobDir - The output folder of the job
  * @param {Object} options
  * @param {FontSubset} options.fonts - The type folder and the extensions, of the processor
  * @param {SubsetSettings} options.settings - The settings, of `resolveSubset()`
  * @param {Subsetter} options.subsetter - The subsetter, of `loadSubsetter()`
  * @param {string} [options.brand] - The brand of the job, whose axes of the settings are fixed
- * @returns {Promise<{ subsetted: number, saved: number, kept: string[], failed: Array<{ file: string, message: string }>, fixed: Record<string, number> }>}
+ * @returns {Promise<{ subsetted: number, saved: number, kept: string[], failed: Array<{ file: string, message: string }>, fixed: Record<string, number>, ranged: number, sheets: number, unsplit: Array<{ sheet: string, reason: string }> }>}
  *   The fonts written again, the bytes that saved, the fonts without a character of the
- *   ranges, the fonts that could not be read, and per fixed axis the fonts it was fixed in
+ *   ranges, the fonts that could not be read, per fixed axis the fonts it was fixed in, the
+ *   files written for a range, the stylesheets written again, and the rules that stay
  */
 export async function subsetJob(jobDir, options) {
   const { fonts, settings, subsetter, brand } = options
@@ -319,18 +456,33 @@ export async function subsetJob(jobDir, options) {
     saved: 0,
     kept: /** @type {string[]} */ ([]),
     failed: /** @type {Array<{ file: string, message: string }>} */ ([]),
-    fixed: /** @type {Record<string, number>} */ ({})
+    fixed: /** @type {Record<string, number>} */ ({}),
+    ranged: 0,
+    sheets: 0,
+    unsplit: /** @type {Array<{ sheet: string, reason: string }>} */ ([])
   }
 
   const dir = path.join(jobDir, fonts.type)
   if (!fs.existsSync(dir)) return result
-  const files = fs
+  const entries = fs
     .readdirSync(dir, { recursive: true, withFileTypes: true })
-    .filter(
-      (entry) => entry.isFile() && fonts.formats.includes(path.extname(entry.name).toLowerCase())
-    )
+    .filter((entry) => entry.isFile())
     .map((entry) => path.join(entry.parentPath, entry.name))
     .sort()
+  const withExtension = (/** @type {string[]} */ extensions) =>
+    entries.filter((file) => extensions.includes(path.extname(file).toLowerCase()))
+
+  const plan = settings.split
+    ? planSplit(
+        withExtension(fonts.formats),
+        withExtension(fonts.stylesheets ?? []),
+        settings.parts
+      )
+    : null
+  // The file of a range from an earlier build is written again from its font, not subsetted
+  const files = withExtension(fonts.formats).filter((file) => !plan?.rangeFiles.has(file))
+  /** @type {Map<string, Map<string, Buffer>>} */
+  const ranges = new Map()
 
   for (const file of files) {
     try {
@@ -349,9 +501,54 @@ export async function subsetJob(jobDir, options) {
           }
         }
       }
+      if (plan?.declared.has(file) && subset !== null) {
+        /** @type {Map<string, Buffer>} */
+        const own = new Map()
+        for (const part of settings.parts) {
+          const range = await subsetter.subset(original, part.text, axes)
+          if (range !== null) own.set(part.slug, range)
+        }
+        ranges.set(file, own)
+      }
     } catch (error) {
       result.failed.push({ file, message: /** @type {Error} */ (error).message })
     }
+  }
+
+  if (plan) {
+    result.unsplit = plan.unsplit
+    /** @type {Map<string, Buffer>} */
+    const written = new Map()
+    for (const sheet of plan.sheets) {
+      const css = splitFontFaces(
+        sheet.css,
+        (rule) => {
+          const declared = sheet.rules.get(rule.start)
+          if (!declared) return null
+          // A range of a rule is one that every file of the rule has a character of
+          const parts = settings.parts.filter((part) =>
+            declared.every((font) => ranges.get(font)?.has(part.slug))
+          )
+          for (const part of parts) {
+            for (const font of declared) {
+              const range = /** @type {Buffer} */ (ranges.get(font)?.get(part.slug))
+              written.set(rangeFileName(font, part.slug), range)
+            }
+          }
+          return parts.reverse().map((part) => ({
+            rename: (url) => rangeFileName(url, part.slug),
+            unicodeRange: part.unicodeRange
+          }))
+        },
+        { scss: sheet.scss }
+      )
+      if (css !== sheet.css) {
+        fs.writeFileSync(sheet.file, css)
+        result.sheets++
+      }
+    }
+    for (const [file, font] of written) fs.writeFileSync(file, font)
+    result.ranged = written.size
   }
   return result
 }

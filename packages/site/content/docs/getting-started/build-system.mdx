@@ -242,6 +242,25 @@ A font keeps its name, its format and its layout features, such as the ligatures
 
 A variable font keeps its axes. A browser uses an axis without being asked: it sets the optical size, `opsz`, from the font size of the text, so a heading is drawn in another cut than a paragraph. To leave an axis out of the fonts of a brand, fix it at a value with `axes` of the [chassis.subset](#chassissubset) block. The build then writes each font that has the axis without it, as the font it is at that value, and the file is smaller.
 
+A font is one file with the characters of every range. With `split` of the [chassis.subset](#chassissubset) block, the build also writes each font that a stylesheet of `fonts/` declares once per range, beside it, and writes the `@font-face` rule of the stylesheet once per range, each with the `unicode-range` of its file. A browser then downloads the file of a range only when the page has a character of that range.
+
+```text
+dist/web/docs/chassis/fonts/
+├── text-latin-ext.woff2    -> the characters of latin-ext
+├── text-latin.woff2        -> the characters of latin
+├── text.css                -> a rule per range, with its unicode-range
+├── text.woff2              -> the characters of both ranges, as without split
+└── ...
+```
+
+The file of a range has the name of the font, a hyphen and the name of the range: `text-latin.woff2`, and `code-u2500-257f.woff2` for the range `U+2500-257F`. A font gets no file for a range that it has no character of. The font itself stays, with the characters of every range, for a page that writes its own rules.
+
+The rules of the range you name first are the last ones in the stylesheet. A browser reads the rules of a family from the last to the first, so a character that two ranges hold is drawn with the file of the first range.
+
+Three kinds of rules and fonts stay as they are. A rule with a `unicode-range` of its own is left to you. A rule whose `src` names something else than a WOFF or WOFF2 font of the folder is left with a warning. A font that no stylesheet declares, such as the files by weight beside a variable font, stays one file.
+
+The split costs a page that has characters of two ranges: the two files share glyphs and are larger together than the one file. A browser also shapes the text of each file on its own, so a pair of letters from two files has no kerning.
+
 Only the fonts of `fonts/` of a web job are written again. The TTF and OTF fonts of iOS and Android stay whole, and so does the icon font of `icons/`. A file with the extension of a font that is no font fails the build, which names the file.
 
 The option uses the package `subset-font`, which the build loads only with it. Without the package the build stops before it removes anything and names `pnpm install` as the fix. Check the license of a font before you publish a subset of it: a license may ask for another name for a changed font.
@@ -334,7 +353,7 @@ The settings are in `package.json` and not in options of the command, so that ev
 
 ### chassis.subset
 
-`subset` holds the settings of `--subset`: the ranges, and the axes that are fixed. The block is optional, and it turns nothing on: only the option does. A block that is not valid fails a build with the option, before the output is removed.
+`subset` holds the settings of `--subset`: the ranges, the axes that are fixed, and whether a font is split by range. The block is optional, and it turns nothing on: only the option does. A block that is not valid fails a build with the option, before the output is removed.
 
 ```json
 {
@@ -343,7 +362,8 @@ The settings are in `package.json` and not in options of the command, so that ev
       "ranges": ["latin", "latin-ext"],
       "axes": {
         "chassis": { "opsz": 14 }
-      }
+      },
+      "split": true
     }
   }
 }
@@ -353,9 +373,11 @@ The settings are in `package.json` and not in options of the command, so that ev
 
 `axes` names, for a brand, the axes of a variable font to fix and the value of each. A key is a brand of `chassis.build.brands`, and a key under it is the tag of an axis as the font names it, such as `opsz` or `wdth`. The build fixes an axis in every font of the web output of the brand that has it, and writes a font without it as it would without the setting. Without `axes` no axis is fixed.
 
-This repository has the block of the example without `ranges`: the optical size of the `chassis` brand is fixed at 14, the cut of Inter for text, and the `sinefil` brand keeps the axes of its fonts.
+This repository has `axes` of the example and nothing else: the optical size of the `chassis` brand is fixed at 14, the cut of Inter for text, and the `sinefil` brand keeps the axes of its fonts.
 
 A value outside the axis of a font fails the build, which names the file and the values the axis spans. An axis that no font of the brand has is a warning.
+
+`split` is `true` or `false`. With `true`, a font that a stylesheet declares is written once per range too, and the stylesheet gets a rule per range, as [Font subsets](#font-subsets) describes. Without it a font is one file.
 
 ### Jobs
 
@@ -602,7 +624,7 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 
 ### generateAssets
 
-`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `filesOptimized`, `bytesSaved`, `filesGenerated`, `fontsSubsetted`, `fontBytesSaved`, `fontAxesFixed`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp`, `avif` and `subset`.
+`generateAssets(options)` of `build-assets.js` is the build. It resolves to the statistics of the run, with `filesProcessed`, `filesRenamed`, `filesConverted`, `imageSets`, `resourceFiles`, `filesOptimized`, `bytesSaved`, `filesGenerated`, `fontsSubsetted`, `fontBytesSaved`, `fontAxesFixed`, `fontRangeFiles`, `warnings` and `jobs`, and throws on a failure. Its options are `brands`, `apps`, `platforms`, `types`, `include`, `clean`, `quiet`, `cwd`, `out`, `dryRun`, `allowLfsPointers`, `vectorDrawables`, `assetCatalog`, `res`, `optimize`, `webp`, `avif` and `subset`.
 
 ### ChassisAssets
 
