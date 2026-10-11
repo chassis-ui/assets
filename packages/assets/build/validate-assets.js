@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import ChassisAssets from './api/index.js'
 import { catalogPath } from './asset-catalog.js'
-import { shouldIgnoreFile } from './build-assets.js'
+import { resolveFormats, resolveIgnore, shouldIgnoreFile } from './build-assets.js'
 import { formatName } from './optimize.js'
 import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
 import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
@@ -24,6 +24,8 @@ class DistValidator {
     this.distDir = path.resolve(this.cwd, this.out)
     this.validationResults = []
     this.api = new ChassisAssets('package.json', { cwd: this.cwd, out: this.out })
+    this.ignore = resolveIgnore(this.api.config?.ignore)
+    this.formats = resolveFormats(this.api.config?.formats)
     this.errors = []
     this.warnings = []
   }
@@ -270,7 +272,7 @@ class DistValidator {
 
     const items = fs.readdirSync(sourcePath)
     for (const item of items) {
-      if (shouldIgnoreFile(item)) continue
+      if (shouldIgnoreFile(item, this.ignore)) continue
 
       const itemPath = path.join(sourcePath, item)
       const stat = fs.statSync(itemPath)
@@ -297,7 +299,7 @@ class DistValidator {
 
     const items = fs.readdirSync(distPath)
     for (const item of items) {
-      if (shouldIgnoreFile(item)) continue
+      if (shouldIgnoreFile(item, this.ignore)) continue
 
       const itemPath = path.join(distPath, item)
       const stat = fs.statSync(itemPath)
@@ -526,7 +528,7 @@ class DistValidator {
     const items = fs.readdirSync(dirPath)
 
     for (const item of items) {
-      if (shouldIgnoreFile(item)) continue
+      if (shouldIgnoreFile(item, this.ignore)) continue
 
       const itemPath = path.join(dirPath, item)
       const stat = fs.statSync(itemPath)
@@ -564,6 +566,11 @@ class DistValidator {
       return false
     }
 
+    // A format that `chassis.formats` names for the type on a platform is one of the type
+    if (Object.values(this.formats).some((types) => types[assetType]?.includes(ext))) {
+      return true
+    }
+
     // Check against canonical asset type definitions
     const validExtensions = getValidExtensions(assetType)
     if (validExtensions.length > 0) {
@@ -589,6 +596,12 @@ class DistValidator {
     if (!processor) {
       // Unknown platform - allow all
       return true
+    }
+
+    // A list of `chassis.formats` is the rule of the type, in place of the processor's
+    const own = this.formats[processor.name]?.[assetType]
+    if (own) {
+      return own.includes(ext)
     }
 
     // Check font format filters
@@ -841,7 +854,7 @@ class DistValidator {
     const items = fs.readdirSync(dirPath)
 
     for (const item of items) {
-      if (shouldIgnoreFile(item)) continue
+      if (shouldIgnoreFile(item, this.ignore)) continue
 
       const itemPath = path.join(dirPath, item)
       const stat = fs.statSync(itemPath)
@@ -886,7 +899,7 @@ class DistValidator {
     const items = fs.readdirSync(dirPath)
 
     for (const item of items) {
-      if (shouldIgnoreFile(item)) continue
+      if (shouldIgnoreFile(item, this.ignore)) continue
 
       const itemPath = path.join(dirPath, item)
       const stat = fs.statSync(itemPath)
@@ -915,7 +928,7 @@ class DistValidator {
     const items = fs.readdirSync(dirPath)
 
     for (const item of items) {
-      if (shouldIgnoreFile(item)) continue
+      if (shouldIgnoreFile(item, this.ignore)) continue
 
       const itemPath = path.join(dirPath, item)
       const stat = fs.statSync(itemPath)

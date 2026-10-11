@@ -288,7 +288,7 @@ A file without a place in `res/` stays where it is, and the build warns once per
 
 ## Configuration
 
-The `chassis` block of the root `package.json` names what is built. What the checks verify is in a file of its own, see [Checks file](#checks-file).
+The `chassis` block of the root `package.json` names what is built, and holds the optional settings: [optimize](#chassisoptimize), [subset](#chassissubset), [ignore](#chassisignore) and [formats](#chassisformats). What the checks verify is in a file of its own, see [Checks file](#checks-file).
 
 ```json
 {
@@ -385,6 +385,49 @@ A value outside the axis of a font fails the build, which names the file and the
 
 `split` is `true` or `false`. With `true`, a font that a stylesheet declares is written once per range too, and the stylesheet gets a rule per range, as [Font subsets](#font-subsets) describes. Without it a font is one file. The `--split` and `--no-split` options of a build win over it.
 
+### chassis.ignore
+
+`ignore` lists names of files and folders that the build leaves out, beside the ones of [Ignored files](#ignored-files). The list is optional, and without it the build ignores what it always did.
+
+```json
+{
+  "chassis": {
+    "ignore": ["*.bak", "notes.md", "drafts"]
+  }
+}
+```
+
+A pattern is a name, not a path: it matches a file or a folder of that name at any depth, in every brand and every app. `*` stands for any run of characters, and the match is case-sensitive. A folder that matches is left out with everything in it. A pattern with a slash fails the build.
+
+The list adds to the names the build ignores and takes none away. The source lint, the validator, the analyzer, `pnpm assets:lfs` and `--watch` read the same list, so a file you ignore is no file for them either.
+
+### chassis.formats
+
+`formats` names, for a platform and a type folder, the extensions the platform keeps of that type. The block is optional. Use it when your application needs a format that the [platform rules](#platform-rules) leave out, such as TTF fonts on the web or WebP images on iOS.
+
+```json
+{
+  "chassis": {
+    "formats": {
+      "web": {
+        "fonts": [".woff2", ".ttf", ".css", ".txt"]
+      },
+      "ios": {
+        "images": [".png", ".jpg", ".webp"]
+      }
+    }
+  }
+}
+```
+
+A key is a platform, and a key under it is `fonts`, `images` or `icons`, the type folders that have a rule. Any other folder is copied in every format, and has no setting. An extension is written with its dot, and its case does not matter.
+
+A list replaces the rule of the platform for the type, it does not add to it. Name every format you want to keep: `.txt` for the licenses of the fonts, `.css` and `.scss` for their stylesheets. A platform or a type that the block does not name keeps its rule, and an empty list keeps no file of the type.
+
+The options of a build work on the files that are kept, each with the formats it reads. A TTF file that the web keeps is copied whole, since `--subset` writes WOFF and WOFF2 fonts only. The validator reads the block, and expects in the output the files that it keeps.
+
+A block that is not valid fails the build before the output is removed, and names each problem: a platform without a processor, another folder than the three, or an extension without its dot.
+
 ### Jobs
 
 A job is one brand, one app and one platform. The build runs every brand for every platform of every app, and writes each job to `dist/<platform>/<app>/<brand>/`, the layout that Chassis Tokens uses too.
@@ -418,7 +461,7 @@ dist/android/mobile/wonka/
 
 ## Platform rules
 
-Each platform has a processor that says which formats it keeps and how a file is named. The rules of a type apply to the files of its folder, `fonts/`, `images/` or `icons/`, and any other folder is copied in every format.
+Each platform has a processor that says which formats it keeps and how a file is named. The rules of a type apply to the files of its folder, `fonts/`, `images/` or `icons/`, and any other folder is copied in every format. The formats of the table are the rules without a [chassis.formats](#chassisformats) block, which replaces the formats of a platform for a type.
 
 <CxTable>
 | Rule | Web | iOS | Android |
@@ -441,7 +484,7 @@ When two files of a folder get the same name on a platform, the file copied last
 
 ### Ignored files
 
-The build does not copy the files that an operating system or an editor leaves behind: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `.gitkeep`, and names that match `._*`, `*~`, `*.swp`, `*.tmp` or `*.temp`. It removes a folder that is empty after the format rules.
+The build does not copy the files that an operating system or an editor leaves behind: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `.gitkeep`, and names that match `._*`, `*~`, `*.swp`, `*.tmp` or `*.temp`. It removes a folder that is empty after the format rules. A name that starts with a dot is left out too. To leave out more names, list them in [chassis.ignore](#chassisignore).
 
 ## Checks
 

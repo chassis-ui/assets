@@ -3,7 +3,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { generateAssets, shouldIgnoreFile } from '../build-assets.js'
+import { generateAssets, resolveIgnore, shouldIgnoreFile } from '../build-assets.js'
 import { resolveRoot } from '../root.js'
 
 /**
@@ -34,6 +34,7 @@ export class ChassisAssets {
     try {
       const packageJson = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'))
       this.config = packageJson.chassis
+      this.ignore = resolveIgnore(this.config?.ignore)
       this.packageInfo = {
         name: packageJson.name,
         version: packageJson.version
@@ -182,7 +183,7 @@ export class ChassisAssets {
 
       items.forEach((item) => {
         // Skip system files and ignored patterns
-        if (shouldIgnoreFile(item)) {
+        if (shouldIgnoreFile(item, this.ignore)) {
           return
         }
 
@@ -344,7 +345,7 @@ export class ChassisAssets {
         const items = fs.readdirSync(dir)
         items.forEach((item) => {
           // Skip system files and ignored patterns
-          if (shouldIgnoreFile(item)) {
+          if (shouldIgnoreFile(item, this.ignore)) {
             return
           }
 

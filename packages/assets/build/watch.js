@@ -44,11 +44,12 @@ export function affectedJobs(config, jobs, relative) {
  * not a file that the filters of the run leave out.
  * @param {string} relative - The path of the change, relative to `source/`
  * @param {ReturnType<typeof createFileFilter>} filter - The file filters of the run
+ * @param {string[]} [ignore] - The patterns of `chassis.ignore`
  * @returns {boolean}
  */
-export function isRelevant(relative, filter) {
+export function isRelevant(relative, filter, ignore) {
   const parts = relative.split('/')
-  if (parts.some((part) => part !== '' && shouldIgnoreFile(part))) return false
+  if (parts.some((part) => part !== '' && shouldIgnoreFile(part, ignore))) return false
   // A type folder the filters leave out, or a file of a type folder they leave out. A
   // folder is taken as it is: what changed below it is not known
   if (parts.length > 2 && !filter.type(parts[2])) return false
@@ -133,7 +134,7 @@ export async function watchAssets(options = {}, events = {}) {
 
   const watcher = fs.watch(source, { recursive: true }, (_event, fileName) => {
     const relative = fileName ? fileName.split(path.sep).join('/') : ''
-    if (closed || !isRelevant(relative, filter)) return
+    if (closed || !isRelevant(relative, filter, config.ignore)) return
     // The system may report what happened shortly before the watch began, such as the
     // checkout that made the files. A file that is gone has no time, and counts
     const stat = fs.statSync(path.join(source, relative), { throwIfNoEntry: false })

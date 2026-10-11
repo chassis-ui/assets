@@ -10,7 +10,7 @@
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { shouldIgnoreFile } from './build-assets.js'
+import { resolveIgnore, shouldIgnoreFile } from './build-assets.js'
 import { isEntry, resolveRoot } from './root.js'
 
 /**
@@ -23,6 +23,7 @@ class AssetAnalyzer {
     this.sourceDir = path.join(this.cwd, 'source')
     this.distDir = path.resolve(this.cwd, options.out || 'dist')
     this.config = this.loadConfig()
+    this.ignore = resolveIgnore(this.config.ignore)
     this.stats = {
       totalFiles: 0,
       totalSize: 0,
@@ -208,7 +209,7 @@ class AssetAnalyzer {
    */
   analyzeFile(filePath, stat, type) {
     // Skip system files and ignored patterns
-    if (shouldIgnoreFile(path.basename(filePath))) {
+    if (shouldIgnoreFile(path.basename(filePath), this.ignore)) {
       return
     }
 

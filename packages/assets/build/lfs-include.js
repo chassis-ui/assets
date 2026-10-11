@@ -64,7 +64,7 @@ export function lfsInclude(options = {}) {
   const source = path.join(cwd, 'source')
   const all = fs
     .readdirSync(source, { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile() && !shouldIgnoreFile(entry.name))
+    .filter((entry) => entry.isFile() && !shouldIgnoreFile(entry.name, config.ignore))
     .map((entry) => relative(path.join(entry.parentPath, entry.name)))
   return coverPaths(all, selected)
 }

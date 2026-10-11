@@ -78,7 +78,15 @@ Options:
 `
 
 /** The configuration of the run. Set by `generateAssets()`. @type {BuildConfig} */
-let config = { brands: [], apps: {}, brandFolder: 'default', contracts: [], lintAllow: [] }
+let config = {
+  brands: [],
+  apps: {},
+  brandFolder: 'default',
+  ignore: [],
+  formats: {},
+  contracts: [],
+  lintAllow: []
+}
 
 /** The paths and switches of the run. Set by `generateAssets()`. */
 let run = {
@@ -192,6 +200,8 @@ export function loadConfig(cwd = findRoot()) {
     brandFolder: chassis.defaults?.brandFolder || 'default',
     optimize: chassis.optimize,
     subset: chassis.subset,
+    ignore: resolveIgnore(chassis.ignore),
+    formats: resolveFormats(chassis.formats),
     contracts: checks.contracts,
     lintAllow: checks.lintAllow,
     name: packageJson.name,
@@ -415,16 +425,85 @@ export function isExcluded(fileName, excludedExtensions) {
   return excludedExtensions.includes(ext)
 }
 
+/** The type folders that a platform has a rule of formats for. */
+export const FORMAT_TYPES = ['fonts', 'images', 'icons']
+
+/** An extension as a setting names it: `.woff2`. */
+const EXTENSION = /^\.[a-z0-9]+$/i
+
+/** @param {unknown} value */
+const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
+
+/**
+ * The formats of `chassis.formats`, checked: per platform and type folder, the extensions
+ * the platform keeps of the type, in place of the rule of its processor.
+ * @param {unknown} [given] - The `formats` block of the `chassis` configuration
+ * @returns {Record<string, Record<string, string[]>>} The extensions in lowercase, by the
+ *   name of the processor and the type folder
+ * @throws {Error} When the block is not valid
+ */
+export function resolveFormats(given) {
+  if (given === undefined) return {}
+  const example = 'such as { "web": { "fonts": [".woff2", ".css", ".txt"] } }'
+  if (!isObject(given)) {
+    throw new Error(`chassis.formats is an object of type folders by platform, ${example}`)
+  }
+
+  const problems = []
+  /** @type {Record<string, Record<string, string[]>>} */
+  const formats = {}
+  for (const [platform, types] of Object.entries(/** @type {Record<string, unknown>} */ (given))) {
+    const processor = platformProcessors[platform]
+    if (!processor) {
+      problems.push(
+        `"${platform}" is not a platform. Known: ${Object.keys(platformProcessors).join(', ')}`
+      )
+    }
+    if (!isObject(types)) {
+      problems.push(`"${platform}" is an object of extensions by type folder, ${example}`)
+      continue
+    }
+    for (const [type, list] of Object.entries(/** @type {Record<string, unknown>} */ (types))) {
+      if (!FORMAT_TYPES.includes(type)) {
+        problems.push(
+          `"${type}" of "${platform}" is not a type folder with formats. Known: ${FORMAT_TYPES.join(', ')}`
+        )
+      } else if (
+        !Array.isArray(list) ||
+        list.some((extension) => typeof extension !== 'string' || !EXTENSION.test(extension))
+      ) {
+        problems.push(
+          `"${type}" of "${platform}" is a list of extensions, such as [".woff2", ".txt"]`
+        )
+      } else if (processor) {
+        formats[processor.name] ??= {}
+        formats[processor.name][type] = [
+          ...new Set(list.map((extension) => extension.toLowerCase()))
+        ]
+      }
+    }
+  }
+  if (problems.length > 0) {
+    throw new Error(`chassis.formats is not valid:\n  - ${problems.join('\n  - ')}`)
+  }
+  return formats
+}
+
 /**
  * Whether a platform keeps a file of a type. `fonts` and `icons` keep the formats the
  * processor allows, `images` drop the formats it excludes, and any other type keeps every
- * file.
+ * file. A list of `chassis.formats` for the platform and the type is the rule in place of
+ * the one of the processor.
  * @param {Processor} processor - The platform processor
  * @param {string|null} type - The type folder the file is under: fonts, images, icons or another
  * @param {string} fileName
+ * @param {Record<string, Record<string, string[]>>} [formats] - The formats of
+ *   `resolveFormats()`
  * @returns {boolean}
  */
-export function keepsFile(processor, type, fileName) {
+export function keepsFile(processor, type, fileName, formats = {}) {
+  const own = type === null ? undefined : formats[processor.name]?.[type]
+  if (own) return hasAllowedExtension(fileName, own)
   if (type === 'fonts' && processor.allowedFontFormats) {
     return hasAllowedExtension(fileName, processor.allowedFontFormats)
   }
@@ -458,20 +537,53 @@ export const IGNORE_PATTERNS = [
 ]
 
 /**
+ * The patterns of `chassis.ignore`, checked: the names of files and folders that the build
+ * leaves out beside those of `IGNORE_PATTERNS`. A pattern is a name, with `*` for any run
+ * of characters, and matches a file or a folder at any depth.
+ * @param {unknown} [given] - The `ignore` list of the `chassis` configuration
+ * @returns {string[]}
+ * @throws {Error} When the list is not valid
+ */
+export function resolveIgnore(given) {
+  if (given === undefined) return []
+  if (!Array.isArray(given)) {
+    throw new Error('chassis.ignore is a list of names, such as ["*.bak", "notes.md"]')
+  }
+  const problems = []
+  for (const pattern of given) {
+    if (typeof pattern !== 'string' || pattern.trim() === '') {
+      problems.push(`${JSON.stringify(pattern)} is not a name, such as "*.bak"`)
+    } else if (/[\\/]/.test(pattern)) {
+      problems.push(
+        `"${pattern}" is a path. A pattern is the name of a file or a folder, at any depth`
+      )
+    }
+  }
+  if (problems.length > 0) {
+    throw new Error(`chassis.ignore is not valid:\n  - ${problems.join('\n  - ')}`)
+  }
+  return [...new Set(given)]
+}
+
+/**
  * Check if a file or directory should be ignored
  * @param {string} fileName - The filename or directory name to check
+ * @param {string[]} [ignore] - The patterns of `chassis.ignore`, of `resolveIgnore()`, which
+ *   are checked beside `IGNORE_PATTERNS`
  * @returns {boolean} True if file should be ignored
  */
-export function shouldIgnoreFile(fileName) {
+export function shouldIgnoreFile(fileName, ignore) {
+  // Anything but a list is no pattern: the index of `names.some(shouldIgnoreFile)`
+  const patterns = Array.isArray(ignore) ? [...IGNORE_PATTERNS, ...ignore] : IGNORE_PATTERNS
   // Check exact matches
   if (
-    IGNORE_PATTERNS.some((pattern) => {
+    patterns.some((pattern) => {
       if (!pattern.includes('*')) {
         return fileName === pattern
       }
-      // Simple wildcard matching: escape the dots first, then turn * into .*
-      const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$')
-      return regex.test(fileName)
+      // Simple wildcard matching: escape what a regular expression reads, then turn * into .*
+      const escaped = pattern.replace(/[$()+.?[\\\]^{|}]/g, '\\$&').replace(/\*/g, '.*')
+      return new RegExp(`^${escaped}$`).test(fileName)
     })
   ) {
     return true
@@ -580,10 +692,12 @@ export function listSourceFiles(config, job, filter, cwd) {
       if (!entry.isFile()) continue
       const file = path.join(entry.parentPath, entry.name)
       const parts = path.relative(appDir, file).split(path.sep)
-      if (parts.some(shouldIgnoreFile)) continue
+      if (parts.some((part) => shouldIgnoreFile(part, config.ignore))) continue
       const type =
         parts.length > 1 && ['fonts', 'images', 'icons'].includes(parts[0]) ? parts[0] : null
-      if (keepsFile(processor, type, entry.name) && filter.file(parts.join('/'))) files.push(file)
+      if (keepsFile(processor, type, entry.name, config.formats) && filter.file(parts.join('/'))) {
+        files.push(file)
+      }
     }
   }
   return files
@@ -664,7 +778,7 @@ function renameFilesRecursively(processor, folderPath, parentDir = '') {
   const currentDirName = path.basename(folderPath)
 
   items.forEach((item) => {
-    if (shouldIgnoreFile(item)) {
+    if (shouldIgnoreFile(item, config.ignore)) {
       return
     }
 
@@ -739,7 +853,7 @@ function copyFilesWithProcessor(
 
   items.forEach((item) => {
     // Skip system files and ignored patterns
-    if (shouldIgnoreFile(item)) {
+    if (shouldIgnoreFile(item, config.ignore)) {
       return
     }
 
@@ -761,7 +875,10 @@ function copyFilesWithProcessor(
     }
 
     // Apply platform-specific filtering, then the filters of the run
-    if (!keepsFile(processor, currentRoot, item) || !run.filter.file(itemRelative)) {
+    if (
+      !keepsFile(processor, currentRoot, item, config.formats) ||
+      !run.filter.file(itemRelative)
+    ) {
       return
     }
 

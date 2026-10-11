@@ -11,6 +11,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, afterEach, describe, expect, test, vi } from 'vitest'
 import {
+  FORMAT_TYPES,
   IGNORE_PATTERNS,
   cleanupEmptyDirectories,
   createCollisionTracker,
@@ -18,11 +19,17 @@ import {
   hasAllowedExtension,
   isExcluded,
   isLfsPointer,
+  keepsFile,
   loadConfig,
   parseArgs,
   planJobs,
+  resolveFormats,
+  resolveIgnore,
   shouldIgnoreFile
 } from '../build/build-assets.js'
+import { lfsInclude } from '../build/lfs-include.js'
+import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
+import DistValidator from '../build/validate-assets.js'
 import {
   FIXTURE,
   GOLDEN,
@@ -52,6 +59,19 @@ async function build(options = {}) {
   const out = options.out || tempDir()
   const stats = await generateAssets({ cwd: FIXTURE, quiet: true, ...options, out })
   return { out, stats }
+}
+
+/**
+ * A copy of the fixture with more keys in the `chassis` block of its `package.json`.
+ * @param {Record<string, unknown>} block - Such as `{ ignore: ['*.bak'] }`
+ * @returns {string} The root of the copy
+ */
+function withChassis(block) {
+  const root = copyFixture()
+  const pkg = JSON.parse(read(root, 'package.json'))
+  Object.assign(pkg.chassis, block)
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify(pkg))
+  return root
 }
 
 describe('shouldIgnoreFile()', () => {
@@ -88,6 +108,117 @@ describe('shouldIgnoreFile()', () => {
     for (const pattern of IGNORE_PATTERNS) {
       expect(shouldIgnoreFile(examples[pattern] || pattern), pattern).toBe(true)
     }
+  })
+})
+
+describe('resolveIgnore() and the patterns of chassis.ignore', () => {
+  test('no list is no pattern, and a list is taken once per name', () => {
+    expect(resolveIgnore()).toEqual([])
+    expect(resolveIgnore([])).toEqual([])
+    expect(resolveIgnore(['*.bak', 'notes.md', '*.bak'])).toEqual(['*.bak', 'notes.md'])
+  })
+
+  test('names every problem of a list', () => {
+    expect(() => resolveIgnore('*.bak')).toThrow('chassis.ignore is a list of names')
+    expect(() => resolveIgnore({ names: ['*.bak'] })).toThrow('chassis.ignore is a list of names')
+    expect(() => resolveIgnore(['*.bak', 7, '', 'drafts/old', 'a\\b'])).toThrow(
+      'chassis.ignore is not valid:\n' +
+        '  - 7 is not a name, such as "*.bak"\n' +
+        '  - "" is not a name, such as "*.bak"\n' +
+        '  - "drafts/old" is a path. A pattern is the name of a file or a folder, at any depth\n' +
+        '  - "a\\b" is a path. A pattern is the name of a file or a folder, at any depth'
+    )
+  })
+
+  test.each([
+    ['notes.md', ['notes.md'], true],
+    ['Notes.md', ['notes.md'], false],
+    ['my-notes.md', ['notes.md'], false],
+    ['logo.bak', ['*.bak'], true],
+    ['logo.bak.png', ['*.bak'], false],
+    ['logo copy.png', ['* copy.*'], true],
+    ['logo (1).png', ['* (1).png'], true],
+    ['logo 1.png', ['* (1).png'], false],
+    ['a+b.svg', ['a+b.svg'], true],
+    ['aab.svg', ['a+b.*'], false],
+    ['logo.png', ['*.bak', 'notes.md'], false],
+    ['.DS_Store', ['*.bak'], true],
+    ['export.tmp', [], true]
+  ])('%s with %j → %s', (name, patterns, ignored) => {
+    expect(shouldIgnoreFile(name, patterns)).toBe(ignored)
+  })
+
+  test('a function that is given to some() reads no pattern from the index', () => {
+    expect(['images', 'logo', 'mark.png'].some(shouldIgnoreFile)).toBe(false)
+    expect(['images', '.cache', 'mark.png'].some(shouldIgnoreFile)).toBe(true)
+  })
+})
+
+describe('resolveFormats() and keepsFile()', () => {
+  test('no block is no rule, and the extensions are in lowercase, once each', () => {
+    expect(resolveFormats()).toEqual({})
+    expect(resolveFormats({})).toEqual({})
+    expect(
+      resolveFormats({ web: { fonts: ['.WOFF2', '.woff2', '.ttf'], icons: [] }, ios: {} })
+    ).toEqual({ web: { fonts: ['.woff2', '.ttf'], icons: [] } })
+  })
+
+  test('names every problem of a block', () => {
+    expect(() => resolveFormats(['.ttf'])).toThrow(
+      'chassis.formats is an object of type folders by platform'
+    )
+    expect(() =>
+      resolveFormats({
+        windows: { fonts: ['.ttf'] },
+        web: { fonts: ['ttf'], data: ['.json'], images: '.png', icons: ['.svg', 7] },
+        ios: ['.ttf']
+      })
+    ).toThrow(
+      'chassis.formats is not valid:\n' +
+        '  - "windows" is not a platform. Known: web, ios, android\n' +
+        '  - "fonts" of "web" is a list of extensions, such as [".woff2", ".txt"]\n' +
+        '  - "data" of "web" is not a type folder with formats. Known: fonts, images, icons\n' +
+        '  - "images" of "web" is a list of extensions, such as [".woff2", ".txt"]\n' +
+        '  - "icons" of "web" is a list of extensions, such as [".woff2", ".txt"]\n' +
+        '  - "ios" is an object of extensions by type folder'
+    )
+  })
+
+  test('the types with formats are the three that a processor has a rule for', () => {
+    expect(FORMAT_TYPES).toEqual(['fonts', 'images', 'icons'])
+  })
+
+  test.each([
+    [webProcessor, 'fonts', 'text.woff2', true],
+    [webProcessor, 'fonts', 'text.ttf', false],
+    [iosProcessor, 'fonts', 'text.ttf', true],
+    [iosProcessor, 'images', 'photo.webp', false],
+    [iosProcessor, 'icons', 'star.png', true],
+    [androidProcessor, 'icons', 'star.png', false],
+    [androidProcessor, 'images', 'photo.webp', true],
+    [webProcessor, null, 'brand.tokens.json', true]
+  ])('without a block, %o keeps of %s the file %s: %s', (processor, type, name, kept) => {
+    expect(keepsFile(processor, type, name)).toBe(kept)
+    expect(keepsFile(processor, type, name, {})).toBe(kept)
+    expect(keepsFile(processor, type, name, { desktop: { fonts: ['.ttf'] } })).toBe(kept)
+  })
+
+  test('a list of the block is the rule of its platform and type, and of no other', () => {
+    const formats = resolveFormats({
+      web: { fonts: ['.woff2', '.ttf'] },
+      ios: { images: ['.png', '.webp'], icons: [] }
+    })
+    expect(keepsFile(webProcessor, 'fonts', 'text.ttf', formats)).toBe(true)
+    expect(keepsFile(webProcessor, 'fonts', 'TEXT.TTF', formats)).toBe(true)
+    expect(keepsFile(webProcessor, 'fonts', 'text.woff', formats)).toBe(false)
+    expect(keepsFile(webProcessor, 'fonts', 'text.css', formats)).toBe(false)
+    expect(keepsFile(webProcessor, 'icons', 'arrow.pdf', formats)).toBe(true)
+    expect(keepsFile(iosProcessor, 'images', 'photo.webp', formats)).toBe(true)
+    expect(keepsFile(iosProcessor, 'images', 'mark.svg', formats)).toBe(false)
+    expect(keepsFile(iosProcessor, 'icons', 'arrow.svg', formats)).toBe(false)
+    expect(keepsFile(iosProcessor, 'fonts', 'text.ttf', formats)).toBe(true)
+    expect(keepsFile(androidProcessor, 'fonts', 'text.woff2', formats)).toBe(false)
+    expect(keepsFile(webProcessor, null, 'notes.ttf', formats)).toBe(true)
   })
 })
 
@@ -207,9 +338,28 @@ describe('loadConfig()', () => {
         expect.objectContaining({ job: 'web/site/alpha', sets: expect.any(Array) })
       ],
       lintAllow: [],
+      ignore: [],
+      formats: {},
       name: 'chassis-assets-fixture',
       version: '0.0.0-fixture'
     })
+  })
+
+  test('reads chassis.ignore and chassis.formats, checked', () => {
+    const root = withChassis({
+      ignore: ['*.bak', 'notes.md'],
+      formats: { web: { fonts: ['.woff2', '.TTF'] } }
+    })
+    expect(loadConfig(root)).toMatchObject({
+      ignore: ['*.bak', 'notes.md'],
+      formats: { web: { fonts: ['.woff2', '.ttf'] } }
+    })
+    expect(() => loadConfig(withChassis({ ignore: 'notes.md' }))).toThrow(
+      'chassis.ignore is a list of names'
+    )
+    expect(() => loadConfig(withChassis({ formats: { web: ['.ttf'] } }))).toThrow(
+      'chassis.formats is not valid'
+    )
   })
 
   test('defaults the fallback brand folder to default', () => {
@@ -445,6 +595,81 @@ describe('generateAssets()', () => {
   test('counts a file that a brand overrides once (F32)', async () => {
     const { out, stats } = await build({ brands: ['alpha'], apps: ['site'] })
     expect(stats.jobs[0].files).toBe(listFiles(path.join(out, 'web/site/alpha')).length)
+  })
+})
+
+describe('chassis.ignore and chassis.formats', () => {
+  test('a build without the blocks is the golden output', async () => {
+    const { out } = await build({ cwd: withChassis({}) })
+    expect(listFiles(out)).toEqual(listFiles(GOLDEN))
+  })
+
+  test('the build leaves out the files and the folders of chassis.ignore', async () => {
+    const root = withChassis({ ignore: ['photo.*', 'svgs', '*-license.txt'] })
+    const { out, stats } = await build({ cwd: root })
+    const left = ['photo.', '/svgs/', 'license']
+    const expected = listFiles(GOLDEN).filter((file) => !left.some((part) => file.includes(part)))
+    expect(listFiles(out)).toEqual(expected)
+    expect(expected.length).toBeLessThan(listFiles(GOLDEN).length)
+    expect(stats.warnings).toEqual([])
+    expect(listFiles(path.join(root, 'source'))).toEqual(listFiles(path.join(FIXTURE, 'source')))
+  })
+
+  test('a list of chassis.formats is what a platform keeps of a type', async () => {
+    const root = withChassis({
+      formats: {
+        web: { fonts: ['.woff2', '.ttf', '.txt'], icons: ['.svg'] },
+        ios: { images: ['.png', '.webp'] }
+      }
+    })
+    const { out } = await build({ cwd: root })
+    expect(listFiles(path.join(out, 'web/site/alpha/fonts'))).toEqual([
+      'text-license.txt',
+      'text.ttf',
+      'text.woff2'
+    ])
+    expect(listFiles(path.join(out, 'web/site/alpha/icons'))).toEqual([
+      'arrow-right.svg',
+      'svgs/check-mark.svg'
+    ])
+    const images = listFiles(path.join(out, 'ios/mobile/alpha/images'))
+    expect(images).toContain('photo.webp')
+    expect(images).not.toContain('logo/mark.svg')
+    // What the block does not name is as it was
+    const untouched = (/** @type {string} */ file) =>
+      !/^web\/site\/[a-z]+\/(fonts|icons)\//.test(file) &&
+      !/^ios\/mobile\/[a-z]+\/images\//.test(file)
+    expect(listFiles(out).filter(untouched)).toEqual(listFiles(GOLDEN).filter(untouched))
+  })
+
+  test('the validator and the Git LFS paths follow the blocks', async () => {
+    const root = withChassis({
+      ignore: ['photo.*'],
+      formats: { web: { fonts: ['.woff2', '.ttf', '.txt'] }, ios: { images: ['.png', '.webp'] } }
+    })
+    await build({ cwd: root, out: 'dist' })
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const validator = new DistValidator({ cwd: root })
+    expect(await validator.runValidation()).toBe(true)
+    expect(validator.errors).toEqual([])
+
+    const paths = lfsInclude({ cwd: root, apps: ['site'], types: ['fonts', 'images'] })
+    expect(paths).toContain('source/default/site/fonts/text.ttf')
+    expect(paths).not.toContain('source/default/site/fonts/text.woff')
+    expect(paths.join(',')).not.toContain('photo')
+  })
+
+  test('a block that is not valid fails the build before the output is removed', async () => {
+    const root = withChassis({ formats: { web: { fonts: ['ttf'] } } })
+    fs.mkdirSync(path.join(root, 'dist'))
+    fs.writeFileSync(path.join(root, 'dist/keep.txt'), 'kept')
+    await expect(build({ cwd: root, out: 'dist' })).rejects.toThrow(
+      'chassis.formats is not valid:\n  - "fonts" of "web" is a list of extensions'
+    )
+    await expect(
+      build({ cwd: withChassis({ ignore: ['source/default'] }), out: 'dist' })
+    ).rejects.toThrow('chassis.ignore is not valid')
+    expect(read(root, 'dist/keep.txt')).toBe('kept')
   })
 })
 

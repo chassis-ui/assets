@@ -257,13 +257,14 @@ export function isOfFormat(format, file) {
  * Every file under a folder, relative to it with forward slashes, without the files and
  * folders the build ignores.
  * @param {string} dir
+ * @param {string[]} [ignore] - The patterns of `chassis.ignore`
  * @returns {string[]}
  */
-function listSource(dir) {
+function listSource(dir, ignore) {
   const files = []
   const walk = (folder, prefix) => {
     for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
-      if (shouldIgnoreFile(entry.name)) continue
+      if (shouldIgnoreFile(entry.name, ignore)) continue
       const relative = prefix ? `${prefix}/${entry.name}` : entry.name
       if (entry.isDirectory()) walk(path.join(folder, entry.name), relative)
       else files.push(relative)
@@ -445,7 +446,7 @@ export function lintSource(options = {}) {
   const warnings = []
 
   for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-    if (shouldIgnoreFile(entry.name) || !entry.isDirectory()) continue
+    if (shouldIgnoreFile(entry.name, config.ignore) || !entry.isDirectory()) continue
     if (!brands.includes(entry.name)) {
       warnings.push({
         file: `${entry.name}/`,
@@ -454,7 +455,13 @@ export function lintSource(options = {}) {
       continue
     }
     for (const app of fs.readdirSync(path.join(sourceDir, entry.name), { withFileTypes: true })) {
-      if (shouldIgnoreFile(app.name) || !app.isDirectory() || apps.includes(app.name)) continue
+      if (
+        shouldIgnoreFile(app.name, config.ignore) ||
+        !app.isDirectory() ||
+        apps.includes(app.name)
+      ) {
+        continue
+      }
       warnings.push({
         file: `${entry.name}/${app.name}/`,
         message: `is not an app of chassis.build.apps (${apps.join(', ')}), so the build reads nothing from it`
@@ -462,7 +469,7 @@ export function lintSource(options = {}) {
     }
   }
 
-  const files = listSource(sourceDir)
+  const files = listSource(sourceDir, config.ignore)
   for (const file of files) {
     const oddity = config.lintAllow.find((known) => matchesPattern(file, known.pattern))
     for (const message of checkName(file)) {

@@ -19,6 +19,11 @@
  *   `chassis.optimize`, as written. `resolveSettings()` checks them when an option is given
  * @property {unknown} [subset] - The settings of `--subset`, `chassis.subset`, as written.
  *   `resolveSubset()` checks them when the option is given
+ * @property {string[]} ignore - The names of files and folders the build leaves out beside
+ *   its own list, `chassis.ignore`, checked by `resolveIgnore()`
+ * @property {Record<string, Record<string, string[]>>} formats - The extensions a platform
+ *   keeps of a type folder in place of the rule of its processor, `chassis.formats`, checked
+ *   by `resolveFormats()`
  * @property {ContractEntry[]} contracts - The files consumers read, `contracts` of `chassis.checks.json`
  * @property {LintAllowance[]} lintAllow - Names the source lint accepts, `lint.allow` of `chassis.checks.json`
  * @property {string} [name] - The package name

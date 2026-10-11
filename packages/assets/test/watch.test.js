@@ -124,6 +124,14 @@ describe('isRelevant()', () => {
     expect(isRelevant(relative, all)).toBe(expected)
   })
 
+  test('a name of chassis.ignore is no change, as a file or as a folder', () => {
+    const ignore = ['*.bak', 'drafts']
+    expect(isRelevant('default/site/images/photo.bak', all, ignore)).toBe(false)
+    expect(isRelevant('default/site/images/drafts/photo.jpg', all, ignore)).toBe(false)
+    expect(isRelevant('default/site/images/photo.jpg', all, ignore)).toBe(true)
+    expect(isRelevant('default/site/images/photo.bak', all)).toBe(true)
+  })
+
   test('the file filters of the run leave a change out', () => {
     const filter = createFileFilter({ types: ['images'], include: ['images/logo'] })
     expect(isRelevant('default/site/images/logo/mark.svg', filter)).toBe(true)
