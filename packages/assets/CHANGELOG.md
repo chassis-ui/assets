@@ -1,5 +1,139 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- **Breaking.** The `example` brand is replaced by the `sinefil` brand, the app fonts of the
+  default brand are TTF files, and the web fonts have a variable file per role.
+
+  Removed: `dist/web/docs/example/`, `dist/ios/demo/example/` and `dist/android/demo/example/`.
+  The brand of `chassis.build.brands` is `sinefil`, with `dist/web/docs/sinefil/`,
+  `dist/ios/demo/sinefil/` and `dist/android/demo/sinefil/` in their place.
+
+  Renamed, in `fonts/` of `dist/ios/demo/<brand>/` and `dist/android/demo/<brand>/`: the 16
+  files `text_<weight>.otf`, `text_<weight>_italic.otf`, `display_<weight>.otf` and
+  `display_<weight>_italic.otf` are `.ttf` files, `text_normal.otf` to `text_normal.ttf`. Every
+  brand has its app fonts as TTF, so that a brand file replaces the default file of the same
+  name.
+
+  Added to `fonts/` of `dist/web/docs/<brand>/`: the variable fonts `text.woff2`,
+  `text-italic.woff2`, `display.woff2`, `display-italic.woff2` and `code.woff2`. A variable font
+  is named by its role, without a weight. The files by weight, `text-normal.woff2` and the
+  others, stay.
+
+  Changed: `text.css`, `display.css` and `code.css` of `dist/web/docs/chassis/fonts/` declare
+  the variable font of their role, with the range of its weights, where they declared one file
+  per weight.
+
+  The `sinefil` brand has fonts of its own for every role, in both apps: DM Sans for `text`,
+  Source Serif 4 for `display` and IBM Plex Mono for `code`, with their stylesheets and
+  licenses. IBM Plex Mono has no variable font, so `code.css` of the brand declares
+  `code-normal.woff2` and `code-strong.woff2`, and `fonts/code.woff2` of its web output is the
+  file of the default brand.
+
+- `--subset` fixes the axes of a variable font that `axes` of `chassis.subset` names for a
+  brand, such as `"axes": { "chassis": { "opsz": 14 } }`. A font of the web output of the brand
+  that has the axis is written without it, as the font it is at that value. A font without the
+  axis, and every font of another brand, is subsetted as before. A value outside the axis of a
+  font fails the build, and an axis that no font of the brand has is a warning.
+
+  Changed, in a build with `--subset` only: `text.woff2` and `text-italic.woff2` of
+  `dist/web/docs/chassis/fonts/` have the optical size of Inter fixed at 14 and hold the weight
+  axis only. They are 136 KB and 146 KB where they were 208 KB and 230 KB. With the axis, a
+  browser draws text above 14 pixels in the display cut of Inter, 7% narrower at 57 pixels.
+
+  No file is added, removed or renamed, and the default build writes what it wrote.
+
+- `--split` writes a font in a file per range. A build with `--subset` and `--split` writes
+  each WOFF and WOFF2 font that a stylesheet of `fonts/` declares once per range too, beside
+  itself, and the `@font-face` rule of the stylesheet once per range, with its `unicode-range`.
+  A browser downloads the file of a range only for a page that has a character of it.
+  `split` of `chassis.subset`, `true` or `false`, is the choice of a repository, and `--split`
+  and `--no-split` win over it.
+
+  Added to `fonts/` of a web job, with the split only: `<name>-<range>.<extension>` for each
+  declared font and each range it has a character of, such as `text-latin.woff2` and
+  `text-latin-ext.woff2`, and `code-u2500-257f.woff2` for the range `U+2500-257F`.
+
+  Changed, with the split only: the stylesheets of `fonts/` that declare a font of the folder.
+
+  No file is removed or renamed: the font itself stays, with every range. Without the split,
+  and without `--subset`, a build writes what it wrote.
+
+### Patch Changes
+
+- `table/{light,dark}/table-row-type-data.png` and `table-row-type-data@2x.png`
+  are removed from `source/`, and so from `images/figma/components/` of
+  `dist/web/docs/<brand>/`. No page of chassis-figma names them.
+
+  Added, in the light and the dark mode, with their `@2x` files:
+
+  - `list/{light,dark}/list-item-text-input-active.png`, which the list variants page names.
+  - `table/{light,dark}/table-row-type-odd.png`, which the table variants page names.
+
+  Changed: `list/light/list-item-text-input-inactive.png` and
+  `table/dark/table-row-type-edit.png`, with their `@2x` files.
+
+- The files by weight of a family with a variable font are written from it, in both brands, so
+  every file of a role is one version of one design. No file of `dist/` is added, removed or
+  renamed.
+
+  Changed: the 18 files by weight of the `chassis` brand and the 16 of `text` and `display` of
+  the `sinefil` brand, in `fonts/` of `dist/web/docs/<brand>/` as `.woff2`, and of
+  `dist/ios/demo/<brand>/` and `dist/android/demo/<brand>/` as `.ttf`, and `code.woff2` in
+  `fonts/` of `dist/web/docs/chassis/` and `dist/web/docs/sinefil/`.
+
+  The `chassis` brand:
+
+  - `text`: Inter 4.001 at the optical size 14 in every file, the cut that `--subset` fixes in
+    the variable font of the web. The PostScript names of the app fonts are `Inter-Regular`,
+    `Inter-SemiBoldItalic` and so on.
+  - `display`: Archivo Narrow 3.002 with the outlines it had. The `.woff2` files are written
+    from the `.ttf` files and are 24 KB where they were 34 KB.
+  - `code`: Fira Code 6.002 in every file. The variable `code.woff2` is the variable font of
+    the 6.2 release of the family, where it was the 5.002 of Google Fonts: it has 35 characters
+    more and the features `cv01` to `cv32`, `ss09` and `ss10`, its advance is 0.615 em where it
+    was 0.600, and its line is 1.23 em where it was 1.31, as the files by weight have them.
+    `code-strong` is the Bold, 700, where it was the SemiBold, 600, and its PostScript name is
+    `FiraCode-Bold`. The files by weight have every character, every feature and the metrics
+    of the files by weight of the release, and no hinting instructions.
+
+  The `sinefil` brand: DM Sans and Source Serif 4 have the outlines they had, point for point,
+  DM Sans in its cut of 18 and Source Serif 4 in its cut of 14. The files of Source Serif 4 name
+  that cut, which the files of the download did not: the family in a file is
+  `Source Serif 4 14pt`, and the PostScript name of `display_normal.ttf` is
+  `SourceSerif414pt-Regular` where it was `SourceSerif4-Regular`. The names of DM Sans are
+  those they were, `DMSans18pt-Regular`.
+
+  `build/instance-font.py` writes such a file, and `docs/fonts.md` has the step.
+
+- `pnpm assets:lint:source` checks the fonts that an app gets. A `@font-face` rule declares a
+  `.woff2` file, and the `.ttf` file of the same name, which iOS and Android get, was checked
+  by nothing.
+
+  - A rule is checked against every font file of the declared name, not the declared one
+    alone: a rule for `text-normal.woff2` is also the rule of `text-normal.ttf`, and of an
+    `.otf` or a `.woff` file of that name, as a brand gets the folder. The error is the one of
+    the declared file, on the file it is about.
+  - Two font files of one name in a `fonts/` folder have to be one font in two formats. The
+    lint fails when they differ in the family, the weight, the style, the axes, the version
+    string or the number of glyphs, and names both files and what differs.
+  - A `format()` of a `src` that is not the format of its file, by the extension, is a warning.
+
+  The fonts of both brands pass. A build writes what it wrote: no file of `dist/` is added,
+  removed or renamed.
+
+- `pnpm assets:lint:source` reads the fonts. For each `@font-face` rule of a stylesheet in
+  `fonts/`, it opens the file the rule declares, as a brand gets it, and fails when the file is
+  of another family than the rule names, has another weight or a weight axis that does not hold
+  the range of the rule, is an italic that the rule declares as normal or the other way round,
+  or is not in the folder. It warns about a font of the default brand that a brand gets and
+  that no stylesheet of the brand declares.
+
+  The lint needs no package, and reads TrueType, OpenType, WOFF and WOFF2 fonts. A build writes
+  what it wrote: no file of `dist/` is added, removed or renamed.
+
 ## 0.2.0
 
 ### Minor Changes
