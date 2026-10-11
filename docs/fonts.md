@@ -70,6 +70,10 @@ Where the files come from:
 - A family with an optical size axis has its files by weight in several cuts. The `text` role
   takes the 18pt cut, `Inter_18pt-Regular.ttf` and `DMSans_18pt-Regular.ttf`. Source Serif 4
   takes the files without a size in the name.
+- A variable font is whole in `source/`, with every axis of the download. Inter, DM Sans and
+  Source Serif 4 have an optical size axis, which a browser sets from the font size. A build
+  with `--subset` fixes it at 14 for the `chassis` brand, by `axes` of `chassis.subset` in
+  `package.json`, and leaves it to the `sinefil` brand. Decision D25 of the roadmap.
 - The files by weight of the default `code` role are Fira Code 6.002, from an earlier commit.
   `code-strong` is the SemiBold, 600, and the tokens give the role 700; task W16 of the
   roadmap.
@@ -135,7 +139,7 @@ done
 ```
 
 The conversion keeps every character, every layout feature and the axes of a variable font.
-The same command on the same file gives the same bytes. Do not subset here: a file of
+The same command on the same file gives the same bytes. Do not subset here, and fix no axis: a file of
 `source/` is whole, and `pnpm assets --subset` writes the smaller files of a build.
 
 ### 5. Write the stylesheet
@@ -242,6 +246,9 @@ A new brand takes the steps for each of its three roles, and two more:
 - Add the name to `chassis.build.brands` of `package.json`.
 - Add what else differs from the default brand, such as `images/logo/`, to
   `source/<brand>/<app>/`.
+- Where a variable font of the brand has an axis that its pages are not to show, such as the
+  optical size, add the brand and the value to `axes` of `chassis.subset` in `package.json`.
+  A build with `--subset` fixes it.
 
 The tokens of the brand are in chassis-tokens, and a site or an app builds with the brand of
 the same name in both repositories.

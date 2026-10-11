@@ -3,7 +3,8 @@
  *
  * `--subset` writes a font again under its name with the characters of a list of Unicode
  * ranges only, where a processor says so. The ranges are those of the option, or of
- * `chassis.subset` of `package.json`, or `SUBSET_DEFAULTS`.
+ * `chassis.subset` of `package.json`, or `SUBSET_DEFAULTS`. A variable font keeps its axes,
+ * but those that `axes` of `chassis.subset` fixes at a value for the brand of the job.
  *
  * The module uses the package `subset-font`, and loads it when the option is given, never
  * at import time: the default build needs nothing installed.
@@ -43,9 +44,10 @@ export const NAMED_RANGES = {
 
 /**
  * The settings without a `chassis.subset` block and without a value of the option: the
- * characters of the languages that are written in Latin letters.
+ * characters of the languages that are written in Latin letters, and no axis fixed.
+ * @type {{ ranges: string[], axes: Record<string, Record<string, number>> }}
  */
-export const SUBSET_DEFAULTS = { ranges: ['latin', 'latin-ext'] }
+export const SUBSET_DEFAULTS = { ranges: ['latin', 'latin-ext'], axes: {} }
 
 /**
  * The entries of the `name` table that are kept beside the names of the family: the
@@ -60,15 +62,53 @@ const RANGE = /^U\+([0-9A-F]{1,6})(?:-([0-9A-F]{1,6}))?$/i
 /** The last code point of Unicode. */
 const LAST_CODE_POINT = 0x10ffff
 
+/** The tag of a variation axis, as a font names it: `wght`, `opsz`. */
+const AXIS_TAG = /^[\x20-\x7e]{4}$/
+
+/**
+ * The problems of `axes` of a `chassis.subset` block: a value per axis, per brand.
+ * @param {unknown} axes - The setting as written, such as `{ "alpha": { "opsz": 14 } }`
+ * @param {string[]} [brands] - The brands of the configuration, when they are known
+ * @returns {string[]} One message per problem
+ */
+function axesProblems(axes, brands) {
+  const isObject = (/** @type {unknown} */ value) =>
+    value !== null && typeof value === 'object' && !Array.isArray(value)
+  const example = 'such as { "<brand>": { "opsz": 14 } }'
+  if (!isObject(axes)) return [`"axes" is an object of axes by brand, ${example}`]
+
+  const problems = []
+  for (const [brand, values] of Object.entries(/** @type {Record<string, unknown>} */ (axes))) {
+    if (brands && !brands.includes(brand)) {
+      problems.push(
+        `"axes" names "${brand}", which is not a brand. Configured: ${brands.join(', ')}`
+      )
+    }
+    if (!isObject(values)) {
+      problems.push(`"axes" of the brand "${brand}" is an object of values by axis, ${example}`)
+      continue
+    }
+    for (const [tag, value] of Object.entries(/** @type {Record<string, unknown>} */ (values))) {
+      if (!AXIS_TAG.test(tag)) {
+        problems.push(`"${tag}" of the brand "${brand}" is not the tag of an axis, such as opsz`)
+      } else if (typeof value !== 'number' || !Number.isFinite(value)) {
+        problems.push(`"${tag}" of the brand "${brand}" is fixed at a number, such as 14`)
+      }
+    }
+  }
+  return problems
+}
+
 /**
  * The settings of a run: the ranges of the option, or those of `chassis.subset`, or the
- * defaults, checked, with the characters they stand for.
+ * defaults, checked, with the characters they stand for, and the axes of the block.
  * @param {unknown} [given] - The `subset` block of the `chassis` configuration
  * @param {string[]} [ranges] - The values of the option, which win over the block
+ * @param {string[]} [brands] - The brands of the configuration: `axes` names no other
  * @returns {SubsetSettings}
  * @throws {Error} When the block is not valid, or a range is not a name or a `U+` range
  */
-export function resolveSubset(given, ranges = []) {
+export function resolveSubset(given, ranges = [], brands) {
   const errors = []
   let block = /** @type {Record<string, any>} */ ({})
   if (given !== undefined) {
@@ -91,6 +131,8 @@ export function resolveSubset(given, ranges = []) {
   ) {
     errors.push('"ranges" is a list of range names or U+ ranges, such as ["latin", "U+2190-21FF"]')
   }
+  // The axes are a setting of the block only, so a problem of theirs is one of the block
+  const axesErrors = block.axes === undefined ? [] : axesProblems(block.axes, brands)
 
   const names = ranges.length > 0 ? ranges : errors.length === 0 && fromBlock
   const list = /** @type {string[]} */ (names || SUBSET_DEFAULTS.ranges)
@@ -112,13 +154,14 @@ export function resolveSubset(given, ranges = []) {
     }
   }
 
-  if (errors.length > 0) {
-    const where = ranges.length > 0 ? '--subset' : 'chassis.subset'
-    throw new Error(`${where} is not valid:\n  - ${errors.join('\n  - ')}`)
+  if (errors.length > 0 || axesErrors.length > 0) {
+    const where = ranges.length > 0 && axesErrors.length === 0 ? '--subset' : 'chassis.subset'
+    throw new Error(`${where} is not valid:\n  - ${[...errors, ...axesErrors].join('\n  - ')}`)
   }
   return {
     ranges: list,
-    text: String.fromCodePoint(...[...codePoints].sort((a, b) => a - b))
+    text: String.fromCodePoint(...[...codePoints].sort((a, b) => a - b)),
+    axes: /** @type {Record<string, Record<string, number>>} */ (block.axes ?? SUBSET_DEFAULTS.axes)
   }
 }
 
@@ -140,13 +183,45 @@ export function glyphCount(sfnt) {
 }
 
 /**
+ * The variation axes of a font in the TrueType or OpenType container, from its `fvar`
+ * table, by tag. A font that is not variable has none.
+ * @param {Buffer} sfnt
+ * @returns {Record<string, { min: number, max: number }>}
+ */
+export function fontAxes(sfnt) {
+  /** @type {Record<string, { min: number, max: number }>} */
+  const axes = {}
+  const tables = sfnt.readUInt16BE(4)
+  for (let i = 0; i < tables; i++) {
+    const record = 12 + i * 16
+    if (sfnt.toString('latin1', record, record + 4) !== 'fvar') continue
+    const table = sfnt.readUInt32BE(record + 8)
+    const first = table + sfnt.readUInt16BE(table + 4)
+    const count = sfnt.readUInt16BE(table + 8)
+    const size = sfnt.readUInt16BE(table + 10)
+    for (let axis = 0; axis < count; axis++) {
+      const at = first + axis * size
+      // The values are 16.16 fixed-point numbers: the minimum, the default, the maximum
+      axes[sfnt.toString('latin1', at, at + 4)] = {
+        min: sfnt.readInt32BE(at + 4) / 65536,
+        max: sfnt.readInt32BE(at + 12) / 65536
+      }
+    }
+  }
+  return axes
+}
+
+/**
  * A subset of a font, loaded.
  * @typedef {Object} Subsetter
- * @property {(font: Buffer, text: string) => Promise<Buffer|null>} subset - The font with
- *   the characters of the text only, in its format, with every layout feature it had, or
- *   null for a font that has none of the characters
+ * @property {(font: Buffer, text: string, axes?: Record<string, number>) => Promise<Buffer|null>} subset
+ *   The font with the characters of the text only, in its format, with every layout feature
+ *   it had, or null for a font that has none of the characters. Each of the axes that the
+ *   font has is fixed at its value; a value outside the axis fails
  * @property {(font: Buffer, text: string) => Promise<number>} glyphs - How many glyphs the
  *   font draws the text with, the glyphs its layout features put in their place included
+ * @property {(font: Buffer) => Promise<Record<string, { min: number, max: number }>>} axes
+ *   The variation axes of the font, by tag
  */
 
 /**
@@ -171,22 +246,52 @@ export async function loadSubsetter() {
   const glyphs = async (font, text) =>
     glyphCount(await subsetFont(font, text, { targetFormat: 'sfnt' })) - 1
 
-  /** @type {Map<string, Promise<Buffer|null>>} */
+  /** @type {Map<string, Promise<any>>} */
   const cache = new Map()
+  /**
+   * @template T
+   * @param {Array<string|Buffer>} parts @param {() => Promise<T>} work @returns {Promise<T>}
+   */
+  const once = (parts, work) => {
+    const hash = crypto.createHash('sha1')
+    parts.forEach((part) => hash.update(part).update('\0'))
+    const key = hash.digest('hex')
+    if (!cache.has(key)) cache.set(key, work())
+    return /** @type {Promise<T>} */ (cache.get(key))
+  }
+
+  // A subset keeps the axes, and its `fvar` table is read without the glyphs of the font
+  /** @param {Buffer} font */
+  const axes = (font) =>
+    once(['axes', font], async () => fontAxes(await subsetFont(font, '', { targetFormat: 'sfnt' })))
 
   return {
     glyphs,
-    subset(font, text) {
-      const key = crypto.createHash('sha1').update(font).update(text).digest('hex')
-      let result = cache.get(key)
-      if (!result) {
-        result = (async () =>
-          (await glyphs(font, text)) === 0
-            ? null
-            : subsetFont(font, text, { preserveNameIds: KEPT_NAME_IDS }))()
-        cache.set(key, result)
-      }
-      return result
+    axes,
+    subset(font, text, fixed = {}) {
+      const tags = Object.keys(fixed).sort()
+      const written = tags.map((tag) => `${tag}=${fixed[tag]}`).join(',')
+      return once(['subset', font, text, written], async () => {
+        if ((await glyphs(font, text)) === 0) return null
+        /** @type {Record<string, number>} */
+        const variationAxes = {}
+        if (tags.length > 0) {
+          const has = await axes(font)
+          for (const tag of tags.filter((tag) => tag in has)) {
+            const { min, max } = has[tag]
+            if (fixed[tag] < min || fixed[tag] > max) {
+              throw new Error(
+                `the axis ${tag} of the font is ${min} to ${max}, and chassis.subset fixes it at ${fixed[tag]}`
+              )
+            }
+            variationAxes[tag] = fixed[tag]
+          }
+        }
+        return subsetFont(font, text, {
+          preserveNameIds: KEPT_NAME_IDS,
+          ...(Object.keys(variationAxes).length > 0 ? { variationAxes } : {})
+        })
+      })
     }
   }
 }
@@ -194,23 +299,27 @@ export async function loadSubsetter() {
 /**
  * Subset the fonts of the output of one job. A font is written again under its name only
  * when the result is smaller. A font that has none of the characters stays as it is: it is
- * a font of another script, or of symbols.
+ * a font of another script, or of symbols. With a brand, the axes that the settings fix for
+ * it are fixed in each font that has them, and a font without them is subsetted as it is.
  * @param {string} jobDir - The output folder of the job
  * @param {Object} options
  * @param {FontSubset} options.fonts - The type folder and the extensions, of the processor
  * @param {SubsetSettings} options.settings - The settings, of `resolveSubset()`
  * @param {Subsetter} options.subsetter - The subsetter, of `loadSubsetter()`
- * @returns {Promise<{ subsetted: number, saved: number, kept: string[], failed: Array<{ file: string, message: string }> }>}
+ * @param {string} [options.brand] - The brand of the job, whose axes of the settings are fixed
+ * @returns {Promise<{ subsetted: number, saved: number, kept: string[], failed: Array<{ file: string, message: string }>, fixed: Record<string, number> }>}
  *   The fonts written again, the bytes that saved, the fonts without a character of the
- *   ranges, and the fonts that could not be read
+ *   ranges, the fonts that could not be read, and per fixed axis the fonts it was fixed in
  */
 export async function subsetJob(jobDir, options) {
-  const { fonts, settings, subsetter } = options
+  const { fonts, settings, subsetter, brand } = options
+  const axes = (brand !== undefined && settings.axes[brand]) || {}
   const result = {
     subsetted: 0,
     saved: 0,
     kept: /** @type {string[]} */ ([]),
-    failed: /** @type {Array<{ file: string, message: string }>} */ ([])
+    failed: /** @type {Array<{ file: string, message: string }>} */ ([]),
+    fixed: /** @type {Record<string, number>} */ ({})
   }
 
   const dir = path.join(jobDir, fonts.type)
@@ -226,13 +335,19 @@ export async function subsetJob(jobDir, options) {
   for (const file of files) {
     try {
       const original = fs.readFileSync(file)
-      const subset = await subsetter.subset(original, settings.text)
+      const subset = await subsetter.subset(original, settings.text, axes)
       if (subset === null) {
         result.kept.push(file)
       } else if (subset.length < original.length) {
         fs.writeFileSync(file, subset)
         result.subsetted++
         result.saved += original.length - subset.length
+        if (Object.keys(axes).length > 0) {
+          const has = await subsetter.axes(original)
+          for (const tag of Object.keys(axes).filter((tag) => tag in has)) {
+            result.fixed[tag] = (result.fixed[tag] ?? 0) + 1
+          }
+        }
       }
     } catch (error) {
       result.failed.push({ file, message: /** @type {Error} */ (error).message })

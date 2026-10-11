@@ -65,7 +65,8 @@ Options:
   --subset [range...]    Write the WOFF and WOFF2 fonts of the web again under their
                          names with the characters of the ranges only, such as latin
                          or U+0370-03FF. Default: \`chassis.subset\`, or latin and
-                         latin-ext. Needs \`pnpm install\`
+                         latin-ext. Fixes the axes of a variable font that \`axes\` of
+                         \`chassis.subset\` names for a brand. Needs \`pnpm install\`
   --quiet                Print errors only
   --help, -h             Print this help
   --version, -v          Print the version
@@ -120,6 +121,7 @@ function emptyStats() {
     filesGenerated: 0,
     fontsSubsetted: 0,
     fontBytesSaved: 0,
+    fontAxesFixed: 0,
     errors: [],
     warnings: [],
     lfsPointers: [],
@@ -928,23 +930,42 @@ async function optimizeImages(processor, destPath, tools) {
 }
 
 /**
+ * What the subset step of a run works with.
+ * @typedef {Object} FontTools
+ * @property {import('./types.js').SubsetSettings} settings - The settings, checked
+ * @property {import('./subset-fonts.js').Subsetter} subsetter - The subsetter, loaded
+ * @property {Set<string>} read - The brands that had a font subsetted or kept
+ * @property {Set<string>} fixed - The axes that were fixed in a font, as `<brand> <tag>`
+ */
+
+/**
  * Write the fonts a processor names in `subset` again with the characters of the ranges
- * only, in the output of one job. A font without a character of the ranges stays as it is,
- * with a warning.
+ * only, in the output of one job, and with the axes fixed that the settings name for the
+ * brand. A font without a character of the ranges stays as it is, with a warning.
  * @param {Processor} processor - The platform processor
  * @param {string} destPath - The output folder of the job
- * @param {{ settings: import('./types.js').SubsetSettings, subsetter: import('./subset-fonts.js').Subsetter }} tools
+ * @param {string} brand - The brand of the job
+ * @param {FontTools} tools
  */
-async function subsetFonts(processor, destPath, tools) {
+async function subsetFonts(processor, destPath, brand, tools) {
   if (!processor.subset) return
 
-  const { subsetted, saved, kept, failed } = await subsetJob(destPath, {
-    ...tools,
-    fonts: processor.subset
+  const { subsetted, saved, kept, failed, fixed } = await subsetJob(destPath, {
+    settings: tools.settings,
+    subsetter: tools.subsetter,
+    fonts: processor.subset,
+    brand
   })
   stats.fontsSubsetted += subsetted
   stats.fontBytesSaved += saved
   if (subsetted > 0) logger.log(`✂️  Subsetted ${subsetted} fonts`)
+  const wanted = tools.settings.axes[brand] ?? {}
+  if (subsetted + kept.length > 0) tools.read.add(brand)
+  for (const [tag, fonts] of Object.entries(fixed)) {
+    stats.fontAxesFixed += fonts
+    tools.fixed.add(`${brand} ${tag}`)
+    logger.log(`✂️  Fixed the axis ${tag} at ${wanted[tag]} in ${fonts} fonts`)
+  }
   kept.forEach((file) =>
     stats.warnings.push(
       `Not subsetted, the font has no character of the ranges: ${path.relative(run.cwd, file)}`
@@ -1090,18 +1111,20 @@ export async function generateAssets(options = {}) {
   }
 
   // The ranges are checked and the package is loaded before anything is removed
+  /** @type {FontTools|null} */
   let fontTools = null
   if (run.subset) {
     const settings = resolveSubset(
       config.subset,
-      Array.isArray(options.subset) ? options.subset : []
+      Array.isArray(options.subset) ? options.subset : [],
+      config.brands
     )
     if (!jobs.some((job) => platformProcessors[job.platform].subset)) {
       stats.warnings.push(
         '--subset changes nothing: no selected job has a platform whose fonts are subsetted'
       )
     } else if (!run.dryRun) {
-      fontTools = { settings, subsetter: await loadSubsetter() }
+      fontTools = { settings, subsetter: await loadSubsetter(), read: new Set(), fixed: new Set() }
     }
   }
 
@@ -1152,11 +1175,24 @@ export async function generateAssets(options = {}) {
     const before = stats.filesProcessed
     processAssets(processor, [defaultAppPath, brandAppPath], destPath, defaultAppPath)
     if (imageTools) await optimizeImages(processor, destPath, imageTools)
-    if (fontTools) await subsetFonts(processor, destPath, fontTools)
+    if (fontTools) await subsetFonts(processor, destPath, brand, fontTools)
     if (convert) await convertVectorDrawables(processor, destPath, convert)
     if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor, destPath)
     if (run.res && !run.dryRun) writeResLayout(processor, destPath)
     stats.jobs.push({ ...job, files: stats.filesProcessed - before })
+  }
+
+  // An axis that no font of a brand has is a mistake in the setting, or a font that changed
+  if (fontTools) {
+    for (const brand of fontTools.read) {
+      for (const tag of Object.keys(fontTools.settings.axes[brand] ?? {})) {
+        if (!fontTools.fixed.has(`${brand} ${tag}`)) {
+          stats.warnings.push(
+            `chassis.subset fixes the axis ${tag} for the brand ${brand}, and no font of its output has it`
+          )
+        }
+      }
+    }
   }
 
   // A filter that matches nothing is a mistake in the filter; one that matches nothing in
@@ -1204,8 +1240,9 @@ export async function generateAssets(options = {}) {
       logger.log(`🖼️  ${stats.filesGenerated} files written in ${run.formats.join(', ')}`)
     }
     if (run.subset) {
+      const fixed = stats.fontAxesFixed > 0 ? `, an axis fixed in ${stats.fontAxesFixed}` : ''
       logger.log(
-        `✂️  ${stats.fontsSubsetted} fonts subsetted, ${Math.round(stats.fontBytesSaved / 1024)} KB saved`
+        `✂️  ${stats.fontsSubsetted} fonts subsetted, ${Math.round(stats.fontBytesSaved / 1024)} KB saved${fixed}`
       )
     }
   }

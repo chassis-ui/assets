@@ -58,11 +58,13 @@
 
 /**
  * The settings of `--subset`: the ranges of the option, of `chassis.subset` of
- * `package.json` or of the defaults of `subset-fonts.js`.
+ * `package.json` or of the defaults of `subset-fonts.js`, and the axes of `chassis.subset`.
  * @typedef {Object} SubsetSettings
  * @property {string[]} ranges - The ranges as they are written: a name of `NAMED_RANGES`, or
  *   a range such as `U+0370-03FF`
  * @property {string} text - Every character of the ranges
+ * @property {Record<string, Record<string, number>>} axes - Per brand, the variation axes
+ *   that are fixed at a value in each font that has them, by tag: `{ alpha: { opsz: 14 } }`
  */
 
 /**
@@ -112,6 +114,8 @@
  * @property {number} filesGenerated - Files written in a second format, with `webp` and `avif`
  * @property {number} fontsSubsetted - Fonts written again under their names, with `subset`
  * @property {number} fontBytesSaved - What the subsetted fonts lost in size, in bytes
+ * @property {number} fontAxesFixed - Subsetted fonts with an axis fixed, by `axes` of
+ *   `chassis.subset`
  * @property {string[]} errors
  * @property {string[]} warnings
  * @property {string[]} lfsPointers - Source files that are Git LFS pointers

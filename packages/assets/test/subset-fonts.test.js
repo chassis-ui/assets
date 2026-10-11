@@ -4,7 +4,8 @@
  *              lines of text, which no subsetter reads, so these tests build a root of their
  *              own with a real font, the one of the package `inter-ui`: it has Latin, Greek
  *              and Cyrillic letters, and layout features that put an arrow in the place of
- *              `->`. A font without a Latin letter is made of it in `beforeAll()`.
+ *              `->`. A font without a Latin letter is made of it in `beforeAll()`. The
+ *              variable font of the package has two axes, the weight and the optical size.
  */
 
 import fs from 'node:fs'
@@ -18,6 +19,7 @@ import { androidProcessor, iosProcessor, webProcessor } from '../build/processor
 import {
   NAMED_RANGES,
   SUBSET_DEFAULTS,
+  fontAxes,
   glyphCount,
   loadSubsetter,
   resolveSubset,
@@ -28,16 +30,18 @@ import { ROOT, compareDirs, copyFixture, listFiles, removeTempDirs, tempDir } fr
 
 vi.setConfig({ testTimeout: 30_000 })
 
-const FONT = path.join(
-  path.dirname(createRequire(import.meta.url).resolve('inter-ui/package.json')),
-  'web/Inter-Regular.woff2'
-)
+const PACKAGE = path.dirname(createRequire(import.meta.url).resolve('inter-ui/package.json'))
+const FONT = path.join(PACKAGE, 'web/Inter-Regular.woff2')
+const VARIABLE = path.join(PACKAGE, 'variable/InterVariable.woff2')
 
 /**
- * The fonts of the tests, by name. The package has the WOFF2 file; the same font as WOFF
- * and as TTF, and `greek.woff2`, are written by `beforeAll()`.
+ * The fonts of the tests, by name. The package has the two WOFF2 files; the same font as
+ * WOFF and as TTF, `greek.woff2` and the variable font as TTF are written by `beforeAll()`.
  */
-const fonts = /** @type {Record<string, Buffer>} */ ({ 'text.woff2': fs.readFileSync(FONT) })
+const fonts = /** @type {Record<string, Buffer>} */ ({
+  'text.woff2': fs.readFileSync(FONT),
+  'variable.woff2': fs.readFileSync(VARIABLE)
+})
 
 /** @type {import('../build/subset-fonts.js').Subsetter} */
 let subsetter
@@ -53,6 +57,9 @@ beforeAll(async () => {
     targetFormat: 'sfnt'
   })
   fonts['greek.woff2'] = await subsetFont(fonts['text.woff2'], 'αβγδ')
+  fonts['variable.ttf'] = await subsetFont(fonts['variable.woff2'], 'abc', {
+    targetFormat: 'sfnt'
+  })
   subsetter = await loadSubsetter()
 })
 
@@ -64,9 +71,11 @@ afterAll(removeTempDirs)
  * WOFF2 without a Latin letter; `site` has the WOFF2 as an icon font too, and `mobile` has
  * the TTF.
  * @param {Record<string, unknown>} [subset] - The `chassis.subset` block
+ * @param {{ variable?: boolean }} [options] - With `variable`, `site` has the variable font
+ *   too, as `fonts/variable.woff2`
  * @returns {string} The root
  */
-function root(subset) {
+function root(subset, { variable = false } = {}) {
   const dir = tempDir('chassis-assets-subset-')
   fs.writeFileSync(
     path.join(dir, 'package.json'),
@@ -84,6 +93,7 @@ function root(subset) {
   for (const name of ['text.woff2', 'text.woff', 'greek.woff2']) {
     fs.writeFileSync(path.join(site, 'fonts', name), fonts[name])
   }
+  if (variable) fs.writeFileSync(path.join(site, 'fonts/variable.woff2'), fonts['variable.woff2'])
   fs.writeFileSync(path.join(site, 'fonts/text.css'), '@font-face { font-family: "Text"; }\n')
   fs.writeFileSync(path.join(site, 'fonts/text-license.txt'), 'The license of the font\n')
   fs.writeFileSync(path.join(site, 'icons/icons.woff2'), fonts['text.woff2'])
@@ -165,12 +175,49 @@ describe('resolveSubset()', () => {
   test('names every problem of a block', () => {
     expect(() => resolveSubset([])).toThrow('chassis.subset is an object')
     expect(() => resolveSubset({ range: ['latin'], ranges: 'latin' })).toThrow(
-      /chassis\.subset is not valid:\n {2}- "range" is not a setting\. Known: ranges\n {2}- "ranges" is a list/
+      /chassis\.subset is not valid:\n {2}- "range" is not a setting\. Known: ranges, axes\n {2}- "ranges" is a list/
     )
     expect(() => resolveSubset({ ranges: [] })).toThrow('"ranges" is a list')
     expect(() => resolveSubset({ ranges: ['latin', 'klingon'] })).toThrow(
       'chassis.subset is not valid:\n  - "klingon" is not a range. Known: latin, latin-ext, cyrillic'
     )
+  })
+
+  test('no axis is fixed without the setting', () => {
+    expect(resolveSubset().axes).toEqual({})
+    expect(resolveSubset({ ranges: ['greek'] }).axes).toEqual({})
+    expect(SUBSET_DEFAULTS.axes).toEqual({})
+  })
+
+  test('a block names the axes that are fixed, by brand', () => {
+    const axes = { alpha: { opsz: 14 }, beta: { opsz: 20, wdth: 87.5 } }
+    expect(resolveSubset({ axes }).axes).toEqual(axes)
+    expect(resolveSubset({ axes }, ['greek'], ['alpha', 'beta', 'gamma']).axes).toEqual(axes)
+    expect(resolveSubset({ axes: {} }).axes).toEqual({})
+  })
+
+  test('names every problem of the axes', () => {
+    expect(() => resolveSubset({ axes: ['opsz'] })).toThrow(
+      'chassis.subset is not valid:\n  - "axes" is an object of axes by brand, such as { "<brand>": { "opsz": 14 } }'
+    )
+    expect(() => resolveSubset({ axes: { opsz: 14 } })).toThrow(
+      '"axes" of the brand "opsz" is an object of values by axis'
+    )
+    expect(() =>
+      resolveSubset({ axes: { alpha: { optical: 14, opsz: '14', wght: Infinity } } })
+    ).toThrow(
+      /- "optical" of the brand "alpha" is not the tag of an axis, such as opsz\n {2}- "opsz" of the brand "alpha" is fixed at a number, such as 14\n {2}- "wght" of the brand "alpha" is fixed at a number/
+    )
+  })
+
+  test('the axes name a brand of the configuration, when the brands are given', () => {
+    const block = { axes: { gamma: { opsz: 14 } } }
+    expect(resolveSubset(block).axes).toEqual(block.axes)
+    expect(() => resolveSubset(block, [], ['alpha', 'beta'])).toThrow(
+      'chassis.subset is not valid:\n  - "axes" names "gamma", which is not a brand. Configured: alpha, beta'
+    )
+    // The ranges of the option are right: the problem is one of the block
+    expect(() => resolveSubset(block, ['greek'], ['alpha'])).toThrow('chassis.subset is not valid')
   })
 
   test('names a value of the option that is no range', () => {
@@ -189,6 +236,19 @@ describe('glyphCount()', () => {
 
   test('fails on a file without the table', () => {
     expect(() => glyphCount(Buffer.alloc(12))).toThrow('The font has no maxp table')
+  })
+})
+
+describe('fontAxes()', () => {
+  test('reads the axes of a variable font, with the values they span', () => {
+    expect(fontAxes(fonts['variable.ttf'])).toEqual({
+      opsz: { min: 14, max: 32 },
+      wght: { min: 100, max: 900 }
+    })
+  })
+
+  test('a font that is not variable has none', () => {
+    expect(fontAxes(fonts['text.ttf'])).toEqual({})
   })
 })
 
@@ -235,6 +295,57 @@ describe('loadSubsetter()', () => {
   test('a file that is no font fails', async () => {
     await expect(subsetter.subset(Buffer.from('a line of text'), 'abc')).rejects.toThrow()
   })
+
+  test('reads the axes of a font in its format', async () => {
+    expect(Object.keys(await subsetter.axes(fonts['variable.woff2'])).sort()).toEqual([
+      'opsz',
+      'wght'
+    ])
+    expect(await subsetter.axes(fonts['text.woff'])).toEqual({})
+  })
+
+  test('a variable font keeps its axes', async () => {
+    const subset = /** @type {Buffer} */ (await subsetter.subset(fonts['variable.woff2'], text))
+    expect(await subsetter.axes(subset)).toEqual(await subsetter.axes(fonts['variable.woff2']))
+  })
+
+  test('an axis is fixed at a value: the font loses it, keeps the others and is smaller', async () => {
+    const whole = /** @type {Buffer} */ (await subsetter.subset(fonts['variable.woff2'], text))
+    const fixed = /** @type {Buffer} */ (
+      await subsetter.subset(fonts['variable.woff2'], text, { opsz: 14 })
+    )
+    expect(await subsetter.axes(fixed)).toEqual({ wght: { min: 100, max: 900 } })
+    expect(fixed.length).toBeLessThan(whole.length * 0.8)
+    expect(signature(fixed)).toBe('wOF2')
+    expect(await subsetter.glyphs(fixed, 'ğ->')).toBe(await subsetter.glyphs(whole, 'ğ->'))
+  })
+
+  test('a font without the axis is subsetted as it is', async () => {
+    const plain = /** @type {Buffer} */ (await subsetter.subset(fonts['text.woff2'], text))
+    const asked = /** @type {Buffer} */ (
+      await subsetter.subset(fonts['text.woff2'], text, { opsz: 14 })
+    )
+    expect(asked.equals(plain)).toBe(true)
+    // An axis the font has not, beside one it has
+    const fixed = /** @type {Buffer} */ (
+      await subsetter.subset(fonts['variable.woff2'], text, { opsz: 14, slnt: 0 })
+    )
+    expect(await subsetter.axes(fixed)).toEqual({ wght: { min: 100, max: 900 } })
+  })
+
+  test('a value outside the axis fails, and names the axis', async () => {
+    await expect(subsetter.subset(fonts['variable.woff2'], text, { opsz: 40 })).rejects.toThrow(
+      'the axis opsz of the font is 14 to 32, and chassis.subset fixes it at 40'
+    )
+  })
+
+  test('one content is subsetted once per value of an axis', async () => {
+    const first = subsetter.subset(fonts['variable.woff2'], 'abc', { opsz: 14 })
+    expect(subsetter.subset(fonts['variable.woff2'], 'abc', { opsz: 14 })).toBe(first)
+    expect(subsetter.subset(fonts['variable.woff2'], 'abc', { opsz: 20 })).not.toBe(first)
+    expect(subsetter.subset(fonts['variable.woff2'], 'abc')).not.toBe(first)
+    await first
+  })
 })
 
 describe('subsetJob()', () => {
@@ -261,6 +372,57 @@ describe('subsetJob()', () => {
     expect(result.saved).toBe(fonts['text.woff2'].length - woff2 + fonts['text.woff'].length - woff)
     expect(result.kept).toEqual([])
     expect(result.failed).toEqual([])
+    expect(result.fixed).toEqual({})
+  })
+
+  test('fixes the axes of the brand, in the fonts that have them', async () => {
+    const withAxes = { ...settings, axes: { alpha: { opsz: 14, slnt: 0 } } }
+    const dir = job()
+    fs.writeFileSync(path.join(dir, 'fonts/variable.woff2'), fonts['variable.woff2'])
+    const result = await subsetJob(dir, {
+      fonts: web,
+      settings: withAxes,
+      subsetter,
+      brand: 'alpha'
+    })
+    expect(result.subsetted).toBe(3)
+    expect(result.fixed).toEqual({ opsz: 1 })
+    expect(result.failed).toEqual([])
+    const written = fs.readFileSync(path.join(dir, 'fonts/variable.woff2'))
+    expect(Object.keys(await subsetter.axes(written))).toEqual(['wght'])
+  })
+
+  test('fixes no axis for another brand, and none without a brand', async () => {
+    const withAxes = { ...settings, axes: { alpha: { opsz: 14 } } }
+    for (const brand of ['beta', undefined]) {
+      const dir = job()
+      fs.writeFileSync(path.join(dir, 'fonts/variable.woff2'), fonts['variable.woff2'])
+      const result = await subsetJob(dir, { fonts: web, settings: withAxes, subsetter, brand })
+      expect(result.fixed).toEqual({})
+      const written = fs.readFileSync(path.join(dir, 'fonts/variable.woff2'))
+      expect(Object.keys(await subsetter.axes(written)).sort()).toEqual(['opsz', 'wght'])
+    }
+  })
+
+  test('reports a font whose axis does not reach the value', async () => {
+    const withAxes = { ...settings, axes: { alpha: { opsz: 40 } } }
+    const dir = job()
+    fs.writeFileSync(path.join(dir, 'fonts/variable.woff2'), fonts['variable.woff2'])
+    const result = await subsetJob(dir, {
+      fonts: web,
+      settings: withAxes,
+      subsetter,
+      brand: 'alpha'
+    })
+    expect(result.failed).toEqual([
+      {
+        file: path.join(dir, 'fonts/variable.woff2'),
+        message: 'the axis opsz of the font is 14 to 32, and chassis.subset fixes it at 40'
+      }
+    ])
+    expect(
+      fs.readFileSync(path.join(dir, 'fonts/variable.woff2')).equals(fonts['variable.woff2'])
+    ).toBe(true)
   })
 
   test('reads the formats of the processor only', async () => {
@@ -299,7 +461,7 @@ describe('subsetJob()', () => {
 
   test('does nothing for a job without the folder', async () => {
     const result = await subsetJob(tempDir(), { fonts: web, settings, subsetter })
-    expect(result).toEqual({ subsetted: 0, saved: 0, kept: [], failed: [] })
+    expect(result).toEqual({ subsetted: 0, saved: 0, kept: [], failed: [], fixed: {} })
   })
 })
 
@@ -344,6 +506,65 @@ describe('generateAssets() with subset', () => {
     const other = fs.readFileSync(path.join(latin.out, 'web/site/alpha/fonts/text.woff2'))
     expect(await subsetter.glyphs(other, 'α')).toBe(0)
     expect(await subsetter.glyphs(other, 'A')).toBeGreaterThan(0)
+  })
+
+  test('chassis.subset fixes the axes of a brand, and the build says in how many fonts', async () => {
+    const cwd = root({ axes: { alpha: { opsz: 14 } } }, { variable: true })
+    const { out, stats } = await build(cwd, { subset: true })
+    const font = fs.readFileSync(path.join(out, 'web/site/alpha/fonts/variable.woff2'))
+    expect(await subsetter.axes(font)).toEqual({ wght: { min: 100, max: 900 } })
+    expect(stats.fontsSubsetted).toBe(3)
+    expect(stats.fontAxesFixed).toBe(1)
+    expect(stats.warnings).toHaveLength(1)
+    expect(stats.warnings[0]).toContain('greek.woff2')
+
+    const whole = await build(root(undefined, { variable: true }), { subset: true })
+    const other = fs.readFileSync(path.join(whole.out, 'web/site/alpha/fonts/variable.woff2'))
+    expect(Object.keys(await subsetter.axes(other)).sort()).toEqual(['opsz', 'wght'])
+    expect(whole.stats.fontAxesFixed).toBe(0)
+    expect(font.length).toBeLessThan(other.length)
+  })
+
+  test('the axes change nothing without the option', async () => {
+    const plain = await build(root(undefined, { variable: true }))
+    const { out, stats } = await build(root({ axes: { alpha: { opsz: 14 } } }, { variable: true }))
+    expect(compareDirs(plain.out, out)).toEqual({ missing: [], extra: [], changed: [] })
+    expect(stats.fontAxesFixed).toBe(0)
+  })
+
+  test('warns about an axis that no font of the brand has', async () => {
+    const cwd = root({ axes: { alpha: { opsz: 14, slnt: 0 } } }, { variable: true })
+    const { stats } = await build(cwd, { subset: true })
+    expect(stats.fontAxesFixed).toBe(1)
+    expect(stats.warnings).toContain(
+      'chassis.subset fixes the axis slnt for the brand alpha, and no font of its output has it'
+    )
+    expect(stats.warnings.some((warning) => warning.includes('the axis opsz'))).toBe(false)
+  })
+
+  test('a value outside the axis of a font fails the build, naming the file', async () => {
+    const cwd = root({ axes: { alpha: { opsz: 40 } } }, { variable: true })
+    const error = await build(cwd, { subset: true }).catch((error) => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error.message).toContain('Failed to subset the font')
+    expect(error.message).toContain(path.join('web/site/alpha/fonts/variable.woff2'))
+    expect(error.message).toContain('the axis opsz of the font is 14 to 32')
+  })
+
+  test('axes that are not valid fail before the output is removed', async () => {
+    const out = tempDir()
+    fs.writeFileSync(path.join(out, 'kept.txt'), 'from an earlier build')
+    for (const [axes, message] of /** @type {Array<[unknown, string]>} */ ([
+      [{ beta: { opsz: 14 } }, '"axes" names "beta", which is not a brand. Configured: alpha'],
+      [{ alpha: { opsz: 'small' } }, '"opsz" of the brand "alpha" is fixed at a number']
+    ])) {
+      await expect(
+        generateAssets({ cwd: root({ axes }), quiet: true, subset: true, out })
+      ).rejects.toThrow(message)
+    }
+    expect(listFiles(out)).toEqual(['kept.txt'])
+    const { stats } = await build(root({ axes: { beta: { opsz: 14 } } }))
+    expect(stats.errors).toEqual([])
   })
 
   test('ranges that are not valid fail before the output is removed', async () => {
@@ -424,7 +645,21 @@ describe('pnpm assets --subset', () => {
       { encoding: 'utf-8' }
     )
     expect(result.status).toBe(0)
-    expect(result.stdout).toMatch(/2 fonts subsetted, \d+ KB saved/)
+    expect(result.stdout).toMatch(/2 fonts subsetted, \d+ KB saved\n/)
+  })
+
+  test('prints the axis it fixed, and in how many fonts', () => {
+    const cwd = root({ axes: { alpha: { opsz: 14 } } }, { variable: true })
+    const result = spawnSync(
+      process.execPath,
+      [entry, '--cwd', cwd, '--out', tempDir(), '--subset'],
+      {
+        encoding: 'utf-8'
+      }
+    )
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('Fixed the axis opsz at 14 in 1 fonts')
+    expect(result.stdout).toMatch(/3 fonts subsetted, \d+ KB saved, an axis fixed in 1\n/)
   })
 
   test('takes the ranges as values, before another option', async () => {

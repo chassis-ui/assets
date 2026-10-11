@@ -117,7 +117,7 @@ jobs with their file counts.
 | `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                              |
 | `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                  |
 | `packages/assets/build/optimize.js`           | `--optimize`, `--webp` and `--avif`: `resolveSettings()`, which checks `chassis.optimize` over `OPTIMIZE_DEFAULTS`, `loadEncoders()`, which imports `sharp` and `svgo` when it is called and says how to install them when they are missing, `svgOptions()`, `formatName()`, which the validator reads, and `optimizeJob()`.                                                                                  |
-| `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()` and `subsetJob()`.                                                                                                                      |
+| `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()`, `fontAxes()` and `subsetJob()`.                                                                                                        |
 | `packages/assets/build/asset-types.js`        | The extension lists per type and `isMetadataFile()`, used by the validator only.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/analyze-assets.js`     | `AssetAnalyzer(options)`: sizes, types, largest files, duplicates by content hash, recommendations. `parseAnalyzerArgs()` for the entry. Takes `cwd` and `out`.                                                                                                                                                                                                                                               |
 | `packages/assets/build/validate-assets.js`    | `DistValidator(options)`: eight checks of an existing output against `source/` and the configuration. Takes `cwd` and `out`; `runValidation()` resolves to true or false.                                                                                                                                                                                                                                     |
@@ -401,6 +401,19 @@ with and without the code (roadmap 6.8, D19).
 - A processor names the fonts in `subset`: `{ type: 'fonts', formats: ['.woff', '.woff2'] }`
   on the web, nothing on iOS and Android. A browser downloads a font, so its size is paid
   on every first visit; an app has its fonts in the bundle, and gets them whole.
+- `axes` of `chassis.subset` fixes axes of a variable font at a value, per brand:
+  `{ "<brand>": { "opsz": 14 } }` (roadmap D25). `subsetJob()` gets the brand of the job, and
+  `subset()` of the subsetter fixes each axis of the setting that the font has, with
+  `variationAxes` of `subset-font`, in the pass that drops the characters. `fontAxes()` reads
+  the `fvar` table for it. A font without the axis is subsetted as without the setting, a
+  value outside the axis of a font is an error of the build that names the file, and an axis
+  that no font of a brand has is a warning. `resolveSubset()` takes the brands of the
+  configuration and fails on another name.
+- The value is per brand, since it belongs to the family: one value for a run would reach
+  the display font of `sinefil`, which has an optical size axis of its own. It is not per
+  file, which would be a manifest. The axes are fixed only with the option, so a default
+  build keeps every axis: a page that loads Inter from it shows the display cut above 14
+  pixels, unless its styles set `font-optical-sizing: none`.
 - A font keeps its name and its format, so the stylesheets of `fonts/` and every reader of
   the output are untouched. Only `fonts/` is read: the icon font of `icons/` has its glyphs
   in a private range and would lose them all.
@@ -420,11 +433,13 @@ with and without the code (roadmap 6.8, D19).
   with a Reserved Font Name may not keep that name once it is changed; whether a family
   declares one is for its brand to check.
 - On this repository, on the maintainer's machine, on 2026-10-11: `--subset` writes the 46
-  fonts of the two web jobs again and saves 1.6 MB of 4.1 MB. `text-normal.woff2` of the
+  fonts of the two web jobs again and saves 1.8 MB of 4.1 MB. `text-normal.woff2` of the
   default brand goes from 111 KB to 57 KB, and to 30 KB with `--subset latin`; the variable
-  `text.woff2` goes from 349 KB to 208 KB, and to 105 KB. A variable font keeps its axes:
-  the `fvar` table of each of the nine was read after the subset. With the 36 fonts of
-  session 6.8, only `fonts/` of the web jobs differed from a default build,
+  `text.woff2` goes from 349 KB to 136 KB, and to 69 KB, with its optical size fixed, where
+  it was 208 KB and 105 KB with the axis. The `fvar` table of each of the nine variable
+  fonts was read after the subset: `text.woff2` and `text-italic.woff2` of the `chassis`
+  brand have the weight axis only, and the seven others the axes of their source. With the
+  36 fonts of session 6.8, only `fonts/` of the web jobs differed from a default build,
   `pnpm assets:verify` passed on the output, and each font loaded in a browser as a
   `FontFace`, drew the Turkish letters and kept the ligatures of the code font.
 

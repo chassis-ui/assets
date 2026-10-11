@@ -206,6 +206,8 @@ The [fonts]([[docsref:/asset-types/fonts#platform-output]]) page has the roles, 
 
 A font of the default output has every character of its source file. If your pages are written in a few scripts only, build with `--subset`: the same files, under the same names, hold the characters of the ranges you name and are smaller to download. See [Font subsets]([[docsref:/getting-started/build-system#font-subsets]]).
 
+The text font of the `chassis` brand, Inter, has an optical size axis, and a browser sets it from the font size: text above 14 pixels is drawn in a narrower cut, a heading of 57 pixels by about 7%. A build with `--subset` fixes the axis at 14 for the brand, so every size shows the same cut. With a default build, `font-optical-sizing: none` in your styles gives the same look.
+
 ### Font stylesheets
 
 The stylesheets `text.css`, `display.css` and `code.css` of a brand declare the fonts of their role, under the family name of the font. A stylesheet declares the variable font of the role where the family has one, and one file per weight where it has none. Link them and the declarations are done:

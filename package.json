@@ -27,6 +27,13 @@
           "android"
         ]
       }
+    },
+    "subset": {
+      "axes": {
+        "chassis": {
+          "opsz": 14
+        }
+      }
     }
   },
   "bin": {
