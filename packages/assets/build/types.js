@@ -54,6 +54,9 @@
  * @property {boolean|string[]} [subset] - Write the fonts a processor names in `subset`
  *   again with the characters of these ranges only; true takes the ranges of
  *   `chassis.subset`, or the defaults. Needs the package `subset-font`
+ * @property {boolean|null} [split] - With `subset`, write a font that a stylesheet declares
+ *   once per range too, and the rules of the stylesheet once per range. Null or nothing
+ *   takes `split` of `chassis.subset`, or false
  */
 
 /**

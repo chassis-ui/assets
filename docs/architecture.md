@@ -79,7 +79,7 @@ For each job, in order:
    wrote. See "Optimization and formats".
 7. **Subset**, only with `--subset` and only for a processor that has `subset`: each WOFF
    and WOFF2 file under `fonts/` of the job is written again under its name with the
-   characters of the ranges only, and with `split` of `chassis.subset` once per range
+   characters of the ranges only, and with `--split` once per range
    beside itself, with the stylesheets of the folder (`subsetFonts()`, `subsetJob()`). See
    "Font subsets".
 8. **Convert**, only with `--vector-drawables` and only for a processor that has
@@ -200,6 +200,7 @@ on the fixture, which has its own configuration.
 | `--optimize`                             | Write the images again under their names where that makes them smaller. Off by default. Needs `pnpm install`.                                                                                                                   |
 | `--webp`, `--avif`                       | Write the PNG and JPEG images in a second format: WebP beside the file on the web and in place of it on Android, AVIF beside the file on the web. Off by default. Need `pnpm install`.                                          |
 | `--subset [range...]`                    | Write the WOFF and WOFF2 fonts of the web again under their names with the characters of the ranges only. Off by default. Needs `pnpm install`.                                                                                 |
+| `--split`, `--no-split`                  | With `--subset`, write each font that a stylesheet declares once per range too, or in one file. Default: `split` of `chassis.subset`, or one file.                                                                              |
 | `--quiet`, `--help`, `--version`         | Errors only; the options; the version of `packages/assets/package.json`.                                                                                                                                                        |
 | `pnpm assets:site`                       | `pnpm assets --clean --brand chassis --app docs`: the job the sites consume.                                                                                                                                                    |
 | `pnpm assets:analyze [filters]`          | The analyzer over `source/` and `dist/`.                                                                                                                                                                                        |
@@ -225,7 +226,7 @@ the roadmap.
 - Names: kebab-case, lowercase; `@2x` and `@3x` kept. `MyFont@2x.woff2` becomes
   `my-font@2x.woff2`. A dot inside a name becomes a hyphen: `chassis-icons.min.css` becomes
   `chassis-icons-min.css`, `default.tokens.json` becomes `default-tokens.json`.
-- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare the variable font of their role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file; for a family without a variable font, one `@font-face` per file by weight. The files by weight, `<role>-<weight>.woff2`, are beside the variable files. A build with `--subset` and `split` of `chassis.subset` adds a file per range beside each declared font, `<name>-<range>.woff2`, and writes the rules of the stylesheets once per range. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
+- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare the variable font of their role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file; for a family without a variable font, one `@font-face` per file by weight. The files by weight, `<role>-<weight>.woff2`, are beside the variable files. A build with `--subset` and `--split` adds a file per range beside each declared font, `<name>-<range>.woff2`, and writes the rules of the stylesheets once per range. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
 - `images/`, `icons/` and every other folder: every file.
 - The docs job, `dist/web/docs/chassis/`, is what every Chassis site copies to `/static/`. The
   files it reads are listed in the roadmap's consumer contract.
@@ -420,8 +421,10 @@ with and without the code (roadmap 6.8, D19).
 - A font keeps its name and its format, so the stylesheets of `fonts/` and every reader of
   the output are untouched. Only `fonts/` is read: the icon font of `icons/` has its glyphs
   in a private range and would lose them all.
-- `split` of `chassis.subset` writes a font in a file per range too (roadmap D27, which
-  takes back a part of D19). `planSplit()` reads the stylesheets that the processor names in
+- `--split` writes a font in a file per range too (roadmap D27, which takes back a part of
+  D19). `--split` and `--no-split` win over `split` of `chassis.subset`, as the ranges of
+  the option win over `ranges`: the repository has a default, and each build decides.
+  `--split` without `--subset` fails before the output is removed. `planSplit()` reads the stylesheets that the processor names in
   `subset.stylesheets`, `.css` and `.scss`, with `findFontFaces()` of `font-faces.js`. A
   `@font-face` rule is split when it has no `unicode-range` of its own and every `url()` of
   its `src` is a font of the folder that is subsetted. Each font of such a rule is

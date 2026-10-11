@@ -208,7 +208,7 @@ A font of the default output has every character of its source file. If your pag
 
 The text font of the `chassis` brand, Inter, has an optical size axis, and a browser sets it from the font size: text above 14 pixels is drawn in a narrower cut, a heading of 57 pixels by about 7%. A build with `--subset` fixes the axis at 14 for the brand, so every size shows the same cut. With a default build, `font-optical-sizing: none` in your styles gives the same look.
 
-With `split` of `chassis.subset`, the same build writes each declared font once per range too, such as `text-latin.woff2` and `text-latin-ext.woff2`, and the stylesheets get a rule per range. Your pages stay as they are: link the stylesheets, and a browser downloads the file of a range only for a page that has a character of it. If you preload a font, name the file of the range.
+Add `--split` to the build, and it writes each declared font once per range too, such as `text-latin.woff2` and `text-latin-ext.woff2`, and the stylesheets get a rule per range. Your pages stay as they are: link the stylesheets, and a browser downloads the file of a range only for a page that has a character of it. If you preload a font, name the file of the range.
 
 ### Font stylesheets
 

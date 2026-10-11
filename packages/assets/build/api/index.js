@@ -261,6 +261,8 @@ export class ChassisAssets {
    * @param {boolean} [options.avif] - Write the PNG and JPEG images of the web as AVIF too
    * @param {boolean|string[]} [options.subset] - Write the fonts of the web again with the
    *   characters of these ranges only; true takes the ranges of the configuration
+   * @param {boolean|null} [options.split] - With `subset`, write a font in a file per range
+   *   too; null takes `split` of the configuration
    * @returns {Promise<import('../types.js').BuildStats>} The statistics of the run
    */
   async build(options = {}) {
@@ -278,7 +280,8 @@ export class ChassisAssets {
       optimize = false,
       webp = false,
       avif = false,
-      subset = false
+      subset = false,
+      split = null
     } = options
     return generateAssets({
       brands,
@@ -295,6 +298,7 @@ export class ChassisAssets {
       webp,
       avif,
       subset,
+      split,
       cwd: this.cwd,
       out: this.out
     })

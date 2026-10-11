@@ -66,8 +66,12 @@ Options:
                          names with the characters of the ranges only, such as latin
                          or U+0370-03FF. Default: \`chassis.subset\`, or latin and
                          latin-ext. Fixes the axes of a variable font that \`axes\` of
-                         \`chassis.subset\` names for a brand, and with its \`split\`
-                         writes a font file per range. Needs \`pnpm install\`
+                         \`chassis.subset\` names for a brand. Needs \`pnpm install\`
+  --split                With --subset, write each font that a stylesheet declares
+                         once per range too, as text-latin.woff2, and the rules of
+                         the stylesheet once per range, with their unicode-range
+  --no-split             With --subset, write a font in one file. Default: \`split\`
+                         of \`chassis.subset\`, or one file
   --quiet                Print errors only
   --help, -h             Print this help
   --version, -v          Print the version
@@ -223,6 +227,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     webp: false,
     avif: false,
     subset: /** @type {boolean|string[]} */ (false),
+    split: /** @type {boolean|null} */ (null),
     help: false,
     version: false
   }
@@ -282,6 +287,10 @@ export function parseArgs(argv = process.argv.slice(2)) {
       const parsed = values(i)
       options.subset = parsed.list.length > 0 ? parsed.list : true
       i = parsed.i
+    } else if (arg === '--split') {
+      options.split = true
+    } else if (arg === '--no-split') {
+      options.split = false
     } else if (arg === '--quiet') {
       options.quiet = true
     } else if (arg === '--help' || arg === '-h') {
@@ -1123,12 +1132,17 @@ export async function generateAssets(options = {}) {
   // The ranges are checked and the package is loaded before anything is removed
   /** @type {FontTools|null} */
   let fontTools = null
+  if (options.split === true && !run.subset) {
+    throw new Error('--split needs --subset: a font is split by the ranges of a subset')
+  }
   if (run.subset) {
     const settings = resolveSubset(
       config.subset,
       Array.isArray(options.subset) ? options.subset : [],
       config.brands
     )
+    // The option wins over `split` of the configuration, as the ranges of the option do
+    if (typeof options.split === 'boolean') settings.split = options.split
     if (!jobs.some((job) => platformProcessors[job.platform].subset)) {
       stats.warnings.push(
         '--subset changes nothing: no selected job has a platform whose fonts are subsetted'

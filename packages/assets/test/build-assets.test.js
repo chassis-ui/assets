@@ -246,6 +246,7 @@ describe('parseArgs()', () => {
     webp: false,
     avif: false,
     subset: false,
+    split: null,
     help: false,
     version: false
   }
@@ -274,6 +275,8 @@ describe('parseArgs()', () => {
     [['--webp', '--avif'], { webp: true, avif: true }],
     [['--subset'], { subset: true }],
     [['--subset', '--quiet'], { subset: true, quiet: true }],
+    [['--subset', 'latin', '--split'], { subset: ['latin'], split: true }],
+    [['--no-split', '--subset'], { subset: true, split: false }],
     [
       ['--subset', 'latin', 'U+0370-03FF', '--brand', 'alpha'],
       { subset: ['latin', 'U+0370-03FF'], brands: ['alpha'] }

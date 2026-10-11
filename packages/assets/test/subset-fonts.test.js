@@ -964,6 +964,33 @@ describe('generateAssets() with subset', () => {
     expect(stats.fontRangeFiles).toBe(4)
   })
 
+  test('the split option wins over the setting, both ways', async () => {
+    const on = await build(root(undefined, { sheet: SHEET }), { subset: true, split: true })
+    expect(on.stats.fontRangeFiles).toBe(4)
+    const off = await build(root({ split: true }, { sheet: SHEET }), { subset: true, split: false })
+    expect(off.stats.fontRangeFiles).toBe(0)
+    const whole = await build(root(undefined, { sheet: SHEET }), { subset: true })
+    expect(compareDirs(whole.out, off.out)).toEqual({ missing: [], extra: [], changed: [] })
+    // Without a value the setting decides
+    const asSet = await build(root({ split: true }, { sheet: SHEET }), {
+      subset: true,
+      split: null
+    })
+    expect(asSet.stats.fontRangeFiles).toBe(4)
+  })
+
+  test('the split option without the subset fails before the output is removed', async () => {
+    const out = tempDir()
+    fs.writeFileSync(path.join(out, 'kept.txt'), 'from an earlier build')
+    await expect(generateAssets({ cwd: root(), quiet: true, split: true, out })).rejects.toThrow(
+      '--split needs --subset'
+    )
+    expect(listFiles(out)).toEqual(['kept.txt'])
+    // Without the split there is nothing to ask for
+    const { stats } = await build(root({ split: true }, { sheet: SHEET }), { split: false })
+    expect(stats.fontRangeFiles).toBe(0)
+  })
+
   test('a split that is not true or false fails before the output is removed', async () => {
     const out = tempDir()
     fs.writeFileSync(path.join(out, 'kept.txt'), 'from an earlier build')
@@ -1079,6 +1106,27 @@ describe('pnpm assets --subset', () => {
     // The Greek font has no Latin letter, and one file
     expect(result.stdout).toContain('Wrote 5 font files per range, for 1 stylesheets')
     expect(result.stdout).toMatch(/2 fonts subsetted, \d+ KB saved, 5 files per range\n/)
+  })
+
+  test('--split and --no-split decide for the run, whatever the setting', () => {
+    const run = (/** @type {string} */ cwd, /** @type {string[]} */ args) =>
+      spawnSync(process.execPath, [entry, '--cwd', cwd, '--out', tempDir(), ...args], {
+        encoding: 'utf-8'
+      })
+    const plain = root(undefined, { sheet: SHEET })
+    const set = root({ split: true }, { sheet: SHEET })
+
+    const on = run(plain, ['--subset', 'latin', 'latin-ext', '--split'])
+    expect(on.status).toBe(0)
+    expect(on.stdout).toMatch(/2 fonts subsetted, \d+ KB saved, 4 files per range\n/)
+    const off = run(set, ['--no-split', '--subset'])
+    expect(off.status).toBe(0)
+    expect(off.stdout).toMatch(/2 fonts subsetted, \d+ KB saved\n/)
+    expect(run(set, ['--subset']).stdout).toContain('4 files per range')
+
+    const alone = run(plain, ['--split'])
+    expect(alone.status).toBe(1)
+    expect(alone.stderr).toContain('--split needs --subset')
   })
 
   test('takes the ranges as values, before another option', async () => {
