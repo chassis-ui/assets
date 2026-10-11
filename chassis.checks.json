@@ -59,7 +59,7 @@
     "allow": [
       {
         "pattern": "*/*/other/default.tokens.json",
-        "reason": "a Figma variables export, kept by D7 of the roadmap; the web output is default-tokens.json"
+        "reason": "a Figma variables export, kept by decision D7; the web output is default-tokens.json"
       },
       {
         "pattern": "*/*/icons/icons/chassis-icons.min.css",

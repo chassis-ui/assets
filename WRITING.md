@@ -4,7 +4,7 @@ How to write the asset type, guide and platform docs of chassis-assets. This gui
 
 **The guide is the reference, not the existing pages.** Most pages predate it and break several of its rules. Don't copy a convention from a page because the page does it; check it here. Migrate a page when editing it, and don't gate unrelated PRs on the migration.
 
-**The pages are the specification of the build.** A page that says what the build does is a promise: when the build does less, the build is fixed, and when the page describes something the build never did, the page is corrected. See the principles of [ref/ROADMAP.md](ref/ROADMAP.md#principles).
+**The pages are the specification of the build.** A page that says what the build does is a promise: when the build does less, the build is fixed, and when the page describes something the build never did, the page is corrected. See the rules of [AGENTS.md](AGENTS.md#rules).
 
 ## How this guide is organized
 
@@ -184,7 +184,7 @@ find dist/android/demo/chassis -name 'ic_arrow_right_solid*'
 
 **Trees are copied from a build.** A tree of `dist/` shows files that a build wrote, with the names and folders it wrote them in. Shorten a tree by leaving lines out and ending a folder with `└── ...`, never by editing a name. Check an output name by building: the web name of `HeroBanner@2x.png` is whatever `pnpm assets` writes, not what the rule suggests.
 
-**A statement about the build is checked by running it.** "A filtered build keeps `dist/`", "the build fails on a Git LFS pointer": run the command, read what it prints, then write the sentence. When the page and the build disagree, see the principles of the roadmap for which one changes.
+**A statement about the build is checked by running it.** "A filtered build keeps `dist/`", "the build fails on a Git LFS pointer": run the command, read what it prints, then write the sentence. When the page and the build disagree, see the rules of [AGENTS.md](AGENTS.md#rules) for which one changes.
 
 **What stays out of prose and tables:**
 
@@ -203,7 +203,7 @@ A doc that states a number makes a promise the next commit can break. Don't coun
 
 **Configuration.** The brands and apps in the `chassis` block of `package.json` are the committed configuration, not the system. Name them as such ("the configured web app is `docs`"), and use them in examples, not in definitions, so an adopter with another configuration can follow. The same goes for `chassis.checks.json`: its contracts are those of the Chassis sites.
 
-**Planned features.** A feature the build does not have is named as planned, in one place, and nowhere described as if the build had it. The optional features are Phase 6 of [ref/ROADMAP.md](ref/ROADMAP.md).
+**Planned features.** A feature the build does not have is named as planned, in one place, and nowhere described as if the build had it. What is planned is in [ref/OPEN.md](ref/OPEN.md).
 
 **The output contract is in [docs/architecture.md](docs/architecture.md#output-contract).** A site page that describes what the build writes must agree with it. When they disagree, run the build, then fix the one that is wrong.
 

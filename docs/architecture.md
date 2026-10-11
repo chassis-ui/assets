@@ -1,11 +1,11 @@
 # Architecture
 
 How the build of Chassis Assets works, as it is. Every claim here points at a line of code or
-at a page of the documentation site; where the two disagree, the roadmap's findings say which
-one is corrected. This document describes; the pages in `packages/site/content/docs/` specify.
+at a page of the documentation site; where the two disagree, the pages win, by the rules of
+[AGENTS.md](../AGENTS.md#rules). This document describes; the pages in `packages/site/content/docs/` specify.
 
-Written in session 1.1 of [the roadmap](../ref/ROADMAP.md), 2026-09-30, at `develop`
-`2bcbd96`.
+First written on 2026-09-30, at `develop` `2bcbd96`. A D-number is a decision of
+[decisions.md](decisions.md).
 
 ## The layout
 
@@ -18,13 +18,13 @@ packages/site/        `chassis-assets-site`: the documentation site
 build/                The site's checks and the version script
 ```
 
-A pnpm workspace, as `chassis-tokens` (roadmap D3). `source/`, `dist/` and the configuration
+A pnpm workspace, as `chassis-tokens` (D3). `source/`, `dist/` and the configuration
 stay at the root, where the designer and the consumers find them. The build runs from the
 root scripts with `node packages/assets/build/cli.js <command>`, never through
 `pnpm --filter` or a package name, and imports Node.js modules only: `pnpm install --ignore-workspace`, which
 is what `chassis-docs vendor` runs in a site, installs the root package and none of the
-build's or the site's packages, and `pnpm assets:site` works with nothing installed at all
-(Principle 8). CI builds that way first, in the Assets job.
+build's or the site's packages, and `pnpm assets:site` works with nothing installed at all.
+CI builds that way first, in the Assets job.
 
 The repository root of a run is the nearest folder, from the working directory upward, whose
 `package.json` has a `chassis` block (`findRoot()` in `root.js`), so the build finds
@@ -182,7 +182,7 @@ the build-system page describes; it may add `processImage()` as Android does, wi
   validator reads the block too.
 
 Both are settings of a team and not of the build: the tables they add to or replace stay in
-the modules, and a build without the two keys is the build it was (roadmap D29). The output
+the modules, and a build without the two keys is the build it was (D29). The output
 contract below is the one of a configuration without `formats`.
 
 `chassis.checks.json`, beside `package.json`, holds what the checks verify. It is optional,
@@ -190,13 +190,13 @@ contract below is the one of a configuration without `formats`.
 
 - `contracts`: for a job, `<platform>/<app>/<brand>`, the files a consumer reads by name from
   its output, as a list of entries with `reader`, `files` and `sets`. Read by
-  `pnpm assets:contract`. The entries of this repository are those of the Chassis sites: the
-  roadmap's consumer contract, as data.
+  `pnpm assets:contract`. The entries of this repository are those of the Chassis sites:
+  what the [README](../README.md#what-consumers-rely-on) says consumers rely on, as data.
 - `lint.allow`: the source files that break a naming rule and are kept, each with `pattern`
   and `reason`. Read by `pnpm assets:lint:source`.
 
-Nothing in `packages/assets/build/` names a brand, an app or a file of this repository
-(roadmap Principle 9). A team that adopts the repository changes `source/`, the root
+Nothing in `packages/assets/build/` names a brand, an app or a file of this repository,
+a rule of [AGENTS.md](../AGENTS.md#rules). A team that adopts the repository changes `source/`, the root
 `package.json` and `chassis.checks.json`; the build, the checks and their tests stay as they are, and the tests run
 on the fixture, which has its own configuration.
 
@@ -240,7 +240,7 @@ A filter value that is not configured, or filters that together select no job, f
 
 The layout is `dist/<platform>/<app>/<brand>/<type>/…`, with the subfolders of `source/`
 kept. Changing a path or a name in it is a breaking change while the version is `0.x`, see
-the roadmap.
+[What a version may break](../.github/CONTRIBUTING.md#what-a-version-may-break).
 
 ### Web
 
@@ -250,13 +250,13 @@ the roadmap.
 - `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare the variable font of their role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file; for a family without a variable font, one `@font-face` per file by weight. The files by weight, `<role>-<weight>.woff2`, are beside the variable files. A build with `--subset` and `--split` adds a file per range beside each declared font, `<name>-<range>.woff2`, and writes the rules of the stylesheets once per range. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
 - `images/`, `icons/` and every other folder: every file.
 - The docs job, `dist/web/docs/chassis/`, is what every Chassis site copies to `/static/`. The
-  files it reads are listed in the roadmap's consumer contract.
+  files it reads are listed in `contracts` of `chassis.checks.json`.
 
 ### iOS
 
 - Names: snake_case, lowercase; `@2x` and `@3x` kept.
 - `fonts/`: `.ttf`, `.otf` and the `.txt` license files.
-- `images/`: every format except `.webp`. With `--asset-catalog`, in the image sets of `Assets.xcassets` (roadmap 6.3, D10).
+- `images/`: every format except `.webp`. With `--asset-catalog`, in the image sets of `Assets.xcassets` (D10).
 - `icons/`: `.svg`, `.pdf` and `.png`. The icon font and its stylesheets are left out.
 - Other folders: every file.
 
@@ -269,14 +269,14 @@ the roadmap.
   `drawable-mdpi/` (`@1x`), `drawable-hdpi/` (`@1.5x`), `drawable-xhdpi/` (`@2x`),
   `drawable-xxhdpi/` (`@3x`) or `drawable-xxxhdpi/` (`@4x`); a file without one goes into
   `drawable/`. Both are created under the folder the file came from, so `images/logo/x@2x.png`
-  becomes `images/logo/drawable-xhdpi/x.png` (roadmap F4, D5).
-- `icons/`: `.svg` only, as SVG. With `--vector-drawables`, as vector drawables: the same folder and name, `.xml` (roadmap 6.2, D9). A PNG icon is not kept, since the build places only `images/` in density folders (D15).
-- With `--res`: the fonts in `res/font/`, the raster images and the vector drawables in `res/drawable/` and the density folders, without subfolders (roadmap 6.4, D11).
+  becomes `images/logo/drawable-xhdpi/x.png` (D5).
+- `icons/`: `.svg` only, as SVG. With `--vector-drawables`, as vector drawables: the same folder and name, `.xml` (D9). A PNG icon is not kept, since the build places only `images/` in density folders (D15).
+- With `--res`: the fonts in `res/font/`, the raster images and the vector drawables in `res/drawable/` and the density folders, without subfolders (D11).
 - Other folders: every file.
 
 ### Vector drawables
 
-`pnpm assets --vector-drawables` is the first option of Phase 6 of the roadmap: off by
+`pnpm assets --vector-drawables` is the first of the optional features: off by
 default, and the default output is the same file for file with and without the code.
 
 - The processor says what is converted: `vectorDrawables: { type: 'icons', from: '.svg', to: '.xml' }`
@@ -300,7 +300,7 @@ default, and the default output is the same file for file with and without the c
 
 ### Watch
 
-`pnpm assets --watch` builds, then builds again on a change under `source/` (roadmap 6.7).
+`pnpm assets --watch` builds, then builds again on a change under `source/`.
 
 - One watcher of Node.js on `source/`, recursive, which Linux has since Node.js 20. No
   package.
@@ -323,7 +323,7 @@ default, and the default output is the same file for file with and without the c
 
 ### File filters
 
-`--type` and `--include` build a part of a job (roadmap 6.6, D13). Without them the build
+`--type` and `--include` build a part of a job (D13). Without them the build
 is as it was.
 
 - Why both: a site reads a few megabytes of the docs job, and the type folders do not
@@ -361,7 +361,7 @@ is as it was.
 ### Optimization and formats
 
 `pnpm assets --optimize`, `--webp` and `--avif` are off by default, and the default output
-is the same file for file with and without the code (roadmap 6.5, D12).
+is the same file for file with and without the code (D12).
 
 - The packages are `sharp` for the rasters and `svgo` for SVG, `optionalDependencies` of
   `packages/assets/package.json`, loaded by `loadEncoders()` when an option is given and
@@ -371,7 +371,7 @@ is the same file for file with and without the code (roadmap 6.5, D12).
 - The settings are `chassis.optimize` of `package.json` over `OPTIMIZE_DEFAULTS`, checked by
   `resolveSettings()` only when an option is given. The block turns nothing on. The options
   of the command carry no numbers, so every build of a commit writes the same files, and
-  there is no setting per file, which would be a manifest (principle 1).
+  there is no setting per file, which would be a manifest (the build stays file-driven).
 - Without settings no visible pixel changes. A PNG is encoded again with the compression
   level only: `effort` and `quality` of `sharp` turn the palette on, which changed 190,000
   pixels of one screenshot of this repository. A JPEG is left alone, since it cannot be
@@ -411,7 +411,7 @@ is the same file for file with and without the code (roadmap 6.5, D12).
 ### Font subsets
 
 `pnpm assets --subset` is off by default, and the default output is the same file for file
-with and without the code (roadmap 6.8, D19).
+with and without the code (D19).
 
 - The package is `subset-font`, the subsetter of HarfBuzz as WebAssembly, an
   `optionalDependencies` entry of `packages/assets/package.json`, loaded by
@@ -426,12 +426,12 @@ with and without the code (roadmap 6.8, D19).
   range written as `U+0370-03FF`. `symbols2` has the box drawing and the block characters,
   `U+2500-259F`, which `symbols` leaves out, and eight spaces that `latin` has too: a text
   font that has the spaces gets a `symbols2` file of them with `--split`, which no page
-  loads when `latin` is named before it. There is no setting per file, which would be a manifest (principle 1).
+  loads when `latin` is named before it. There is no setting per file, which would be a manifest (the build stays file-driven).
 - A processor names the fonts in `subset`: `{ type: 'fonts', formats: ['.woff', '.woff2'] }`
   on the web, nothing on iOS and Android. A browser downloads a font, so its size is paid
   on every first visit; an app has its fonts in the bundle, and gets them whole.
 - `axes` of `chassis.subset` fixes axes of a variable font at a value, per brand:
-  `{ "<brand>": { "opsz": 14 } }` (roadmap D25). `subsetJob()` gets the brand of the job, and
+  `{ "<brand>": { "opsz": 14 } }` (D25). `subsetJob()` gets the brand of the job, and
   `subset()` of the subsetter fixes each axis of the setting that the font has, with
   `variationAxes` of `subset-font`, in the pass that drops the characters. `fontAxes()` reads
   the `fvar` table for it. A font without the axis is subsetted as without the setting, a
@@ -446,7 +446,7 @@ with and without the code (roadmap 6.8, D19).
 - A font keeps its name and its format, so the stylesheets of `fonts/` and every reader of
   the output are untouched. Only `fonts/` is read: the icon font of `icons/` has its glyphs
   in a private range and would lose them all.
-- `--split` writes a font in a file per range too (roadmap D27, which takes back a part of
+- `--split` writes a font in a file per range too (D27, which takes back a part of
   D19). `--split` and `--no-split` win over `split` of `chassis.subset`, as the ranges of
   the option win over `ranges`: the repository has a default, and each build decides.
   `--split` without `--subset` fails before the output is removed. `planSplit()` reads the stylesheets that the processor names in
@@ -498,7 +498,7 @@ with and without the code (roadmap 6.8, D19).
   `split` and the ranges `latin`, `latin-ext` and `U+2500-257F`, 25 files are written for
   the six stylesheets of the two brands, and `text.woff2` of `chassis`, 136 KB, is
   `text-latin.woff2` of 69 KB and `text-latin-ext.woff2` of 90 KB: a page in English loads
-  the first alone. With the 36 fonts of session 6.8, only `fonts/` of the web jobs differed
+  the first alone. With the 36 fonts the source had on 2026-10-01, only `fonts/` of the web jobs differed
   from a default build, `pnpm assets:verify` passed on the output, and each font loaded in
   a browser as a `FontFace`, drew the Turkish letters and kept the ligatures of the code
   font.
@@ -554,7 +554,7 @@ page: a rule of a stylesheet names the family of its file and the weights it hol
   not this file. One case is known and kept, the variable code font beside the code family
   of `sinefil`; see "Known oddities".
 - The lint reads no token and no file of another repository: a stylesheet and the font
-  beside it are compared with each other (roadmap D26).
+  beside it are compared with each other (D26).
 
 ### Res folder
 
@@ -667,16 +667,16 @@ steps are in `.github/CONTRIBUTING.md`, "Releases".
   `gh release create`, with one `chassis-assets-<platform>-<app>-<brand>-<version>.zip` per
   job. It installs the packages
   of the build only, for `sharp` and `svgo`.
-- Nothing is published to npm (roadmap D2). `@chassis-ui/assets` is private.
+- Nothing is published to npm (D2). `@chassis-ui/assets` is private.
 
 The tags before this pipeline were made by `tag-release.yml`, which tagged `app/docs` when
 a push changed the version there. `v0.1.6` is an annotated tag. `v0.1.8` was moved to its
 version commit, `a4b6445`, on 2026-10-01. `v0.1.7` points at `867611c`, a commit of 0.1.6;
-its version commit is `992e47e` (roadmap T4).
+its version commit is `992e47e`.
 
 ## Known oddities
 
-Kept on purpose until a decision of the roadmap says otherwise. Do not fix one without a
+Kept on purpose until a [decision](decisions.md) says otherwise. Do not fix one without a
 changeset that says what breaks.
 
 - A dot inside a source name becomes a hyphen on the web (`chassis-icons-min.css`,
@@ -684,14 +684,14 @@ changeset that says what breaks.
   names.
 - Eight screenshots under `images/figma/` carry a Figma export number after the resolution
   indicator, `card-orientation-top-2x-1.png`. The web build wrote that name from
-  `card-orientation-top@2x-1.png`, and session 1.2 renamed the sources to the output names,
+  `card-orientation-top@2x-1.png`, and the sources were renamed to the output names on 2026-09-30,
   so `chassis-figma` keeps reading them. They are not `@2x` files to the build.
 - `icons/icons/chassis-icons.json` of the icon package is copied to the web output with the
   rest of the package.
 - A collision of two source files on one output name warns and the file copied last wins.
 - A brand whose family of a role has no variable font keeps the variable file of the default
   brand in its output: `fonts/code.woff2` of `dist/web/docs/sinefil/` is the code font of
-  the default brand, and `code.css` of the brand does not load it (roadmap D24).
+  the default brand, and `code.css` of the brand does not load it (D24).
   `pnpm assets:lint:source` warns about it, and about `code.ttf` beside it.
 - On Android, a file with an indicator outside `images/` loses the indicator and gets no
   density folder: `data/poster@2x.png` is `data/poster.png`. Beside a `poster.png` that is a
@@ -734,38 +734,35 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 ## History
 
 - 0.1.0 to 0.1.8: the build as described here, one `package.json`, tests as scripts.
-- 2026-09-29 to 2026-09-30: a rewrite was started and reverted; see
-  `ref/ROADMAP-2026-09-29-superseded.md`. The discarded work is at
-  `archive/rewrite-2026-09`.
-- 2026-09-30: this document and the roadmap that governs the next changes.
-- 2026-09-30: the tests become a Vitest suite on a fixture, with a golden baseline (roadmap
-  session 2.1).
+- 2026-09-29 to 2026-09-30: a rewrite was started and reverted. Its roadmap is in the
+  history, `git show a7c4c42:ref/ROADMAP-2026-09-29-superseded.md`, and the discarded work is
+  at `archive/rewrite-2026-09`.
+- 2026-09-30: this document, and a roadmap for the changes below. The roadmap was closed and
+  deleted on 2026-10-12: its last text is `git show a7c4c42:ref/ROADMAP.md`, its decisions
+  are in [decisions.md](decisions.md), and what it left is in [ref/OPEN.md](../ref/OPEN.md).
+- 2026-09-30: the tests become a Vitest suite on a fixture, with a golden baseline.
 - 2026-09-30: the consumer contract check, `assets:verify`, the source lint and the type
-  check, all in CI (roadmap session 2.2).
+  check, all in CI.
 - 2026-10-01: a pnpm workspace: the build in `packages/assets/`, the site in `packages/site/`,
-  `source/` and `dist/` at the root, one `cli.js` for the commands (roadmap session 3.1).
+  `source/` and `dist/` at the root, one `cli.js` for the commands.
 - 2026-10-01: Changesets, versions made on `develop`, and a release workflow on `main` that
-  attaches one archive per platform, app and brand (roadmap session 3.2).
+  attaches one archive per platform, app and brand.
 - 2026-10-01: the icons of the default brand are `@chassis-ui/icons` 0.3.1, where they were
-  0.1.0 (roadmap F11).
+  0.1.0.
 - 2026-10-01: every command has `--help`, the README is written from `package.json` and the
-  help texts, and `build/build-site.js`, which nothing called, is deleted (roadmap session
-  4.1).
+  help texts, and `build/build-site.js`, which nothing called, is deleted.
 - 2026-10-01: the consumer contracts and the names the source lint keeps are data of
   `chassis.checks.json`, and the build names nothing of this
-  repository (roadmap session 3.3).
-- 2026-10-01: the contributing guide, the community files, `AGENTS.md` and `WRITING.md`
-  (roadmap session 4.2).
+  repository.
+- 2026-10-01: the contributing guide, the community files, `AGENTS.md` and `WRITING.md`.
 - 2026-10-01: `--vector-drawables`, the first optional feature, and the first package the
-  build loads, only with its option (roadmap 6.2).
-- 2026-10-01: `--asset-catalog`, with a check that compiles the catalogs on a macOS runner
-  (roadmap 6.3).
-- 2026-10-01: `--res`, the Android `res/` layout (roadmap 6.4).
-- 2026-10-01: `--type` and `--include`, and `pnpm assets:lfs` (roadmap 6.6).
-- 2026-10-01: `--watch` (roadmap 6.7), the last option of Phase 6.
-- 2026-10-01: `--subset`, with the ranges in `chassis.subset` (roadmap 6.8).
-- 2026-10-01: `--optimize`, `--webp` and `--avif`, with the settings in `chassis.optimize`
-  (roadmap 6.5). `isEntry()` compares real paths: a build started through a linked folder
+  build loads, only with its option.
+- 2026-10-01: `--asset-catalog`, with a check that compiles the catalogs on a macOS runner.
+- 2026-10-01: `--res`, the Android `res/` layout.
+- 2026-10-01: `--type` and `--include`, and `pnpm assets:lfs`.
+- 2026-10-01: `--watch`.
+- 2026-10-01: `--subset`, with the ranges in `chassis.subset`.
+- 2026-10-01: `--optimize`, `--webp` and `--avif`, with the settings in `chassis.optimize`. `isEntry()` compares real paths: a build started through a linked folder
   did nothing and exited with 0.
 - 2026-10-12: `chassis.ignore` and `chassis.formats`, the two tables of the build that a team
-  sets (roadmap D29).
+  sets (D29).

@@ -110,7 +110,7 @@ describe('DistValidator', () => {
     expect(warnings.some((w) => w.startsWith(warning))).toBe(true)
   })
 
-  test('leaves hidden files out of the naming check (T13)', async () => {
+  test('leaves hidden files out of the naming check', async () => {
     const out = goldenCopy()
     fs.writeFileSync(path.join(out, 'web/site/alpha/images/.DS_Store'), '')
     fs.writeFileSync(path.join(out, 'ios/mobile/alpha/._Icon_file'), '')
@@ -119,7 +119,7 @@ describe('DistValidator', () => {
     expect(ok).toBe(true)
   })
 
-  test('leaves hidden files out of the count of platform folders (F33)', async () => {
+  test('leaves hidden files out of the count of platform folders', async () => {
     const out = goldenCopy()
     fs.writeFileSync(path.join(out, '.DS_Store'), '')
     const validator = new DistValidator({ cwd: FIXTURE, out })

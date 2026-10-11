@@ -22,8 +22,8 @@ packages/
     test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/)
   site/                # chassis-assets-site, the Astro documentation site
 build/                 # repository scripts (releases, the site's HTML checks, the font instancer)
-docs/                  # architecture.md, fonts.md
-ref/ROADMAP.md         # the plan, its principles, the decisions and the session log
+docs/                  # architecture.md, decisions.md, fonts.md
+ref/OPEN.md            # what is left to do, decide or check
 ```
 
 ## Setup and commands
@@ -54,8 +54,8 @@ Run the checks of the area you changed, and report the ones that fail.
 
 ## Rules
 
-The first nine are the principles of [ref/ROADMAP.md](ref/ROADMAP.md#principles). They exist
-because an earlier rewrite broke them and was reverted.
+The first nine are the principles of the project. They exist because an earlier rewrite
+broke them and was reverted.
 
 - **The build stays file-driven.** A designer adds a file to `source/<brand>/<app>/<type>/` and
   the build does the rest. Do not add a manifest, a declaration file or a list that has to be
@@ -93,7 +93,7 @@ And these:
 - **Do not edit the copies of other projects.** `icons/icons/` and `icons/svgs/` under
   `source/default/` are the build output of `@chassis-ui/icons`; refresh them by the steps of
   [docs/architecture.md](docs/architecture.md#refreshing-the-icons). The sibling repositories
-  are read, never edited; work for one goes to "Tasks for the siblings" of the roadmap.
+  are read, never edited; work for one is reported in its repository, not done from here.
 - **Keep the known oddities.** The list in
   [docs/architecture.md](docs/architecture.md#known-oddities) is part of the output contract.
   Do not add an entry to `lint.allow` of `chassis.checks.json` to get past the source lint.
@@ -128,8 +128,10 @@ And these:
 
 - Never push, merge or tag without being asked. Pushing `main` with a new version starts the
   release workflow, and pushing `app/docs` changes what every Chassis site builds. Commit only
-  when the task asks for it; a roadmap session ends with one local commit on `develop`, with
-  the roadmap ticks and the session-log line in it.
+  when the task asks for it, as one local commit on `develop`. A change is recorded by its
+  changeset and its commit. A decision gets an entry in
+  [docs/decisions.md](docs/decisions.md), and what a task leaves undone goes to
+  [ref/OPEN.md](ref/OPEN.md), in the same commit.
 - Do not open a pull request unless asked. The maintainer merges locally into `develop`.
 - Do not edit generated or fetched files: `dist/`, `_site/`, `.cache/`, `node_modules/`.
 - The version is in `packages/assets/package.json`. It and the references to it are written by
@@ -154,5 +156,8 @@ Read the doc of an area before working in it, rather than deriving it from the c
   them
 - [packages/assets/test/README.md](packages/assets/test/README.md): the tests, the fixture and
   the golden output
-- [ref/ROADMAP.md](ref/ROADMAP.md): the plan, the principles, the decisions and the session log
+- [docs/decisions.md](docs/decisions.md): the decisions behind the build, the layout and the
+  releases, which the other documents and the tests cite by number
+- [ref/OPEN.md](ref/OPEN.md): what is left to do, decide or check, and what was considered
+  and left out
 - [WRITING.md](WRITING.md): the style guide of the documentation

@@ -61,8 +61,9 @@ packages/assets/          -> @chassis-ui/assets: the build in build/, its tests 
 packages/site/            -> The documentation site, built with Astro
 build/                    -> Scripts of the repository: releases, the site's checks, the font instancer
 docs/architecture.md      -> How the build works, module by module
+docs/decisions.md         -> The decisions behind the build, by number
 docs/fonts.md             -> How the fonts of a brand are prepared
-ref/ROADMAP.md            -> Planned work on this repository
+ref/OPEN.md               -> What is left to do, decide or check
 .changeset/               -> The changesets of the next version
 ```
 

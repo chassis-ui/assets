@@ -3,7 +3,7 @@
 How the font files of a brand are made and placed in `source/`: for a new brand, a new family
 of a role, or a new version of a family. The names and the formats are the rules of the
 [fonts page](../packages/site/content/docs/asset-types/fonts.mdx); this document is the
-procedure behind the files. Decision D24 of the [roadmap](../ref/ROADMAP.md#decisions) has the
+procedure behind the files. Decision D24 of [decisions.md](decisions.md) has the
 reasons.
 
 The build copies fonts and converts nothing by default, so every file the output needs is a
@@ -76,10 +76,9 @@ Where the files come from:
 - A variable font is whole in `source/`, with every axis of the download. Inter, DM Sans and
   Source Serif 4 have an optical size axis, which a browser sets from the font size. A build
   with `--subset` fixes it at 14 for the `chassis` brand, by `axes` of `chassis.subset` in
-  `package.json`, and leaves it to the `sinefil` brand. Decision D25 of the roadmap.
+  `package.json`, and leaves it to the `sinefil` brand. Decision D25.
 - The files by weight of both brands are written from their variable files, by step 4 with
-  fonttools 4.66.1, on 2026-10-11, each at the weight of its role. Decision D28 of the
-  roadmap.
+  fonttools 4.66.1, on 2026-10-11, each at the weight of its role. Decision D28.
 - The files by weight of the default brand are at the default of every other axis. For Inter
   that is the optical size 14, the cut that `--subset` fixes for the web, so a page and an
   app show the same cut. An iOS app loads the files as `Inter-Regular`,

@@ -41,8 +41,8 @@ merges locally into `develop` too; both ways run the same checks. A commit reach
 Commits follow a loose `<type>(<scope>): <description>` convention:
 
 - **Types in use**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`.
-- **Scopes in use**: `site` for the documentation site, `roadmap` for `ref/ROADMAP.md`; omitted
-  for the build, the assets and changes that span several areas.
+- **Scopes in use**: `site` for the documentation site; omitted for the build, the assets and
+  changes that span several areas.
 - Examples from the history: `fix: make the build do what the pages say`,
   `docs(site): make the pages say what the build does`,
   `test: run the tests with Vitest on a fixture with a golden output`.
@@ -88,8 +88,8 @@ A name that breaks a naming rule on purpose is listed in `lint.allow` of
 
 ## Changing the build
 
-The build in `packages/assets/build/` follows the principles of
-[ref/ROADMAP.md](../ref/ROADMAP.md#principles); please keep them.
+The build in `packages/assets/build/` follows the rules of
+[AGENTS.md](../AGENTS.md#rules); please keep them.
 [docs/architecture.md](../docs/architecture.md) describes the modules, the output contract of
 each platform and the known oddities.
 
@@ -199,7 +199,7 @@ The layout of `dist/`, the names of the files in it and the commands and flags o
 are the public API. Before 1.0, a change that breaks one of them is a `minor` bump, and its
 summary starts with `**Breaking.**`. Everything else is a `patch`.
 
-The [consumer contract](../ref/ROADMAP.md#the-consumer-contract) is not for a version to
+The [consumer contract](../README.md#what-consumers-rely-on) is not for a version to
 break. It is `contracts` in `chassis.checks.json`, and `pnpm assets:contract`
 checks it on every commit.
 

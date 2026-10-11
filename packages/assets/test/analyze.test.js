@@ -2,7 +2,7 @@
  * @file analyze.test.js
  * @description `AssetAnalyzer` of `build/analyze-assets.js` on the fixture and on the golden
  *              output: the counts per type, platform, app and brand, the filters, and the
- *              duplicate the fixture holds on purpose (F8).
+ *              duplicate the fixture holds on purpose.
  */
 
 import fs from 'node:fs'

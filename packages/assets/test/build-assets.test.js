@@ -559,7 +559,7 @@ describe('generateAssets()', () => {
     expect(listFiles(path.join(out, 'web/site/beta/images'))).toContain('my-icon.png')
   })
 
-  test('warns when a renamed file takes the name of a file that keeps its name (F31)', async () => {
+  test('warns when a renamed file takes the name of a file that keeps its name', async () => {
     const root = copyFixture()
     fs.writeFileSync(path.join(root, 'source/default/site/images/my-icon.png'), 'one')
     fs.writeFileSync(path.join(root, 'source/default/site/images/My Icon.png'), 'two')
@@ -570,7 +570,7 @@ describe('generateAssets()', () => {
     expect(images.filter((file) => file === 'my-icon.png')).toHaveLength(1)
   })
 
-  test('warns when Android drops the indicator of two variants outside images/ (F31)', async () => {
+  test('warns when Android drops the indicator of two variants outside images/', async () => {
     const root = copyFixture()
     fs.writeFileSync(path.join(root, 'source/default/mobile/data/poster.png'), 'one')
     fs.writeFileSync(path.join(root, 'source/default/mobile/data/poster@2x.png'), 'two')
@@ -582,7 +582,7 @@ describe('generateAssets()', () => {
     expect(fs.existsSync(path.join(out, 'android/mobile/beta/data/poster.png'))).toBe(true)
   })
 
-  test('warns when two Android images meet in one density folder (F31)', async () => {
+  test('warns when two Android images meet in one density folder', async () => {
     const root = copyFixture()
     fs.writeFileSync(path.join(root, 'source/default/mobile/images/Side Bar@2x.png'), 'one')
     fs.writeFileSync(path.join(root, 'source/default/mobile/images/side-bar@2x.png'), 'two')
@@ -592,7 +592,7 @@ describe('generateAssets()', () => {
     expect(stats.warnings[0]).toMatch(/→ "side_bar\.png"/)
   })
 
-  test('counts a file that a brand overrides once (F32)', async () => {
+  test('counts a file that a brand overrides once', async () => {
     const { out, stats } = await build({ brands: ['alpha'], apps: ['site'] })
     expect(stats.jobs[0].files).toBe(listFiles(path.join(out, 'web/site/alpha')).length)
   })
@@ -723,7 +723,7 @@ describe('dry run', () => {
     expect(fs.existsSync(out)).toBe(false)
     expect(stats.jobs).toEqual([
       // The files of the output: the brand has one file of its own per job, and its
-      // override of a default file is counted once (F32)
+      // override of a default file is counted once
       { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 1 },
       { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 },
       { brand: 'alpha', app: 'mobile', platform: 'android', files: 15 + 1 },
@@ -741,7 +741,7 @@ describe('dry run', () => {
   })
 })
 
-describe('Git LFS pointers (T12)', () => {
+describe('Git LFS pointers', () => {
   function withPointer() {
     const root = copyFixture()
     fs.writeFileSync(path.join(root, 'source/default/site/images/pointer.png'), LFS_POINTER)
