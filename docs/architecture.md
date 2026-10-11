@@ -139,6 +139,7 @@ jobs with their file counts.
 | `build/release-notes.js`                      | Prints the entry of a version in `packages/assets/CHANGELOG.md`, for the text of the GitHub release. `pnpm release:notes`.                                                                                                                                                                                                                                                                                    |
 | `build/release-archives.js`                   | Writes one archive per platform, app and brand of an existing `dist/`, with the `zip` command. `pnpm release:archives`.                                                                                                                                                                                                                                                                                       |
 | `build/check-changeset.js`                    | Fails when the commits since a base change `source/` or `packages/assets/build/` and add no changeset. The Changeset job of CI, on pull requests and on pushes to `develop`.                                                                                                                                                                                                                                  |
+| `build/instance-font.py`                      | Writes a file by weight of a role from the variable font of the role, with fonttools: the font at the values given for its axes and at the default of the others, named as a download by weight is. A step of `docs/fonts.md`, run by hand in a Python environment; no command of `package.json` runs it, and no test.                                                                                        |
 
 The processors are the only platform knowledge. Everything else is the same for every
 platform. A new platform is a new file in `packages/assets/build/processors/` and a key in the registry, as
@@ -498,8 +499,8 @@ page: a rule of a stylesheet names the family of its file and the weights it hol
   or is declared with a range; the weight axis of a file does not hold the weight or the
   range; the file is an italic and `font-style` is not, or the other way round. A rule
   without `font-weight` or `font-style` declares 400 and normal, as a browser reads it.
-- A cut of a family is of the family: `isOfFamily()` takes `Inter 18pt` for `Inter`, since
-  the files by weight of a family with an optical size axis name their cut. The rule would
+- A cut of a family is of the family: `isOfFamily()` takes `DM Sans 18pt` for `DM Sans`,
+  since the files by weight of a download with an optical size axis name their cut. The rule would
   take `Inter Tight` for `Inter` too, which is the price of it.
 - A rule that declares a file that is not in the folder is an error, and so is a declared
   file that is no font. An address of a service, a value that SCSS computes and a Git LFS

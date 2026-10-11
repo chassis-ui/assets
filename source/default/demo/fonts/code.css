@@ -1,5 +1,5 @@
 /* Fira Code, the "code" family of the Chassis typography tokens. */
-/* Weights by role: normal 400, strong 600. */
+/* Weights by role: normal 400, strong 700. */
 
 @font-face {
   font-family: "Fira Code";
@@ -12,7 +12,7 @@
 @font-face {
   font-family: "Fira Code";
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
   font-display: swap;
   src: url("code-strong.woff2") format("woff2");
 }

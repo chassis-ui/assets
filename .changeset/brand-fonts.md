@@ -11,10 +11,9 @@ The brand of `chassis.build.brands` is `sinefil`, with `dist/web/docs/sinefil/`,
 
 Renamed, in `fonts/` of `dist/ios/demo/<brand>/` and `dist/android/demo/<brand>/`: the 16
 files `text_<weight>.otf`, `text_<weight>_italic.otf`, `display_<weight>.otf` and
-`display_<weight>_italic.otf` are `.ttf` files, `text_normal.otf` to `text_normal.ttf`. The
-text font is the 18pt cut of Inter, so its PostScript name is `Inter18pt-Regular` where it was
-`Inter-Regular`. Every brand has its app fonts as TTF, so that a brand file replaces the
-default file of the same name.
+`display_<weight>_italic.otf` are `.ttf` files, `text_normal.otf` to `text_normal.ttf`. Every
+brand has its app fonts as TTF, so that a brand file replaces the default file of the same
+name.
 
 Added to `fonts/` of `dist/web/docs/<brand>/`: the variable fonts `text.woff2`,
 `text-italic.woff2`, `display.woff2`, `display-italic.woff2` and `code.woff2`. A variable font

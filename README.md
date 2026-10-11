@@ -59,7 +59,7 @@ package.json              -> The `chassis` configuration and the commands
 chassis.checks.json       -> What the checks verify: the consumer contracts, the names the lint keeps
 packages/assets/          -> @chassis-ui/assets: the build in build/, its tests in test/
 packages/site/            -> The documentation site, built with Astro
-build/                    -> Scripts of the repository: releases and the site's checks
+build/                    -> Scripts of the repository: releases, the site's checks, the font instancer
 docs/architecture.md      -> How the build works, module by module
 docs/fonts.md             -> How the fonts of a brand are prepared
 ref/ROADMAP.md            -> Planned work on this repository

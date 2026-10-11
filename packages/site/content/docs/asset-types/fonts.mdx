@@ -147,7 +147,7 @@ A `.css` or `.scss` file in `fonts/` is copied to the web output like a font. Th
 
 The rule names the family of the brand and the range of weights the file holds, and loads the file from the folder the stylesheet is in. The stylesheet of a family without a variable font has one rule per file, with the numeric weight of the role. A page that links `fonts/text.css` needs no `@font-face` rule of its own.
 
-`pnpm assets:lint:source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: `Inter 18pt` is declared as `Inter`.
+`pnpm assets:lint:source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: `DM Sans 18pt` is declared as `DM Sans`.
 
 A stylesheet may also load fonts from a service instead of the folder. The build copies it as it is.
 

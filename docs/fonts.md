@@ -7,7 +7,8 @@ procedure behind the files. Decision D24 of the [roadmap](../ref/ROADMAP.md#deci
 reasons.
 
 The build copies fonts and converts nothing by default, so every file the output needs is a
-file of `source/`, prepared once by hand.
+file of `source/`, prepared once by hand. `build/instance-font.py` is the one script of the
+procedure, and no part of the build.
 
 ## What a brand holds
 
@@ -25,9 +26,9 @@ The web app, `source/<brand>/docs/fonts/`, holds for each role:
 | `<role>.css`                                            | Declares the variable files, or the files by weight without one    |
 | `<role>-license.txt`                                    | The license of the family                                          |
 
-The `.woff2` of a font is written from the `.ttf` beside it, by step 4. The files by weight
-of two roles of the default brand are older than that rule; see
-[the families today](#the-families-today).
+The files by weight of a family with a variable font are written from the variable file, by
+step 4, so every file of a role is one version of one design. The `.woff2` of a font is
+written from the `.ttf` beside it, by step 5.
 
 The iOS and Android app, `source/<brand>/demo/fonts/`, holds the files by weight only, as
 `.ttf` and `.woff2`, with a `<role>.css` that declares the files by weight, and the licenses.
@@ -53,14 +54,13 @@ of the brand does not load it. See the known oddities of
 The roles and the weights are those of the font tokens of Chassis Tokens,
 `typography.fontFamily.<role>` and `typography.fontWeight.<role>.<weight>` in
 `source/brand-<brand>/brand-base.json` of that repository. The table has the weight of each
-file by weight, which is the weight of its token with one exception: `strong` of the default
-`code` role, below.
+file by weight, which is the weight of its token.
 
 | Brand     | Role      | Family         | Variable           | elegant | normal | strong | mass |
 | --------- | --------- | -------------- | ------------------ | ------- | ------ | ------ | ---- |
 | `default` | `text`    | Inter          | Upright and italic | 300     | 400    | 600    | 700  |
 | `default` | `display` | Archivo Narrow | Upright and italic | 400     | 500    | 600    | 700  |
-| `default` | `code`    | Fira Code      | Upright            |         | 400    | 600    |      |
+| `default` | `code`    | Fira Code      | Upright            |         | 400    | 700    |      |
 | `sinefil` | `text`    | DM Sans        | Upright and italic | 300     | 400    | 600    | 700  |
 | `sinefil` | `display` | Source Serif 4 | Upright and italic | 300     | 400    | 600    | 700  |
 | `sinefil` | `code`    | IBM Plex Mono  | None               |         | 400    | 700    |      |
@@ -69,29 +69,39 @@ The `text` and `display` roles have an italic of every weight. The `code` role h
 
 Where the files come from:
 
-- Every family is licensed under the SIL Open Font License. The files are the downloads of
-  [Google Fonts](https://fonts.google.com), placed here on 2026-10-11: Inter 4.001, Archivo Narrow
-  3.002, Fira Code 5.002 (the variable file), DM Sans 4.004, Source Serif 4 4.004 and IBM
-  Plex Mono 2.3.
-- A family with an optical size axis has its files by weight in several cuts. The `text` role
-  takes the 18pt cut, `Inter_18pt-Regular.ttf` and `DMSans_18pt-Regular.ttf`. Source Serif 4
-  takes the files without a size in the name.
+- Every family is licensed under the SIL Open Font License. The variable files, and the
+  files of IBM Plex Mono, are the downloads of [Google Fonts](https://fonts.google.com),
+  placed here on 2026-10-11: Inter 4.001, Archivo Narrow 3.002, DM Sans 4.004, Source Serif 4
+  4.004 and IBM Plex Mono 2.3. Fira Code is the one family from elsewhere, below.
 - A variable font is whole in `source/`, with every axis of the download. Inter, DM Sans and
   Source Serif 4 have an optical size axis, which a browser sets from the font size. A build
   with `--subset` fixes it at 14 for the `chassis` brand, by `axes` of `chassis.subset` in
   `package.json`, and leaves it to the `sinefil` brand. Decision D25 of the roadmap.
-- The files by weight of the default `code` role are Fira Code 6.002, from an earlier commit.
-  `code-strong` is the SemiBold, 600, and the tokens give the role 700; task W16 of the
+- The files by weight of both brands are written from their variable files, by step 4 with
+  fonttools 4.66.1, on 2026-10-11, each at the weight of its role. Decision D28 of the
   roadmap.
-- The `.woff2` files by weight of the `text` and the `display` role of the default brand are
-  from an earlier commit too, and were not written from the `.ttf` files beside them: a
-  `.woff2` of the `text` role names its family `Inter`, and its `.ttf` `Inter 18pt`. The two
-  of the `code` role are what step 4 writes from their `.ttf` files.
+- The files by weight of the default brand are at the default of every other axis. For Inter
+  that is the optical size 14, the cut that `--subset` fixes for the web, so a page and an
+  app show the same cut. An iOS app loads the files as `Inter-Regular`,
+  `ArchivoNarrow-Medium` and `FiraCode-Bold`.
+- The files by weight of the `sinefil` brand are at the optical size that the files by weight
+  of the downloads had, and have their outlines point for point: DM Sans at 18, written with
+  `opsz=18`, and Source Serif 4 at 14, written with `opsz=14`. The defaults of the two axes
+  are 9 and 20. The files name their cut, `DM Sans 18pt` and `Source Serif 4 14pt`, and an
+  iOS app loads them as `DMSans18pt-Regular` and `SourceSerif414pt-Regular`. The download of
+  Source Serif 4 has its files of 14 without a size in the name. The `display` role is so
+  drawn in a cut for text, where the variable file of the web takes the size of a heading.
+- The variable file of the default `code` role is `variable_ttf/FiraCode-VF.ttf` of
+  `Fira_Code_v6.2.zip`, from the [releases of Fira Code](https://github.com/tonsky/FiraCode/releases),
+  placed here on 2026-10-11. The font names its version 6.002. Google Fonts has 5.002, with
+  35 characters fewer, without the features `cv01` to `cv32`, `ss09` and `ss10`, and with
+  other line metrics. `code.woff2`, which step 5 writes, is `woff2/FiraCode-VF.woff2` of the
+  archive byte for byte.
 
 ## Steps
 
 The steps add or replace the fonts of one role of one brand. They need Git LFS, since fonts
-are Git LFS files, and `pnpm` for the conversion.
+are Git LFS files, `pnpm` for the conversion, and Python for a family with a variable font.
 
 ### 1. Read the tokens
 
@@ -109,22 +119,54 @@ not committed: only the files of the next step enter the repository.
 
 ### 3. Copy the files by role
 
-Copy each file to `source/<brand>/docs/fonts/` under its role name. For the `text` role of
-the `sinefil` brand:
+Copy each file to `source/<brand>/docs/fonts/` under its role name. A family with a variable
+font gives its variable files and its license. For the `text` role of the `sinefil` brand:
 
-| File of the download                       | Name in `fonts/`          |
-| ------------------------------------------ | ------------------------- |
-| `DMSans-VariableFont_opsz,wght.ttf`        | `text.ttf`                |
-| `DMSans-Italic-VariableFont_opsz,wght.ttf` | `text-italic.ttf`         |
-| `static/DMSans_18pt-Light.ttf`             | `text-elegant.ttf`        |
-| `static/DMSans_18pt-LightItalic.ttf`       | `text-elegant-italic.ttf` |
-| `static/DMSans_18pt-Regular.ttf`           | `text-normal.ttf`         |
-| `static/DMSans_18pt-Italic.ttf`            | `text-normal-italic.ttf`  |
-| `static/DMSans_18pt-SemiBold.ttf`          | `text-strong.ttf`         |
-| `static/DMSans_18pt-SemiBoldItalic.ttf`    | `text-strong-italic.ttf`  |
-| `static/DMSans_18pt-Bold.ttf`              | `text-mass.ttf`           |
-| `static/DMSans_18pt-BoldItalic.ttf`        | `text-mass-italic.ttf`    |
-| `OFL.txt`                                  | `text-license.txt`        |
+| File of the download                       | Name in `fonts/`   |
+| ------------------------------------------ | ------------------ |
+| `DMSans-VariableFont_opsz,wght.ttf`        | `text.ttf`         |
+| `DMSans-Italic-VariableFont_opsz,wght.ttf` | `text-italic.ttf`  |
+| `OFL.txt`                                  | `text-license.txt` |
+
+A family without a variable font gives its files by weight, each under the name of the weight
+the tokens give it. For the `code` role of the `sinefil` brand:
+
+| File of the download      | Name in `fonts/`   |
+| ------------------------- | ------------------ |
+| `IBMPlexMono-Regular.ttf` | `code-normal.ttf`  |
+| `IBMPlexMono-Bold.ttf`    | `code-strong.ttf`  |
+| `OFL.txt`                 | `code-license.txt` |
+
+### 4. Write the files by weight
+
+For a family with a variable font, write each file by weight from the variable file of its
+style, with `build/instance-font.py`. The script needs the package fonttools, in a Python
+environment of its own:
+
+```shell
+python3 -m venv .cache/fonttools
+.cache/fonttools/bin/pip install fonttools==4.66.1
+```
+
+Give it the variable file, the file to write and the weight the tokens give the name. For
+`text-strong` of a role whose `strong` is 600:
+
+```shell
+fonts=source/<brand>/docs/fonts
+.cache/fonttools/bin/python build/instance-font.py $fonts/text.ttf $fonts/text-strong.ttf wght=600
+.cache/fonttools/bin/python build/instance-font.py $fonts/text-italic.ttf $fonts/text-strong-italic.ttf wght=600
+```
+
+The script writes the font as it is at that weight, without an axis, and prints the names it
+gave it: `Inter SemiBold Italic`, with the PostScript name `Inter-SemiBoldItalic`. The file
+keeps every glyph, every character and every layout feature of the variable font. The same
+command on the same file gives the same bytes.
+
+An axis that is not named is fixed at its default. Name the optical size too, as
+`wght=600 opsz=18`, when its default is not the cut the brand shows; take the value that
+`axes` of `chassis.subset` fixes for the brand, where it fixes one. A size that the font has
+a name for and leaves in its names is then a part of the family, as in a download by weight:
+`DM Sans 18pt SemiBold`, with the PostScript name `DMSans18pt-SemiBold`.
 
 The weight in the name of a file is the weight the tokens give the role, not a fixed one:
 `display-normal` is the Medium of Archivo Narrow and the Regular of Source Serif 4.
@@ -135,7 +177,7 @@ On a Mac, the names inside a file say which font it is:
 mdimport -t -d2 source/sinefil/docs/fonts/text-strong.ttf 2>&1 | grep -A 2 -E 'name_(family|postscript)'
 ```
 
-### 4. Write the WOFF2 files
+### 5. Write the WOFF2 files
 
 Write a `.woff2` beside each `.ttf`, with the WOFF2 encoder of Google as a package:
 
@@ -147,10 +189,11 @@ done
 ```
 
 The conversion keeps every character, every layout feature and the axes of a variable font.
-The same command on the same file gives the same bytes. Do not subset here, and fix no axis:
-a file of `source/` is whole, and `pnpm assets --subset` writes the smaller files of a build.
+The same command on the same file gives the same bytes. Do not subset here, and fix no axis
+of a variable file: a file of `source/` has every character of its family, and
+`pnpm assets --subset` writes the smaller files of a build.
 
-### 5. Write the stylesheet
+### 6. Write the stylesheet
 
 `<role>.css` starts with a comment that names the family and the weights by role, and has one
 `@font-face` rule per file it declares. For a family with a variable font, one rule per
@@ -196,13 +239,13 @@ role:
 }
 ```
 
-### 6. Fill the app folder
+### 7. Fill the app folder
 
 Copy the files by weight, as `.ttf` and `.woff2`, and the license to
 `source/<brand>/demo/fonts/`. Its `<role>.css` declares the files by weight, one rule per
 file, also for a family that has a variable font.
 
-### 7. Compare with the default brand
+### 8. Compare with the default brand
 
 The two folders of a brand hold the names of the default brand:
 
@@ -215,7 +258,7 @@ diff <(command ls source/default/demo/fonts) <(command ls source/<brand>/demo/fo
 lines the first command may print are the variable files of a family that has none,
 `code.ttf` and `code.woff2` for the `sinefil` brand. The second prints nothing.
 
-### 8. Build and check
+### 9. Build and check
 
 Run the checks of a change to `source/`:
 
@@ -247,7 +290,7 @@ Then check the output:
 - The fonts are Git LFS files. `git check-attr filter` on a new `.ttf` and `.woff2` answers
   `filter: lfs`.
 
-### 9. Record the change
+### 10. Record the change
 
 Add a changeset that names the files of `dist/` that are added, removed or renamed. A font
 that changes its family changes the PostScript name an iOS app loads it by; say so in the

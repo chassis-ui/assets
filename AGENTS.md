@@ -21,7 +21,7 @@ packages/
     build/             # the build and its checks (JavaScript with JSDoc types, Node.js modules only)
     test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/)
   site/                # chassis-assets-site, the Astro documentation site
-build/                 # repository scripts (releases, the site's HTML checks)
+build/                 # repository scripts (releases, the site's HTML checks, the font instancer)
 docs/                  # architecture.md, fonts.md
 ref/ROADMAP.md         # the plan, its principles, the decisions and the session log
 ```
