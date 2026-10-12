@@ -177,6 +177,7 @@ Every `pnpm assets*` command prints its options with `--help`. [docs/architectur
 ```shell
 pnpm dev                # Build the docs assets and run the site at http://localhost:4325/assets/
 pnpm site:build         # Build the docs assets, the site and its search index into _site/
+pnpm site:assets        # Build the docs assets with the fonts of the site: subsetted, a file per range
 pnpm astro:dev          # Run the site without building the assets
 pnpm astro:build        # Build the site without the assets and the search index
 pnpm site:lint          # ESLint, Stylelint, unused Sass variables and Prettier over the site

@@ -485,6 +485,13 @@ with and without the code (D19).
 - A file that the subsetter cannot read is an error of the build, with the name of the file.
 - The release archives are built without `--subset`: an archive is for every language, and
   the option drops characters.
+- The site of this repository builds its own copy with the option (D30). `pnpm site:assets`
+  is `pnpm assets:site --subset latin latin-ext symbols2 --split`, and `pnpm dev` and
+  `pnpm site:build` run it before Astro. The pages link `fonts/text.css`,
+  `fonts/display.css` and `fonts/code.css` under `/static/`, as every site does from
+  `@chassis-ui/docs` 0.8.0 on, and a page loads `text-latin.woff2`, `code-latin.woff2` and,
+  with a file tree in a code block, `code-symbols2.woff2`. `pnpm assets:site` itself has no
+  option of the fonts: the vendor step of the other sites gives it theirs.
 - The licenses of the committed fonts, the SIL Open Font License, allow a subset. A font
   with a Reserved Font Name may not keep that name once it is changed; whether a family
   declares one is for its brand to check.

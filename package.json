@@ -45,7 +45,7 @@
   "scripts": {
     "build": "pnpm site:build",
     "clean": "pnpm site:clean && rm -rf dist || true",
-    "dev": "pnpm assets:site && pnpm astro:dev",
+    "dev": "pnpm site:assets && pnpm astro:dev",
     "test": "pnpm -C packages/assets test",
     "test:ios": "packages/assets/test/native/ios/check.sh",
     "test:golden": "node packages/assets/build/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet",
@@ -61,7 +61,8 @@
     "assets:site": "node packages/assets/build/cli.js build --clean --brand chassis --app docs",
     "assets:validate": "node packages/assets/build/cli.js validate",
     "site": "pnpm site:build && pnpm site:lint",
-    "site:build": "pnpm assets:site && pnpm astro:build && pnpm site:pagefind",
+    "site:assets": "pnpm assets:site --subset latin latin-ext symbols2 --split",
+    "site:build": "pnpm site:assets && pnpm astro:build && pnpm site:pagefind",
     "site:clean": "rm -rf _site && pnpm -C packages/site clean",
     "site:lint": "pnpm site:lint:eslint && pnpm site:lint:fusv && pnpm site:lint:stylelint && pnpm site:lint:prettier",
     "site:lint:fusv": "find-unused-sass-variables packages/site/src/scss/",

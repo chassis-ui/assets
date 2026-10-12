@@ -17,6 +17,19 @@ out. An entry is removed when it is done. A D-number is a decision of
   name and not a path, a list of `chassis.formats` replaces the rule of a processor, and both
   are read from the configuration without an option. In 0.3.1, and they wait for a
   confirmation.
+- **The choices of D30.** The site builds its fonts with `pnpm site:assets`, a script of its
+  own beside `pnpm assets:site`, and with the range `symbols2` beside `latin` and
+  `latin-ext`. Both are the session's and wait for a confirmation.
+- **The code font of the pages is wider than it was.** Fira Code 6.2 of `source/` has an
+  advance of 1200 in an em of 1950, 0.6154 em, where the 5.002 of Google Fonts, which the
+  pages loaded up to `@chassis-ui/docs` 0.7, has 0.6 em: code is 2.56% wider on every site
+  that moves to 0.8.0. Measured on this site on 2026-10-12, at 375 and 1280 pixels: code
+  blocks scroll that much further, 94 of 16,135 pieces of text wrap on another line, and a
+  page is 0.02% to 1.02% taller. Inter has the same width at every size and weight. D28
+  chose the family, and `docs/fonts.md` names its other line metrics, not the width. To
+  keep the old width, a `size-adjust` of 97.5% in `code.css` or the 5.002 files would do
+  it, and both change `source/`. "From 0.7 to 0.8" of `UPGRADING.md` of `@chassis-ui/docs`
+  says that text keeps its width, which holds for Inter only: a report for chassis-website.
 - **1.0.** The five requirements that were set for it hold: the pages and the build agree,
   the consumer contract is tested, the build has unit and build tests, releases are
   automated, and the docs site uses `@chassis-ui/docs` 0.6 or later. Whether a release
@@ -39,8 +52,17 @@ out. An entry is removed when it is done. A D-number is a decision of
 ## Not written
 
 - An entry of `contracts` in `chassis.checks.json` for `fonts/text.css`, `fonts/display.css`
-  and `fonts/code.css`, once the sites link them. Until then no check fails when one
-  is missing.
+  and `fonts/code.css`. The sites link them from `@chassis-ui/docs` 0.8.0 on, so the entry
+  is due: no check fails when one is missing. The table of
+  [README.md](../README.md#what-consumers-rely-on) gets a row with it.
+- A build with `--split` that leaves out the file of a range of which a font has only
+  glyphs without an outline. With `symbols2`, Inter and Archivo Narrow have the eight
+  spaces of the range and nothing else, and `text-symbols2.woff2`,
+  `text-italic-symbols2.woff2`, `display-symbols2.woff2` and `display-italic-symbols2.woff2`
+  are written with an empty `glyf` table, which Chrome rejects: "OTS parsing error: glyf:
+  zero-length table". No page asks for them while `latin` is named first, so nothing shows.
+  A box drawing character in text of the text font would ask for one, fail, and fall back
+  as it would without the file. Found on 2026-10-12 with D30.
 - A rule of the source lint for a file that no platform keeps, and a check of
   `chassis.checks.json` against `chassis.formats` (D29).
 - The ranges `latin-ext`, `math` and `symbols` of `packages/assets/build/subset-ranges.json`

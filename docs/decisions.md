@@ -3,7 +3,7 @@
 The decisions behind the build, the layout of the repository and its releases, each with its
 reason. The other documents and the tests cite them by number, so a number never changes.
 
-D1 to D23 were taken while the roadmap of 2026-09-30 ran, D24 to D29 after it. The roadmap
+D1 to D23 were taken while the roadmap of 2026-09-30 ran, D24 to D30 after it. The roadmap
 is deleted: its last full text, with the evidence and the session log, is
 `git show a7c4c42:ref/ROADMAP.md`.
 
@@ -180,3 +180,18 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `formats` the output is no longer the one of the output contract, which describes a
   configuration without it. Asked for by the maintainer, 2026-10-12. The choices of the
   session wait for a confirmation, see [ref/OPEN.md](../ref/OPEN.md).
+- **D30. How does the site of this repository get the fonts that its pages load?** From its
+  own docs build, with `pnpm site:assets`, which `pnpm dev` and `pnpm site:build` run before
+  Astro. The script is `pnpm assets:site` with the options
+  `--subset latin latin-ext symbols2 --split`. From `@chassis-ui/docs` 0.8.0 on a page links
+  the three stylesheets of `fonts/` under `/static/` and no longer Google Fonts, and the
+  other sites get the same files from `chassis-docs vendor`, which runs `pnpm assets:site`
+  with the options of their own script. So the options are in a script of the site and
+  `pnpm assets:site` is as it was: what it writes for a site that gives no option does not
+  change. They are not in `chassis.subset` either, where `ranges` and `split` would be the
+  default of every site that builds this repository, and D27 leaves the split to the project
+  that builds. `symbols2` is for the file trees of the pages: 1,620 box drawing characters in
+  the code blocks of 11 pages, which the code font draws at the width of a letter and a
+  fallback font does not. The upgrade was asked for by the maintainer, 2026-10-12. The
+  script and the range are the session's and wait for a confirmation, see
+  [ref/OPEN.md](../ref/OPEN.md).
