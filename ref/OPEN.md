@@ -15,7 +15,8 @@ out. An entry is removed when it is done. A D-number is a decision of
   [docs/fonts.md](../docs/fonts.md).
 - **The choices of D29.** `chassis.ignore` adds names and takes none away, a pattern is a
   name and not a path, a list of `chassis.formats` replaces the rule of a processor, and both
-  are read from the configuration without an option. Not released yet.
+  are read from the configuration without an option. In 0.3.1, and they wait for a
+  confirmation.
 - **1.0.** The five requirements that were set for it hold: the pages and the build agree,
   the consumer contract is tested, the build has unit and build tests, releases are
   automated, and the docs site uses `@chassis-ui/docs` 0.6 or later. Whether a release
