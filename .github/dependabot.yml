@@ -21,6 +21,10 @@ updates:
         - '@chassis-ui/*'
     commit-message:
       prefix: 'chore(deps)'
+    ignore:
+      # The build is type-checked against Node.js 22, the oldest version the package supports
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       # A dependency goes into the first group that matches it.
       # The Chassis packages move together, and change what the site copies and styles.
