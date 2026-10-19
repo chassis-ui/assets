@@ -11,6 +11,11 @@ out. An entry is removed when it is done. A D-number is a decision of
   2026-10-19 for `fonts/fonts.css`, and the `text` files are `ui` files. A site on those
   versions shows its fallback fonts until the package links the one stylesheet, and the
   maintainer said the sites move anyway. A report for chassis-website.
+- **The sites load `site-logo.svg` with `<img>`.** `Navigation.astro` and `Footer.astro` of
+  `@chassis-ui/docs` 0.9 do, and the logo of 2026-10-19 is for inline use: it has no
+  `xmlns`, and its paths are colored by the classes `icon-default` and `icon-primary` of the
+  page. The maintainer said the sites change how they use it. A report for chassis-website,
+  with the one above.
 - **The weights of the `display` role of the `chassis` brand.** Its Montserrat files, taken
   from `feat/new-chassis-brand` on 2026-10-19, are at 300, 400, 600 and 700, the weights of
   the `ui` role, while `typography.fontWeight.display` of `source/brand-chassis/brand-base.json`
