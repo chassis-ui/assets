@@ -489,10 +489,10 @@ with and without the code (D19).
   is `pnpm assets:site --subset latin latin-ext symbols2 --split`, and `pnpm dev` and
   `pnpm site:build` run it before Astro. The pages link `fonts/fonts.css`
   under `/static/`, and a page loads `ui-latin.woff2`, `code-latin.woff2` and, with a file
-  tree in a code block, `code-symbols2.woff2`. `@chassis-ui/docs` 0.8 and 0.9 link
-  `fonts/text.css`, `fonts/display.css` and `fonts/code.css`, which D31 removed: a site on
-  them shows its fallback fonts until the package links the one stylesheet. `pnpm assets:site` itself has no
-  option of the fonts: the vendor step of the other sites gives it theirs.
+  tree in a code block, `code-symbols2.woff2`. `@chassis-ui/docs` links `fonts/fonts.css`
+  from 0.10 on; 0.8 and 0.9 link `fonts/text.css`, `fonts/display.css` and `fonts/code.css`,
+  which D31 removed, and a site on them shows its fallback fonts. `pnpm assets:site` itself
+  has no option of the fonts: the vendor step of the other sites gives it theirs.
 - The licenses of the committed fonts, the SIL Open Font License, allow a subset. A font
   with a Reserved Font Name may not keep that name once it is changed; whether a family
   declares one is for its brand to check.

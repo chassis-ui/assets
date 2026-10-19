@@ -2,8 +2,12 @@
   "contracts": {
     "web/docs/chassis": [
       {
-        "reader": "Navigation.astro and Footer.astro of @chassis-ui/docs",
+        "reader": "Navigation.astro and Footer.astro of @chassis-ui/docs, which inline it from 0.10 on and fail the build of a site without it",
         "files": ["images/site-logo.svg"]
+      },
+      {
+        "reader": "Head.astro of @chassis-ui/docs 0.10 and later",
+        "files": ["fonts/fonts.css"]
       },
       {
         "reader": "Favicons.astro of @chassis-ui/docs, and the aliases of the website",
