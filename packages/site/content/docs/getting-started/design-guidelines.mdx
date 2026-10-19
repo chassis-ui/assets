@@ -128,7 +128,7 @@ git push origin feature/onboarding-assets
 
 These practices keep `source/` to the files the build is meant to copy, and a commit to one change.
 
-- **Check the license before adding a font or a stock image:** a font keeps its license beside it as `text-license.txt`, `display-license.txt` or `code-license.txt`.
+- **Check the license before adding a font or a stock image:** a font keeps its license beside it as `ui-license.txt`, `display-license.txt` or `code-license.txt`.
 - **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them.
 - **Commit the exported file only:** design sources, such as a `.fig` or a `.sketch` file, do not belong in `source/`. Every file of a type folder is copied to the output.
 - **Stage only the files of the change:** a commit with unrelated exports is hard to review and to revert.

@@ -6,6 +6,20 @@ out. An entry is removed when it is done. A D-number is a decision of
 
 ## For the maintainer
 
+- **The sites link the three stylesheets.** `Head.astro` of `@chassis-ui/docs` 0.8 and 0.9
+  links `fonts/text.css`, `fonts/display.css` and `fonts/code.css`, which D31 removed on
+  2026-10-19 for `fonts/fonts.css`, and the `text` files are `ui` files. A site on those
+  versions shows its fallback fonts until the package links the one stylesheet, and the
+  maintainer said the sites move anyway. A report for chassis-website.
+- **The weights of the `display` role of the `chassis` brand.** Its Montserrat files, taken
+  from `feat/new-chassis-brand` on 2026-10-19, are at 300, 400, 600 and 700, the weights of
+  the `ui` role, while `typography.fontWeight.display` of `source/brand-chassis/brand-base.json`
+  in chassis-tokens 0.10 is Regular, Medium, SemiBold and Bold, 400, 500, 600 and 700. The
+  files by weight of `elegant` and `normal`, and the comment of `fonts.css`, follow one of the
+  two once the maintainer says which.
+- **The fonts of `sinefil`.** The maintainer said on 2026-10-19 that the brand will set
+  `ui`, `prose` and `display` in three families. The brand then gets `prose` files by the
+  steps of [docs/fonts.md](../docs/fonts.md), and a block of `prose` in its `fonts.css`.
 - **The choices of D28.** Two were the session's: Inter is at the optical size 14 in every
   file by weight, so the app fonts left the 18pt cut of D24, and `code-strong` of the default
   brand is the Bold, 700. Both are in 0.3.0 and wait for a confirmation.
@@ -27,7 +41,7 @@ out. An entry is removed when it is done. A D-number is a decision of
   blocks scroll that much further, 94 of 16,135 pieces of text wrap on another line, and a
   page is 0.02% to 1.02% taller. Inter has the same width at every size and weight. D28
   chose the family, and `docs/fonts.md` names its other line metrics, not the width. To
-  keep the old width, a `size-adjust` of 97.5% in `code.css` or the 5.002 files would do
+  keep the old width, a `size-adjust` of 97.5% in `fonts.css` or the 5.002 files would do
   it, and both change `source/`. "From 0.7 to 0.8" of `UPGRADING.md` of `@chassis-ui/docs`
   says that text keeps its width, which holds for Inter only: a report for chassis-website.
 - **1.0.** The five requirements that were set for it hold: the pages and the build agree,
@@ -51,18 +65,19 @@ out. An entry is removed when it is done. A D-number is a decision of
 
 ## Not written
 
-- An entry of `contracts` in `chassis.checks.json` for `fonts/text.css`, `fonts/display.css`
-  and `fonts/code.css`. The sites link them from `@chassis-ui/docs` 0.8.0 on, so the entry
-  is due: no check fails when one is missing. The table of
+- An entry of `contracts` in `chassis.checks.json` for `fonts/fonts.css`. The sites link the
+  stylesheets of `fonts/` from `@chassis-ui/docs` 0.8.0 on, so the entry is due: no check
+  fails when it is missing. The table of
   [README.md](../README.md#what-consumers-rely-on) gets a row with it.
 - A build with `--split` that leaves out the file of a range of which a font has only
-  glyphs without an outline. With `symbols2`, Inter and Archivo Narrow have the eight
-  spaces of the range and nothing else, and `text-symbols2.woff2`,
-  `text-italic-symbols2.woff2`, `display-symbols2.woff2` and `display-italic-symbols2.woff2`
+  glyphs without an outline. With `symbols2`, Inter and Archivo Narrow had the eight
+  spaces of the range and nothing else, and `ui-symbols2.woff2`,
+  `ui-italic-symbols2.woff2`, `display-symbols2.woff2` and `display-italic-symbols2.woff2`
   are written with an empty `glyf` table, which Chrome rejects: "OTS parsing error: glyf:
   zero-length table". No page asks for them while `latin` is named first, so nothing shows.
   A box drawing character in text of the text font would ask for one, fail, and fall back
-  as it would without the file. Found on 2026-10-12 with D30.
+  as it would without the file. Found on 2026-10-12 with D30. Montserrat, the `display`
+  family of `chassis` since 2026-10-19, gets the two files of `display` too.
 - A rule of the source lint for a file that no platform keeps, and a check of
   `chassis.checks.json` against `chassis.formats` (D29).
 - The ranges `latin-ext`, `math` and `symbols` of `packages/assets/build/subset-ranges.json`
@@ -85,6 +100,14 @@ out. An entry is removed when it is done. A D-number is a decision of
 
 Considered and left out. Each needs a reason to come back.
 
+- **A `fonts.css` that the build writes from the font files.** Considered with D31 on
+  2026-10-19: the build reads the family, the weight, the style and the axes of a font for
+  the source lint, so it could write the rules itself and no brand would write CSS. Left out
+  because the default build would then write a file that is not in `source/`, where the
+  fonts page says a stylesheet is copied, and a hand-written rule can hold what a font file
+  cannot say, such as a `size-adjust`. Taken again when writing the stylesheet by hand goes
+  wrong more than once, as an option that writes the rules of the files no stylesheet
+  declares.
 - **A `shared` layer under `source/<brand>/`** for assets every app gets. The pages do not
   describe it, and adding it changes the override order. The duplication between `docs` and
   `demo` is by design until the maintainer says otherwise.

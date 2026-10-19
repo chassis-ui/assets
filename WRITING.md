@@ -188,7 +188,7 @@ find dist/android/demo/chassis -name 'ic_arrow_right_solid*'
 
 **What stays out of prose and tables:**
 
-- **Font families.** The font files are named by role: `text`, `display`, `code`. Which family a role holds is the choice of the brand. Write "the text font of the brand", not the family.
+- **Font families.** The font files are named by role: `ui`, `prose`, `display`, `code`. Which family a role holds is the choice of the brand. Write "the `ui` font of the brand", not the family.
 - **File sizes and counts.** They change with every export. See [§8](#8-counts-versions-and-configuration).
 - **Features the build does not have.** The build does not resize an image or make a variant the designer did not export. A page says what an app does with the files instead, and names the tool of the platform.
 - **An option as the default.** A feature behind an option, such as the vector drawables of `--vector-drawables` , the asset catalog of `--asset-catalog`, the `res/` folder of `--res`, the WebP files of `--webp` or the font subsets of `--subset`, is described with its option. The trees and the tables of a page show the output of the default build first.

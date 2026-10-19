@@ -100,9 +100,9 @@ The folder of a job holds one folder per type, with the subfolders of the source
 ```text
 dist/web/docs/chassis/
 ├── fonts/
-│   ├── text-license.txt
-│   ├── text-normal.woff2
-│   ├── text.css
+│   ├── fonts.css
+│   ├── ui-license.txt
+│   ├── ui-normal.woff2
 │   └── ...
 ├── icons/
 │   ├── cx-sprite.svg
@@ -171,7 +171,7 @@ module.exports = {
 With either one, an import gives the URL of the file:
 
 ```js
-import '@assets/fonts/text.css'
+import '@assets/fonts/fonts.css'
 import siteLogo from '@assets/images/site-logo.svg'
 ```
 
@@ -181,24 +181,22 @@ Parcel needs no alias: it resolves a relative path to a file of the output in `u
 
 ## Fonts
 
-The `fonts/` folder holds the WOFF and WOFF2 files of the source, the stylesheets and the licenses. A font file is named by its role and its weight, not by its family, so a brand with other families has the same file names. A variable font holds every weight of its role and is named by the role alone, `text.woff2`, with `text-italic.woff2` for the italic.
+The `fonts/` folder holds the WOFF and WOFF2 files of the source, the stylesheets and the licenses. A font file is named by its role and its weight, not by its family, so a brand with other families has the same file names for its roles. A variable font holds every weight of its role and is named by the role alone, `ui.woff2`, with `ui-italic.woff2` for the italic. A role that the brand sets in the family of another role, as `prose` is set in `ui` for the `chassis` brand, has no files.
 
 ```text
 dist/web/docs/chassis/fonts/
 ├── code-license.txt
 ├── code-normal.woff2
 ├── code-strong.woff2
-├── code.css
 ├── code.woff2
 ├── display-italic.woff2
 ├── display-normal.woff2
-├── display.css
 ├── display.woff2
-├── text-italic.woff2
-├── text-normal.woff2
-├── text-strong.woff2
-├── text.css
-├── text.woff2
+├── fonts.css
+├── ui-italic.woff2
+├── ui-normal.woff2
+├── ui-strong.woff2
+├── ui.woff2
 └── ...
 ```
 
@@ -206,21 +204,19 @@ The [fonts]([[docsref:/asset-types/fonts#platform-output]]) page has the roles, 
 
 A font of the default output has every character of its source file. If your pages are written in a few scripts only, build with `--subset`: the same files, under the same names, hold the characters of the ranges you name and are smaller to download. See [Font subsets]([[docsref:/getting-started/build-system#font-subsets]]).
 
-The text font of the `chassis` brand, Inter, has an optical size axis, and a browser sets it from the font size: text above 14 pixels is drawn in a narrower cut, a heading of 57 pixels by about 7%. A build with `--subset` fixes the axis at 14 for the brand, so every size shows the same cut. With a default build, `font-optical-sizing: none` in your styles gives the same look.
+The `ui` font of the `chassis` brand, Inter, has an optical size axis, and a browser sets it from the font size: text above 14 pixels is drawn in a narrower cut, a heading of 57 pixels by about 7%. A build with `--subset` fixes the axis at 14 for the brand, so every size shows the same cut. With a default build, `font-optical-sizing: none` in your styles gives the same look.
 
-Add `--split` to the build, and it writes each declared font once per range too, such as `text-latin.woff2` and `text-latin-ext.woff2`, and the stylesheets get a rule per range. Your pages stay as they are: link the stylesheets, and a browser downloads the file of a range only for a page that has a character of it. If you preload a font, name the file of the range.
+Add `--split` to the build, and it writes each declared font once per range too, such as `ui-latin.woff2` and `ui-latin-ext.woff2`, and the stylesheet gets a rule per range. Your pages stay as they are: link the stylesheet, and a browser downloads the file of a range only for a page that has a character of it. If you preload a font, name the file of the range.
 
 ### Font stylesheets
 
-The stylesheets `text.css`, `display.css` and `code.css` of a brand declare the fonts of their role, under the family name of the font. A stylesheet declares the variable font of the role where the family has one, and one file per weight where it has none. Link them and the declarations are done:
+The stylesheet `fonts.css` of a brand declares every family of the brand, under the family name of each font. It declares the variable font of a role where the family has one, and one file per weight where it has none. Link it and the declarations are done:
 
 ```html
-<link rel="stylesheet" href="/assets/fonts/text.css" />
-<link rel="stylesheet" href="/assets/fonts/display.css" />
-<link rel="stylesheet" href="/assets/fonts/code.css" />
+<link rel="stylesheet" href="/assets/fonts/fonts.css" />
 ```
 
-Each rule reads its file by a relative URL, `url("text.woff2")`, so a stylesheet works only beside the font files. The family name to use in `font-family` is in the comment at the top of each stylesheet.
+Each rule reads its file by a relative URL, `url("ui.woff2")`, so the stylesheet works only beside the font files. The family name of each role, to use in `font-family`, is in the comment above its rules. One stylesheet declares every family because a brand sets several roles in one family: the `prose` role of the `chassis` brand is its `ui` family.
 
 ### Own declarations
 
@@ -232,7 +228,7 @@ Write the `@font-face` rules yourself when the family name has to be one of your
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/assets/fonts/text-normal.woff2') format('woff2');
+  src: url('/assets/fonts/ui-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -240,7 +236,7 @@ Write the `@font-face` rules yourself when the family name has to be one of your
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/assets/fonts/text-strong.woff2') format('woff2');
+  src: url('/assets/fonts/ui-strong.woff2') format('woff2');
 }
 
 body {
@@ -248,11 +244,11 @@ body {
 }
 ```
 
-The weight of a role is the choice of the brand; read it in the stylesheet of the role. To declare a variable font, give the rule the range of weights the file holds, such as `font-weight: 100 900`; the range is in the stylesheet of the role too. Chassis Tokens owns the names of the font roles, see the [Chassis Tokens docs](https://chassis-ui.com/tokens/).
+The weight of a role is the choice of the brand; read it in the stylesheet of the brand. To declare a variable font, give the rule the range of weights the file holds, such as `font-weight: 100 900`; the range is in the stylesheet too. Chassis Tokens owns the names of the font roles, see the [Chassis Tokens docs](https://chassis-ui.com/tokens/).
 
 ### Licenses
 
-The build copies the license of each role beside its fonts, as `<role>-license.txt`. Keep `text-license.txt`, `display-license.txt` and `code-license.txt` with the fonts when you copy them to another folder.
+The build copies the license of each role beside its fonts, as `<role>-license.txt`. Keep `ui-license.txt`, `display-license.txt` and `code-license.txt` with the fonts when you copy them to another folder.
 
 ## Images
 
@@ -422,10 +418,10 @@ document.querySelector('#logo').src = assetUrl('sinefil', 'images/logo/chassis-l
 
 A brand folder of `source/` holds only the files that differ, and the build fills the rest from the default brand. The `sinefil` brand has fonts and logos of its own, and its output has the same files as the output of the default brand, under the same names.
 
-A default file that a brand does not replace stays in the output of the brand. The code family of `sinefil` has no variable font, so `fonts/code.woff2` of its output is the code font of the default brand, and `code.css` of the brand does not load it. Link the stylesheet of a role and you get the fonts of the brand.
+A default file that a brand does not replace stays in the output of the brand. The code family of `sinefil` has no variable font, so `fonts/code.woff2` of its output is the code font of the default brand, and `fonts.css` of the brand does not load it. Link the stylesheet and you get the fonts of the brand.
 
 <Callout type="warning">
-A brand that replaces the font files of a role without replacing the stylesheet of that role gets the stylesheet of the default brand, which declares the family name of the default font. Add `text.css`, `display.css` or `code.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).
+A brand that replaces font files without a stylesheet of its own gets `fonts.css` of the default brand, which declares the family names of the default fonts. Add `fonts.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).
 </Callout>
 
 ## Continuous integration
@@ -468,7 +464,7 @@ The commands of this job were run in a project with the submodule; the workflow 
 These practices keep your application reading the output as the build wrote it, with the names and the folders of `dist/web/`.
 
 - **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so the output has `other/default-tokens.json` and `icons/icons/chassis-icons-min.css`. Find a name with `find dist/web/docs/chassis -name '<pattern>'`.
-- **Keep a stylesheet beside its fonts:** `text.css`, `display.css`, `code.css` and `chassis-icons.css` read their font files by a relative URL. Copy `fonts/` and `icons/icons/` whole.
+- **Keep a stylesheet beside its fonts:** `fonts.css` and `chassis-icons.css` read their font files by a relative URL. Copy `fonts/` and `icons/icons/` whole.
 - **Ship the licenses:** copy `<role>-license.txt` with the fonts of `fonts/`.
 - **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is marked `**Breaking.**` in the changelog.
 

@@ -11,8 +11,8 @@ The Android output of a brand and an app is the folder `dist/android/<app>/<bran
 ```text
 dist/android/demo/chassis/
 ├── fonts/
-│   ├── text_normal.ttf
-│   ├── text_license.txt
+│   ├── ui_normal.ttf
+│   ├── ui_license.txt
 │   └── ...
 ├── images/
 │   ├── drawable/
@@ -86,10 +86,10 @@ dist/android/demo/chassis/
 │   ├── code_normal.ttf
 │   ├── display_license.txt
 │   ├── display_normal.ttf
-│   ├── text_license.txt
-│   ├── text_normal.ttf
-│   ├── text_normal_italic.ttf
-│   ├── text_strong.ttf
+│   ├── ui_license.txt
+│   ├── ui_normal.ttf
+│   ├── ui_normal_italic.ttf
+│   ├── ui_strong.ttf
 │   └── ...
 ├── icons/
 │   ├── icons/
@@ -140,7 +140,7 @@ dist/android/demo/chassis/
 ├── fonts/
 │   ├── code_license.txt
 │   ├── display_license.txt
-│   └── text_license.txt
+│   └── ui_license.txt
 ├── icons/
 │   └── icons/
 │       └── ic_chassis_icons.svg
@@ -165,7 +165,7 @@ dist/android/demo/chassis/
     │   └── ...
     └── font/
         ├── code_normal.ttf
-        ├── text_normal.ttf
+        ├── ui_normal.ttf
         └── ...
 ```
 
@@ -223,27 +223,27 @@ The script copies and replaces files and never removes one. A file that a later 
 
 ## Fonts
 
-The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `text_normal.ttf` or `display_strong_italic.ttf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
+The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `ui_normal.ttf` or `display_strong_italic.ttf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
 
 ### Font resources
 
-The copy script puts the font files in `res/font/`, where each one becomes a resource named after the file: `R.font.text_normal`. The licenses go to `assets/licenses/`, because `res/font/` accepts only font files and XML, and the app still has to ship the license with the font.
+The copy script puts the font files in `res/font/`, where each one becomes a resource named after the file: `R.font.ui_normal`. The licenses go to `assets/licenses/`, because `res/font/` accepts only font files and XML, and the app still has to ship the license with the font.
 
 ### Font families
 
-A font family resource groups the files of one role, so a layout asks for the role and a weight. Add `res/font/text.xml` with one entry for each file the app uses:
+A font family resource groups the files of one role, so a layout asks for the role and a weight. Add `res/font/ui.xml` with one entry for each file the app uses:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <font-family xmlns:android="http://schemas.android.com/apk/res/android">
-    <font android:font="@font/text_normal" android:fontStyle="normal" android:fontWeight="400" />
-    <font android:font="@font/text_normal_italic" android:fontStyle="italic" android:fontWeight="400" />
-    <font android:font="@font/text_strong" android:fontStyle="normal" android:fontWeight="600" />
-    <font android:font="@font/text_strong_italic" android:fontStyle="italic" android:fontWeight="600" />
+    <font android:font="@font/ui_normal" android:fontStyle="normal" android:fontWeight="400" />
+    <font android:font="@font/ui_normal_italic" android:fontStyle="italic" android:fontWeight="400" />
+    <font android:font="@font/ui_strong" android:fontStyle="normal" android:fontWeight="600" />
+    <font android:font="@font/ui_strong_italic" android:fontStyle="italic" android:fontWeight="600" />
 </font-family>
 ```
 
-The file name does not hold the weight. `normal` and `strong` are names of [Chassis Tokens](https://chassis-ui.com/tokens/), and the number behind each one is a choice of the brand: the `400` and `600` above are examples, so take the numbers from the tokens of your brand. The attribute needs a literal number, so a brand with other weights needs its own `text.xml` in `app/src/<brand>/res/font/`.
+The file name does not hold the weight. `normal` and `strong` are names of [Chassis Tokens](https://chassis-ui.com/tokens/), and the number behind each one is a choice of the brand: the `400` and `600` above are examples, so take the numbers from the tokens of your brand. The attribute needs a literal number, so a brand with other weights needs its own `ui.xml` in `app/src/<brand>/res/font/`.
 
 The attributes are in the `android:` namespace, which every view reads from API 26 on. A family that has only `app:` attributes, the namespace of AndroidX, loads in an `AppCompatTextView` and not in a plain `TextView` or any other view of the framework: the text shows in the system font, without an error. An app that supports API 25 or lower repeats each attribute with `app:` beside the `android:` one.
 
@@ -255,21 +255,21 @@ A view takes the family by its resource name, and Jetpack Compose builds a `Font
 <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:fontFamily="@font/text"
+    android:fontFamily="@font/ui"
     android:text="@string/title" />
 ```
 
 Use the files in Jetpack Compose:
 
 ```kotlin
-val TextFamily = FontFamily(
-    Font(R.font.text_normal, FontWeight.Normal),
-    Font(R.font.text_normal_italic, FontWeight.Normal, FontStyle.Italic),
-    Font(R.font.text_strong, FontWeight.SemiBold),
-    Font(R.font.text_strong_italic, FontWeight.SemiBold, FontStyle.Italic)
+val UiFamily = FontFamily(
+    Font(R.font.ui_normal, FontWeight.Normal),
+    Font(R.font.ui_normal_italic, FontWeight.Normal, FontStyle.Italic),
+    Font(R.font.ui_strong, FontWeight.SemiBold),
+    Font(R.font.ui_strong_italic, FontWeight.SemiBold, FontStyle.Italic)
 )
 
-Text(text = "Title", fontFamily = TextFamily, fontWeight = FontWeight.SemiBold)
+Text(text = "Title", fontFamily = UiFamily, fontWeight = FontWeight.SemiBold)
 ```
 
 ## Images

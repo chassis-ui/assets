@@ -252,14 +252,14 @@ pnpm assets --subset latin latin-ext --split
 
 ```text
 dist/web/docs/chassis/fonts/
-├── text-latin-ext.woff2    -> the characters of latin-ext
-├── text-latin.woff2        -> the characters of latin
-├── text.css                -> a rule per range, with its unicode-range
-├── text.woff2              -> the characters of both ranges, as without split
+├── fonts.css               -> a rule per range, with its unicode-range
+├── ui-latin-ext.woff2      -> the characters of latin-ext
+├── ui-latin.woff2          -> the characters of latin
+├── ui.woff2                -> the characters of both ranges, as without split
 └── ...
 ```
 
-The file of a range has the name of the font, a hyphen and the name of the range: `text-latin.woff2`, and `code-u2500-257f.woff2` for the range `U+2500-257F`. A font gets no file for a range that it has no character of. The font itself stays, with the characters of every range, for a page that writes its own rules.
+The file of a range has the name of the font, a hyphen and the name of the range: `ui-latin.woff2`, and `code-u2500-257f.woff2` for the range `U+2500-257F`. A font gets no file for a range that it has no character of. The font itself stays, with the characters of every range, for a page that writes its own rules.
 
 The rules of the range you name first are the last ones in the stylesheet. A browser reads the rules of a family from the last to the first, so a character that two ranges hold is drawn with the file of the first range.
 
@@ -522,7 +522,7 @@ The message suggests a name that keeps the rules. A file that breaks a rule on p
 
 The lint also reads the fonts. For each `@font-face` rule of a stylesheet in `fonts/`, it opens the file the rule declares and compares the two, as a brand gets them, with its own files over those of the default brand. It fails when the file is of another family than the rule names, when its weight is not the weight of the rule or its weight axis does not hold the range of the rule, when one is italic and the other is not, and when the rule declares a file that is not in the folder. A rule that loads a font from a service is not read.
 
-A rule declares the file of the web, and the apps get the file of the same name in another format, which no rule declares. The lint checks a rule against those files too: a rule for `text.woff2` is also the rule of `text.ttf` in the same folder, and of an `.otf` or a `.woff` file of that name. It also fails when two files of one name are not one font in two formats, and names both files with what differs: the family, the weight, the style, the axes, the version or the number of glyphs.
+A rule declares the file of the web, and the apps get the file of the same name in another format, which no rule declares. The lint checks a rule against those files too: a rule for `ui.woff2` is also the rule of `ui.ttf` in the same folder, and of an `.otf` or a `.woff` file of that name. It also fails when two files of one name are not one font in two formats, and names both files with what differs: the family, the weight, the style, the axes, the version or the number of glyphs.
 
 It warns about a font of the default brand that a brand gets beside a family of its own, where no stylesheet of the brand declares the family of that font. The file is in the output of the brand, and nothing loads it. It also warns about a `format()` of a rule that is not the format of its file.
 

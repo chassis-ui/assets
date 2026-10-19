@@ -247,7 +247,7 @@ kept. Changing a path or a name in it is a breaking change while the version is 
 - Names: kebab-case, lowercase; `@2x` and `@3x` kept. `MyFont@2x.woff2` becomes
   `my-font@2x.woff2`. A dot inside a name becomes a hyphen: `chassis-icons.min.css` becomes
   `chassis-icons-min.css`, `default.tokens.json` becomes `default-tokens.json`.
-- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheets `text.css`, `display.css` and `code.css` declare the variable font of their role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file; for a family without a variable font, one `@font-face` per file by weight. The files by weight, `<role>-<weight>.woff2`, are beside the variable files. A build with `--subset` and `--split` adds a file per range beside each declared font, `<name>-<range>.woff2`, and writes the rules of the stylesheets once per range. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
+- `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheet `fonts.css`, one per brand, declares every family of the brand: the variable font of a role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file, and for a family without a variable font one `@font-face` per file by weight. A role that the brand sets in the family of another role has no files and no rules (D31). The files by weight, `<role>-<weight>.woff2`, are beside the variable files. A build with `--subset` and `--split` adds a file per range beside each declared font, `<name>-<range>.woff2`, and writes the rules of the stylesheet once per range. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
 - `images/`, `icons/` and every other folder: every file.
 - The docs job, `dist/web/docs/chassis/`, is what every Chassis site copies to `/static/`. The
   files it reads are listed in `contracts` of `chassis.checks.json`.
@@ -487,24 +487,25 @@ with and without the code (D19).
   the option drops characters.
 - The site of this repository builds its own copy with the option (D30). `pnpm site:assets`
   is `pnpm assets:site --subset latin latin-ext symbols2 --split`, and `pnpm dev` and
-  `pnpm site:build` run it before Astro. The pages link `fonts/text.css`,
-  `fonts/display.css` and `fonts/code.css` under `/static/`, as every site does from
-  `@chassis-ui/docs` 0.8.0 on, and a page loads `text-latin.woff2`, `code-latin.woff2` and,
-  with a file tree in a code block, `code-symbols2.woff2`. `pnpm assets:site` itself has no
+  `pnpm site:build` run it before Astro. The pages link `fonts/fonts.css`
+  under `/static/`, and a page loads `ui-latin.woff2`, `code-latin.woff2` and, with a file
+  tree in a code block, `code-symbols2.woff2`. `@chassis-ui/docs` 0.8 and 0.9 link
+  `fonts/text.css`, `fonts/display.css` and `fonts/code.css`, which D31 removed: a site on
+  them shows its fallback fonts until the package links the one stylesheet. `pnpm assets:site` itself has no
   option of the fonts: the vendor step of the other sites gives it theirs.
 - The licenses of the committed fonts, the SIL Open Font License, allow a subset. A font
   with a Reserved Font Name may not keep that name once it is changed; whether a family
   declares one is for its brand to check.
 - On this repository, on the maintainer's machine, on 2026-10-11: `--subset` writes the 46
-  fonts of the two web jobs again and saves 1.8 MB of 4.1 MB. `text-normal.woff2` of the
+  fonts of the two web jobs again and saves 1.8 MB of 4.1 MB. `ui-normal.woff2` of the
   default brand goes from 111 KB to 57 KB, and to 30 KB with `--subset latin`; the variable
-  `text.woff2` goes from 349 KB to 136 KB, and to 69 KB, with its optical size fixed, where
+  `ui.woff2` goes from 349 KB to 136 KB, and to 69 KB, with its optical size fixed, where
   it was 208 KB and 105 KB with the axis. The `fvar` table of each of the nine variable
-  fonts was read after the subset: `text.woff2` and `text-italic.woff2` of the `chassis`
+  fonts was read after the subset: `ui.woff2` and `ui-italic.woff2` of the `chassis`
   brand have the weight axis only, and the seven others the axes of their source. With
   `split` and the ranges `latin`, `latin-ext` and `U+2500-257F`, 25 files are written for
-  the six stylesheets of the two brands, and `text.woff2` of `chassis`, 136 KB, is
-  `text-latin.woff2` of 69 KB and `text-latin-ext.woff2` of 90 KB: a page in English loads
+  the stylesheets of the two brands, and `ui.woff2` of `chassis`, 136 KB, is
+  `ui-latin.woff2` of 69 KB and `ui-latin-ext.woff2` of 90 KB: a page in English loads
   the first alone. With the 36 fonts the source had on 2026-10-01, only `fonts/` of the web jobs differed
   from a default build, `pnpm assets:verify` passed on the output, and each font loaded in
   a browser as a `FontFace`, drew the Turkish letters and kept the ligatures of the code
@@ -540,7 +541,7 @@ page: a rule of a stylesheet names the family of its file and the weights it hol
   stylesheet, so the file an app gets is declared by nothing. `lintFonts()` takes the files
   of the folder that `readFont()` reads by their path without the extension, and
   `checkFontFace()` compares a rule with the declared file and with each of the others:
-  `text.ttf`, `text.otf` and `text.woff` beside a declared `text.woff2`. The message is the
+  `ui.ttf`, `ui.otf` and `ui.woff` beside a declared `ui.woff2`. The message is the
   same, with the file it is about. A file beside the declared one that is no font is not
   reported: a rule holds that against the file it declares, and no other.
 - Two files of one name are one font in two formats, with or without a rule.
@@ -698,7 +699,7 @@ changeset that says what breaks.
 - A collision of two source files on one output name warns and the file copied last wins.
 - A brand whose family of a role has no variable font keeps the variable file of the default
   brand in its output: `fonts/code.woff2` of `dist/web/docs/sinefil/` is the code font of
-  the default brand, and `code.css` of the brand does not load it (D24).
+  the default brand, and `fonts.css` of the brand does not load it (D24, D31).
   `pnpm assets:lint:source` warns about it, and about `code.ttf` beside it.
 - On Android, a file with an indicator outside `images/` loses the indicator and gets no
   density folder: `data/poster@2x.png` is `data/poster.png`. Beside a `poster.png` that is a

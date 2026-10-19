@@ -134,7 +134,8 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   and extension only. The `demo` app holds the files by weight only. A default variable file
   that a brand cannot replace stays in its output: `code.woff2` for `sinefil`, a known
   oddity. With the maintainer, 2026-10-11. D28 changes the cut of the app fonts and closes
-  the weight of `code-strong`.
+  the weight of `code-strong`. D31 renames the `text` role to `ui` and replaces the
+  stylesheet of a role with one stylesheet per brand.
 - **D25. Does a page show the optical size axis of the default text font, Inter?** Not in a
   build with `--subset`. A browser sets `opsz` from the font size, so a page draws Inter in
   its display cut above 14 pixels, 7% narrower at 57 pixels. `axes` of `chassis.subset` names
@@ -146,7 +147,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
 - **D26. Does a check of this repository read chassis-tokens, or the other way round?** No.
   Each repository is used alone, and a team may take the tokens only or the assets only. The
   two meet in a convention: the names of the roles and the weights, and the family that the
-  stylesheet of a role declares. A check stays inside the repository whose files it reads.
+  stylesheet of the brand declares for a role (D31). A check stays inside the repository whose files it reads.
   The maintainer, 2026-10-11.
 - **D27. Is a font written in a file per range, with `unicode-range` in the stylesheets?**
   Yes, with `--split`, off by default. A build with `--subset` and `--split` writes each font
@@ -195,3 +196,20 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   fallback font does not. The upgrade was asked for by the maintainer, 2026-10-12. The
   script and the range are the session's and wait for a confirmation, see
   [ref/OPEN.md](../ref/OPEN.md).
+- **D31. One stylesheet per role, or one per brand, now that a brand sets several roles in
+  one family?** One per brand, `fonts.css`, written by hand in `source/<brand>/<app>/fonts/`,
+  and the `text` role is `ui`. Chassis Tokens 0.10 renamed the family `text` to `ui` and
+  added `prose`, the family of reading content, which the default brand sets in its `ui`
+  family and `sinefil` in its `display` family. A `@font-face` rule declares a family name,
+  so a stylesheet per role would declare one family twice, or be a copy of another, and a
+  page would link a file per role whether the role has files or not. So a brand holds the
+  files of the families it has, under the role that owns each family; a role set in another
+  family has no files; the one stylesheet declares each family once, with a block per role;
+  and a page links `fonts/fonts.css`. The file names of a brand follow the families of its
+  tokens, so they are no longer the same in every brand, and "every file of a role is
+  replaced" holds per role. A stylesheet that the build writes from the font files was
+  considered and parked, see [ref/OPEN.md](../ref/OPEN.md). Breaking: `text.css`,
+  `display.css` and `code.css` are gone, `fonts.css` is new, and the `text` files are `ui`
+  files on every platform, with the same fonts and PostScript names inside. `@chassis-ui/docs`
+  0.8 and 0.9 link the three stylesheets and move with the sites. The maintainer,
+  2026-10-19.

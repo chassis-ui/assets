@@ -62,9 +62,9 @@ dist/ios/demo/chassis/
 │   ├── code_license.txt
 │   ├── code_normal.ttf
 │   ├── display_normal.ttf
-│   ├── text_license.txt
-│   ├── text_normal.ttf
-│   ├── text_strong_italic.ttf
+│   ├── ui_license.txt
+│   ├── ui_normal.ttf
+│   ├── ui_strong_italic.ttf
 │   └── ...
 ├── icons/
 │   ├── icons/
@@ -94,7 +94,7 @@ The build renames files, not folders: `HeroBanner@2x.png` becomes `hero_banner@2
 
 ## Fonts
 
-The font files are named by role and weight, not by family: `text_normal.ttf`, `display_strong_italic.ttf`, `code_normal.ttf`. Which family a role holds is the choice of the brand, so the app refers to the file of a role and reads the name of the font from it. The roles are those of [Chassis Tokens](https://chassis-ui.com/tokens/), and the [fonts page]([[docsref:/asset-types/fonts#platform-output]]) lists what each platform gets.
+The font files are named by role and weight, not by family: `ui_normal.ttf`, `display_strong_italic.ttf`, `code_normal.ttf`. Which family a role holds is the choice of the brand, so the app refers to the file of a role and reads the name of the font from it. The roles are those of [Chassis Tokens](https://chassis-ui.com/tokens/), and the [fonts page]([[docsref:/asset-types/fonts#platform-output]]) lists what each platform gets.
 
 ### Add the fonts
 
@@ -103,22 +103,22 @@ Xcode has to copy the fonts into the app bundle, and iOS has to be told about th
 ```xml
 <key>UIAppFonts</key>
 <array>
-    <string>text_normal.ttf</string>
-    <string>text_strong.ttf</string>
+    <string>ui_normal.ttf</string>
+    <string>ui_strong.ttf</string>
     <string>display_normal.ttf</string>
     <string>display_strong.ttf</string>
     <string>code_normal.ttf</string>
 </array>
 ```
 
-Each role has a license, `text_license.txt`, `display_license.txt` and `code_license.txt`. Keep it with the fonts when you copy them, and add it to the app where the license of the family asks for it.
+Each role has a license, `ui_license.txt`, `display_license.txt` and `code_license.txt`. Keep it with the fonts when you copy them, and add it to the app where the license of the family asks for it.
 
 ### PostScript names
 
 UIKit and SwiftUI load a custom font by its PostScript name, which is inside the file and is not the file name. On a Mac, read it from a file of the output:
 
 ```bash
-mdimport -t -d2 dist/ios/demo/chassis/fonts/text_normal.ttf 2>&1 | grep -A 2 name_postscript
+mdimport -t -d2 dist/ios/demo/chassis/fonts/ui_normal.ttf 2>&1 | grep -A 2 name_postscript
 ```
 
 The command reads the file itself, so it also answers for a file that was just built, which Spotlight has not indexed yet.
@@ -129,7 +129,7 @@ The name changes when a brand changes the family of a role. To keep the app free
 import CoreText
 import Foundation
 
-/// The PostScript name of a font file of the bundle, such as "text_normal.ttf".
+/// The PostScript name of a font file of the bundle, such as "ui_normal.ttf".
 func postScriptName(ofFontFile file: String) -> String? {
     guard
         let url = Bundle.main.url(forResource: file, withExtension: nil),
@@ -151,7 +151,7 @@ import UIKit
 
 let label = UILabel()
 
-if let name = postScriptName(ofFontFile: "text_normal.ttf"),
+if let name = postScriptName(ofFontFile: "ui_normal.ttf"),
    let font = UIFont(name: name, size: 17) {
     label.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: font)
     label.adjustsFontForContentSizeCategory = true
@@ -462,7 +462,7 @@ Run the lane with `fastlane ios build_brand brand:sinefil`. The lane was not run
 
 These practices keep the Xcode project in step with `dist/ios/`, so a new export or another brand needs no change in code.
 
-- **Refer to fonts by role:** list `text_normal.ttf` in `UIAppFonts` and read the PostScript name from the file, so a brand that changes the family of a role changes no code.
+- **Refer to fonts by role:** list `ui_normal.ttf` in `UIAppFonts` and read the PostScript name from the file, so a brand that changes the family of a role changes no code.
 - **Fill every slot the output has:** put `@2x` and `@3x` files in their slots of an image set. The build does not resize, so a missing variant is fixed by an export into `source/`, not in Xcode.
 - **Take icons from `icons/svgs/`:** add them as single-scale SVG image sets with **Preserve Vector Data** and **Template Image**.
 - **Keep the license with the font:** copy `<role>_license.txt` of `fonts/` along with the font files.
@@ -492,7 +492,7 @@ The build prints `The filters select no job. Check --brand, --app and --platform
 
 ### Font does not appear
 
-`UIFont(name:size:)` returns `nil`, or the text shows in the system font. Either the file is not in the bundle, or its file name is missing from `UIAppFonts`, or the code passes the file name where the PostScript name belongs. Check the target membership of the file, list it in `Info.plist` as `text_normal.ttf`, with the extension, and read the PostScript name as [PostScript names](#postscript-names) says.
+`UIFont(name:size:)` returns `nil`, or the text shows in the system font. Either the file is not in the bundle, or its file name is missing from `UIAppFonts`, or the code passes the file name where the PostScript name belongs. Check the target membership of the file, list it in `Info.plist` as `ui_normal.ttf`, with the extension, and read the PostScript name as [PostScript names](#postscript-names) says.
 
 ### Image is missing
 

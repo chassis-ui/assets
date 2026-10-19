@@ -1,0 +1,156 @@
+/* The fonts of the Sinefil brand: the files by weight of each family. */
+/* One @font-face rule per file, under the family name that the typography tokens of the brand name. */
+/* The "prose" role is set in the "display" family and has no files of its own. */
+
+/* DM Sans, the "ui" family of the Sinefil brand. */
+/* Weights by role: elegant 300, normal 400, strong 600, mass 700. */
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("ui-elegant.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 300;
+  font-display: swap;
+  src: url("ui-elegant-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("ui-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("ui-normal-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("ui-strong.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url("ui-strong-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("ui-mass.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("ui-mass-italic.woff2") format("woff2");
+}
+
+/* Source Serif 4, the "display" family of the Sinefil brand. */
+/* Weights by role: elegant 300, normal 400, strong 600, mass 700. */
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("display-elegant.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 300;
+  font-display: swap;
+  src: url("display-elegant-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("display-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("display-normal-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("display-strong.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url("display-strong-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("display-mass.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("display-mass-italic.woff2") format("woff2");
+}
+
+/* IBM Plex Mono, the "code" family of the Sinefil brand. */
+/* Weights by role: normal 400, strong 700. */
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("code-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("code-strong.woff2") format("woff2");
+}
