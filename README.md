@@ -246,7 +246,7 @@ Every Chassis site vendors this repository as the submodule `vendor/assets`, pin
 | `icons/cx-sprite.svg`                         | The sprite of the home page icons                                                                                                      |
 | `images/figma/components/<component>/<mode>/` | The screenshots that the pages of chassis-figma read by name                                                                           |
 
-The full list, with the code that reads each file, is `contracts` in [chassis.checks.json](chassis.checks.json).
+sinefil.org takes the archive `chassis-assets-web-docs-sinefil-<version>.zip` of a release instead, and reads its fonts, logo, favicons, `other/manifest.json` and social image by name. The full list for both, with the code that reads each file, is `contracts` in [chassis.checks.json](chassis.checks.json).
 
 ## Branches and CI
 

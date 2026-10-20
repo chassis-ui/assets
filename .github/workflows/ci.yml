@@ -90,13 +90,15 @@ jobs:
           cache: pnpm
 
       # What a site does with this repository as `vendor/assets`: `chassis-docs vendor` runs
-      # these two commands. The root package only is installed, the build needs none of it,
-      # and the checkout stays clean. The contract check then reads the docs output.
+      # the first two commands. The root package only is installed, the build needs none of it,
+      # and the checkout stays clean. sinefil.org reads the docs job of its brand from the
+      # release archive instead, so that job is built too, and the contract check reads both.
       - name: Build as a consumer
         run: |
           pnpm install --ignore-workspace
           test ! -e packages/assets/node_modules
           pnpm assets:site
+          pnpm assets --brand sinefil --app docs --platform web
           pnpm assets:contract
           git diff --exit-code
 
