@@ -1,5 +1,104 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- **Breaking.** `source/chassis/` holds the files of the `chassis` brand, its fonts, logos,
+  favicons and tokens export, and `source/default/` the files every brand shares. Decision D33.
+  A brand so gets no file of another brand. In the output:
+
+  - The logos are 8 files per brand and app, `logo-black`, `logo-dark`, `logo-light` and
+    `logo-white`, each as PNG and SVG: `images/logo/logo-<color>.{png,svg}` in
+    `dist/web/docs/<brand>/`, `images/logo/logo_<color>.{png,svg}` in
+    `dist/ios/demo/<brand>/`, and `images/logo/drawable/logo_<color>.{png,svg}` in
+    `dist/android/demo/<brand>/`. They replace the 48 logos
+    `chassis-{logo,icon}-{black,brand,white}` with their `-banner` forms and their `@2x` and
+    `@3x` files, which are removed on every platform: on the web
+    `images/logo/chassis-logo-brand.svg`, `chassis-icon-white-banner@2x.png` and the others, on
+    iOS `chassis_logo_brand.svg` and the others, and on Android the same names in the density
+    folders of `images/logo/`. `sinefil` had 16 of them and has its own 8.
+  - `dist/web/docs/<brand>/icons/` holds `cx-sprite.svg` only: `icons/icons/`, the icon font
+    and its stylesheets, and `icons/svgs/`, the 503 SVG icons, are removed from the web output.
+    A page takes them from `@chassis-ui/icons`, as the Chassis sites do. The iOS and Android
+    output keeps them.
+  - The top of `images/` of `dist/ios/demo/<brand>/` and `dist/android/demo/<brand>/` loses
+    the favicons, `android_chrome_192x192.png`, `android_chrome_512x512.png`,
+    `apple_touch_icon.png`, `safari_pinned_tab.png`, `chassis_logo.svg`,
+    `chassis_logo_black.svg`, `chassis_logo_white.svg`, `chassis_logo_shadow.png` and its `@2x`
+    file, and `chassis_social.png`.
+  - `other/default-tokens.json` of `dist/web/docs/chassis/` is `other/example-tokens.json`,
+    with the same content, and `dist/web/docs/sinefil/` has none.
+  - The output of `sinefil` has no font of the default brand: `fonts/code.woff2` and the 10
+    `display` fonts with `display-license.txt` are removed from `dist/web/docs/sinefil/`, and
+    the 8 `display_<weight>.ttf` files with `display_license.txt` from
+    `dist/ios/demo/sinefil/fonts/` and `dist/android/demo/sinefil/fonts/`. A page of `sinefil`
+    sets its headings in Lora through `fonts.css`.
+  - `site-logo.svg`, the favicons, `apple-touch-icon.png`, `android-chrome-192x192.png`,
+    `android-chrome-512x512.png`, `safari-pinned-tab.png` and `social-image.png` of
+    `dist/web/docs/sinefil/images/` are those of `sinefil`, where they were those of `chassis`.
+
+  The about page of the website shows and links
+  `images/logo/chassis-{logo,icon}-{brand,white}-banner.svg`, which are gone until it reads the
+  new names.
+
+- **Breaking.** The `text` font role is `ui`, and a brand has one font stylesheet, `fonts.css`, in place of one per role, after Chassis Tokens 0.10 renamed the family `text` to `ui` and added `prose`, which the `chassis` brand sets in its `ui` family and `sinefil` in its `display` family. In `dist/web/docs/<brand>/fonts/`, `text.css`, `display.css` and `code.css` are removed and `fonts.css` is added, with the `@font-face` rules of the three; `text.woff2`, `text-italic.woff2`, `text-<weight>.woff2`, `text-<weight>-italic.woff2` and `text-license.txt` are `ui.woff2`, `ui-italic.woff2`, `ui-<weight>.woff2`, `ui-<weight>-italic.woff2` and `ui-license.txt`. In `dist/ios/demo/<brand>/fonts/` and `dist/android/demo/<brand>/fonts/`, `text_<weight>.ttf`, `text_<weight>_italic.ttf` and `text_license.txt` are `ui_<weight>.ttf`, `ui_<weight>_italic.ttf` and `ui_license.txt`. The fonts inside the files, and their PostScript names, do not change. A page links `fonts/fonts.css` in place of the three stylesheets; `@chassis-ui/docs` 0.8 and 0.9 link the three. No brand has a `prose` file: a role set in the family of another role has no files of its own. Decision D31.
+
+### Patch Changes
+
+- The `docs` app has the new Chassis logo, favicons and social image. No file of `dist/` is
+  added, removed or renamed.
+
+  Changed: `site-logo.svg`, `favicon.png`, `favicon-16x16.png`, `favicon-32x32.png`,
+  `apple-touch-icon.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png`,
+  `safari-pinned-tab.png` and `social-image.png` in `images/` of `dist/web/docs/chassis/` and
+  `dist/web/docs/sinefil/`. `site-logo.svg` is 448 by 96 where it was 324 by 84. It is for
+  inline use: it has no `xmlns`, and its paths take their color from the classes
+  `icon-default` and `icon-primary` of the page, where they were filled `#00A4CC`. Insert the
+  markup of the file into the page, where it was loaded with `<img>`.
+
+- `icons/cx-sprite.svg` of `dist/web/docs/chassis/` and `dist/web/docs/sinefil/` has a new
+  symbol, `cx-react`, and the paths of its other symbols are written again with fewer decimals,
+  taken from `feat/new-chassis-brand`. Every symbol keeps its id and its `viewBox`. No file of
+  `dist/` is added, removed or renamed.
+- The `display` font of the `chassis` brand is Montserrat 9.000, where it was Archivo Narrow
+  3.002, at the weights elegant 300, normal 400, strong 600 and mass 700, where Archivo Narrow
+  had 400, 500, 600 and 700. No file of `dist/` is added, removed or renamed by this change.
+
+  Changed: `display.woff2`, `display-italic.woff2`, the rules of `display` in `fonts.css` and
+  the 16 files by weight of `display` in `fonts/` of `dist/web/docs/chassis/`, the 16 files by
+  weight as `.ttf` in `dist/ios/demo/chassis/fonts/` and `dist/android/demo/chassis/fonts/`, and
+  `display-license.txt` beside them. The variable font has every weight from 100 to 900, where
+  it had 400 to 700.
+
+  The PostScript names of the app fonts change with the family: `display_normal.ttf` is
+  `Montserrat-Regular` where it was `ArchivoNarrow-Medium`, and `display_strong_italic.ttf` is
+  `Montserrat-SemiBoldItalic`. An app that names a font in its code, and does not read the name
+  from the file, changes that name.
+
+- The fonts of the `sinefil` brand are Geist 1.800 for `ui`, Lora 3.008 for `prose` and
+  Cousine 1.241 for `code`, where they were DM Sans, Source Serif 4 and IBM Plex Mono, after
+  the tokens of the brand in chassis-tokens. The `display` role is set in the Lora family of
+  `prose`, so the brand has `prose` files and no `display` files. The `display` files that
+  leave the output of `sinefil` are in the changeset of D33.
+
+  Added: `prose.woff2`, `prose-italic.woff2`, the 8 files by weight `prose-<weight>.woff2` and
+  `prose-<weight>-italic.woff2`, and `prose-license.txt` in `fonts/` of
+  `dist/web/docs/sinefil/`; the 8 files by weight `prose_<weight>.ttf` and
+  `prose_<weight>_italic.ttf`, and `prose_license.txt`, in `dist/ios/demo/sinefil/fonts/` and
+  `dist/android/demo/sinefil/fonts/`. The weights of `prose` are elegant 500, normal 400,
+  strong 600 and mass 700.
+
+  Changed: `fonts.css`, the `ui` and `code` fonts and their licenses in the same folders.
+  `fonts.css` declares the families `Geist`, `Lora` and `Cousine`.
+
+  The PostScript names of the app fonts change with the family: `ui_normal.ttf` is
+  `Geist-Regular` where it was `DMSans18pt-Regular`, `prose_normal.ttf` is `Lora-Regular`, and
+  `code_strong.ttf` is `Cousine-Bold` where it was `IBMPlexMono-Bold`. The `display` role,
+  which was `SourceSerif414pt-Regular` and the other cuts of Source Serif 4, is set in Lora. An
+  app that names a font in its code, and does not read the name from the file, changes that
+  name.
+
 ## 0.3.1
 
 ### Patch Changes

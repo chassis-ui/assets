@@ -1,6 +1,6 @@
 {
   "name": "@chassis-ui/assets",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "description": "A multi-brand, multi-product asset management system for distributing fonts, images, icons, and other design files across web, iOS, and Android platforms.",
   "type": "module",
