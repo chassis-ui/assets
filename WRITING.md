@@ -70,7 +70,7 @@ Every `##`, `###`, and `####` heading must be followed by at least one explanato
 Images live under `images/` of an app, in any subfolders. The build keeps the subfolders in the output of every platform.
 
 ```text
-source/default/docs/images/
+source/chassis/docs/images/
 ├── site-logo.svg
 └── logo/
 ```
@@ -82,7 +82,7 @@ source/default/docs/images/
 ## Source layout
 
 ```text
-source/default/docs/images/
+source/chassis/docs/images/
 ├── site-logo.svg
 └── logo/
 ```
@@ -151,7 +151,7 @@ Backtick every code reference. A file has one name in `source/` and one per plat
 
 | Referring to           | Form                                  | Example                                          |
 | ---------------------- | ------------------------------------- | ------------------------------------------------ |
-| A source file          | Path from `source/`, or from the app  | `` `source/default/docs/images/site-logo.svg` `` |
+| A source file          | Path from `source/`, or from the app  | `` `source/chassis/docs/images/site-logo.svg` `` |
 | A web output file      | kebab-case, indicator kept            | `` `images/hero-banner@2x.png` ``                |
 | An iOS output file     | snake_case, indicator kept            | `` `images/hero_banner@2x.png` ``                |
 | An Android output file | snake_case, in its density folder     | `` `images/drawable-xhdpi/hero_banner.png` ``    |

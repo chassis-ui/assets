@@ -246,7 +246,7 @@ kept. Changing a path or a name in it is a breaking change while the version is 
 
 - Names: kebab-case, lowercase; `@2x` and `@3x` kept. `MyFont@2x.woff2` becomes
   `my-font@2x.woff2`. A dot inside a name becomes a hyphen: `chassis-icons.min.css` becomes
-  `chassis-icons-min.css`, `default.tokens.json` becomes `default-tokens.json`.
+  `chassis-icons-min.css`.
 - `fonts/`: `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files, nothing else. The stylesheet `fonts.css`, one per brand, declares every family of the brand: the variable font of a role, `<role>.woff2` and `<role>-italic.woff2`, by the real family name and with the range of weights of the file, and for a family without a variable font one `@font-face` per file by weight. A role that the brand sets in the family of another role has no files and no rules (D31). The files by weight, `<role>-<weight>.woff2`, are beside the variable files. A build with `--subset` and `--split` adds a file per range beside each declared font, `<name>-<range>.woff2`, and writes the rules of the stylesheet once per range. The `<role>-license.txt` files are the licenses of the families. [fonts.md](fonts.md) has the steps that prepare them.
 - `images/`, `icons/` and every other folder: every file.
 - The docs job, `dist/web/docs/chassis/`, is what every Chassis site copies to `/static/`. The
@@ -439,7 +439,7 @@ with and without the code (D19).
   that no font of a brand has is a warning. `resolveSubset()` takes the brands of the
   configuration and fails on another name.
 - The value is per brand, since it belongs to the family: one value for a run would reach
-  the display font of `sinefil`, which has an optical size axis of its own. It is not per
+  the fonts of every brand, whose families need not share the axis or its cut. It is not per
   file, which would be a manifest. The axes are fixed only with the option, so a default
   build keeps every axis: a page that loads Inter from it shows the display cut above 14
   pixels, unless its styles set `font-optical-sizing: none`.
@@ -498,7 +498,7 @@ with and without the code (D19).
   declares one is for its brand to check.
 - On this repository, on the maintainer's machine, on 2026-10-11: `--subset` writes the 46
   fonts of the two web jobs again and saves 1.8 MB of 4.1 MB. `ui-normal.woff2` of the
-  default brand goes from 111 KB to 57 KB, and to 30 KB with `--subset latin`; the variable
+  `chassis` brand goes from 111 KB to 57 KB, and to 30 KB with `--subset latin`; the variable
   `ui.woff2` goes from 349 KB to 136 KB, and to 69 KB, with its optical size fixed, where
   it was 208 KB and 105 KB with the axis. The `fvar` table of each of the nine variable
   fonts was read after the subset: `ui.woff2` and `ui-italic.woff2` of the `chassis`
@@ -559,8 +559,8 @@ page: a rule of a stylesheet names the family of its file and the weights it hol
   browser does, and passes a format it does not know.
 - A warning, and no error: a font of the default brand that is in the output of a brand,
   of a family that no stylesheet of the brand declares. The brand replaced the family and
-  not this file. One case is known and kept, the variable code font beside the code family
-  of `sinefil`; see "Known oddities".
+  not this file, or sets the role in another family. This repository has no case of it:
+  `source/default/` holds no font, and each brand holds its own (D33).
 - The lint reads no token and no file of another repository: a stylesheet and the font
   beside it are compared with each other (D26).
 
@@ -687,20 +687,14 @@ its version commit is `992e47e`.
 Kept on purpose until a [decision](decisions.md) says otherwise. Do not fix one without a
 changeset that says what breaks.
 
-- A dot inside a source name becomes a hyphen on the web (`chassis-icons-min.css`,
-  `default-tokens.json`) and an underscore on iOS and Android. Consumers read the renamed
-  names.
+- A dot inside a source name becomes a hyphen on the web and an underscore on iOS and
+  Android. Since D33 no file of the output has one: `chassis-icons.min.css`, the one source
+  name with a dot, is in the `demo` app, whose platforms do not keep `.css` files.
 - Eight screenshots under `images/figma/` carry a Figma export number after the resolution
   indicator, `card-orientation-top-2x-1.png`. The web build wrote that name from
   `card-orientation-top@2x-1.png`, and the sources were renamed to the output names on 2026-09-30,
   so `chassis-figma` keeps reading them. They are not `@2x` files to the build.
-- `icons/icons/chassis-icons.json` of the icon package is copied to the web output with the
-  rest of the package.
 - A collision of two source files on one output name warns and the file copied last wins.
-- A brand whose family of a role has no variable font keeps the variable file of the default
-  brand in its output: `fonts/code.woff2` of `dist/web/docs/sinefil/` is the code font of
-  the default brand, and `fonts.css` of the brand does not load it (D24, D31).
-  `pnpm assets:lint:source` warns about it, and about `code.ttf` beside it.
 - On Android, a file with an indicator outside `images/` loses the indicator and gets no
   density folder: `data/poster@2x.png` is `data/poster.png`. Beside a `poster.png` that is a
   collision, and the build warns.
@@ -710,27 +704,23 @@ changeset that says what breaks.
   without `@2x`. No page of `chassis-figma` reads them. The contract check requires both
   modes for them, and not the `@2x`: they are the `except` patterns of the screenshot set in
   `chassis.checks.json`.
-- `source/default/docs/other/default.tokens.json` and the two `icons/icons/chassis-icons.min.css`
-  break the naming rules; `pnpm assets:lint:source` warns about them (`lint.allow` of `chassis.checks.json`).
+- `source/default/demo/icons/icons/chassis-icons.min.css` breaks the naming rules;
+  `pnpm assets:lint:source` warns about it (`lint.allow` of `chassis.checks.json`).
 - The copy of `@chassis-ui/icons` under `icons/` is made by hand, so it is as new as its
   last refresh: 0.3.1, on 2026-10-01. See "Refreshing the icons".
-- Chassis CSS builds the URL of a named icon from `$icon-url-prefix`, `/static/icons/svgs/`
-  by default, so a site may read any file of `icons/svgs/` by its name. The contract check
-  names none of them, because no stylesheet of the siblings names one.
 
 ## Refreshing the icons
 
-The `icons/` folders of `source/default/docs/` and `source/default/demo/` hold the build
-output of `@chassis-ui/icons`, plus `cx-sprite.svg`, which is this repository's. To bring
-them level with the package, on a machine with Git LFS:
+The `icons/` folder of `source/default/demo/` holds the build output of `@chassis-ui/icons`.
+`source/default/docs/icons/` holds `cx-sprite.svg` only, which is this repository's: the
+`docs` app has no copy of the package since D33. To bring the copy level with the package,
+on a machine with Git LFS:
 
 ```shell
 pnpm install
-for app in docs demo; do
-  rm -rf source/default/$app/icons/icons source/default/$app/icons/svgs
-  cp -r packages/site/node_modules/@chassis-ui/icons/icons source/default/$app/icons/icons
-  cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/default/$app/icons/svgs
-done
+rm -rf source/default/demo/icons/icons source/default/demo/icons/svgs
+cp -r packages/site/node_modules/@chassis-ui/icons/icons source/default/demo/icons/icons
+cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/default/demo/icons/svgs
 pnpm assets && pnpm assets:validate
 ```
 
@@ -774,3 +764,6 @@ a name that was under `icons/svgs/` and is gone breaks a site that reads it.
   did nothing and exited with 0.
 - 2026-10-12: `chassis.ignore` and `chassis.formats`, the two tables of the build that a team
   sets (D29).
+- 2026-10-20: `source/chassis/` holds the files of the `chassis` brand, its fonts, logos,
+  favicons and tokens export, and `source/default/` the files every brand shares; the `docs`
+  app has no copy of `@chassis-ui/icons` (D33).

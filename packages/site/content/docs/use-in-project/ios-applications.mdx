@@ -74,7 +74,6 @@ dist/ios/demo/chassis/
 │       ├── arrow_right_solid.svg
 │       └── ...
 └── images/
-    ├── chassis_logo.svg
     ├── home/
     └── logo/
 ```
@@ -111,7 +110,7 @@ Xcode has to copy the fonts into the app bundle, and iOS has to be told about th
 </array>
 ```
 
-Each role has a license, `ui_license.txt`, `display_license.txt` and `code_license.txt`. Keep it with the fonts when you copy them, and add it to the app where the license of the family asks for it.
+Each role that has files has a license, such as `ui_license.txt` and `code_license.txt`. Keep it with the fonts when you copy them, and add it to the app where the license of the family asks for it.
 
 ### PostScript names
 
@@ -179,9 +178,6 @@ The build writes an image to `images/` with every variant the designer exported,
 
 ```text
 dist/ios/demo/chassis/images/
-├── chassis_logo.svg
-├── chassis_logo_shadow.png
-├── chassis_logo_shadow@2x.png
 ├── home/
 │   ├── comp_gallery_dark.png
 │   ├── comp_gallery_dark@2x.png
@@ -189,10 +185,10 @@ dist/ios/demo/chassis/images/
 │   ├── comp_gallery_light@2x.png
 │   └── ...
 └── logo/
-    ├── chassis_icon_brand.png
-    ├── chassis_icon_brand.svg
-    ├── chassis_icon_brand@2x.png
-    ├── chassis_icon_brand@3x.png
+    ├── logo_black.png
+    ├── logo_black.svg
+    ├── logo_dark.png
+    ├── logo_dark.svg
     └── ...
 ```
 
@@ -214,41 +210,43 @@ The images move from `images/` into `Assets.xcassets`, the files of one name int
 dist/ios/demo/chassis/
 ├── Assets.xcassets/
 │   ├── Contents.json
-│   ├── chassis_logo.imageset/
-│   │   ├── Contents.json
-│   │   └── chassis_logo.svg
-│   ├── chassis_logo_shadow.imageset/
-│   │   ├── Contents.json
-│   │   ├── chassis_logo_shadow.png
-│   │   └── chassis_logo_shadow@2x.png
 │   ├── home/
+│   │   ├── Contents.json
+│   │   ├── platforms.imageset/
+│   │   │   ├── Contents.json
+│   │   │   ├── platforms.png
+│   │   │   └── platforms@2x.png
+│   │   ├── tokens_scheme.imageset/
+│   │   │   ├── Contents.json
+│   │   │   └── tokens_scheme.svg
+│   │   └── ...
 │   └── logo/
 ├── fonts/
 ├── icons/
 └── images/
     └── logo/
-        ├── chassis_icon_brand.svg
+        ├── logo_black.svg
         └── ...
 ```
 
-Add `Assets.xcassets` to the project with **File → Add Files to…**, with the app target checked. An SVG without a PNG of its name is an image set of one file with **Preserve Vector Data** set. A subfolder is a folder of the catalog with **Provides Namespace** set, so an image of `logo/` is named `logo/chassis_icon_brand`.
+Add `Assets.xcassets` to the project with **File → Add Files to…**, with the app target checked. An SVG without a PNG of its name is an image set of one file with **Preserve Vector Data** set. A subfolder is a folder of the catalog with **Provides Namespace** set, so an image of `logo/` is named `logo/logo_black`.
 
 A file without a place in an image set stays in `images/`, and the build warns about the number of them. In the committed configuration these are the SVG logos of `images/logo/`, which have PNG variants of the same name. The build does not fill the **Dark** row of an image set and does not put the icons into the catalog. The release archives are built without the option.
 
-Without the option, you make the image sets in Xcode. Drag the variants of an image into the asset catalog together, and Xcode makes one image set named after the file and puts each variant in the slot of its indicator: `chassis_logo_shadow.png` in **1x**, `chassis_logo_shadow@2x.png` in **2x**. A slot stays empty when the designer exported no variant for it, and iOS scales the nearest one.
+Without the option, you make the image sets in Xcode. Drag the variants of an image into the asset catalog together, and Xcode makes one image set named after the file and puts each variant in the slot of its indicator: `platforms.png` in **1x**, `platforms@2x.png` in **2x**. A slot stays empty when the designer exported no variant for it, and iOS scales the nearest one.
 
-An SVG goes into an image set of its own, with **Scales** set to **Single Scale** and **Preserve Vector Data** checked. A logo that the output has as SVG and as PNG, such as `logo/chassis_icon_brand.svg` beside `logo/chassis_icon_brand.png`, needs one of the two: both would make an image set of the same name.
+An SVG goes into an image set of its own, with **Scales** set to **Single Scale** and **Preserve Vector Data** checked. A logo that the output has as SVG and as PNG, such as `logo/logo_black.svg` beside `logo/logo_black.png`, needs one of the two: both would make an image set of the same name.
 
-A name is unique within its folder only: the output has `images/chassis_logo_black.svg` and `images/logo/chassis_logo_black.svg`. Keep the subfolders as folders of the catalog and check **Provides Namespace** on them, and the second one is `logo/chassis_logo_black`.
+A name is unique within its folder only: two subfolders of `images/` can hold files of one name. Keep the subfolders as folders of the catalog and check **Provides Namespace** on them, and an image of `logo/` is `logo/logo_black`.
 
 ### Use the images
 
-The name of an image set is the output name without the indicator and the extension. In a catalog of `--asset-catalog`, an image of a subfolder has the folder before its name, as in `logo/chassis_icon_brand`. Use the name in UIKit:
+The name of an image set is the output name without the indicator and the extension. In a catalog of `--asset-catalog`, an image of a subfolder has the folder before its name, as in `logo/logo_black`. Use the name in UIKit:
 
 ```swift
 import UIKit
 
-let imageView = UIImageView(image: UIImage(named: "chassis_logo_shadow"))
+let imageView = UIImageView(image: UIImage(named: "logo_black"))
 imageView.contentMode = .scaleAspectFit
 ```
 
@@ -259,7 +257,7 @@ import SwiftUI
 
 struct Logo: View {
     var body: some View {
-        Image("chassis_logo_shadow")
+        Image("logo_black")
             .resizable()
             .scaledToFit()
     }
@@ -341,7 +339,7 @@ let url = Bundle.main.url(
 
 ## Brand switching
 
-Every brand of an app has the same folders and the same file names, so the code of the app does not change with the brand: what changes is the folder the files come from. In the committed configuration, `dist/ios/demo/sinefil/` differs from `dist/ios/demo/chassis/` in the fonts and in the logos under `images/logo/` that the `sinefil` brand overrides.
+The brands of an app have the same folders, and a file that two brands both have has the same name in each, so the code of the app does not change with the brand: what changes is the folder the files come from. In the committed configuration, `dist/ios/demo/sinefil/` and `dist/ios/demo/chassis/` share the images of `images/home/` and the icons, which come from the default brand, and each has its own fonts and its own logos under `images/logo/`. `sinefil` has `prose_*.ttf` files and no `display_*.ttf` files, since it sets its `display` role in its `prose` family; `chassis` has `display_*.ttf` files and no `prose_*.ttf` files, since it sets its `prose` role in its `ui` family. An app that loads the files of one of these roles builds with that brand only.
 
 ### Brand per build
 
@@ -385,7 +383,7 @@ func brandImage(_ name: String, brand: String) -> UIImage? {
     UIImage(named: "\(brand)/\(name)")
 }
 
-let logo = brandImage("chassis_logo_shadow", brand: "sinefil")
+let logo = brandImage("logo_black", brand: "sinefil")
 ```
 
 ## Continuous integration

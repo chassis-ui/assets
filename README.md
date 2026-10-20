@@ -71,18 +71,19 @@ ref/OPEN.md               -> What is left to do, decide or check
 
 ```
 source/
-├── default/              -> The fallback brand, used by every brand
+├── default/              -> The fallback brand: the files every brand gets
 │   ├── docs/             -> The app `docs`
-│   │   ├── fonts/        -> Font files, their stylesheets and their licenses
 │   │   ├── images/       -> Images, with the @2x and @3x variants the designer exported
-│   │   ├── icons/        -> The build output of @chassis-ui/icons, and cx-sprite.svg
-│   │   └── other/        -> Any other folder name is copied as it is
-│   └── demo/             -> The app `demo`
-└── <brand>/              -> The files of a brand that differ from the default
+│   │   └── icons/        -> cx-sprite.svg
+│   └── demo/             -> The app `demo`, with the build output of @chassis-ui/icons in icons/
+└── <brand>/              -> The files of a brand: `chassis` and `sinefil`
     └── <app>/
+        ├── fonts/        -> Font files, their stylesheet and their licenses
+        ├── images/       -> The logos, the favicons and the other images of the brand
+        └── other/        -> Any other folder name is copied as it is
 ```
 
-A file under `source/<brand>/<app>/` replaces the file of the same path under `source/default/<app>/`. A brand needs only the files that differ.
+A file under `source/<brand>/<app>/` replaces the file of the same path under `source/default/<app>/`. A brand needs only the files that differ. In this repository each brand holds its fonts, its logos and its favicons, and `default` holds what every brand shares.
 
 ### Output
 

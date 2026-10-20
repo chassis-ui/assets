@@ -105,14 +105,7 @@ dist/web/docs/chassis/
 │   ├── ui-normal.woff2
 │   └── ...
 ├── icons/
-│   ├── cx-sprite.svg
-│   ├── icons/
-│   │   ├── chassis-icons.css
-│   │   ├── chassis-icons.woff2
-│   │   └── ...
-│   └── svgs/
-│       ├── arrow-right-solid.svg
-│       └── ...
+│   └── cx-sprite.svg
 ├── images/
 │   ├── site-logo.svg
 │   ├── home/
@@ -120,7 +113,7 @@ dist/web/docs/chassis/
 │   └── logo/
 │       └── ...
 └── other/
-    └── default-tokens.json
+    └── example-tokens.json
 ```
 
 ### Copy the output
@@ -248,7 +241,7 @@ The weight of a role is the choice of the brand; read it in the stylesheet of th
 
 ### Licenses
 
-The build copies the license of each role beside its fonts, as `<role>-license.txt`. Keep `ui-license.txt`, `display-license.txt` and `code-license.txt` with the fonts when you copy them to another folder.
+The build copies the license of each role beside its fonts, as `<role>-license.txt`. Keep these files, such as `ui-license.txt` and `code-license.txt`, with the fonts when you copy them to another folder.
 
 ## Images
 
@@ -264,10 +257,10 @@ dist/web/docs/chassis/images/
 │   ├── platforms@2x.webp
 │   └── ...
 └── logo/
-    ├── chassis-logo-brand.png
-    ├── chassis-logo-brand.svg
-    ├── chassis-logo-brand@2x.png
-    ├── chassis-logo-brand@3x.png
+    ├── logo-black.png
+    ├── logo-black.svg
+    ├── logo-dark.png
+    ├── logo-dark.svg
     └── ...
 ```
 
@@ -279,12 +272,8 @@ An image with `@2x` and `@3x` variants goes into `srcset`, one variant per pixel
 
 ```html
 <img
-  src="/assets/images/logo/chassis-logo-brand.png"
-  srcset="
-    /assets/images/logo/chassis-logo-brand.png    1x,
-    /assets/images/logo/chassis-logo-brand@2x.png 2x,
-    /assets/images/logo/chassis-logo-brand@3x.png 3x
-  "
+  src="/assets/images/home/lego-chassis.png"
+  srcset="/assets/images/home/lego-chassis.png 1x, /assets/images/home/lego-chassis@2x.png 2x"
   alt="Chassis"
 />
 ```
@@ -309,64 +298,26 @@ An image that the output has as WebP and as PNG goes into a `<picture>` element,
 
 ## Icons
 
-The `icons/` folder holds every file of the source. In the committed source that is the build output of Chassis Icons, as an icon font under `icons/icons/` and as SVG files under `icons/svgs/`, and the sprite `cx-sprite.svg`.
+The `icons/` folder holds every file of the source. In the committed source that is the sprite `cx-sprite.svg`, which holds the icons of the home pages of the Chassis sites.
 
 ```text
 dist/web/docs/chassis/icons/
-├── cx-sprite.svg
-├── icons/
-│   ├── chassis-icons-min.css
-│   ├── chassis-icons.css
-│   ├── chassis-icons.json
-│   ├── chassis-icons.scss
-│   ├── chassis-icons.svg
-│   ├── chassis-icons.woff
-│   └── chassis-icons.woff2
-└── svgs/
-    ├── arrow-right-outline.svg
-    ├── arrow-right-solid.svg
-    └── ...
+└── cx-sprite.svg
 ```
 
-Chassis Icons owns the icons and their font; the [Chassis Icons docs](https://chassis-ui.com/icons/) list them. The [icons]([[docsref:/asset-types/icons#platform-output]]) page has what each platform gets.
+The [icons]([[docsref:/asset-types/icons#platform-output]]) page has what each platform gets.
 
-### SVG files
+### Chassis Icons
 
-Each icon is one file of `icons/svgs/`, named `<icon>-solid.svg` or `<icon>-outline.svg`. Use an `<img>` element for an icon that keeps its color:
-
-```html
-<img src="/assets/icons/svgs/arrow-right-solid.svg" alt="" width="24" height="24" />
-```
-
-The files have `fill="currentcolor"`, so an icon takes the color of the text only when its markup is in the page. With Vite, the `?raw` query imports the markup of a file as a string:
-
-```js
-import arrowRight from '@assets/icons/svgs/arrow-right-solid.svg?raw'
-
-document.querySelector('#next').insertAdjacentHTML('beforeend', arrowRight)
-```
-
-### Icon font
-
-The stylesheet `icons/icons/chassis-icons.css` declares the icon font and one class per icon, `cx-<icon>-solid` or `cx-<icon>-outline`. It reads `chassis-icons.woff2` and `chassis-icons.woff` by a relative URL, so keep the files of `icons/icons/` together.
-
-```html
-<link rel="stylesheet" href="/assets/icons/icons/chassis-icons.css" />
-
-<i class="cx-arrow-right-solid"></i>
-```
-
-<Callout type="warning">
-The web build turns a dot inside a name into a hyphen. The minified stylesheet of the icon font is `chassis-icons-min.css` in the output, not `chassis-icons.min.css`.
-</Callout>
+The web output does not hold the icons of Chassis Icons. A web application installs them from npm, as the package [`@chassis-ui/icons`](https://www.npmjs.com/package/@chassis-ui/icons), which holds the icon font with its stylesheets and its sprite under `icons/`, and one SVG file per icon under `svgs/`. Chassis Icons owns the icons and their font; the [Chassis Icons docs](https://chassis-ui.com/icons/) list them and show how to use the package.
 
 ### Sprites
 
-A sprite holds icons as `<symbol>` elements that a page shows with `<use>`. The output has two: `icons/icons/chassis-icons.svg` has one symbol per icon of Chassis Icons, with the name of the icon as its `id`, and `icons/cx-sprite.svg` has the icons of the home pages of the Chassis sites, with `cx-<icon>` as the `id`.
+A sprite holds icons as `<symbol>` elements that a page shows with `<use>`. `icons/cx-sprite.svg` has the icons of the home pages of the Chassis sites, with `cx-<icon>` as the `id`:
 
 ```html
 <svg width="24" height="24" fill="currentColor">
-  <use href="/assets/icons/icons/chassis-icons.svg#arrow-right-solid"></use>
+  <use href="/assets/icons/cx-sprite.svg#cx-rocket"></use>
 </svg>
 ```
 
@@ -374,24 +325,24 @@ The Chassis sites put the markup of `cx-sprite.svg` into the page and refer to a
 
 ## Other assets
 
-The build copies any other folder under an app as it is, with the names in kebab-case. In the committed source that is `other/`, which holds the design tokens of a Figma export:
+The build copies any other folder under an app as it is, with the names in kebab-case. In the committed source that is `other/` of the `chassis` brand, which holds the design tokens of a Figma export:
 
 ```text
 dist/web/docs/chassis/other/
-└── default-tokens.json
+└── example-tokens.json
 ```
 
-The source file is `source/default/docs/other/default.tokens.json`: the dot inside the name became a hyphen. Read a file of such a folder by its output name:
+The source file is `source/chassis/docs/other/example-tokens.json`, and the other brands have no such folder. Read a file of such a folder by its output name:
 
 ```js
-const tokens = await fetch('/assets/other/default-tokens.json').then((response) => response.json())
+const tokens = await fetch('/assets/other/example-tokens.json').then((response) => response.json())
 ```
 
 The [other assets]([[docsref:/asset-types/other]]) page describes these folders.
 
 ## Brand switching
 
-Every brand of `chassis.build.brands` has a folder of its own beside the others, `dist/web/<app>/<brand>/`. A file has the same path in each of them, so an application changes brand by reading another folder, with no change to the paths in its code.
+Every brand of `chassis.build.brands` has a folder of its own beside the others, `dist/web/<app>/<brand>/`. A file has the same path in each brand that has it, so an application changes brand by reading another folder, with no change to the paths in its code.
 
 To ship one brand, copy the folder of that brand at build time:
 
@@ -413,15 +364,15 @@ export function assetUrl(brand, path) {
   return `/assets/${brand}/${path}`
 }
 
-document.querySelector('#logo').src = assetUrl('sinefil', 'images/logo/chassis-logo-brand.svg')
+document.querySelector('#logo').src = assetUrl('sinefil', 'images/logo/logo-dark.svg')
 ```
 
-A brand folder of `source/` holds only the files that differ, and the build fills the rest from the default brand. The `sinefil` brand has fonts and logos of its own, and its output has the same files as the output of the default brand, under the same names.
+The build fills the output of a brand with the files of its folder in `source/` and with the files of the default brand that the brand does not replace. In the committed source the default brand holds the files every brand shares, such as `images/home/` and `icons/cx-sprite.svg`, and each brand holds its own fonts, logos and favicons under the same names.
 
-A default file that a brand does not replace stays in the output of the brand. The code family of `sinefil` has no variable font, so `fonts/code.woff2` of its output is the code font of the default brand, and `fonts.css` of the brand does not load it. Link the stylesheet and you get the fonts of the brand.
+The two brands do not have the same files. The output of `sinefil` has `prose-*` fonts, no `display-*` fonts, since `sinefil` sets `display` in its `prose` family, no `fonts/code.woff2`, since its code family has no variable font, and no `other/` folder. Read such a file only for the brand that has it. `fonts.css` of each brand declares the fonts of that brand: link the stylesheet and you get the fonts of the brand.
 
 <Callout type="warning">
-A brand that replaces font files without a stylesheet of its own gets `fonts.css` of the default brand, which declares the family names of the default fonts. Add `fonts.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).
+A brand with font files and no stylesheet of its own gets `fonts.css` of the default brand if there is one, which declares the family names of the default fonts, and no stylesheet otherwise. In this repository each brand has its own. Add `fonts.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).
 </Callout>
 
 ## Continuous integration
@@ -463,8 +414,8 @@ The commands of this job were run in a project with the submodule; the workflow 
 
 These practices keep your application reading the output as the build wrote it, with the names and the folders of `dist/web/`.
 
-- **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so the output has `other/default-tokens.json` and `icons/icons/chassis-icons-min.css`. Find a name with `find dist/web/docs/chassis -name '<pattern>'`.
-- **Keep a stylesheet beside its fonts:** `fonts.css` and `chassis-icons.css` read their font files by a relative URL. Copy `fonts/` and `icons/icons/` whole.
+- **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so a source file `brand.tokens.json` is `brand-tokens.json` in the output. Find a name with `find dist/web/docs/chassis -name '<pattern>'`.
+- **Keep the stylesheet beside its fonts:** `fonts.css` reads its font files by a relative URL. Copy `fonts/` whole.
 - **Ship the licenses:** copy `<role>-license.txt` with the fonts of `fonts/`.
 - **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is marked `**Breaking.**` in the changelog.
 
@@ -487,7 +438,7 @@ The browser logs `Failed to decode downloaded font` for a file of `fonts/`. The 
 
 ### Font file not found
 
-The browser gets a 404 for a font that a stylesheet of `fonts/` or of `icons/icons/` names. The stylesheet was copied without the font files beside it, and its URLs are relative. Copy the whole folder.
+The browser gets a 404 for a font that the stylesheet of `fonts/` names. The stylesheet was copied without the font files beside it, and its URLs are relative. Copy the whole folder.
 
 ### File not found
 

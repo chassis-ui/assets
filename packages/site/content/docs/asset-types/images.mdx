@@ -15,19 +15,24 @@ An image has the variants the designer exported. The build does not resize a fil
 Images live in `source/<brand>/<app>/images/`, in any subfolders. The default brand holds the images of every brand, and a brand holds only the files that differ.
 
 ```text
-source/default/demo/images/
-├── chassis-logo.svg
-├── chassis-logo-shadow.png
-├── chassis-logo-shadow@2x.png
-├── home/
-│   ├── comp-gallery-dark.png
-│   ├── comp-gallery-dark@2x.png
-│   └── ...
-└── logo/
-    └── ...
+source/
+├── default/
+│   └── demo/
+│       └── images/
+│           └── home/
+│               ├── comp-gallery-dark.png
+│               ├── comp-gallery-dark@2x.png
+│               └── ...
+└── chassis/
+    └── demo/
+        └── images/
+            └── logo/
+                ├── logo-black.png
+                ├── logo-black.svg
+                └── ...
 ```
 
-A brand file replaces the default file of the same path, subfolder included. The `sinefil` brand of this repository has a `logo/` folder only, so it gets its own logos and every other image of the default brand.
+A brand file replaces the default file of the same path, subfolder included. In the `demo` app of this repository each brand has a `logo/` folder only, so it gets its own logos and the `home/` images of the default brand.
 
 ## Formats
 
@@ -48,17 +53,16 @@ PNG, JPG and WebP files are Git LFS files. SVG files are text and are committed 
 
 ## Naming
 
-Name an image in lowercase with hyphens, after what it shows: `comp-gallery-dark.png`, `chassis-logo-white.svg`. Each platform renames the file, so the source name is written once and the web, iOS and Android names follow from it.
+Name an image in lowercase with hyphens, after what it shows: `comp-gallery-dark.png`, `logo-white.svg`. Each platform renames the file, so the source name is written once and the web, iOS and Android names follow from it.
 
 ### Variants
 
 A variant is the same image exported at another resolution. Its name ends with an indicator before the extension: `@2x` for twice the size, `@3x` for three times. The file without an indicator is the base size.
 
 ```text
-source/default/demo/images/logo/
-├── chassis-icon-black.png
-├── chassis-icon-black@2x.png
-└── chassis-icon-black@3x.png
+source/default/demo/images/home/
+├── comp-gallery-dark.png
+└── comp-gallery-dark@2x.png
 ```
 
 The web and the iOS output keep the indicator in the name. Android has no indicator: the build writes each variant under the same name into the density folder of its resolution, see [Platform output](#platform-output).
@@ -85,7 +89,7 @@ The build copies an image as the designer exported it. These practices cover wha
 - **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them. An image without variants reaches Android in `drawable/` only.
 - **Keep the base name the same across variants:** `hero.png`, `hero@2x.png` and `hero@3x.png` become one Android drawable in three densities. A variant with another base name becomes another image.
 - **Add a PNG or JPG beside a WebP:** iOS does not get WebP files.
-- **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/logo/chassis-logo.svg` for `images/logo/chassis-logo.svg`.
+- **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/home/platforms.png` for `images/home/platforms.png`.
 
 Avoid the habits that undo this:
 
@@ -107,12 +111,6 @@ The source file `images/home/comp-gallery-dark@2x.png` is `images/home/comp-gall
 
 ```text
 dist/android/demo/chassis/images/
-├── drawable/
-│   ├── chassis_logo.svg
-│   ├── chassis_logo_shadow.png
-│   └── ...
-├── drawable-xhdpi/
-│   └── chassis_logo_shadow.png
 ├── home/
 │   ├── drawable/
 │   │   ├── comp_gallery_dark.png
@@ -121,9 +119,9 @@ dist/android/demo/chassis/images/
 │       ├── comp_gallery_dark.png
 │       └── ...
 └── logo/
-    ├── drawable/
-    ├── drawable-xhdpi/
-    └── drawable-xxhdpi/
+    └── drawable/
+        ├── logo_black.png
+        └── ...
 ```
 
 On Android the indicator of a name chooses the density folder, and a file without an indicator goes to `drawable/`.
@@ -139,7 +137,7 @@ On Android the indicator of a name chooses the density folder, and a file withou
 | `@4x` | `drawable-xxxhdpi/` |
 </CxTable>
 
-The density folders are written inside each subfolder of `images/`, so `images/logo/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`. A build with the `--res` option does that copy: it moves the raster images of every subfolder into `res/drawable/` and the density folders, see the [build system page]([[docsref:/getting-started/build-system#res-folder]]).
+The density folders are written inside each subfolder of `images/`, so `images/home/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`. A build with the `--res` option does that copy: it moves the raster images of every subfolder into `res/drawable/` and the density folders, see the [build system page]([[docsref:/getting-started/build-system#res-folder]]).
 
 ### Asset catalog
 
@@ -149,25 +147,25 @@ A build with `pnpm assets --asset-catalog` writes the images of an iOS job as an
 dist/ios/demo/chassis/
 ├── Assets.xcassets/
 │   ├── Contents.json
-│   ├── chassis_logo.imageset/
-│   │   ├── Contents.json
-│   │   └── chassis_logo.svg
-│   ├── chassis_logo_shadow.imageset/
-│   │   ├── Contents.json
-│   │   ├── chassis_logo_shadow.png
-│   │   └── chassis_logo_shadow@2x.png
 │   ├── home/
+│   │   ├── Contents.json
+│   │   ├── assets_visual_dark.imageset/
+│   │   │   ├── Contents.json
+│   │   │   └── assets_visual_dark.svg
+│   │   ├── comp_gallery_dark.imageset/
+│   │   │   ├── Contents.json
+│   │   │   ├── comp_gallery_dark.png
+│   │   │   └── comp_gallery_dark@2x.png
+│   │   └── ...
 │   └── logo/
 │       ├── Contents.json
-│       ├── chassis_icon_brand.imageset/
+│       ├── logo_black.imageset/
 │       │   ├── Contents.json
-│       │   ├── chassis_icon_brand.png
-│       │   ├── chassis_icon_brand@2x.png
-│       │   └── chassis_icon_brand@3x.png
+│       │   └── logo_black.png
 │       └── ...
 └── images/
     └── logo/
-        ├── chassis_icon_brand.svg
+        ├── logo_black.svg
         └── ...
 ```
 

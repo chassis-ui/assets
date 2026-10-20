@@ -15,10 +15,11 @@ dist/android/demo/chassis/
 │   ├── ui_license.txt
 │   └── ...
 ├── images/
-│   ├── drawable/
-│   │   └── chassis_logo_shadow.png
-│   └── drawable-xhdpi/
-│       └── chassis_logo_shadow.png
+│   └── home/
+│       ├── drawable/
+│       │   └── platforms.png
+│       └── drawable-xhdpi/
+│           └── platforms.png
 └── icons/
     └── svgs/
         ├── ic_arrow_right_solid.svg
@@ -99,27 +100,17 @@ dist/android/demo/chassis/
 │       ├── ic_arrow_right_solid.svg
 │       └── ...
 └── images/
-    ├── drawable/
-    │   ├── chassis_logo.svg
-    │   ├── chassis_logo_shadow.png
-    │   └── ...
-    ├── drawable-xhdpi/
-    │   └── chassis_logo_shadow.png
     ├── home/
     │   ├── drawable/
+    │   │   ├── platforms.png
     │   │   └── ...
     │   └── drawable-xhdpi/
+    │       ├── platforms.png
     │       └── ...
     └── logo/
-        ├── drawable/
-        │   ├── chassis_logo_brand.png
-        │   ├── chassis_logo_brand.svg
-        │   └── ...
-        ├── drawable-xhdpi/
-        │   ├── chassis_logo_brand.png
-        │   └── ...
-        └── drawable-xxhdpi/
-            ├── chassis_logo_brand.png
+        └── drawable/
+            ├── logo_black.png
+            ├── logo_black.svg
             └── ...
 ```
 
@@ -145,23 +136,22 @@ dist/android/demo/chassis/
 │   └── icons/
 │       └── ic_chassis_icons.svg
 ├── images/
-│   ├── drawable/
-│   │   ├── chassis_logo.svg
-│   │   └── ...
 │   ├── home/
+│   │   └── drawable/
+│   │       ├── tokens_scheme.svg
+│   │       └── ...
 │   └── logo/
+│       └── drawable/
+│           ├── logo_black.svg
+│           └── ...
 └── res/
     ├── drawable/
-    │   ├── chassis_logo_brand.png
-    │   ├── chassis_logo_shadow.png
     │   ├── ic_arrow_right_solid.xml
+    │   ├── logo_black.png
+    │   ├── platforms.png
     │   └── ...
     ├── drawable-xhdpi/
-    │   ├── chassis_logo_brand.png
-    │   ├── chassis_logo_shadow.png
-    │   └── ...
-    ├── drawable-xxhdpi/
-    │   ├── chassis_logo_brand.png
+    │   ├── platforms.png
     │   └── ...
     └── font/
         ├── code_normal.ttf
@@ -201,7 +191,7 @@ find "$ASSETS/fonts" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) -exec cp {
 cp "$ASSETS"/fonts/*_license.txt "$SRC/assets/licenses/"
 
 # The PNG and WebP files of each folder of images/ that the app uses
-for folder in images images/home images/logo; do
+for folder in images/home images/logo; do
   for density in "$ASSETS/$folder"/drawable*/; do
     target="$SRC/res/$(basename "$density")"
     mkdir -p "$target"
@@ -291,46 +281,44 @@ The build removes the indicator from the name and writes the file to the density
 | `@4x` | `drawable-xxxhdpi/` |
 </CxTable>
 
-The source files `images/logo/chassis-logo-brand.png`, `chassis-logo-brand@2x.png` and `chassis-logo-brand@3x.png` of the app come out as one name in three folders:
+The source files `images/home/platforms.png` and `platforms@2x.png` of the app come out as one name in two folders:
 
 ```text
-dist/android/demo/chassis/images/logo/
+dist/android/demo/chassis/images/home/
 ├── drawable/
-│   └── chassis_logo_brand.png
-├── drawable-xhdpi/
-│   └── chassis_logo_brand.png
-└── drawable-xxhdpi/
-    └── chassis_logo_brand.png
+│   └── platforms.png
+└── drawable-xhdpi/
+    └── platforms.png
 ```
 
 The build does not resize: an image has the variants that the designer exported, and no others. Android reads a file of `drawable/` as an mdpi image and scales it up on a denser screen.
 
 ### Using an image
 
-After the copy script ran, the three files are one resource, `R.drawable.chassis_logo_brand`, and Android picks the file of the screen density. Use it in a layout:
+After the copy script ran, the two files are one resource, `R.drawable.platforms`, and Android picks the file of the screen density. Use it in a layout:
 
 ```xml
 <ImageView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:src="@drawable/chassis_logo_brand"
-    android:contentDescription="@string/logo" />
+    android:src="@drawable/platforms"
+    android:contentDescription="@string/platforms" />
 ```
 
 Use it in Jetpack Compose:
 
 ```kotlin
 Image(
-    painter = painterResource(R.drawable.chassis_logo_brand),
-    contentDescription = stringResource(R.string.logo)
+    painter = painterResource(R.drawable.platforms),
+    contentDescription = stringResource(R.string.platforms)
 )
 ```
 
 ### SVG images
 
-The build copies an SVG image to `drawable/` as SVG, and `res/drawable/` does not accept that format, so the copy script leaves the SVG files out. Import the ones you need with Vector Asset Studio of Android Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then the file, for example `images/drawable/chassis_logo.svg` of the job folder. Android Studio writes `res/drawable/chassis_logo.xml`.
+The build copies an SVG image to `drawable/` as SVG, and `res/drawable/` does not accept that format, so the copy script leaves the SVG files out. Import the ones you need with Vector Asset Studio of Android Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then the file, for example `images/home/drawable/tokens_scheme.svg` of the job folder. Android Studio writes `res/drawable/tokens_scheme.xml`.
 
-Several images of `images/logo/` exist as both PNG and SVG with one name, such as `chassis_logo_brand.png` and `chassis_logo_brand.svg`. A resource has one file per folder, so use one of the two formats for a name, or give the vector drawable another name in the dialog.
+The images of `images/logo/` exist as both PNG and SVG with one name, such as `logo_black.png` and `logo_black.svg`. A resource has one file per folder, so use one of the two formats for a name, or give the vector drawable another name in the dialog.
 
 ### Night images
 
@@ -430,7 +418,7 @@ Copy such a file to `res/raw/` to read it as `R.raw.brand_tokens`, or copy the f
 
 ## Brand switching
 
-Every brand of `chassis.build.brands` has a job folder with the same file names, so an app changes brand by changing the folder it copies from. A brand file replaces the default file of the same path in the build; the names stay, and the code of the app does not change.
+Every brand of `chassis.build.brands` has a job folder with the same folders, and a file that two brands both have has the same name in each, so an app changes brand by changing the folder it copies from. A brand file replaces the default file of the same path in the build; the names stay, and the code of the app does not change. The font files of the committed brands differ: `chassis` has `display_*.ttf` files and `sinefil` has `prose_*.ttf` files in their place, so a font family resource of one of these roles goes in the source set of its brand.
 
 ### Product flavors
 
@@ -554,7 +542,7 @@ Gradle fails on a file of `res/drawable/` with `The file name must end with .xml
 
 ### Duplicate resources
 
-Gradle fails with `Duplicate resources` and names two files of one folder, such as `chassis_logo_brand.png` and `chassis_logo_brand.xml`. The image exists as PNG and as SVG in `images/logo/`, and both were added to `res/drawable/`. Keep one of them, or import the SVG under another name. The two files can also be a copy of an earlier build and one of this build: `chassis_logo_brand.png` is still in `app/src/chassis/res/drawable/` when a build with `--webp` writes `chassis_logo_brand.webp` in its place. Delete the file of the earlier build.
+Gradle fails with `Duplicate resources` and names two files of one folder, such as `logo_black.png` and `logo_black.xml`. The image exists as PNG and as SVG in `images/logo/`, and both were added to `res/drawable/`. Keep one of them, or import the SVG under another name. The two files can also be a copy of an earlier build and one of this build: `logo_black.png` is still in `app/src/chassis/res/drawable/` when a build with `--webp` writes `logo_black.webp` in its place. Delete the file of the earlier build.
 
 ### Image is missing
 

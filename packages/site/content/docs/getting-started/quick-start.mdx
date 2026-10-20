@@ -95,12 +95,16 @@ A file added to `source/` is in the output of the next build. No list or configu
 source/
 ├── default/              -> the default brand, used by every brand
 │   ├── docs/             -> an app
+│   │   ├── icons/
+│   │   └── images/
+│   └── demo/
+├── chassis/              -> a brand: its fonts, logos and favicons
+│   ├── docs/
 │   │   ├── fonts/
 │   │   ├── images/
-│   │   ├── icons/
 │   │   └── other/        -> any other folder is a type too
 │   └── demo/
-└── sinefil/              -> a brand: only the files that differ
+└── sinefil/
     ├── docs/
     └── demo/
 ```

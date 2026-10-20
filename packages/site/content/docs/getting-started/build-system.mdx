@@ -756,7 +756,7 @@ These practices keep a build short while you work, and keep the paths of the out
 
 - **Build a part while you work:** `pnpm assets --brand chassis --platform web` writes one job and keeps the rest of `dist/`.
 - **Run a full build before the checks:** `pnpm assets:validate` and `pnpm assets:verify` expect the output of every job.
-- **Start with the default brand:** put a complete set of files in `source/default/<app>/`, and add to a brand folder only what differs.
+- **Start with the default brand:** put the files that every brand shares in `source/default/<app>/`, and add to a brand folder only what is its own.
 - **Keep brand and app names in lowercase with hyphens:** they are folder names in `source/` and in `dist/`, and a consumer reads its files by that path.
 
 Avoid the habits that undo this:

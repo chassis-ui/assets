@@ -42,7 +42,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   jobs. A build without filters removes `dist/` whole. 2026-09-30.
 - **D7. Does `other/default.tokens.json` stay in `source/`?** It stays: any folder under an
   app is copied, and removing a file is the maintainer's. `lint.allow` accepts its name.
-  2026-09-30.
+  2026-09-30. D33 renames it `other/example-tokens.json` of the `chassis` brand.
 - **D8. Where do font licenses live?** Beside the fonts in `source/<brand>/<app>/fonts/`, as
   `<role>-license.txt`, and the build copies them to `fonts/` of every job like any file.
   2026-09-30.
@@ -135,7 +135,9 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   that a brand cannot replace stays in its output: `code.woff2` for `sinefil`, a known
   oddity. With the maintainer, 2026-10-11. D28 changes the cut of the app fonts and closes
   the weight of `code-strong`. D31 renames the `text` role to `ui` and replaces the
-  stylesheet of a role with one stylesheet per brand.
+  stylesheet of a role with one stylesheet per brand. D32 replaces the families of
+  `sinefil`. D33 moves the default fonts to `source/chassis/`, which ends the known oddity
+  of `code.woff2`.
 - **D25. Does a page show the optical size axis of the default text font, Inter?** Not in a
   build with `--subset`. A browser sets `opsz` from the font size, so a page draws Inter in
   its display cut above 14 pixels, 7% narrower at 57 pixels. `axes` of `chassis.subset` names
@@ -169,7 +171,8 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `sinefil` keep the cuts of its downloads, DM Sans at 18 and Source Serif 4 at 14, and a
   file names the cut it is fixed at. Asked for by the maintainer, 2026-10-11. The first two
   choices and the cut of the `display` role of `sinefil` wait for a confirmation, see
-  [ref/OPEN.md](../ref/OPEN.md).
+  [ref/OPEN.md](../ref/OPEN.md). D32 takes the files by weight of a family with a reserved
+  font name from its download, and the families it replaces close the cut of `sinefil`.
 - **D29. Which tables of the build does a team set, and where?** Two, in the `chassis` block
   of `package.json`. `ignore` is a list of names of files and folders that are left out
   beside `IGNORE_PATTERNS`: it adds and takes nothing away, and a pattern is a name with `*`,
@@ -212,4 +215,34 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `display.css` and `code.css` are gone, `fonts.css` is new, and the `text` files are `ui`
   files on every platform, with the same fonts and PostScript names inside. `@chassis-ui/docs`
   0.8 and 0.9 link the three stylesheets and move with the sites. The maintainer,
-  2026-10-19.
+  2026-10-19. D32 sets the `display` role of `sinefil` in its `prose` family.
+- **D32. Which fonts does `sinefil` have, and how are the files of a family with a reserved
+  font name made?** Geist for `ui`, Lora for `prose` and Cousine for `code`, the families of
+  `source/brand-sinefil/brand-base.json` in chassis-tokens since its commit `1168271`, which
+  sets the `display` role in the `prose` family. So `sinefil` has `prose` files, which the
+  default brand has not, and no `display` files: the display files of the default brand stay
+  in its output, as `code.woff2` does. D33 ends both. The license of Lora
+  reserves the name "Lora". The OFL FAQ counts a font with changed data as a Modified
+  Version, which may not carry a reserved name, and allows a WOFF2 of unchanged data under
+  the name (FAQ 2.2.1). So the files by weight of Lora are the files in `static/` of its
+  download, copied, and not written by `build/instance-font.py`: they are the same version
+  as the variable files, 3.008, and the authors' own. Geist reserves no name and takes the
+  step of D28. A build with `--subset` writes a subset of Lora under its name; the maintainer
+  accepts that, as most sites do. With the maintainer, 2026-10-20.
+- **D33. What does `source/default/` hold, now that the brands differ in their fonts, logos
+  and favicons?** What every brand shares, and nothing else: the screenshots and the home page
+  images, `icons/cx-sprite.svg` of the `docs` app, and the copy of `@chassis-ui/icons` in the
+  `demo` app. Each brand holds its fonts, logos, favicons, site logo and social image in
+  `source/<brand>/`, the `chassis` brand in `source/chassis/`. A brand so gets no font of
+  another: the display files and `code.woff2` of the default brand are no longer in the
+  output of `sinefil`, and a brand that has no file of a role ships none. The maintainer
+  reorganized `source/` so, and took the breaks that came with it: the 48 logos
+  `chassis-{logo,icon}-{black,brand,white}`, with their banners and their `@2x` and `@3x`
+  files, are 8 files per brand and app, `images/logo/logo-{black,dark,light,white}.{png,svg}`;
+  the `docs` app has no `icons/icons/` and `icons/svgs/`, so a page takes the icons from
+  `@chassis-ui/icons`, and the `demo` app keeps them; the 13 files at the top of `images/` of
+  the `demo` app are removed; and `other/default.tokens.json` is
+  `other/example-tokens.json` of the `chassis` brand, with the content of D7 and without the
+  dot, and `sinefil` has none. The contract of the logos that the website reads is removed
+  from `chassis.checks.json` until the website reads the new names, see
+  [ref/OPEN.md](../ref/OPEN.md). The maintainer, 2026-10-20.

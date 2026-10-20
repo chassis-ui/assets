@@ -8,7 +8,7 @@ toc: true
 
 Fonts are the files under `fonts/` of an app. The build copies the WOFF and WOFF2 files to the web output and the TTF and OTF files to iOS and Android, together with the license of each font. Stylesheets in the folder go to the web output only.
 
-The files are named by the role a font plays, not by its family, so that a brand ships fonts of its own under the names of the default brand. A role that a brand sets in the family of another role has no files of its own.
+The files are named by the role a font plays, not by its family, so that every brand ships its fonts under the same names. A role that a brand sets in the family of another role has no files of its own.
 
 ## Source layout
 
@@ -29,7 +29,7 @@ source/
             └── ui-normal.woff2       -> replaces the default file of the same name
 ```
 
-A brand file replaces the default file of the same path. A brand without a `fonts/` folder gets the default fonts as they are.
+A brand file replaces the default file of the same path. A brand without a `fonts/` folder gets the default fonts as they are. In this repository the default brand holds no fonts, and each brand holds all of its own, with a `fonts.css` of its own.
 
 ## Formats
 
@@ -59,12 +59,12 @@ A font file is named `<role>-<weight>.<ext>`, with `-italic` after the weight fo
 | Weight | `elegant`, `normal`, `strong`, `mass` | From the lightest to the heaviest weight of the role |
 </CxTable>
 
-A role that a brand sets in the family of another role has no files: the files of a family are under the role that owns it. The `prose` role is set in the `ui` family of the default brand and in the `display` family of the `sinefil` brand, so neither has a `prose` file. Which roles have files so differs by brand.
+A role that a brand sets in the family of another role has no files: the files of a family are under the role that owns it. The `prose` role of the `chassis` brand is set in its `ui` family, so `chassis` has no `prose` file, and the `display` role of the `sinefil` brand is set in its `prose` family, so `sinefil` has no `display` file. Which roles have files so differs by brand.
 
-The default brand names its fonts this way:
+The `chassis` brand names its fonts this way:
 
 ```text
-source/default/demo/fonts/
+source/chassis/demo/fonts/
 ├── code-normal.ttf
 ├── code-strong.ttf
 ├── display-normal.ttf
@@ -97,7 +97,7 @@ Fonts are Git LFS files. Install Git LFS before adding one, so that the commit h
 A family with a variable font gets both forms in a web app: the variable file of the role, and one file per weight beside it.
 
 ```text
-source/default/docs/fonts/
+source/chassis/docs/fonts/
 ├── fonts.css               -> declares ui.woff2 and ui-italic.woff2
 ├── ui-italic.woff2         -> every weight, italic
 ├── ui-normal.woff2         -> one weight
@@ -112,25 +112,25 @@ The `demo` app of this repository, which is built for iOS and Android, holds the
 
 ### Brand fonts
 
-A brand changes a font by adding a file of the same name to its own folder. The `sinefil` brand of this repository replaces the font of every role, in both apps:
+A brand changes a font of the default brand by adding a file of the same name to its own folder. In this repository each brand holds all of its fonts: the `sinefil` brand holds those of `ui`, `prose` and `code`, in both apps:
 
 ```text
 source/sinefil/docs/fonts/
 ├── code-license.txt
 ├── code-normal.woff2
 ├── code-strong.woff2
-├── display-license.txt
-├── display-normal.woff2
-├── display.woff2
 ├── fonts.css
+├── prose-license.txt
+├── prose-normal.woff2
+├── prose.woff2
 └── ...
 ```
 
 A brand that replaces the files of a role replaces the license of that role too, and adds a `fonts.css` of its own that declares every family of the brand, since the stylesheet of the default brand declares the families of the default brand.
 
-A brand file replaces a default file only when the name and the extension are the same. A brand with `ui-normal.otf` beside a default `ui-normal.ttf` gets both files in its output. Every brand of this repository has its app fonts as TTF for that reason.
+A brand file replaces a default file only when the name and the extension are the same. A brand with `ui-normal.otf` beside a default `ui-normal.ttf` gets both files in its output. Every brand of this repository has its app fonts as TTF.
 
-A brand gets every default file that it does not replace. The code family of the `sinefil` brand has no variable font, so its web output holds `code.woff2` of the default brand, which `fonts.css` of the brand does not load. `pnpm assets:lint:source` warns about such a file: a font of the default brand whose family no stylesheet of the brand declares.
+A brand gets every default file that it does not replace: a brand whose family of a role has no variable font, or that sets a role in the family of another role, would get the default files of that role beside its own, and its `fonts.css` would load none of them. `pnpm assets:lint:source` warns about such a file: a font of the default brand whose family no stylesheet of the brand declares. No brand of this repository gets one, since its default brand holds no fonts.
 
 ### Stylesheets
 
@@ -196,7 +196,7 @@ The build copies each font to the `fonts/` folder of the job, in the formats the
 | Android | `dist/android/<app>/<brand>/fonts/` | snake_case | TTF, OTF, TXT |
 </CxTable>
 
-The web output of the configured web app, for the default fonts:
+The web output of the configured web app, for the fonts of the `chassis` brand:
 
 ```text
 dist/web/docs/chassis/fonts/

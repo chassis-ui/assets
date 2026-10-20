@@ -15,8 +15,7 @@ The web output gets every file of the folder. iOS gets the SVG, PDF and PNG file
 Icons live in `source/<brand>/<app>/icons/`, in the two folders that Chassis Icons writes: `icons/` for the icon font, its stylesheets and the sprite, and `svgs/` for one SVG file per icon.
 
 ```text
-source/default/docs/icons/
-├── cx-sprite.svg                  -> a sprite of this repository, not of Chassis Icons
+source/default/demo/icons/
 ├── icons/
 │   ├── chassis-icons.css
 │   ├── chassis-icons.json
@@ -30,6 +29,8 @@ source/default/docs/icons/
     ├── arrow-right-solid.svg
     └── ...
 ```
+
+In this repository only the `demo` app of the default brand holds a copy of Chassis Icons. The `docs` app holds `source/default/docs/icons/cx-sprite.svg` only, a sprite of this repository and not of Chassis Icons, which the build copies like any other file of `icons/`.
 
 A brand with icons of its own has the same two folders under `source/<brand>/<app>/icons/`. A brand file replaces the default file of the same path, so a brand may also replace single icons under `svgs/` and take the rest from the default brand.
 
@@ -63,15 +64,13 @@ Do not edit a file under `icons/icons/` or `icons/svgs/` by hand. The next copy 
 
 ### Refreshing the copy
 
-The default brand of this repository holds the icons of the `@chassis-ui/icons` package, which ships the two folders as they are. Install the dependencies, replace the folders of each app with those of the package, and build:
+The `demo` app of the default brand of this repository holds the icons of the `@chassis-ui/icons` package, which ships the two folders as they are. Install the dependencies, replace the folders of the app with those of the package, and build:
 
 ```bash
 pnpm install
-for app in docs demo; do
-  rm -rf source/default/$app/icons/icons source/default/$app/icons/svgs
-  cp -r packages/site/node_modules/@chassis-ui/icons/icons source/default/$app/icons/icons
-  cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/default/$app/icons/svgs
-done
+rm -rf source/default/demo/icons/icons source/default/demo/icons/svgs
+cp -r packages/site/node_modules/@chassis-ui/icons/icons source/default/demo/icons/icons
+cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/default/demo/icons/svgs
 pnpm assets
 ```
 
@@ -93,7 +92,7 @@ The icon files are a copy of the output of Chassis Icons. These practices keep t
 
 - **Keep the icon names across brands:** an app that shows `arrow-right-solid` gets the drawing of the brand it is built for. A brand that renames an icon needs a change in every app.
 - **Refresh both folders together:** `icons/icons/` and `icons/svgs/` come from one build of Chassis Icons. A font from one version and SVG files from another disagree on the icons they hold.
-- **Refresh every app of the brand:** `docs` and `demo` of the default brand each hold a copy.
+- **Refresh every app that holds a copy:** each app has a copy of its own. In this repository only `demo` of the default brand holds one.
 
 Avoid the habits that undo this:
 
@@ -111,24 +110,14 @@ The build copies each file to the `icons/` folder of the job, in its subfolder, 
 | Android | `dist/android/<app>/<brand>/icons/` | snake_case with the `ic_` prefix | SVG |
 </CxTable>
 
-The web output of the configured web app keeps every file. The dot inside a name becomes a hyphen, so `chassis-icons.min.css` is `chassis-icons-min.css`:
+The web output keeps every file. The configured web app holds no copy of Chassis Icons, so its output holds the sprite of this repository only:
 
 ```text
 dist/web/docs/chassis/icons/
-├── cx-sprite.svg
-├── icons/
-│   ├── chassis-icons-min.css
-│   ├── chassis-icons.css
-│   ├── chassis-icons.json
-│   ├── chassis-icons.scss
-│   ├── chassis-icons.svg
-│   ├── chassis-icons.woff
-│   └── chassis-icons.woff2
-└── svgs/
-    ├── arrow-right-outline.svg
-    ├── arrow-right-solid.svg
-    └── ...
+└── cx-sprite.svg
 ```
+
+A web app that holds a copy gets both folders under `icons/`, with the dot inside a name made a hyphen: `chassis-icons.min.css` is `icons/icons/chassis-icons-min.css`.
 
 The iOS output of the configured app holds the sprite and the SVG file of each icon:
 

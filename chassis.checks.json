@@ -41,10 +41,6 @@
         ]
       },
       {
-        "reader": "BrandingSection.astro of the website",
-        "files": ["images/logo/chassis-{logo,icon}-{brand,white}-banner.svg"]
-      },
-      {
         "reader": "ExampleImage.astro and CxVariant.astro of chassis-figma",
         "sets": [
           "images/figma/components/*/{light,dark}/*.png",
@@ -61,10 +57,6 @@
   },
   "lint": {
     "allow": [
-      {
-        "pattern": "*/*/other/default.tokens.json",
-        "reason": "a Figma variables export, kept by decision D7; the web output is default-tokens.json"
-      },
       {
         "pattern": "*/*/icons/icons/chassis-icons.min.css",
         "reason": "part of the build output of @chassis-ui/icons, copied as it is; the web output is chassis-icons-min.css"

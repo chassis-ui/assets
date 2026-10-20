@@ -12,9 +12,10 @@ procedure, and no part of the build.
 
 ## What a brand holds
 
-A brand has the same file names as the default brand, with families of its own. A page or an
-app that reads `fonts/fonts.css` or `ui_normal.ttf` then gets the font of the brand it was
-built for, with no change to its code.
+Every brand holds all of its fonts, in `source/<brand>/<app>/fonts/`, and `source/default/`
+holds none. The brands name their files by role and weight, so a page or an app that reads
+`fonts/fonts.css` or `ui_normal.ttf` gets the font of the brand it was built for, with no
+change to its code.
 
 The web app, `source/<brand>/docs/fonts/`, holds for each role that has a family of its own:
 
@@ -27,12 +28,13 @@ The web app, `source/<brand>/docs/fonts/`, holds for each role that has a family
 
 and one `fonts.css`, which declares every family of the brand: the variable files of a role,
 or the files by weight of a family without one. A role that the tokens of the brand set in
-the family of another role, as `prose` is set in `ui` for the default brand and in `display`
-for `sinefil`, has no files: the files of a family are under the role that owns it, and the
-stylesheet declares the family once. Which roles have files so differs by brand (D31).
+the family of another role, as `prose` is set in `ui` for `chassis` and `display` in `prose`
+for `sinefil`, has no files: the files of a family are under the role that owns it,
+and the stylesheet declares the family once. Which roles have files so differs by brand (D31).
 
 The files by weight of a family with a variable font are written from the variable file, by
-step 4, so every file of a role is one version of one design. The `.woff2` of a font is
+step 4, or copied from its download where the license reserves the name of the family, so
+every file of a role is one version of one design. The `.woff2` of a font is
 written from the `.ttf` beside it, by step 5.
 
 The iOS and Android app, `source/<brand>/demo/fonts/`, holds the files by weight only, as
@@ -41,20 +43,19 @@ It has no variable file.
 
 Three rules keep the brands in step:
 
-- **Every file of a role is replaced.** A brand gets each default file it has no replacement
-  for. A role with half its files replaced ships two families.
-- **Same name, same extension.** A brand file replaces a default file of the same path only.
-  The app fonts are `.ttf` in every brand; a `.otf` beside a default `.ttf` adds a file and
-  replaces none.
-- **The stylesheet and the license go with the family.** A brand that replaces the files of
-  a role adds its own `<role>-license.txt`, and declares the family in a `fonts.css` of its
-  own. The stylesheet is one per brand, so a brand that replaces one family writes the rules
-  of every family: the stylesheet of the default brand declares the default families.
+- **A brand holds every font it ships.** No font is in `source/default/`, so a brand gets no
+  font it does not hold, and the font of one brand never reaches the output of another
+  (D33). A font put in `source/default/` would reach every brand that has no file of its
+  name, and a brand that replaces half the files of a role would ship two families.
+- **Same names, same extension.** The file of a role and a weight has one name in every
+  brand. The app fonts are `.ttf` in every brand.
+- **The stylesheet and the license go with the family.** Every brand has its own `fonts.css`,
+  which declares every family of the brand, and a `<role>-license.txt` beside the files of
+  each family.
 
-A family without a variable font is the one exception to the first rule: the brand has no
-`<role>.woff2`, so the file of the default brand stays in its web output, and the stylesheet
-of the brand does not load it. See the known oddities of
-[architecture.md](architecture.md#known-oddities).
+The outputs of two brands so differ in the roles that have files and in the variable files:
+a family without a variable font has no `<role>.woff2`, so the web output of `sinefil` has
+no `code.woff2`, where that of `chassis` has one.
 
 ## The families today
 
@@ -63,45 +64,43 @@ The roles and the weights are those of the font tokens of Chassis Tokens,
 `source/brand-<brand>/brand-base.json` of that repository. The table has the weight of each
 file by weight, which is the weight of its token.
 
-| Brand     | Role      | Family         | Variable           | elegant | normal | strong | mass |
-| --------- | --------- | -------------- | ------------------ | ------- | ------ | ------ | ---- |
-| `default` | `ui`      | Inter          | Upright and italic | 300     | 400    | 600    | 700  |
-| `default` | `display` | Montserrat     | Upright and italic | 300     | 400    | 600    | 700  |
-| `default` | `code`    | Fira Code      | Upright            |         | 400    | 700    |      |
-| `sinefil` | `ui`      | DM Sans        | Upright and italic | 300     | 400    | 600    | 700  |
-| `sinefil` | `display` | Source Serif 4 | Upright and italic | 300     | 400    | 600    | 700  |
-| `sinefil` | `code`    | IBM Plex Mono  | None               |         | 400    | 700    |      |
+| Brand     | Role      | Family     | Variable           | elegant | normal | strong | mass |
+| --------- | --------- | ---------- | ------------------ | ------- | ------ | ------ | ---- |
+| `chassis` | `ui`      | Inter      | Upright and italic | 300     | 400    | 600    | 700  |
+| `chassis` | `display` | Montserrat | Upright and italic | 300     | 400    | 600    | 700  |
+| `chassis` | `code`    | Fira Code  | Upright            |         | 400    | 700    |      |
+| `sinefil` | `ui`      | Geist      | Upright and italic | 300     | 400    | 600    | 700  |
+| `sinefil` | `prose`   | Lora       | Upright and italic | 500     | 400    | 600    | 700  |
+| `sinefil` | `code`    | Cousine    | None               |         | 400    | 700    |      |
 
-The `ui` and `display` roles have an italic of every weight. The `code` role has none. The
-`prose` role is set in the `ui` family of the default brand and in the `display` family of
-`sinefil`, so neither brand has a file of it.
+Every role with files has an italic of every weight, except `code`. The `prose` role of
+`chassis` is set in its `ui` family, and the `display` role of `sinefil` in its `prose`
+family, so neither has files of its own. The `display` role of `sinefil` takes the Lora files
+at elegant 400, normal 500, strong 600 and mass 700. Lora has no weight under 400, so the
+`elegant` of its `prose` role is the Medium.
 
 Where the files come from:
 
-- Every family is licensed under the SIL Open Font License. The variable files, and the
-  files of IBM Plex Mono, are the downloads of [Google Fonts](https://fonts.google.com),
-  placed here on 2026-10-11: Inter 4.001, DM Sans 4.004, Source Serif 4 4.004 and IBM Plex
-  Mono 2.3, and Montserrat 9.000 on 2026-10-15. Fira Code is the one family from elsewhere,
-  below.
-- A variable font is whole in `source/`, with every axis of the download. Inter, DM Sans and
-  Source Serif 4 have an optical size axis, which a browser sets from the font size. A build
-  with `--subset` fixes it at 14 for the `chassis` brand, by `axes` of `chassis.subset` in
-  `package.json`, and leaves it to the `sinefil` brand. Decision D25.
-- The files by weight of both brands are written from their variable files, by step 4 with
-  fonttools 4.66.1, on 2026-10-11, each at the weight of its role, and those of Montserrat on
-  2026-10-15. Decision D28.
-- The files by weight of the default brand are at the default of every other axis. For Inter
+- Every family is licensed under the SIL Open Font License. The variable files are the
+  downloads of [Google Fonts](https://fonts.google.com): Inter 4.001, placed here on
+  2026-10-11, Montserrat 9.000 on 2026-10-15, and Geist 1.800 and Lora 3.008 on 2026-10-20,
+  with the files by weight of Lora and of Cousine 1.241, which has no variable font. Fira
+  Code is the one family from elsewhere, below.
+- A variable font is whole in `source/`, with every axis of the download. Inter has an
+  optical size axis, which a browser sets from the font size. A build with `--subset` fixes
+  it at 14 for the `chassis` brand, by `axes` of `chassis.subset` in `package.json`. Geist and
+  Lora have a weight axis only. Decision D25.
+- The files by weight of `chassis` are written from their variable files, by step 4
+  with fonttools 4.66.1, on 2026-10-11, each at the weight of its role, those of Montserrat
+  on 2026-10-15, and those of Geist on 2026-10-20. Decision D28.
+- The files by weight of `chassis` are at the default of every other axis. For Inter
   that is the optical size 14, the cut that `--subset` fixes for the web, so a page and an
   app show the same cut. An iOS app loads the files as `Inter-Regular`,
   `Montserrat-Regular` and `FiraCode-Bold`.
-- The files by weight of the `sinefil` brand are at the optical size that the files by weight
-  of the downloads had, and have their outlines point for point: DM Sans at 18, written with
-  `opsz=18`, and Source Serif 4 at 14, written with `opsz=14`. The defaults of the two axes
-  are 9 and 20. The files name their cut, `DM Sans 18pt` and `Source Serif 4 14pt`, and an
-  iOS app loads them as `DMSans18pt-Regular` and `SourceSerif414pt-Regular`. The download of
-  Source Serif 4 has its files of 14 without a size in the name. The `display` role is so
-  drawn in a cut for text, where the variable file of the web takes the size of a heading.
-- The variable file of the default `code` role is `variable_ttf/FiraCode-VF.ttf` of
+- The files by weight of Lora are the files in `static/` of its download, copied under the
+  names of their roles, since its license reserves the name "Lora" (D32). An iOS app loads
+  the fonts of `sinefil` as `Geist-Regular`, `Lora-Regular` and `Cousine-Bold`.
+- The variable file of the `code` role of `chassis` is `variable_ttf/FiraCode-VF.ttf` of
   `Fira_Code_v6.2.zip`, from the [releases of Fira Code](https://github.com/tonsky/FiraCode/releases),
   placed here on 2026-10-11. The font names its version 6.002. Google Fonts has 5.002, with
   35 characters fewer, without the features `cv01` to `cv32`, `ss09` and `ss10`, and with
@@ -132,25 +131,42 @@ not committed: only the files of the next step enter the repository.
 Copy each file to `source/<brand>/docs/fonts/` under its role name. A family with a variable
 font gives its variable files and its license. For the `ui` role of the `sinefil` brand:
 
-| File of the download                       | Name in `fonts/` |
-| ------------------------------------------ | ---------------- |
-| `DMSans-VariableFont_opsz,wght.ttf`        | `ui.ttf`         |
-| `DMSans-Italic-VariableFont_opsz,wght.ttf` | `ui-italic.ttf`  |
-| `OFL.txt`                                  | `ui-license.txt` |
+| File of the download                 | Name in `fonts/` |
+| ------------------------------------ | ---------------- |
+| `Geist-VariableFont_wght.ttf`        | `ui.ttf`         |
+| `Geist-Italic-VariableFont_wght.ttf` | `ui-italic.ttf`  |
+| `OFL.txt`                            | `ui-license.txt` |
 
 A family without a variable font gives its files by weight, each under the name of the weight
 the tokens give it. For the `code` role of the `sinefil` brand:
 
-| File of the download      | Name in `fonts/`   |
-| ------------------------- | ------------------ |
-| `IBMPlexMono-Regular.ttf` | `code-normal.ttf`  |
-| `IBMPlexMono-Bold.ttf`    | `code-strong.ttf`  |
-| `OFL.txt`                 | `code-license.txt` |
+| File of the download  | Name in `fonts/`   |
+| --------------------- | ------------------ |
+| `Cousine-Regular.ttf` | `code-normal.ttf`  |
+| `Cousine-Bold.ttf`    | `code-strong.ttf`  |
+| `OFL.txt`             | `code-license.txt` |
+
+A family whose license reserves its name, as the first line of `OFL.txt` of Lora says with
+`Reserved Font Name "Lora"`, gives its variable files and its files by weight from
+`static/`, and skips step 4: a file that step 4 writes is a modified version of the font,
+which the license does not let carry the name (D32). Check that the files of `static/` have
+the version of the variable files. For the `prose` role of the `sinefil` brand, whose
+`elegant` is 500:
+
+| File of the download | Name in `fonts/`    |
+| -------------------- | ------------------- |
+| `Lora-Regular.ttf`   | `prose-normal.ttf`  |
+| `Lora-Medium.ttf`    | `prose-elegant.ttf` |
+| `Lora-SemiBold.ttf`  | `prose-strong.ttf`  |
+| `Lora-Bold.ttf`      | `prose-mass.ttf`    |
+
+and each italic beside it, as `Lora-MediumItalic.ttf` to `prose-elegant-italic.ttf`, and
+`Lora-Italic.ttf` to `prose-normal-italic.ttf`.
 
 ### 4. Write the files by weight
 
-For a family with a variable font, write each file by weight from the variable file of its
-style, with `build/instance-font.py`. The script needs the package fonttools, in a Python
+For a family with a variable font and no reserved name, write each file by weight from the
+variable file of its style, with `build/instance-font.py`. The script needs the package fonttools, in a Python
 environment of its own:
 
 ```shell
@@ -208,27 +224,26 @@ of a variable file: a file of `source/` has every character of its family, and
 `fonts.css` is one file per brand. It starts with a comment that names the brand and the
 roles without files, and has a block per role with a family of its own. A block starts with
 a comment that names the family and the weights by role, and has one `@font-face` rule per
-file it declares. A brand that replaces one family writes the blocks of every family, since
-the stylesheet of the default brand declares the default families. For a family with a
-variable font, one rule per variable file, with the range of weights the file holds:
+file it declares. A brand that changes one family writes its block again, and keeps the
+blocks of its other families. For a family with a variable font, one rule per variable file, with the range of weights the file holds:
 
 ```css
-/* DM Sans, the "ui" family of the Sinefil brand. */
-/* A variable font: every weight from 100 to 1000, in one file per style. */
+/* Geist, the "ui" family of the Sinefil brand. */
+/* A variable font: every weight from 100 to 900, in one file per style. */
 /* Weights by role: elegant 300, normal 400, strong 600, mass 700. */
 
 @font-face {
-  font-family: "DM Sans";
+  font-family: "Geist";
   font-style: normal;
-  font-weight: 100 1000;
+  font-weight: 100 900;
   font-display: swap;
   src: url("ui.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "DM Sans";
+  font-family: "Geist";
   font-style: italic;
-  font-weight: 100 1000;
+  font-weight: 100 900;
   font-display: swap;
   src: url("ui-italic.woff2") format("woff2");
 }
@@ -239,12 +254,12 @@ For a family without a variable font, one rule per file by weight, with the weig
 role:
 
 ```css
-/* IBM Plex Mono, the "code" family of the Sinefil brand. */
+/* Cousine, the "code" family of the Sinefil brand. */
 /* The family has no variable font: one file per weight. */
 /* Weights by role: normal 400, strong 700. */
 
 @font-face {
-  font-family: "IBM Plex Mono";
+  font-family: "Cousine";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -258,18 +273,20 @@ Copy the files by weight, as `.ttf` and `.woff2`, and the license to
 `source/<brand>/demo/fonts/`. Its `fonts.css` declares the files by weight, one rule per
 file, also for a family that has a variable font.
 
-### 8. Compare with the default brand
+### 8. Compare with another brand
 
-The two folders of a brand hold the names of the default brand:
+The two folders of a brand hold the names of the other brands:
 
 ```shell
-diff <(command ls source/default/docs/fonts) <(command ls source/<brand>/docs/fonts)
-diff <(command ls source/default/demo/fonts) <(command ls source/<brand>/demo/fonts)
+diff <(command ls source/chassis/docs/fonts) <(command ls source/<brand>/docs/fonts)
+diff <(command ls source/chassis/demo/fonts) <(command ls source/<brand>/demo/fonts)
 ```
 
-`command ls` lists the names alone, also in a shell that has an alias for `ls`. The only
-lines the first command may print are the variable files of a family that has none,
-`code.ttf` and `code.woff2` for the `sinefil` brand. The second prints nothing.
+`command ls` lists the names alone, also in a shell that has an alias for `ls`. The commands
+print the files of a role that one of the two brands sets in the family of another role,
+and the variable files of a family that has none. For the `sinefil` brand, the first prints
+`code.ttf`, `code.woff2` and the files of `display` of `chassis`, and the files of `prose`
+of `sinefil`; the second prints the files of `display` and of `prose`.
 
 ### 9. Build and check
 
@@ -285,17 +302,18 @@ family, weight or style than the file has: a file under the wrong role name, or 
 that was not written again with its fonts. The `.ttf` file of a declared `.woff2` file is
 checked against the same rule, and the two against each other: the lint fails when they
 differ in the family, the weight, the style, the axes, the version or the number of glyphs,
-as they do when one of the two was not written again. It warns about a font of the default
-brand that is left in the output of the brand and that no stylesheet of the brand declares;
-the variable file of a family that has none is the one such file to expect.
+as they do when one of the two was not written again. It warns about a font of
+`source/default/` that is left in the output of a brand and that no stylesheet of the brand
+declares, which this repository, with no font there, does not have.
 
 Then check the output:
 
-- The web output of the brand has the files of the default brand, name for name. This prints
-  nothing:
+- The web output of the brand has the font names of its source, without the `.ttf` files.
+  Against `chassis`, this prints what the comparison of step 8 printed for `docs`, less the
+  `.ttf` files:
 
   ```shell
-  diff <(cd dist/web/docs/chassis && find . -type f | sort) <(cd dist/web/docs/<brand> && find . -type f | sort)
+  diff <(command ls dist/web/docs/chassis/fonts) <(command ls dist/web/docs/<brand>/fonts)
   ```
 
 - The stylesheets load their fonts. Serve the web output with
@@ -314,10 +332,11 @@ the site where they name a file that changed.
 
 ## A new brand
 
-A new brand takes the steps for each role that has a family of its own, and two more:
+A new brand takes the steps for each role that has files, since a brand holds every font it
+ships, and two more:
 
 - Add the name to `chassis.build.brands` of `package.json`.
-- Add what else differs from the default brand, such as `images/logo/`, to
+- Add the other files of the brand, such as its logos and favicons under `images/`, to
   `source/<brand>/<app>/`.
 - Where a variable font of the brand has an axis that its pages are not to show, such as the
   optical size, add the brand and the value to `axes` of `chassis.subset` in `package.json`.

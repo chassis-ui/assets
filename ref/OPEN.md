@@ -12,16 +12,20 @@ out. An entry is removed when it is done. A D-number is a decision of
   in chassis-tokens 0.10 is Regular, Medium, SemiBold and Bold, 400, 500, 600 and 700. The
   files by weight of `elegant` and `normal`, and the comment of `fonts.css`, follow one of the
   two once the maintainer says which.
-- **The fonts of `sinefil`.** The maintainer said on 2026-10-19 that the brand will set
-  `ui`, `prose` and `display` in three families. The brand then gets `prose` files by the
-  steps of [docs/fonts.md](../docs/fonts.md), and a block of `prose` in its `fonts.css`.
+- **The logos that the siblings read by their old names.** D33 renamed the logos to
+  `images/logo/logo-{black,dark,light,white}.{png,svg}` of each brand, and removed the
+  `chassis-{logo,icon}-*` files. Reports for the siblings: `BrandingSection.astro` of
+  chassis-website reads `images/logo/chassis-{logo,icon}-{brand,white}-banner.svg` from
+  `/static/`, and the table of `packages/docs/README.md` there names them; the pages of
+  chassis-css load `images/logo/chassis-logo-brand.svg` with `getStaticPath()` in
+  `components/navbar.mdx`, and `about/brand.mdx` loads `chassis-logo-{brand,black,white}.svg`;
+  the README of chassis-react shows `https://chassis-ui.com/static/images/logo/chassis-logo-brand.svg`,
+  which stops working when the website deploys this version. The entry of `contracts` in
+  `chassis.checks.json` for the website's logos was removed with D33: add the names the
+  website reads once it reads the new ones.
 - **The choices of D28.** Two were the session's: Inter is at the optical size 14 in every
   file by weight, so the app fonts left the 18pt cut of D24, and `code-strong` of the default
   brand is the Bold, 700. Both are in 0.3.0 and wait for a confirmation.
-- **The cut of the `display` role of `sinefil`.** Its files by weight are Source Serif 4 at
-  the optical size 14, a text cut, since that is what the files they replaced were. Another
-  cut, such as the default of the axis, 20, is one value of a command of
-  [docs/fonts.md](../docs/fonts.md).
 - **The choices of D29.** `chassis.ignore` adds names and takes none away, a pattern is a
   name and not a path, a list of `chassis.formats` replaces the rule of a processor, and both
   are read from the configuration without an option. In 0.3.1, and they wait for a
@@ -45,18 +49,15 @@ out. An entry is removed when it is done. A D-number is a decision of
   becomes 1.0, and when, is not decided.
 - **The icons of the next `@chassis-ui/icons`.** `chassis-icons` removed `road-outline-1.svg`
   and `road-solid-1.svg` from its source, export copies of the two icons without the number,
-  and its version is `0.4.0-next.0`. The copy in `source/default/` is the output of 0.3.1 and
-  has both. A refresh, by the steps of
+  and its version is `0.4.0-next.0`. The copy in `source/default/demo/` is the output of 0.3.1
+  and has both. A refresh, by the steps of
   [docs/architecture.md](../docs/architecture.md#refreshing-the-icons), removes two names from
-  `icons/svgs/` of every job, which is a change of the output contract.
+  `icons/svgs/` of every job of the `demo` app, which is a change of the output contract.
 - **Files an app cannot use.** The apps get the symbol sprite of the icons, since it is an
   SVG, and logos that exist under one name as PNG and as SVG, which meet in one `res/`
   folder or one asset catalog. The build copies what the source holds, and the platform
   pages say what an app does about each. Removing the copies from `source/default/demo/` is
   the maintainer's.
-- **The logos of `sinefil`.** `source/sinefil/docs/images/logo/` holds the logos of the
-  `example` brand it replaced, under the `chassis-*` names. The example of the website that
-  is built per brand shows them.
 
 ## Not written
 
@@ -109,9 +110,10 @@ Considered and left out. Each needs a reason to come back.
 - **Deriving image variants from one master.** The build stays file-driven: the designer
   exports the variants. `--optimize` re-encodes what is exported, and `--webp` and `--avif`
   write a second format of it, which is a format and not a variant (D12).
-- **Removing the `icons/` copies or `other/default.tokens.json` from `source/`.** Every asset
-  type the pages describe is kept: the icons page describes the copies, and D7 keeps the
-  tokens file.
+- **Removing the `icons/` copy of the `demo` app or `other/example-tokens.json` from
+  `source/`.** Every asset type the pages describe is kept: the icons page describes the
+  copy, and D7 keeps the tokens file. The maintainer removed the copy of the `docs` app with
+  D33, since the sites take the icons from `@chassis-ui/icons`.
 - **A `Package.swift` at the root.** `dist/` is not committed, so a Swift package would name
   folders that a checkout does not have.
 - **Publishing the built assets on npm for the sites.** D2, and D9 of the website's roadmap:
