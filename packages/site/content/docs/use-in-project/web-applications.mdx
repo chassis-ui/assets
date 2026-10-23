@@ -17,18 +17,20 @@ The web output of an app and a brand is the folder `dist/web/<app>/<brand>/`. Th
 | Any other folder | Every file |
 </CxTable>
 
-The committed configuration has one web app, `docs`, and the brands `chassis` and `sinefil`. The examples of this page use the job `dist/web/docs/chassis/`; with another configuration, read the names of your own app and brand in their place.
+Each brand of the app has a folder of its own, with the type folders of the source in it. A type folder is there when the brand or the default brand has files of the type.
 
 ```text
-dist/web/docs/
-├── chassis/
+dist/web/<app>/
+├── <brand>/
 │   ├── fonts/
 │   ├── icons/
 │   ├── images/
-│   └── other/
-└── sinefil/
+│   └── <folder>/      -> any other folder of the source
+└── <brand>/
     └── ...
 ```
+
+The commands of this page build the configured web app, `docs`, for the brand `chassis`; with another configuration, use the names of your own app and brand. The file names of the samples, such as `images/hero-banner.png`, are examples: your output has the files of your source, under the names that [Output names](#output-names) describes.
 
 ## Installation
 
@@ -70,7 +72,7 @@ While you change the assets, `pnpm assets --watch --brand chassis --app docs` ke
 A project that reads a few files of the output does not have to fetch and build all of it. The `--include` option builds the files that match a pattern, and `pnpm assets:lfs` prints the Git LFS paths of the same patterns, so `git lfs pull` fetches those files only:
 
 ```bash
-FILTERS=(--brand chassis --app docs --include "images/home/**" "icons/cx-sprite.svg")
+FILTERS=(--brand chassis --app docs --include "fonts/**" "images/logo/**")
 git lfs pull --include "$(node packages/assets/build/cli.js lfs "${FILTERS[@]}")"
 pnpm assets --clean "${FILTERS[@]}"
 ```
@@ -95,25 +97,47 @@ pnpm assets --platform web
 
 ## Output layout
 
-The folder of a job holds one folder per type, with the subfolders of the source kept. The build writes this for the job `dist/web/docs/chassis/`:
+The folder of a job holds one folder per type, with the subfolders of the source kept. For a source with a font role, a few images, a copy of Chassis Icons and a `data/` folder, the build writes:
 
 ```text
-dist/web/docs/chassis/
+dist/web/<app>/<brand>/
+├── data/
+│   └── country-list.json
 ├── fonts/
 │   ├── fonts.css
 │   ├── ui-license.txt
 │   ├── ui-normal.woff2
 │   └── ...
 ├── icons/
-│   └── cx-sprite.svg
-├── images/
-│   ├── site-logo.svg
-│   ├── home/
+│   ├── icons/
 │   │   └── ...
-│   └── logo/
+│   └── svgs/
 │       └── ...
-└── other/
-    └── example-tokens.json
+└── images/
+    ├── hero-banner.png
+    ├── hero-banner@2x.png
+    └── logo/
+        └── wordmark.svg
+```
+
+### Output names
+
+An application reads a file by its path in the folder of the job, and the build derives that path from the source. A file of `source/<brand>/<app>/<type>/` or `source/default/<app>/<type>/` is at `<type>/` of the job, in the same subfolders, with its name in kebab-case:
+
+<CxTable>
+| Source | Web output |
+| --- | --- |
+| `images/logo/wordmark.svg` | `images/logo/wordmark.svg` |
+| `images/HeroBanner@2x.png` | `images/hero-banner@2x.png` |
+| `data/brand.tokens.json` | `data/brand-tokens.json` |
+</CxTable>
+
+The indicator stays at the end of a name, and a dot inside a name becomes a hyphen. The build renames files, not folders. A path so stays the same in every brand that has the file, whether the file comes from the folder of the brand or from the default brand.
+
+To find the name of a file, list the output of the job, or the folder of a type:
+
+```bash
+find dist/web/docs/chassis/images -name 'hero-banner*'
 ```
 
 ### Copy the output
@@ -165,39 +189,35 @@ With either one, an import gives the URL of the file:
 
 ```js
 import '@assets/fonts/fonts.css'
-import siteLogo from '@assets/images/site-logo.svg'
+import wordmark from '@assets/images/logo/wordmark.svg'
 ```
 
-Vite gives a small file, such as this logo, as a `data:` URL in place of a path. The import of the stylesheet needs a webpack that reads CSS without a rule for it; with an older one, add a rule with `css-loader`.
+Vite gives a small file, such as this SVG, as a `data:` URL in place of a path. The import of the stylesheet needs a webpack that reads CSS without a rule for it; with an older one, add a rule with `css-loader`.
 
 Parcel needs no alias: it resolves a relative path to a file of the output in `url()` of a stylesheet and in `new URL('<path>', import.meta.url)` of a script.
 
 ## Fonts
 
-The `fonts/` folder holds the WOFF and WOFF2 files of the source, the stylesheets and the licenses. A font file is named by its role and its weight, not by its family, so a brand with other families has the same file names for its roles. A variable font holds every weight of its role and is named by the role alone, `ui.woff2`, with `ui-italic.woff2` for the italic. A role that the brand sets in the family of another role, as `prose` is set in `ui` for the `chassis` brand, has no files.
+The `fonts/` folder holds the WOFF and WOFF2 files of the source, the stylesheets and the licenses. A font file is named by its role and its weight, not by its family, so a brand with other families has the same file names for its roles. A variable font holds every weight of its role and is named by the role alone, `ui.woff2`, with `ui-italic.woff2` for the italic. A role that the brand sets in the family of another role has no files, so the roles that have files differ by brand.
 
 ```text
-dist/web/docs/chassis/fonts/
+dist/web/<app>/<brand>/fonts/
 ├── code-license.txt
 ├── code-normal.woff2
-├── code-strong.woff2
-├── code.woff2
-├── display-italic.woff2
-├── display-normal.woff2
-├── display.woff2
 ├── fonts.css
 ├── ui-italic.woff2
+├── ui-license.txt
+├── ui-normal-italic.woff2
 ├── ui-normal.woff2
 ├── ui-strong.woff2
-├── ui.woff2
-└── ...
+└── ui.woff2
 ```
 
 The [fonts]([[docsref:/asset-types/fonts#platform-output]]) page has the roles, the weights and what each platform gets.
 
 A font of the default output has every character of its source file. If your pages are written in a few scripts only, build with `--subset`: the same files, under the same names, hold the characters of the ranges you name and are smaller to download. See [Font subsets]([[docsref:/getting-started/build-system#font-subsets]]).
 
-The `ui` font of the `chassis` brand, Inter, has an optical size axis, and a browser sets it from the font size: text above 14 pixels is drawn in a narrower cut, a heading of 57 pixels by about 7%. A build with `--subset` fixes the axis at 14 for the brand, so every size shows the same cut. With a default build, `font-optical-sizing: none` in your styles gives the same look.
+A variable font with an optical size axis, `opsz`, is drawn in another cut at each font size, since a browser sets the axis from the size of the text. A build with `--subset` fixes the axis at the value that `axes` of [chassis.subset]([[docsref:/getting-started/build-system#chassissubset]]) names for the brand, so every size shows the same cut. With a default build, `font-optical-sizing: none` in your styles keeps the cut of the default value of the axis.
 
 Add `--split` to the build, and it writes each declared font once per range too, such as `ui-latin.woff2` and `ui-latin-ext.woff2`, and the stylesheet gets a rule per range. Your pages stay as they are: link the stylesheet, and a browser downloads the file of a range only for a page that has a character of it. If you preload a font, name the file of the range.
 
@@ -209,7 +229,7 @@ The stylesheet `fonts.css` of a brand declares every family of the brand, under 
 <link rel="stylesheet" href="/assets/fonts/fonts.css" />
 ```
 
-Each rule reads its file by a relative URL, `url("ui.woff2")`, so the stylesheet works only beside the font files. The family name of each role, to use in `font-family`, is in the comment above its rules. One stylesheet declares every family because a brand sets several roles in one family: the `prose` role of the `chassis` brand is its `ui` family.
+Each rule reads its file by a relative URL, `url("ui.woff2")`, so the stylesheet works only beside the font files. The family name of each role, to use in `font-family`, is in the comment above its rules. One stylesheet declares every family because a brand may set several roles in one family, which a stylesheet per role would declare twice.
 
 ### Own declarations
 
@@ -248,20 +268,18 @@ The build copies the license of each role beside its fonts, as `<role>-license.t
 The `images/` folder holds every image of the source, in the same subfolders, with kebab-case names and the indicator kept. An image has the formats and the variants the designer exported: the default build writes no `@2x` file and no WebP file of its own.
 
 ```text
-dist/web/docs/chassis/images/
-├── site-logo.svg
-├── home/
-│   ├── platforms.png
-│   ├── platforms.webp
-│   ├── platforms@2x.png
-│   ├── platforms@2x.webp
-│   └── ...
-└── logo/
-    ├── logo-black.png
-    ├── logo-black.svg
-    ├── logo-dark.png
-    ├── logo-dark.svg
-    └── ...
+dist/web/<app>/<brand>/images/
+├── hero-banner.png
+├── hero-banner@2x.png
+├── hero-banner@3x.png
+├── logo/
+│   ├── wordmark.png
+│   └── wordmark.svg
+└── onboarding/
+    ├── welcome-dark.png
+    ├── welcome-dark@2x.png
+    ├── welcome-light.png
+    └── welcome-light@2x.png
 ```
 
 The [images]([[docsref:/asset-types/images#platform-output]]) page has the naming rules and what each platform gets.
@@ -272,9 +290,9 @@ An image with `@2x` and `@3x` variants goes into `srcset`, one variant per pixel
 
 ```html
 <img
-  src="/assets/images/home/lego-chassis.png"
-  srcset="/assets/images/home/lego-chassis.png 1x, /assets/images/home/lego-chassis@2x.png 2x"
-  alt="Chassis"
+  src="/assets/images/hero-banner.png"
+  srcset="/assets/images/hero-banner.png 1x, /assets/images/hero-banner@2x.png 2x, /assets/images/hero-banner@3x.png 3x"
+  alt="Hero banner"
 />
 ```
 
@@ -286,56 +304,65 @@ An image that the output has as WebP and as PNG goes into a `<picture>` element,
 <picture>
   <source
     type="image/webp"
-    srcset="/assets/images/home/platforms.webp 1x, /assets/images/home/platforms@2x.webp 2x"
+    srcset="/assets/images/hero-banner.webp 1x, /assets/images/hero-banner@2x.webp 2x"
   />
   <img
-    src="/assets/images/home/platforms.png"
-    srcset="/assets/images/home/platforms.png 1x, /assets/images/home/platforms@2x.png 2x"
-    alt="Platforms"
+    src="/assets/images/hero-banner.png"
+    srcset="/assets/images/hero-banner.png 1x, /assets/images/hero-banner@2x.png 2x"
+    alt="Hero banner"
   />
 </picture>
 ```
 
 ## Icons
 
-The `icons/` folder holds every file of the source. In the committed source that is the sprite `cx-sprite.svg`, which holds the icons of the home pages of the Chassis sites.
+The `icons/` folder holds every file of `icons/` of the source, in its subfolders, with kebab-case names. An app that holds a copy of Chassis Icons gets its two folders, and an app may also hold an icon or a sprite of its own, which the build copies the same way:
 
 ```text
-dist/web/docs/chassis/icons/
-└── cx-sprite.svg
+dist/web/<app>/<brand>/icons/
+├── icons/
+│   ├── chassis-icons-min.css
+│   ├── chassis-icons.css
+│   ├── chassis-icons.svg
+│   ├── chassis-icons.woff2
+│   └── ...
+└── svgs/
+    ├── arrow-right-outline.svg
+    ├── arrow-right-solid.svg
+    └── ...
 ```
 
 The [icons]([[docsref:/asset-types/icons#platform-output]]) page has what each platform gets.
 
 ### Chassis Icons
 
-The web output does not hold the icons of Chassis Icons. A web application installs them from npm, as the package [`@chassis-ui/icons`](https://www.npmjs.com/package/@chassis-ui/icons), which holds the icon font with its stylesheets and its sprite under `icons/`, and one SVG file per icon under `svgs/`. Chassis Icons owns the icons and their font; the [Chassis Icons docs](https://chassis-ui.com/icons/) list them and show how to use the package.
+An app whose `icons/` holds no copy of Chassis Icons has none of its icons in the output. A web application can also install them from npm, as the package [`@chassis-ui/icons`](https://www.npmjs.com/package/@chassis-ui/icons), which holds the same two folders: the icon font with its stylesheets and its sprite under `icons/`, and one SVG file per icon under `svgs/`. Chassis Icons owns the icons and their font; the [Chassis Icons docs](https://chassis-ui.com/icons/) list them and show how to use the package.
 
 ### Sprites
 
-A sprite holds icons as `<symbol>` elements that a page shows with `<use>`. `icons/cx-sprite.svg` has the icons of the home pages of the Chassis sites, with `cx-<icon>` as the `id`:
+A sprite holds icons as `<symbol>` elements that a page shows with `<use>`. The sprite of Chassis Icons, `icons/icons/chassis-icons.svg`, has the name of each icon as the `id` of its symbol:
 
 ```html
 <svg width="24" height="24" fill="currentColor">
-  <use href="/assets/icons/cx-sprite.svg#cx-rocket"></use>
+  <use href="/assets/icons/icons/chassis-icons.svg#arrow-right-solid"></use>
 </svg>
 ```
 
-The Chassis sites put the markup of `cx-sprite.svg` into the page and refer to a symbol by its `id` alone, `<use href="#cx-rocket"></use>`.
+A sprite of your own under `icons/` works the same way, with the `id` values it was drawn with. A page can also put the markup of a sprite into the page and refer to a symbol by its `id` alone, `<use href="#arrow-right-solid"></use>`.
 
 ## Other assets
 
-The build copies any other folder under an app as it is, with the names in kebab-case. In the committed source that is `other/` of the `chassis` brand, which holds the design tokens of a Figma export:
+The build copies any other folder under an app as it is, with the names in kebab-case. A source file `source/<brand>/<app>/data/country-list.json` is in the output of the brand as `data/country-list.json`:
 
 ```text
-dist/web/docs/chassis/other/
-└── example-tokens.json
+dist/web/<app>/<brand>/data/
+└── country-list.json
 ```
 
-The source file is `source/chassis/docs/other/example-tokens.json`, and the other brands have no such folder. Read a file of such a folder by its output name:
+A folder that only some brands hold is in the output of those brands only. Read a file of such a folder by its output name:
 
 ```js
-const tokens = await fetch('/assets/other/example-tokens.json').then((response) => response.json())
+const countries = await fetch('/assets/data/country-list.json').then((response) => response.json())
 ```
 
 The [other assets]([[docsref:/asset-types/other]]) page describes these folders.
@@ -364,15 +391,24 @@ export function assetUrl(brand, path) {
   return `/assets/${brand}/${path}`
 }
 
-document.querySelector('#logo').src = assetUrl('sinefil', 'images/logo/logo-dark.svg')
+document.querySelector('#logo').src = assetUrl('sinefil', 'images/logo/wordmark.svg')
 ```
 
-The build fills the output of a brand with the files of its folder in `source/` and with the files of the default brand that the brand does not replace. In the committed source the default brand holds the files every brand shares, such as `images/home/` and `icons/cx-sprite.svg`, and each brand holds its own fonts, logos and favicons under the same names.
+### Brand fallback
 
-The two brands do not have the same files. The output of `sinefil` has `prose-*` fonts, no `display-*` fonts, since `sinefil` sets `display` in its `prose` family, no `fonts/code.woff2`, since its code family has no variable font, and its own `other/` folder with `manifest.json` in place of the `example-tokens.json` of `chassis`. Its `images/` also has `favicon.svg`, `favicon.ico` and `android-chrome-maskable-512x512.png`, which `chassis` has not. Read such a file only for the brand that has it. `fonts.css` of each brand declares the fonts of that brand: link the stylesheet and you get the fonts of the brand.
+The build fills the output of a brand with the files of its folder in `source/` and with the files of the default brand that the brand does not replace. A file of the brand replaces the default file of the same path, so a file that every brand shares is held once by the default brand, and a file that differs is held by each brand under the same name.
+
+The brands of an app do not have to hold the same files. A file that only the folder of one brand holds, with no default file of its path, is in the output of that brand only, and a font role that a brand sets in the family of another role has no files in its output. Read such a file only for the brands that have it, and list the output of each brand to see which they are:
+
+```bash
+diff <(cd vendor/assets/dist/web/docs/chassis && find . -type f | sort) \
+     <(cd vendor/assets/dist/web/docs/sinefil && find . -type f | sort)
+```
+
+`fonts.css` of each brand declares the fonts of that brand: link the stylesheet and you get the fonts of the brand, whichever roles have files.
 
 <Callout type="warning">
-A brand with font files and no stylesheet of its own gets `fonts.css` of the default brand if there is one, which declares the family names of the default fonts, and no stylesheet otherwise. In this repository each brand has its own. Add `fonts.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).
+A brand with font files and no stylesheet of its own gets `fonts.css` of the default brand if there is one, which declares the family names of the default fonts, and no stylesheet otherwise. Add `fonts.css` to `fonts/` of the brand in `source/`, or write [own declarations](#own-declarations).
 </Callout>
 
 ## Continuous integration
@@ -414,7 +450,7 @@ The commands of this job were run in a project with the submodule; the workflow 
 
 These practices keep your application reading the output as the build wrote it, with the names and the folders of `dist/web/`.
 
-- **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so a source file `brand.tokens.json` is `brand-tokens.json` in the output. Find a name with `find dist/web/docs/chassis -name '<pattern>'`.
+- **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so a source file `brand.tokens.json` is `brand-tokens.json` in the output. Find a name with `find dist/web/<app>/<brand> -name '<pattern>'`.
 - **Keep the stylesheet beside its fonts:** `fonts.css` reads its font files by a relative URL. Copy `fonts/` whole.
 - **Ship the licenses:** copy `<role>-license.txt` with the fonts of `fonts/`.
 - **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is marked `**Breaking.**` in the changelog.
@@ -442,7 +478,7 @@ The browser gets a 404 for a font that the stylesheet of `fonts/` names. The sty
 
 ### File not found
 
-The browser gets a 404 for a file that is in `source/`. The build renamed it, or left it out: the web names are kebab-case with a hyphen for a dot inside the name, and `fonts/` keeps only `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files. List the output of the type, `find dist/web/docs/chassis/fonts`, and use the name it prints.
+The browser gets a 404 for a file that is in `source/`. The build renamed it, or left it out: the web names are kebab-case with a hyphen for a dot inside the name, and `fonts/` keeps only `.woff`, `.woff2`, `.css`, `.scss` and `.txt` files. List the output of the type, `find dist/web/<app>/<brand>/fonts`, and use the name it prints.
 
 ### Unknown brand
 

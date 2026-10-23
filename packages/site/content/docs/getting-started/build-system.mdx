@@ -85,7 +85,7 @@ The `--type` and `--include` options build a part of a job: the build reads only
 
 ```bash
 pnpm assets --type images icons
-pnpm assets --brand chassis --app docs --include "images/home/**" "icons/cx-sprite.svg"
+pnpm assets --brand chassis --app docs --include "fonts/**" "images/logo/**"
 ```
 
 `--type` names type folders. `--include` takes patterns of paths as they are in `source/`, relative to the folder of the app, so with the source names and not the names of a platform. A file has to pass both options when both are given.
@@ -93,11 +93,11 @@ pnpm assets --brand chassis --app docs --include "images/home/**" "icons/cx-spri
 <CxTable>
 | Pattern | Matches |
 | --- | --- |
-| `icons/cx-sprite.svg` | That file |
-| `images/home` | Every file under the folder, at any depth |
+| `images/logo/wordmark.svg` | That file |
+| `images/logo` | Every file under the folder, at any depth |
 | `images/*` | The files of `images/` itself, not of its subfolders |
 | `images/**/*.svg` | The SVG files of `images/`, at any depth |
-| `images/home/hero-{light,dark}{,@2x}.png` | Four files: `{a,b}` is one of its alternatives, an empty one too |
+| `images/onboarding/welcome-{light,dark}{,@2x}.png` | Four files: `{a,b}` is one of its alternatives, an empty one too |
 </CxTable>
 
 Quote a pattern, or the shell expands it. A build with a file filter keeps the rest of `dist/`, as a build with any filter does. Filters that match no file fail the build. Filters that match no file of one job among several warn, and that job gets no folder. The validator checks a full build, so `pnpm assets:verify` fails on an output of a part.
@@ -105,7 +105,7 @@ Quote a pattern, or the shell expands it. A build with a file filter keeps the r
 A file that the filters leave out is not read, so it may be a Git LFS pointer. `pnpm assets:lfs` takes the same filters and prints the paths of `source/` that the build reads, separated by commas, which is the value `git lfs pull --include` takes. A folder whose files are all read is one path. In a clone made without the Git LFS files, fetch the files of a build and run it:
 
 ```bash
-FILTERS=(--brand chassis --app docs --include "images/home/**" "icons/cx-sprite.svg")
+FILTERS=(--brand chassis --app docs --include "fonts/**" "images/logo/**")
 git lfs pull --include "$(node packages/assets/build/cli.js lfs "${FILTERS[@]}")"
 pnpm assets "${FILTERS[@]}"
 ```
@@ -251,7 +251,7 @@ pnpm assets --subset latin latin-ext --split
 ```
 
 ```text
-dist/web/docs/chassis/fonts/
+dist/web/<app>/<brand>/fonts/
 ├── fonts.css               -> a rule per range, with its unicode-range
 ├── ui-latin-ext.woff2      -> the characters of latin-ext
 ├── ui-latin.woff2          -> the characters of latin
@@ -378,8 +378,6 @@ The settings are in `package.json` and not in options of the command, so that ev
 `ranges` is an array of the names and the code point ranges that [Font subsets](#font-subsets) describes, and every font of a web job gets the same ranges. Without it the ranges are `latin` and `latin-ext`.
 
 `axes` names, for a brand, the axes of a variable font to fix and the value of each. A key is a brand of `chassis.build.brands`, and a key under it is the tag of an axis as the font names it, such as `opsz` or `wdth`. The build fixes an axis in every font of the web output of the brand that has it, and writes a font without it as it would without the setting. Without `axes` no axis is fixed.
-
-This repository has `axes` of the example and nothing else: the optical size of the `chassis` brand is fixed at 14, the cut of Inter for text, and the `sinefil` brand keeps the axes of its fonts.
 
 A value outside the axis of a font fails the build, which names the file and the values the axis spans. An axis that no font of the brand has is a warning.
 
@@ -535,7 +533,7 @@ pnpm assets:analyze
 pnpm assets:analyze --brand chassis --platform web
 ```
 
-Files with the same content are listed per group, for the source and for the output apart. An app that holds a copy of the files of another app, as `docs` and `demo` of this repository do, shows up there.
+Files with the same content are listed per group, for the source and for the output apart. An app that holds a copy of the files of another app shows up there.
 
 ## Checks file
 
@@ -561,7 +559,7 @@ In `chassis.checks.json`, a contract with a list of files and a set:
     "web/docs/chassis": [
       {
         "reader": "the layout of the site",
-        "files": ["images/site-logo.svg", "images/favicon{,-16x16,-32x32}.png"]
+        "files": ["fonts/fonts.css", "images/logo/wordmark.svg"]
       },
       {
         "reader": "the gallery of the site",

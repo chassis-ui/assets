@@ -57,17 +57,13 @@ pnpm assets --platform ios android   # two platforms
 pnpm assets --dry-run                # print the jobs, write nothing
 ```
 
-The build writes the output to `dist/<platform>/<app>/<brand>/`. With the configuration of this repository:
+The build writes the output to `dist/<platform>/<app>/<brand>/`, and each of these folders holds one folder per type of the app. With the configuration of this repository:
 
 ```text
 dist/
 ├── web/
 │   └── docs/
 │       ├── chassis/      -> kebab-case names
-│       │   ├── fonts/
-│       │   ├── icons/
-│       │   ├── images/
-│       │   └── other/
 │       └── sinefil/
 ├── ios/
 │   └── demo/
@@ -94,22 +90,17 @@ A file added to `source/` is in the output of the next build. No list or configu
 ```text
 source/
 ├── default/              -> the default brand, used by every brand
-│   ├── docs/             -> an app
-│   │   ├── icons/
-│   │   └── images/
-│   └── demo/
-├── chassis/              -> a brand: its fonts, logos and favicons
-│   ├── docs/
-│   │   ├── fonts/
-│   │   ├── images/
-│   │   └── other/        -> any other folder is a type too
-│   └── demo/
-└── sinefil/
-    ├── docs/
-    └── demo/
+│   └── <app>/            -> an app of the configuration
+│       ├── fonts/
+│       ├── icons/
+│       ├── images/
+│       └── <folder>/     -> any other folder is a type too
+└── <brand>/              -> a brand: the files that differ
+    └── <app>/
+        └── <type>/
 ```
 
-A brand file replaces the default file of the same path. To give a brand a file of its own, add it to the folder of the brand under the same subfolder and name.
+A brand file replaces the default file of the same path, and a brand gets every default file that it does not replace. To give a brand a file of its own, add it to the folder of the brand under the same subfolder and name. A file that only a brand holds is in the output of that brand only.
 
 The [design guidelines]([[docsref:/getting-started/design-guidelines]]) have the naming rules, and each type has a page: [fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]).
 

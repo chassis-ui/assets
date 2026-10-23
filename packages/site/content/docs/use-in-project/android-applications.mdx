@@ -6,20 +6,19 @@ toc: true
 
 ## Introduction
 
-The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. In the committed configuration the Android app is `demo` and the brands are `chassis` and `sinefil`; your own configuration has other names in the same places.
+The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. In the committed configuration the Android app is `demo` and the brands are `chassis` and `sinefil`; your own configuration has other names in the same places. The file names of the samples, such as `hero_banner.png`, are examples: your output has the files of your source, under the names of the table below.
 
 ```text
-dist/android/demo/chassis/
+dist/android/<app>/<brand>/
 ├── fonts/
-│   ├── ui_normal.ttf
 │   ├── ui_license.txt
+│   ├── ui_normal.ttf
 │   └── ...
 ├── images/
-│   └── home/
-│       ├── drawable/
-│       │   └── platforms.png
-│       └── drawable-xhdpi/
-│           └── platforms.png
+│   ├── drawable/
+│   │   └── hero_banner.png
+│   └── drawable-xhdpi/
+│       └── hero_banner.png
 └── icons/
     └── svgs/
         ├── ic_arrow_right_solid.svg
@@ -78,20 +77,17 @@ A build with a filter keeps the rest of `dist/`; add `--clean` to remove the fol
 
 ## Output layout
 
-The job folder holds one folder per type of the app. The build writes `fonts/` flat, puts `drawable/` and the density folders under `images/` and under each of its subfolders, and keeps the subfolders of `icons/`.
+The job folder holds one folder per type of the app. The build writes `fonts/` flat, puts `drawable/` and the density folders under `images/` and under each of its subfolders, and keeps the subfolders of `icons/`. For a source with two font roles, a few images and a copy of Chassis Icons, the build writes:
 
 ```text
-dist/android/demo/chassis/
+dist/android/<app>/<brand>/
 ├── fonts/
 │   ├── code_license.txt
 │   ├── code_normal.ttf
-│   ├── display_license.txt
-│   ├── display_normal.ttf
 │   ├── ui_license.txt
 │   ├── ui_normal.ttf
 │   ├── ui_normal_italic.ttf
-│   ├── ui_strong.ttf
-│   └── ...
+│   └── ui_strong.ttf
 ├── icons/
 │   ├── icons/
 │   │   └── ic_chassis_icons.svg
@@ -100,19 +96,26 @@ dist/android/demo/chassis/
 │       ├── ic_arrow_right_solid.svg
 │       └── ...
 └── images/
-    ├── home/
-    │   ├── drawable/
-    │   │   ├── platforms.png
-    │   │   └── ...
-    │   └── drawable-xhdpi/
-    │       ├── platforms.png
-    │       └── ...
-    └── logo/
-        └── drawable/
-            ├── logo_black.png
-            ├── logo_black.svg
-            └── ...
+    ├── drawable/
+    │   └── hero_banner.png
+    ├── drawable-xhdpi/
+    │   └── hero_banner.png
+    ├── drawable-xxhdpi/
+    │   └── hero_banner.png
+    ├── logo/
+    │   └── drawable/
+    │       ├── wordmark.png
+    │       └── wordmark.svg
+    └── onboarding/
+        ├── drawable/
+        │   ├── welcome_dark.png
+        │   └── welcome_light.png
+        └── drawable-xhdpi/
+            ├── welcome_dark.png
+            └── welcome_light.png
 ```
+
+A file of `source/<brand>/<app>/<type>/` or `source/default/<app>/<type>/` is under `<type>/` of the job, in the same subfolders, with its name in snake_case, so a path is the same in every brand that has the file. To find the name of a file, list the output of the job: `find dist/android/demo/chassis -name 'hero_banner*'`.
 
 ### Res folder
 
@@ -127,36 +130,36 @@ pnpm assets --platform android --res --vector-drawables
 The font files, the raster images and the vector drawables move into `res/`, without the subfolders they had:
 
 ```text
-dist/android/demo/chassis/
+dist/android/<app>/<brand>/
 ├── fonts/
 │   ├── code_license.txt
-│   ├── display_license.txt
 │   └── ui_license.txt
 ├── icons/
 │   └── icons/
 │       └── ic_chassis_icons.svg
 ├── images/
-│   ├── home/
-│   │   └── drawable/
-│   │       ├── tokens_scheme.svg
-│   │       └── ...
 │   └── logo/
 │       └── drawable/
-│           ├── logo_black.svg
-│           └── ...
+│           └── wordmark.svg
 └── res/
     ├── drawable/
+    │   ├── hero_banner.png
+    │   ├── ic_arrow_right_outline.xml
     │   ├── ic_arrow_right_solid.xml
-    │   ├── logo_black.png
-    │   ├── platforms.png
-    │   └── ...
+    │   ├── welcome_dark.png
+    │   ├── welcome_light.png
+    │   └── wordmark.png
     ├── drawable-xhdpi/
-    │   ├── platforms.png
-    │   └── ...
+    │   ├── hero_banner.png
+    │   ├── welcome_dark.png
+    │   └── welcome_light.png
+    ├── drawable-xxhdpi/
+    │   └── hero_banner.png
     └── font/
         ├── code_normal.ttf
         ├── ui_normal.ttf
-        └── ...
+        ├── ui_normal_italic.ttf
+        └── ui_strong.ttf
 ```
 
 Copy the folder into the source set of the brand, and the licenses beside it:
@@ -191,7 +194,7 @@ find "$ASSETS/fonts" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) -exec cp {
 cp "$ASSETS"/fonts/*_license.txt "$SRC/assets/licenses/"
 
 # The PNG and WebP files of each folder of images/ that the app uses
-for folder in images/home images/logo; do
+for folder in images images/onboarding; do
   for density in "$ASSETS/$folder"/drawable*/; do
     target="$SRC/res/$(basename "$density")"
     mkdir -p "$target"
@@ -213,7 +216,7 @@ The script copies and replaces files and never removes one. A file that a later 
 
 ## Fonts
 
-The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `ui_normal.ttf` or `display_strong_italic.ttf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
+The build gives Android the TTF and OTF files of `fonts/` and the `<role>-license.txt` of each font, renamed to snake_case. A font file is named after its role and its style, `ui_normal.ttf` or `ui_strong_italic.ttf`, so two brands with different typefaces have the same file names. See [Fonts]([[docsref:/asset-types/fonts#platform-output]]) for the roles and the source layout.
 
 ### Font resources
 
@@ -281,77 +284,77 @@ The build removes the indicator from the name and writes the file to the density
 | `@4x` | `drawable-xxxhdpi/` |
 </CxTable>
 
-The source files `images/home/platforms.png` and `platforms@2x.png` of the app come out as one name in two folders:
+The source files `images/hero-banner.png`, `hero-banner@2x.png` and `hero-banner@3x.png` of the app come out as one name in three folders:
 
 ```text
-dist/android/demo/chassis/images/home/
+dist/android/<app>/<brand>/images/
 ├── drawable/
-│   └── platforms.png
-└── drawable-xhdpi/
-    └── platforms.png
+│   └── hero_banner.png
+├── drawable-xhdpi/
+│   └── hero_banner.png
+└── drawable-xxhdpi/
+    └── hero_banner.png
 ```
 
 The build does not resize: an image has the variants that the designer exported, and no others. Android reads a file of `drawable/` as an mdpi image and scales it up on a denser screen.
 
 ### Using an image
 
-After the copy script ran, the two files are one resource, `R.drawable.platforms`, and Android picks the file of the screen density. Use it in a layout:
+After the copy script ran, the three files are one resource, `R.drawable.hero_banner`, and Android picks the file of the screen density. Use it in a layout:
 
 ```xml
 <ImageView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:src="@drawable/platforms"
-    android:contentDescription="@string/platforms" />
+    android:src="@drawable/hero_banner"
+    android:contentDescription="@string/hero_banner" />
 ```
 
 Use it in Jetpack Compose:
 
 ```kotlin
 Image(
-    painter = painterResource(R.drawable.platforms),
-    contentDescription = stringResource(R.string.platforms)
+    painter = painterResource(R.drawable.hero_banner),
+    contentDescription = stringResource(R.string.hero_banner)
 )
 ```
 
 ### SVG images
 
-The build copies an SVG image to `drawable/` as SVG, and `res/drawable/` does not accept that format, so the copy script leaves the SVG files out. Import the ones you need with Vector Asset Studio of Android Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then the file, for example `images/home/drawable/tokens_scheme.svg` of the job folder. Android Studio writes `res/drawable/tokens_scheme.xml`.
+The build copies an SVG image to `drawable/` as SVG, and `res/drawable/` does not accept that format, so the copy script leaves the SVG files out. Import the ones you need with Vector Asset Studio of Android Studio: **File → New → Vector Asset**, **Local file (SVG, PSD)**, then the file, for example `images/logo/drawable/wordmark.svg` of the job folder. Android Studio writes `res/drawable/wordmark.xml`.
 
-The images of `images/logo/` exist as both PNG and SVG with one name, such as `logo_black.png` and `logo_black.svg`. A resource has one file per folder, so use one of the two formats for a name, or give the vector drawable another name in the dialog.
+An image that the designer exported as PNG and as SVG has both files with one name, such as `wordmark.png` and `wordmark.svg`. A resource has one file per folder, so use one of the two formats for a name, or give the vector drawable another name in the dialog.
 
 ### Night images
 
-The build has no rule for dark mode: an image for a dark background is a file of its own with its own name, such as `comp_gallery_dark.png` beside `comp_gallery_light.png` in `images/home/`. To let Android choose between the two, copy them to one resource name, the dark one into a folder with the `night` qualifier:
+The build has no rule for dark mode: an image for a dark background is a file of its own with its own name, such as `welcome_dark.png` beside `welcome_light.png` in `images/onboarding/`. To let Android choose between the two, copy them to one resource name, the dark one into a folder with the `night` qualifier:
 
 ```bash
-HOME_IMAGES="chassis-assets/dist/android/demo/chassis/images/home"
+IMAGES="chassis-assets/dist/android/demo/chassis/images/onboarding"
 RES="app/src/main/res"
 
 mkdir -p "$RES/drawable-xhdpi" "$RES/drawable-night-xhdpi"
-cp "$HOME_IMAGES/drawable-xhdpi/comp_gallery_light.png" "$RES/drawable-xhdpi/comp_gallery.png"
-cp "$HOME_IMAGES/drawable-xhdpi/comp_gallery_dark.png" "$RES/drawable-night-xhdpi/comp_gallery.png"
+cp "$IMAGES/drawable-xhdpi/welcome_light.png" "$RES/drawable-xhdpi/welcome.png"
+cp "$IMAGES/drawable-xhdpi/welcome_dark.png" "$RES/drawable-night-xhdpi/welcome.png"
 ```
 
-The app then reads `R.drawable.comp_gallery` in both modes.
+The app then reads `R.drawable.welcome` in both modes.
 
 ## Icons
 
 The build keeps only the SVG files under `icons/`. It adds the `ic_` prefix to a name that does not have it, and renames the files to snake_case. See [Icons]([[docsref:/asset-types/icons#platform-output]]) for where the icons come from.
 
 ```text
-dist/android/demo/chassis/icons/
+dist/android/<app>/<brand>/icons/
 ├── icons/
 │   └── ic_chassis_icons.svg
 └── svgs/
     ├── ic_arrow_right_outline.svg
     ├── ic_arrow_right_solid.svg
-    ├── ic_bars_outline.svg
-    ├── ic_bars_solid.svg
     └── ...
 ```
 
-The files of `icons/svgs/` are the icons, one file per icon and style. `icons/icons/ic_chassis_icons.svg` is the SVG sprite of [Chassis Icons](https://chassis-ui.com/icons/), which an Android app has no use for.
+For an app that holds a copy of Chassis Icons, the files of `icons/svgs/` are the icons, one file per icon and style. `icons/icons/ic_chassis_icons.svg` is the SVG sprite of [Chassis Icons](https://chassis-ui.com/icons/), which an Android app has no use for.
 
 ### Vector drawables
 
@@ -366,18 +369,16 @@ pnpm assets --platform android --vector-drawables
 Each SVG file under `icons/` is then an XML file of the same name, which `res/drawable/` takes as it is:
 
 ```text
-dist/android/demo/chassis/icons/
+dist/android/<app>/<brand>/icons/
 ├── icons/
 │   └── ic_chassis_icons.svg
 └── svgs/
     ├── ic_arrow_right_outline.xml
     ├── ic_arrow_right_solid.xml
-    ├── ic_bars_outline.xml
-    ├── ic_bars_solid.xml
     └── ...
 ```
 
-A path without a fill color is filled black, which the tint of the app replaces. A file with no shape to draw stays an SVG, and the build warns about it: `icons/icons/ic_chassis_icons.svg` is the one of this output. Add the icons to the copy script of [Copying to res](#copying-to-res):
+A path without a fill color is filled black, which the tint of the app replaces. A file with no shape to draw stays an SVG, and the build warns about it: `icons/icons/ic_chassis_icons.svg`, the sprite of Chassis Icons, is one. Add the icons to the copy script of [Copying to res](#copying-to-res):
 
 ```bash
 # The vector drawables of the icons, from a build with --vector-drawables
@@ -412,13 +413,20 @@ Icon(
 
 ## Other assets
 
-The build copies any other folder of the app whole, with its subfolders, and renames its files to snake_case; a dot inside a name becomes an underscore too. The committed `demo` app has no such folder. A source file `data/brand.tokens.json` would come out as `dist/android/<app>/<brand>/data/brand_tokens.json`.
+The build copies any other folder of the app whole, with its subfolders, and renames its files to snake_case; a dot inside a name becomes an underscore too. A source file `data/brand.tokens.json` comes out as `dist/android/<app>/<brand>/data/brand_tokens.json`. A folder that only some brands hold is in the output of those brands only.
 
 Copy such a file to `res/raw/` to read it as `R.raw.brand_tokens`, or copy the folder to `app/src/main/assets/` to keep its subfolders and read a file by its path. See [Other assets]([[docsref:/asset-types/other]]) for what the folder can hold.
 
 ## Brand switching
 
-Every brand of `chassis.build.brands` has a job folder with the same folders, and a file that two brands both have has the same name in each, so an app changes brand by changing the folder it copies from. A brand file replaces the default file of the same path in the build; the names stay, and the code of the app does not change. The font files of the committed brands differ: `chassis` has `display_*.ttf` files and `sinefil` has `prose_*.ttf` files in their place, so a font family resource of one of these roles goes in the source set of its brand.
+Every brand of `chassis.build.brands` has a job folder with the same folders, and a file that two brands both have has the same name in each, so an app changes brand by changing the folder it copies from. A brand file replaces the default file of the same path in the build; the names stay, and the code of the app does not change.
+
+The brands do not have to hold the same files. A file that only the folder of one brand holds is in the output of that brand only, and a font role that a brand sets in the family of another role has no files in its output. A resource that only some brands have, such as the font family resource of such a role, goes in the source set of each brand that has it. Compare the output of two brands to see which files they share:
+
+```bash
+diff <(cd chassis-assets/dist/android/demo/chassis && find . -type f | sort) \
+     <(cd chassis-assets/dist/android/demo/sinefil && find . -type f | sort)
+```
 
 ### Product flavors
 
@@ -435,7 +443,7 @@ android {
 }
 ```
 
-`./gradlew assembleChassisDebug` then builds the app with the files of `app/src/chassis/`, and `./gradlew assembleSinefilDebug` with those of `app/src/sinefil/`. Put the vector drawables and the `text.xml` that differ by brand in the same source sets, and the ones that all brands share in `app/src/main/res/`.
+`./gradlew assembleChassisDebug` then builds the app with the files of `app/src/chassis/`, and `./gradlew assembleSinefilDebug` with those of `app/src/sinefil/`. Put the vector drawables and the `ui.xml` that differ by brand in the same source sets, and the ones that all brands share in `app/src/main/res/`.
 
 ### Gradle task
 
@@ -542,7 +550,7 @@ Gradle fails on a file of `res/drawable/` with `The file name must end with .xml
 
 ### Duplicate resources
 
-Gradle fails with `Duplicate resources` and names two files of one folder, such as `logo_black.png` and `logo_black.xml`. The image exists as PNG and as SVG in `images/logo/`, and both were added to `res/drawable/`. Keep one of them, or import the SVG under another name. The two files can also be a copy of an earlier build and one of this build: `logo_black.png` is still in `app/src/chassis/res/drawable/` when a build with `--webp` writes `logo_black.webp` in its place. Delete the file of the earlier build.
+Gradle fails with `Duplicate resources` and names two files of one folder, such as `wordmark.png` and `wordmark.xml`. The image exists as PNG and as SVG in `images/logo/`, and both were added to `res/drawable/`. Keep one of them, or import the SVG under another name. The two files can also be a copy of an earlier build and one of this build: `wordmark.png` is still in `app/src/chassis/res/drawable/` when a build with `--webp` writes `wordmark.webp` in its place. Delete the file of the earlier build.
 
 ### Image is missing
 

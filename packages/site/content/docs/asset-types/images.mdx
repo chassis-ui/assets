@@ -17,22 +17,22 @@ Images live in `source/<brand>/<app>/images/`, in any subfolders. The default br
 ```text
 source/
 ├── default/
-│   └── demo/
+│   └── <app>/
 │       └── images/
-│           └── home/
-│               ├── comp-gallery-dark.png
-│               ├── comp-gallery-dark@2x.png
-│               └── ...
-└── chassis/
-    └── demo/
+│           ├── onboarding/
+│           │   ├── welcome-dark.png
+│           │   ├── welcome-dark@2x.png
+│           │   └── ...
+│           └── logo/
+│               └── wordmark.svg
+└── <brand>/
+    └── <app>/
         └── images/
             └── logo/
-                ├── logo-black.png
-                ├── logo-black.svg
-                └── ...
+                └── wordmark.svg  -> replaces the default file of the same path
 ```
 
-A brand file replaces the default file of the same path, subfolder included. In the `demo` app of this repository each brand has a `logo/` folder only, so it gets its own logos and the `home/` images of the default brand.
+A brand file replaces the default file of the same path, subfolder included. A brand that holds a `logo/` folder only, as above, gets its own logo and the `onboarding/` images of the default brand.
 
 ## Formats
 
@@ -53,23 +53,23 @@ PNG, JPG and WebP files are Git LFS files. SVG files are text and are committed 
 
 ## Naming
 
-Name an image in lowercase with hyphens, after what it shows: `comp-gallery-dark.png`, `logo-white.svg`. Each platform renames the file, so the source name is written once and the web, iOS and Android names follow from it.
+Name an image in lowercase with hyphens, after what it shows: `welcome-dark.png`, `wordmark.svg`. Each platform renames the file, so the source name is written once and the web, iOS and Android names follow from it.
 
 ### Variants
 
 A variant is the same image exported at another resolution. Its name ends with an indicator before the extension: `@2x` for twice the size, `@3x` for three times. The file without an indicator is the base size.
 
 ```text
-source/default/demo/images/home/
-├── comp-gallery-dark.png
-└── comp-gallery-dark@2x.png
+source/<brand>/<app>/images/onboarding/
+├── welcome-dark.png
+└── welcome-dark@2x.png
 ```
 
 The web and the iOS output keep the indicator in the name. Android has no indicator: the build writes each variant under the same name into the density folder of its resolution, see [Platform output](#platform-output).
 
 ### Color modes
 
-An image that differs between the light and the dark mode is two files, with the mode at the end of the name: `comp-gallery-light.png` and `comp-gallery-dark.png`. The build treats them as two images, and the app chooses between them.
+An image that differs between the light and the dark mode is two files, with the mode at the end of the name: `welcome-light.png` and `welcome-dark.png`. The build treats them as two images, and the app chooses between them.
 
 ## Adding files
 
@@ -80,7 +80,7 @@ An image enters the repository as an export from the design tool, saved under `i
 3. Export to `source/default/<app>/images/` for an image of every brand, or to `source/<brand>/<app>/images/` for an image of one brand.
 4. Run `pnpm assets` and look for the file in `dist/`.
 
-A subfolder groups images that belong together, such as `logo/` or `home/`. The build keeps the subfolder on every platform.
+A subfolder groups images that belong together, such as `logo/` or `onboarding/`. The build keeps the subfolder on every platform.
 
 ## Best practices
 
@@ -89,7 +89,7 @@ The build copies an image as the designer exported it. These practices cover wha
 - **Export every variant an app needs:** the build copies `@2x` and `@3x` files and does not make them. An image without variants reaches Android in `drawable/` only.
 - **Keep the base name the same across variants:** `hero.png`, `hero@2x.png` and `hero@3x.png` become one Android drawable in three densities. A variant with another base name becomes another image.
 - **Add a PNG or JPG beside a WebP:** iOS does not get WebP files.
-- **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/home/platforms.png` for `images/home/platforms.png`.
+- **Override by path:** a brand image replaces the default image only when the subfolder and the name are the same, `images/onboarding/welcome-dark.png` for `images/onboarding/welcome-dark.png`.
 
 Avoid the habits that undo this:
 
@@ -107,21 +107,27 @@ The build copies each image to the `images/` folder of the job, in its subfolder
 | Android | `dist/android/<app>/<brand>/images/` | snake_case, in density folders | Every format |
 </CxTable>
 
-The source file `images/home/comp-gallery-dark@2x.png` is `images/home/comp-gallery-dark@2x.png` in the web output and `images/home/comp_gallery_dark@2x.png` in the iOS output. In the Android output it is `images/home/drawable-xhdpi/comp_gallery_dark.png`:
+The source file `images/onboarding/welcome-dark@2x.png` is `images/onboarding/welcome-dark@2x.png` in the web output and `images/onboarding/welcome_dark@2x.png` in the iOS output. In the Android output it is `images/onboarding/drawable-xhdpi/welcome_dark.png`:
 
 ```text
-dist/android/demo/chassis/images/
-├── home/
-│   ├── drawable/
-│   │   ├── comp_gallery_dark.png
-│   │   └── ...
-│   └── drawable-xhdpi/
-│       ├── comp_gallery_dark.png
-│       └── ...
-└── logo/
-    └── drawable/
-        ├── logo_black.png
-        └── ...
+dist/android/<app>/<brand>/images/
+├── drawable/
+│   └── hero_banner.png
+├── drawable-xhdpi/
+│   └── hero_banner.png
+├── drawable-xxhdpi/
+│   └── hero_banner.png
+├── logo/
+│   └── drawable/
+│       ├── wordmark.png
+│       └── wordmark.svg
+└── onboarding/
+    ├── drawable/
+    │   ├── welcome_dark.png
+    │   └── welcome_light.png
+    └── drawable-xhdpi/
+        ├── welcome_dark.png
+        └── welcome_light.png
 ```
 
 On Android the indicator of a name chooses the density folder, and a file without an indicator goes to `drawable/`.
@@ -137,38 +143,38 @@ On Android the indicator of a name chooses the density folder, and a file withou
 | `@4x` | `drawable-xxxhdpi/` |
 </CxTable>
 
-The density folders are written inside each subfolder of `images/`, so `images/home/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`. A build with the `--res` option does that copy: it moves the raster images of every subfolder into `res/drawable/` and the density folders, see the [build system page]([[docsref:/getting-started/build-system#res-folder]]).
+The density folders are written inside each subfolder of `images/`, so `images/onboarding/` has density folders of its own. The `res/` folder of an Android app does not nest, so an app copies the density folders of each subfolder it uses into `res/`. A build with the `--res` option does that copy: it moves the raster images of every subfolder into `res/drawable/` and the density folders, see the [build system page]([[docsref:/getting-started/build-system#res-folder]]).
 
 ### Asset catalog
 
 A build with `pnpm assets --asset-catalog` writes the images of an iOS job as an asset catalog, `Assets.xcassets` in place of `images/`. The files of one base name are one image set, each variant in the slot of its indicator, and a subfolder is a folder of the catalog:
 
 ```text
-dist/ios/demo/chassis/
+dist/ios/<app>/<brand>/
 ├── Assets.xcassets/
 │   ├── Contents.json
-│   ├── home/
+│   ├── hero_banner.imageset/
 │   │   ├── Contents.json
-│   │   ├── assets_visual_dark.imageset/
-│   │   │   ├── Contents.json
-│   │   │   └── assets_visual_dark.svg
-│   │   ├── comp_gallery_dark.imageset/
-│   │   │   ├── Contents.json
-│   │   │   ├── comp_gallery_dark.png
-│   │   │   └── comp_gallery_dark@2x.png
-│   │   └── ...
-│   └── logo/
+│   │   ├── hero_banner.png
+│   │   ├── hero_banner@2x.png
+│   │   └── hero_banner@3x.png
+│   ├── logo/
+│   │   ├── Contents.json
+│   │   └── wordmark.imageset/
+│   │       ├── Contents.json
+│   │       └── wordmark.png
+│   └── onboarding/
 │       ├── Contents.json
-│       ├── logo_black.imageset/
+│       ├── welcome_dark.imageset/
 │       │   ├── Contents.json
-│       │   └── logo_black.png
+│       │   ├── welcome_dark.png
+│       │   └── welcome_dark@2x.png
 │       └── ...
 └── images/
     └── logo/
-        ├── logo_black.svg
-        └── ...
+        └── wordmark.svg
 ```
 
-An image set holds the raster variants of a name, or one SVG or PDF where the name has no raster. A file without a place in an image set stays in `images/`: here the SVG logos, which have PNG variants of the same name. The [build system page]([[docsref:/getting-started/build-system#asset-catalog]]) has the rules of the option.
+An image set holds the raster variants of a name, or one SVG or PDF where the name has no raster. A file without a place in an image set stays in `images/`: here the SVG of the logo, which has a PNG of the same name. The [build system page]([[docsref:/getting-started/build-system#asset-catalog]]) has the rules of the option.
 
 See the [web]([[docsref:/use-in-project/web-applications#images]]), [iOS]([[docsref:/use-in-project/ios-applications#images]]), and [Android]([[docsref:/use-in-project/android-applications#images]]) docs for how an app uses these files.

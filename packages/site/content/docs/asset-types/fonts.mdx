@@ -29,7 +29,7 @@ source/
             └── ui-normal.woff2       -> replaces the default file of the same name
 ```
 
-A brand file replaces the default file of the same path. A brand without a `fonts/` folder gets the default fonts as they are. In this repository the default brand holds no fonts, and each brand holds all of its own, with a `fonts.css` of its own.
+A brand file replaces the default file of the same path. A brand without a `fonts/` folder gets the default fonts as they are. A default brand without fonts leaves every brand to hold all of its own, with a `fonts.css` of its own.
 
 ## Formats
 
@@ -59,17 +59,14 @@ A font file is named `<role>-<weight>.<ext>`, with `-italic` after the weight fo
 | Weight | `elegant`, `normal`, `strong`, `mass` | From the lightest to the heaviest weight of the role |
 </CxTable>
 
-A role that a brand sets in the family of another role has no files: the files of a family are under the role that owns it. The `prose` role of the `chassis` brand is set in its `ui` family, so `chassis` has no `prose` file, and the `display` role of the `sinefil` brand is set in its `prose` family, so `sinefil` has no `display` file. Which roles have files so differs by brand.
+A role that a brand sets in the family of another role has no files: the files of a family are under the role that owns it. A brand that sets its `prose` role in its `ui` family has no `prose` file, and the `ui` files serve both roles. Which roles have files so differs by brand.
 
-The `chassis` brand names its fonts this way:
+A brand with fonts for the `ui` and the `code` roles names them this way:
 
 ```text
-source/chassis/demo/fonts/
+source/<brand>/<app>/fonts/
 ├── code-normal.ttf
 ├── code-strong.ttf
-├── display-normal.ttf
-├── display-normal-italic.ttf
-├── display-strong.ttf
 ├── ui-normal.ttf
 ├── ui-normal-italic.ttf
 ├── ui-strong.ttf
@@ -97,7 +94,7 @@ Fonts are Git LFS files. Install Git LFS before adding one, so that the commit h
 A family with a variable font gets both forms in a web app: the variable file of the role, and one file per weight beside it.
 
 ```text
-source/chassis/docs/fonts/
+source/<brand>/<app>/fonts/
 ├── fonts.css               -> declares ui.woff2 and ui-italic.woff2
 ├── ui-italic.woff2         -> every weight, italic
 ├── ui-normal.woff2         -> one weight
@@ -108,29 +105,27 @@ source/chassis/docs/fonts/
 
 The stylesheet of the brand declares the variable file. The files by weight stay for a page that writes its own `@font-face` rules. A family without a variable font has the files by weight only, and the stylesheet declares those.
 
-The `demo` app of this repository, which is built for iOS and Android, holds the files by weight only.
-
 ### Brand fonts
 
-A brand changes a font of the default brand by adding a file of the same name to its own folder. In this repository each brand holds all of its fonts: the `sinefil` brand holds those of `ui`, `prose` and `code`, in both apps:
+A brand changes a font of the default brand by adding a file of the same name to its own folder. A brand that replaces the `ui` and the `code` fonts of a web app holds their files, their licenses and a stylesheet:
 
 ```text
-source/sinefil/docs/fonts/
+source/<brand>/<app>/fonts/
 ├── code-license.txt
 ├── code-normal.woff2
 ├── code-strong.woff2
 ├── fonts.css
-├── prose-license.txt
-├── prose-normal.woff2
-├── prose.woff2
+├── ui-license.txt
+├── ui-normal.woff2
+├── ui.woff2
 └── ...
 ```
 
 A brand that replaces the files of a role replaces the license of that role too, and adds a `fonts.css` of its own that declares every family of the brand, since the stylesheet of the default brand declares the families of the default brand.
 
-A brand file replaces a default file only when the name and the extension are the same. A brand with `ui-normal.otf` beside a default `ui-normal.ttf` gets both files in its output. Every brand of this repository has its app fonts as TTF.
+A brand file replaces a default file only when the name and the extension are the same. A brand with `ui-normal.otf` beside a default `ui-normal.ttf` gets both files in its output.
 
-A brand gets every default file that it does not replace: a brand whose family of a role has no variable font, or that sets a role in the family of another role, would get the default files of that role beside its own, and its `fonts.css` would load none of them. `pnpm assets:lint:source` warns about such a file: a font of the default brand whose family no stylesheet of the brand declares. No brand of this repository gets one, since its default brand holds no fonts.
+A brand gets every default file that it does not replace: a brand whose family of a role has no variable font, or that sets a role in the family of another role, would get the default files of that role beside its own, and its `fonts.css` would load none of them. `pnpm assets:lint:source` warns about such a file: a font of the default brand whose family no stylesheet of the brand declares.
 
 ### Stylesheets
 
@@ -138,7 +133,7 @@ A `.css` or `.scss` file in `fonts/` is copied to the web output like a font. Ea
 
 ```css
 @font-face {
-  font-family: "Inter";
+  font-family: "Brand Sans";
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
@@ -150,7 +145,7 @@ The rule names the family of the brand and the range of weights the file holds, 
 
 The stylesheet is one per brand and not one per role, because a brand sets several roles in one family and a rule declares a family: a stylesheet per role would declare one family twice. The comment of each block names the role and the family.
 
-`pnpm assets:lint:source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: `DM Sans 18pt` is declared as `DM Sans`.
+`pnpm assets:lint:source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: a cut named `<family> 18pt` is declared as `<family>`.
 
 A rule declares the file of the web, and an app gets the file of the same name in another format. The lint checks the rule against that file too: `ui.ttf` beside a declared `ui.woff2` has to be what the rule says. It also fails when two files of one name in a folder, such as `ui-normal.ttf` and `ui-normal.woff2`, are not one font in two formats: when they differ in the family, the weight, the style, the axes, the version or the number of glyphs. Write both files from the same font to keep them together.
 
@@ -196,10 +191,10 @@ The build copies each font to the `fonts/` folder of the job, in the formats the
 | Android | `dist/android/<app>/<brand>/fonts/` | snake_case | TTF, OTF, TXT |
 </CxTable>
 
-The web output of the configured web app, for the fonts of the `chassis` brand:
+The web output of a brand with a variable `ui` font and its files by weight:
 
 ```text
-dist/web/docs/chassis/fonts/
+dist/web/<app>/<brand>/fonts/
 ├── ...
 ├── fonts.css
 ├── ui-italic.woff2
@@ -210,10 +205,10 @@ dist/web/docs/chassis/fonts/
 └── ui.woff2
 ```
 
-The iOS and the Android output of the configured app hold the same files, under the same names:
+The iOS and the Android output hold the TTF and OTF files of the same roles, under the same names in snake_case:
 
 ```text
-dist/ios/demo/chassis/fonts/
+dist/ios/<app>/<brand>/fonts/
 ├── ui_license.txt
 ├── ui_normal.ttf
 ├── ui_normal_italic.ttf

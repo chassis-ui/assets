@@ -44,7 +44,7 @@ A name in `source/` is made of lowercase letters, digits and hyphens, with a low
 
 - **Separate words with hyphens:** `hero-background.jpg`.
 - **Name a file after what it shows or does:** `illustration-onboarding.svg`, not `image1.svg`.
-- **Put the color mode at the end of the name:** `comp-gallery-light.png` and `comp-gallery-dark.png`.
+- **Put the color mode at the end of the name:** `welcome-light.png` and `welcome-dark.png`.
 - **End a variant with its indicator:** `hero-image.png`, `hero-image@2x.png`, `hero-image@3x.png`.
 - **Do not use spaces, capitals or underscores:** `Hero Background.jpg` and `hero_background.jpg` fail the source lint.
 - **Do not put a dot or an indicator inside a name:** `hero.v2.png` and `hero@2x-final.png` fail the source lint.
@@ -86,7 +86,7 @@ See [images]([[docsref:/asset-types/images]]) for the variants and the density f
 
 ### Icons
 
-Icons go to `icons/` as the build output of Chassis Icons, in the apps that need them: here the `demo` app, while the `docs` app has only `cx-sprite.svg`, a sprite of its own. You do not export them into this repository one by one.
+Icons go to `icons/` as the build output of Chassis Icons, in the apps that need them. You do not export them into the repository one by one. A file of another name under `icons/`, such as a sprite drawn for the app, is copied with the same rules.
 
 <CxTable>
 | Platform | Gets | Does not get |

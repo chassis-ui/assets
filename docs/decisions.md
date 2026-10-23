@@ -246,3 +246,17 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   dot, and `sinefil` has none. The contract of the logos that the website reads is removed
   from `chassis.checks.json` until the website reads the new names, see
   [ref/OPEN.md](../ref/OPEN.md). The maintainer, 2026-10-20.
+- **D34. Do the pages of the site list what `source/` holds?** No. They explain how the asset
+  system works: the layout `source/<brand>/<app>/<type>/`, the fallback of a brand to the
+  default brand, the output name of each platform, and how an app finds a file by that name.
+  A page names no file of a brand, holds no tree of the files of a brand, and says nothing of
+  which brand has which file; its examples are placeholder files, such as
+  `images/hero-banner.png`, in paths with `<app>` and `<brand>`, and its trees of `dist/` are
+  copied from a build of those files in a scratch repository. The names of the font roles, of
+  `fonts.css` and of the files of Chassis Icons are conventions and stay, and a command may
+  name a job of the committed configuration. The pages listed the files of the brands, and
+  went wrong with every change to an asset: the removal of `other/example-tokens.json` and of
+  the maskable icon of `sinefil` left several of them stale. So a change to the files of
+  `source/` needs no change to a page. The contracts of `chassis.checks.json` and the table of
+  consumers in the README still name the files that consumers read, since those are the
+  output contract. [WRITING.md](../WRITING.md) §7 holds the rule. The maintainer, 2026-10-23.

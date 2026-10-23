@@ -70,8 +70,8 @@ Every `##`, `###`, and `####` heading must be followed by at least one explanato
 Images live under `images/` of an app, in any subfolders. The build keeps the subfolders in the output of every platform.
 
 ```text
-source/chassis/docs/images/
-├── site-logo.svg
+source/<brand>/<app>/images/
+├── hero-banner.png
 └── logo/
 ```
 ````
@@ -82,8 +82,8 @@ source/chassis/docs/images/
 ## Source layout
 
 ```text
-source/chassis/docs/images/
-├── site-logo.svg
+source/<brand>/<app>/images/
+├── hero-banner.png
 └── logo/
 ```
 ````
@@ -149,16 +149,16 @@ Write in American English (`color`, `behavior`, `customize`), which is the spell
 
 Backtick every code reference. A file has one name in `source/` and one per platform; which one to write depends on what the sentence is about.
 
-| Referring to           | Form                                  | Example                                          |
-| ---------------------- | ------------------------------------- | ------------------------------------------------ |
-| A source file          | Path from `source/`, or from the app  | `` `source/chassis/docs/images/site-logo.svg` `` |
-| A web output file      | kebab-case, indicator kept            | `` `images/hero-banner@2x.png` ``                |
-| An iOS output file     | snake_case, indicator kept            | `` `images/hero_banner@2x.png` ``                |
-| An Android output file | snake_case, in its density folder     | `` `images/drawable-xhdpi/hero_banner.png` ``    |
-| An Android icon        | snake_case with the `ic_` prefix      | `` `icons/svgs/ic_arrow_right_solid.svg` ``      |
-| A folder               | With a trailing slash                 | `` `fonts/` ``, `` `dist/web/docs/chassis/` ``   |
-| A group of files       | A pattern with `*`                    | `` `images/home/comp-gallery-*` ``               |
-| A format               | Uppercase in prose, extension in code | WOFF2, `` `.woff2` ``                            |
+| Referring to           | Form                                  | Example                                             |
+| ---------------------- | ------------------------------------- | --------------------------------------------------- |
+| A source file          | Path from `source/`, or from the app  | `` `source/<brand>/<app>/images/hero-banner.png` `` |
+| A web output file      | kebab-case, indicator kept            | `` `images/hero-banner@2x.png` ``                   |
+| An iOS output file     | snake_case, indicator kept            | `` `images/hero_banner@2x.png` ``                   |
+| An Android output file | snake_case, in its density folder     | `` `images/drawable-xhdpi/hero_banner.png` ``       |
+| An Android icon        | snake_case with the `ic_` prefix      | `` `icons/svgs/ic_arrow_right_solid.svg` ``         |
+| A folder               | With a trailing slash                 | `` `fonts/` ``, `` `dist/web/docs/chassis/` ``      |
+| A group of files       | A pattern with `*`                    | `` `images/home/comp-gallery-*` ``                  |
+| A format               | Uppercase in prose, extension in code | WOFF2, `` `.woff2` ``                               |
 
 Don't use the name of one platform where another is meant — `hero-banner.png` doesn't exist for an Android developer.
 
@@ -172,9 +172,11 @@ Don't use the name of one platform where another is meant — `hero-banner.png` 
 
 ### 7. Names are facts, files are examples
 
-Chassis Assets is a multi-brand, multi-platform repository that its adopters own and customize. The layout of `source/` and `dist/`, the naming rules, the formats each platform gets and the commands are its structure. The files are not: a logo, a font family or a screenshot belongs to one brand, changes with the next release, and is different in the fork of an adopter. Document the structure, and use the files as examples.
+Chassis Assets is a multi-brand, multi-platform repository that its adopters own and customize. The layout of `source/` and `dist/`, the naming rules, the formats each platform gets and the commands are its structure. The files are not: a logo, a font family or a screenshot belongs to one brand, changes with the next release, and is different in the fork of an adopter. Document the structure, never the contents of `source/` ([D34](docs/decisions.md)).
 
-**Names must exist.** Every path, file name, command and option in a doc must exist in `source/`, in the output of a build, or in the build as written. Don't write a file name from memory, and don't invent a flag — a reader will run it. Before adding a name, find it:
+**Examples are placeholders.** A page does not list what `source/` holds: no tree of the files of a brand, no sentence on which brand has which file, no file of this repository as the example of a rule. An example uses a placeholder file, such as `images/hero-banner.png` or `data/country-list.json`, in a path with `<app>` and `<brand>`. A page explains how the reader finds a file instead: the layout, the fallback to the default brand, and the output name of each platform. The names of the font roles, of `fonts.css` and of the files of Chassis Icons are conventions, not contents, and may be named. The committed configuration may name a job in a command ([§8](#8-counts-versions-and-configuration)).
+
+**Names must exist.** Every path, command and option in a doc must exist as written, and the output name of a placeholder file is the one a build writes for it. Don't write a name from memory, and don't invent a flag — a reader will run it. Before adding a name, find it:
 
 ```bash
 pnpm assets --help
@@ -182,7 +184,7 @@ pnpm assets --dry-run
 find dist/android/demo/chassis -name 'ic_arrow_right_solid*'
 ```
 
-**Trees are copied from a build.** A tree of `dist/` shows files that a build wrote, with the names and folders it wrote them in. Shorten a tree by leaving lines out and ending a folder with `└── ...`, never by editing a name. Check an output name by building: the web name of `HeroBanner@2x.png` is whatever `pnpm assets` writes, not what the rule suggests.
+**Trees are copied from a build.** A tree of `dist/` shows files that a build wrote, with the names and folders it wrote them in: put the placeholder files in the `source/` of a scratch repository, build it with `--cwd`, and copy the tree. Shorten a tree by leaving lines out and ending a folder with `└── ...`, never by editing a name. Check an output name by building: the web name of `HeroBanner@2x.png` is whatever `pnpm assets` writes, not what the rule suggests.
 
 **A statement about the build is checked by running it.** "A filtered build keeps `dist/`", "the build fails on a Git LFS pointer": run the command, read what it prints, then write the sentence. When the page and the build disagree, see the rules of [AGENTS.md](AGENTS.md#rules) for which one changes.
 
@@ -327,7 +329,7 @@ Tables are Markdown tables wrapped in `<CxTable>`, which makes them scroll on na
 
 **Columns that say the same in every row** move into the intro sentence of the table.
 
-**Trees** are `text` blocks drawn with `├──`, `└──` and `│`, with a comment after `->` where a line needs one. A tree of `source/` shows the layout with placeholders or with the files of the default brand; a tree of `dist/` shows what a build wrote ([§7](#7-names-are-facts-files-are-examples)). Keep a tree to the lines that show the layout.
+**Trees** are `text` blocks drawn with `├──`, `└──` and `│`, with a comment after `->` where a line needs one. A tree of `source/` shows the layout with placeholders and placeholder files; a tree of `dist/` shows what a build of those files wrote ([§7](#7-names-are-facts-files-are-examples)). Keep a tree to the lines that show the layout.
 
 ### 15. Callouts
 
