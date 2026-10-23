@@ -236,17 +236,17 @@ The build writes one job per brand, app and platform: the files of `source/defau
 
 Every Chassis site vendors this repository as the submodule `vendor/assets`, pinned to a commit of the `app/docs` branch, and builds it with the two commands below. A change that breaks a row breaks the sites; `pnpm assets:contract` checks the files on every commit.
 
-| Consumers rely on                             | Detail                                                                                                                                 |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| The `app/docs` branch                         | `chassis-docs sync-submodules` moves the submodule of a site to its tip                                                                |
-| Git LFS                                       | `git lfs pull` gives the real fonts and images                                                                                         |
-| `pnpm install --ignore-workspace`             | Installs the root package only. The build needs none of it                                                                             |
-| `pnpm assets:site`                            | Writes `dist/web/docs/chassis/`, which a site copies to `/static/`                                                                     |
-| `images/` of that folder                      | `site-logo.svg`, the favicons, `apple-touch-icon.png`, `social-image.png`, the home page images under `home/`, the logos under `logo/` |
-| `icons/cx-sprite.svg`                         | The sprite of the home page icons                                                                                                      |
-| `images/figma/components/<component>/<mode>/` | The screenshots that the pages of chassis-figma read by name                                                                           |
+| Consumers rely on                             | Detail                                                                                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The `app/docs` branch                         | `chassis-docs sync-submodules` moves the submodule of a site to its tip                                                                                     |
+| Git LFS                                       | `git lfs pull` gives the real fonts and images                                                                                                              |
+| `pnpm install --ignore-workspace`             | Installs the root package only. The build needs none of it                                                                                                  |
+| `pnpm assets:site`                            | Writes `dist/web/docs/chassis/`, which a site copies to `/static/`                                                                                          |
+| `images/` of that folder                      | `site-logo.svg`, `site-logomark.svg`, the favicons, `apple-touch-icon.png`, `social-image.png`, the home page images under `home/`, the logos under `logo/` |
+| `icons/cx-sprite.svg`                         | The sprite of the home page icons                                                                                                                           |
+| `images/figma/components/<component>/<mode>/` | The screenshots that the pages of chassis-figma read by name                                                                                                |
 
-sinefil.org takes the archive `chassis-assets-web-docs-sinefil-<version>.zip` of a release instead, and reads its fonts, logo, favicons, `other/manifest.json` and social image by name. The full list for both, with the code that reads each file, is `contracts` in [chassis.checks.json](chassis.checks.json).
+sinefil.org takes the archive `chassis-assets-web-docs-sinefil-<version>.zip` of a release instead, and reads its fonts, logo, logomark, favicons, `other/manifest.json` and social image by name. The full list for both, with the code that reads each file, is `contracts` in [chassis.checks.json](chassis.checks.json).
 
 ## Branches and CI
 

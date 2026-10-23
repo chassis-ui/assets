@@ -110,10 +110,10 @@ Considered and left out. Each needs a reason to come back.
 - **Deriving image variants from one master.** The build stays file-driven: the designer
   exports the variants. `--optimize` re-encodes what is exported, and `--webp` and `--avif`
   write a second format of it, which is a format and not a variant (D12).
-- **Removing the `icons/` copy of the `demo` app or `other/example-tokens.json` from
-  `source/`.** Every asset type the pages describe is kept: the icons page describes the
-  copy, and D7 keeps the tokens file. The maintainer removed the copy of the `docs` app with
-  D33, since the sites take the icons from `@chassis-ui/icons`.
+- **Removing the `icons/` copy of the `demo` app from `source/`.** Every asset type the pages
+  describe is kept, and the icons page describes the copy. The maintainer removed the copy of
+  the `docs` app with D33, since the sites take the icons from `@chassis-ui/icons`, and the
+  tokens file with D35.
 - **A `Package.swift` at the root.** `dist/` is not committed, so a Swift package would name
   folders that a checkout does not have.
 - **Publishing the built assets on npm for the sites.** D2, and D9 of the website's roadmap:

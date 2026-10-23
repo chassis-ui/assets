@@ -42,7 +42,8 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   jobs. A build without filters removes `dist/` whole. 2026-09-30.
 - **D7. Does `other/default.tokens.json` stay in `source/`?** It stays: any folder under an
   app is copied, and removing a file is the maintainer's. `lint.allow` accepts its name.
-  2026-09-30. D33 renames it `other/example-tokens.json` of the `chassis` brand.
+  2026-09-30. D33 renames it `other/example-tokens.json` of the `chassis` brand, and D35
+  removes it.
 - **D8. Where do font licenses live?** Beside the fonts in `source/<brand>/<app>/fonts/`, as
   `<role>-license.txt`, and the build copies them to `fonts/` of every job like any file.
   2026-09-30.
@@ -260,3 +261,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `source/` needs no change to a page. The contracts of `chassis.checks.json` and the table of
   consumers in the README still name the files that consumers read, since those are the
   output contract. [WRITING.md](../WRITING.md) §7 holds the rule. The maintainer, 2026-10-23.
+- **D35. Does `other/example-tokens.json` stay in `source/`?** No. It was an example file that
+  no consumer reads, kept by D7 only because removing an asset is the maintainer's, and the
+  maintainer removed it. `other/` of the `chassis` brand holds its web manifest, as that of
+  `sinefil` does. The maintainer, 2026-10-23.

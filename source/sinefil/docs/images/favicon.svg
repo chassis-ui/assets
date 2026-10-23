@@ -1,6 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#FFFFFF"/>
-  <g transform="translate(8 8) scale(0.75)"><path d="M17.4541 64H0V46.5449H17.4541V64ZM40.7266 64H23.2725V46.5449H40.7266V64ZM64 64H46.5459V46.5449H64V64Z" fill="#241E1C"/>
-<path d="M64 40.7275C64 40.7275 55.0328 39.096 43.8115 38.2764C44.6309 36.3761 45.0908 34.2478 45.0908 32C45.0908 23.9668 39.2299 17.4541 32 17.4541C24.7701 17.4541 18.9092 23.9668 18.9092 32C18.9092 34.2477 19.3682 36.3762 20.1875 38.2764C8.96665 39.096 0 40.7275 0 40.7275V0C0 0 16 2.90918 32 2.90918C48 2.90918 64 0 64 0V40.7275Z" fill="#7A2E6B"/>
-<ellipse cx="32.0003" cy="31.9997" rx="7.27273" ry="8.72727" fill="#241E1C"/></g>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_99_8270)">
+<rect width="64" height="64" fill="#7A2E6F"/>
+<rect width="64" height="64" fill="url(#paint0_linear_99_8270)"/>
+<path d="M22.9092 51.9999H12V41.0907H22.9092V51.9999ZM37.4541 51.9999H26.5449V41.0907H37.4541V51.9999ZM52 51.9999H41.0908V41.0907H52V51.9999Z" fill="white" fill-opacity="0.6"/>
+<path d="M52 37.4541C52 37.4541 46.3952 36.4361 39.3818 35.9238C39.8942 34.7359 40.1816 33.4053 40.1816 32C40.1816 26.9793 36.5186 22.9093 32 22.9092C27.4813 22.9092 23.8184 26.9792 23.8184 32C23.8184 33.4052 24.1049 34.736 24.6172 35.9238C17.6194 36.435 12.0243 37.4497 12 37.4541V12C12 12 22.0001 13.8184 32 13.8184C41.9999 13.8183 52 12 52 12V37.4541Z" fill="white" fill-opacity="0.6"/>
+<ellipse cx="31.9999" cy="32.0001" rx="4.54543" ry="5.45455" fill="white"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_99_8270" x1="9.14286" y1="9.14286" x2="54.8571" y2="54.8571" gradientUnits="userSpaceOnUse">
+<stop stop-opacity="0"/>
+<stop offset="1" stop-opacity="0.4"/>
+</linearGradient>
+<clipPath id="clip0_99_8270">
+<rect width="64" height="64" fill="white"/>
+</clipPath>
+</defs>
 </svg>

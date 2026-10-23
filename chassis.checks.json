@@ -70,8 +70,12 @@
         "reader": "the web manifest of sinefil.org, which reads other/manifest.json and the icons it names",
         "files": [
           "other/manifest.json",
-          "images/android-chrome-{192x192,512x512,maskable-512x512}.png"
+          "images/android-chrome-{192x192,512x512,512x512-maskable}.png"
         ]
+      },
+      {
+        "reader": "the stand-in for a missing cover on sinefil.org, which inlines the logomark",
+        "files": ["images/site-logomark.svg"]
       },
       {
         "reader": "the social card of sinefil.org",
