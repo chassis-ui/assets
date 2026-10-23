@@ -155,21 +155,22 @@ A full build removes `dist/` first; a filtered build keeps it. A filter value th
 
 ### Check
 
-| Command                   | What it does                                                                                                    | Options                                                          |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `pnpm test`               | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files              |                                                                  |
-| `pnpm test:golden`        | Writes `packages/assets/test/golden/` again, after an intended change to the output                             |                                                                  |
-| `pnpm test:ios`           | Compiles the asset catalogs of an output with `actool`, after `pnpm assets --asset-catalog`. Needs Xcode        | A folder, default `dist`                                         |
-| `pnpm assets:analyze`     | Sizes, types, largest files and files with the same content, of `source/` and of an existing output             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet`    |
-| `pnpm assets:validate`    | Checks an existing output against `source/` and the configuration                                               | `--out`, `--cwd`                                                 |
-| `pnpm assets:lfs`         | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include`                 | `--brand`, `--app`, `--platform`, `--type`, `--include`, `--cwd` |
-| `pnpm assets:contract`    | Checks that each output has the files of its contracts in `chassis.checks.json`                                 | `--out`, `--cwd`                                                 |
-| `pnpm assets:verify`      | The validator, then the contract check                                                                          | `--out`, `--cwd`                                                 |
-| `pnpm assets:lint:source` | The names and the layout of `source/`, LFS pointers, the fonts against their stylesheets and against each other | `--cwd`, `--allow-lfs-pointers`                                  |
-| `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                     |                                                                  |
-| `pnpm assets:typecheck`   | TypeScript over `packages/assets/build/`, from its JSDoc                                                        |                                                                  |
-| `pnpm lint:prettier`      | Formatting, across the repository                                                                               |                                                                  |
-| `pnpm check`              | The types of the site, then `pnpm check:pnpm`: `pnpm audit --prod --audit-level moderate`                       |                                                                  |
+| Command                   | What it does                                                                                                                             | Options                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `pnpm test`               | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files                                       |                                                                  |
+| `pnpm test:ci`            | The Lint, Assets, Site and Audit jobs of CI in one command, without the iOS catalogs, the changeset check and the report of `pnpm audit` |                                                                  |
+| `pnpm test:golden`        | Writes `packages/assets/test/golden/` again, after an intended change to the output                                                      |                                                                  |
+| `pnpm test:ios`           | Compiles the asset catalogs of an output with `actool`, after `pnpm assets --asset-catalog`. Needs Xcode                                 | A folder, default `dist`                                         |
+| `pnpm assets:analyze`     | Sizes, types, largest files and files with the same content, of `source/` and of an existing output                                      | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet`    |
+| `pnpm assets:validate`    | Checks an existing output against `source/` and the configuration                                                                        | `--out`, `--cwd`                                                 |
+| `pnpm assets:lfs`         | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include`                                          | `--brand`, `--app`, `--platform`, `--type`, `--include`, `--cwd` |
+| `pnpm assets:contract`    | Checks that each output has the files of its contracts in `chassis.checks.json`                                                          | `--out`, `--cwd`                                                 |
+| `pnpm assets:verify`      | The validator, then the contract check                                                                                                   | `--out`, `--cwd`                                                 |
+| `pnpm assets:lint:source` | The names and the layout of `source/`, LFS pointers, the fonts against their stylesheets and against each other                          | `--cwd`, `--allow-lfs-pointers`                                  |
+| `pnpm assets:lint`        | ESLint over the build, its tests and the repository scripts                                                                              |                                                                  |
+| `pnpm assets:typecheck`   | TypeScript over `packages/assets/build/`, from its JSDoc                                                                                 |                                                                  |
+| `pnpm lint:prettier`      | Formatting, across the repository                                                                                                        |                                                                  |
+| `pnpm check`              | The types of the site, then `pnpm check:pnpm`: `pnpm audit --prod --audit-level moderate`                                                |                                                                  |
 
 Every `pnpm assets*` command prints its options with `--help`. [docs/architecture.md](docs/architecture.md#checks-per-changed-area) says which checks to run for which change.
 

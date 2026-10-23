@@ -47,6 +47,7 @@
     "clean": "pnpm site:clean && rm -rf dist || true",
     "dev": "pnpm site:assets && pnpm astro:dev",
     "test": "pnpm -C packages/assets test",
+    "test:ci": "pnpm lint:prettier && pnpm site:lint && pnpm check:astro && pnpm assets:site && pnpm assets --brand sinefil --app docs --platform web && pnpm assets:contract && pnpm assets:lint && pnpm assets:lint:source && pnpm assets:typecheck && pnpm test && pnpm assets && pnpm assets:verify && pnpm site:build && pnpm check:pnpm",
     "test:ios": "packages/assets/test/native/ios/check.sh",
     "test:golden": "node packages/assets/build/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet",
     "assets": "node packages/assets/build/cli.js build",
