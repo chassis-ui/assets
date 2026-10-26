@@ -94,7 +94,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.7",
-    "eslint-plugin-unicorn": "^78.0.0",
+    "eslint-plugin-unicorn": "^79.0.0",
     "find-unused-sass-variables": "^6.2.1",
     "globals": "^17.13.0",
     "pagefind": "^1.5.2",
