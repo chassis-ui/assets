@@ -7,6 +7,11 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 
 ## For the maintainer
 
+- **The fonts page of website-assets after the release of `static-font`.** Its step 4 runs
+  `build/instance-font.py` in a Python environment, and its step 5 writes the WOFF2 files with
+  another package. Once the version with `chassis-assets static-font` is on npm: both steps use
+  the command, `build/instance-font.py` and its entry of `ref/OPEN.md` there go, and the
+  dependency of website-assets moves to that version (D40).
 - **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
   commands, `chassis-ui/website-assets` holds the assets with their history, and this
@@ -57,6 +62,8 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 
 ## Not checked
 
+- A variable font with PostScript outlines, `CFF2`, in `chassis-assets static-font` (D40).
+  The fonts of the brands and of the tests have TrueType outlines.
 - The samples of the iOS and the Android page with the fonts of D24: the app fonts are TTF
   where they were OTF, and the second brand is `sinefil` where the Android sample had a
   flavor `example`. Both pages were last run on 2026-10-01.

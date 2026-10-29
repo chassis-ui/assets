@@ -29,6 +29,7 @@ Each command is `chassis-assets <command>`, run with `npx chassis-assets` where 
 | `chassis-assets lfs` | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include` |
 | `chassis-assets archive` | Writes one zip per platform, app and brand of an existing output, for a release, see [Releases](#releases) |
 | `chassis-assets init [dir]` | Writes the baseline of a repository of assets into a folder, see the [quick start]([[docsref:/getting-started/quick-start]]) |
+| `chassis-assets static-font <font> <output...> <axis>=<value>` | Writes the static font of a variable font at a weight to each output, see [Files by weight]([[docsref:/asset-types/fonts#files-by-weight]]) |
 | `chassis-assets validate` | Checks an existing output against the source and the configuration |
 | `chassis-assets contract` | Checks that an existing output has the files its consumers read by name |
 | `chassis-assets verify` | Runs the validator, then the contract check |

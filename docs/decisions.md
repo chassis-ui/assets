@@ -323,3 +323,19 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   command of `@chassis-ui/docs` takes the archive, chassis-ui/website#33. This repository
   keeps its submodule, since its CI checks the build of the checkout on the real files. The
   maintainer, 2026-10-29.
+- **D40. Who writes the files by weight of a variable font?** The package, with
+  `chassis-assets static-font`, in place of `build/instance-font.py` of website-assets, a
+  Python script with fontTools that an adopting team never got. HarfBuzz pins the axes, the
+  one of `subset-font`, an optional peer as for `--subset`, loaded from the folder of that
+  package: its own options empty the outline of `.notdef` and drop the glyphs no character
+  reaches, so the command drives HarfBuzz directly, keeping every glyph. The names are a port
+  of the naming of fontTools from `STAT`, with the style bits of a regular, a bold and an
+  italic, then the rules of the script: the optical size in the family, the PostScript and
+  unique names of a download by weight. Checked on 2026-10-30 against the files the script
+  wrote for website-assets, the 18 of `chassis` and the 8 `ui` files of `sinefil`: the names,
+  the glyphs, the style bits and the weights are the same, and so are the outlines but where
+  `avar` maps the weight, as Inter's Bold, where HarfBuzz rounds the mapped coordinate
+  otherwise than fontTools: points move by 2 units of 2048 at most, and some advances by 1.
+  A run writes the font to every output it is given, TrueType and WOFF2, so the conversion of
+  the fonts page is no step of its own.
+  Variable fonts with TrueType outlines only were tried. The maintainer, 2026-10-30.

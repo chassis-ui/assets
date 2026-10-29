@@ -328,7 +328,8 @@ describe('cli.js', () => {
     ['verify', ['--out', '../golden']],
     ['lint-source', ['--help']],
     ['archive', ['--help']],
-    ['init', ['--help']]
+    ['init', ['--help']],
+    ['static-font', ['--help']]
   ])('%s runs its module', (command, args) => {
     expect(cli(command, ...args).code).toBe(0)
   })
@@ -350,7 +351,8 @@ describe('cli.js', () => {
       'lfs',
       'lint-source',
       'archive',
-      'init'
+      'init',
+      'static-font'
     ]) {
       expect(stdout).toContain(`  ${command} `)
     }

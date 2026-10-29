@@ -49,6 +49,11 @@ export const COMMANDS = {
     script: 'chassis-assets init',
     about: 'Write the baseline of a repository of assets into a folder'
   },
+  'static-font': {
+    module: './static-font.js',
+    script: 'chassis-assets static-font',
+    about: 'Write the static font of a variable font at a weight, in each format given'
+  },
   'lint-source': {
     module: './lint-source.js',
     script: 'pnpm assets:lint:source',

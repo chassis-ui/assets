@@ -22,11 +22,12 @@ npx chassis-assets build
 | `chassis-assets lfs`         | The Git LFS paths a build reads, for `git lfs pull --include`                                    |
 | `chassis-assets archive`     | One zip per platform, app and brand of an existing output, for a release                         |
 | `chassis-assets init [dir]`  | Writes the baseline of a repository of assets: `package.json`, the LFS attributes, the workflows |
+| `chassis-assets static-font` | Writes the static font of a variable font at a weight, such as `wght=600`, to each output        |
 
 Every command takes `--help`, and `--cwd <dir>` names the repository root, by default the
 nearest folder upward whose `package.json` has a `chassis` block. The options that convert
 files load a package when they are given, an optional peer dependency: `sharp` and `svgo`
-for `--optimize`, `--webp` and `--avif`, `subset-font` for `--subset`, and
+for `--optimize`, `--webp` and `--avif`, `subset-font` for `--subset` and `static-font`, and
 `svg2vectordrawable` for `--vector-drawables`.
 
 The [documentation](https://chassis-ui.com/assets/) describes the source layout, the

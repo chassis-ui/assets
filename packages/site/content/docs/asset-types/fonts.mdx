@@ -107,6 +107,19 @@ source/<brand>/<app>/fonts/
 
 The stylesheet of the brand declares the variable file. The files by weight stay for a page that writes its own `@font-face` rules. A family without a variable font has the files by weight only, and the stylesheet declares those.
 
+### Files by weight
+
+A family with a variable font gets its files by weight from the variable file of each style, with `chassis-assets static-font`. The command fixes every axis, the ones that are given at their value and the others at their default, and names the font as a download of the family by weight names it: `Inter SemiBold`, with the PostScript name `Inter-SemiBold`, by which an iOS app loads a font.
+
+```bash
+npx chassis-assets static-font source/<brand>/<app>/fonts/ui.ttf \
+  source/<brand>/_shared/fonts/ui-strong.ttf source/<brand>/_shared/fonts/ui-strong.woff2 wght=600
+```
+
+The command writes the font to every output it is given: TrueType for the apps, and WOFF2 for the web when the name of an output ends with `.woff2`. The font keeps every glyph, every character and every layout feature of the variable font, and the same command on the same file writes the same bytes. The names come from the `STAT` table of the variable font, and a value that the table has no name for fails the command. An optical size that the table names is a part of the family, as in a download: give it as `wght=600 opsz=18` when its default is not the size the brand shows.
+
+The command needs the package `subset-font` installed beside the build. It reads variable fonts with TrueType outlines.
+
 ### Brand fonts
 
 A brand changes a font of the default brand by adding a file of the same name to its own folder. A brand that replaces the `ui` and the `code` fonts of a web app holds their files, their licenses and a stylesheet:

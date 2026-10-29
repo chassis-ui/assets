@@ -47,6 +47,9 @@ A repository of assets, such as `vendor/assets`, holds `source/`, `chassis.check
 - `pnpm assets:archive` writes one zip per job of an existing output to `vendor/assets/archives/`.
 - `node packages/assets/build/cli.js init <dir>` writes the baseline of a repository of assets
   for an adopting team; its templates are in `packages/assets/build/templates/`.
+- `node packages/assets/build/cli.js static-font <variable> <output...> wght=600` writes the
+  static font of a variable font to each output, the files by weight of a role, with HarfBuzz
+  from `subset-font`.
 - `pnpm dev` runs the site at `http://localhost:4325/assets/`.
 
 ## Before a task is done
@@ -58,6 +61,7 @@ Run the checks of the area you changed, and report the ones that fail.
 | `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
 | The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                                  |
 | `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
+| `static-font.js` or `font-tables.js`                     | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`.                                                                                                   |
 | `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
 | The pin of `vendor/assets`                               | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS.                                                                         |
 | `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
