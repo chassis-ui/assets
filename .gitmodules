@@ -1,0 +1,4 @@
+[submodule "vendor/assets"]
+	path = vendor/assets
+	url = https://github.com/chassis-ui/website-assets.git
+	branch = main

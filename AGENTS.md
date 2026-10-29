@@ -5,42 +5,49 @@ breaks without being told; the docs it links to explain the rest.
 
 ## Project
 
-Chassis Assets holds the fonts, images, icons and other design files of the Chassis Design
-System, and a build that copies them from `source/<brand>/<app>/<type>/` to
-`dist/<platform>/<app>/<brand>/` with the names and the formats of the web, iOS and Android.
-The build is file-driven and by default copies only: it does not convert, resize or optimize
-unless an option asks for it. It is a pnpm workspace:
+Chassis Assets is `@chassis-ui/assets`, the build of the design files of the Chassis Design
+System and of any team that adopts it: it copies the fonts, images, icons and other files of
+a repository of assets from `source/<brand>/<app>/<type>/` to `dist/<platform>/<app>/<brand>/`
+with the names and the formats of the web, iOS and Android. The build is file-driven and by
+default copies only: it does not convert, resize or optimize unless an option asks for it.
+The assets of the Chassis sites are in a repository of their own, `chassis-ui/website-assets`
+(D38), which this repository vendors as a submodule to build and to check. It is a pnpm
+workspace:
 
 ```
-source/                # the assets, as source/<brand>/<app>/<type>/; fonts and rasters are Git LFS files
-dist/                  # the build output, not committed
-package.json           # the `chassis` configuration (brands, apps, platforms) and the commands
-chassis.checks.json    # what the checks verify: the consumer contracts, the names the lint keeps
+package.json           # the commands; the root scripts run the build on vendor/assets
+vendor/assets/         # the chassis-ui/website-assets submodule: the assets of the Chassis sites, Git LFS files
 packages/
   assets/              # @chassis-ui/assets, published to npm with the `chassis-assets` command
     build/             # the build and its checks (JavaScript with JSDoc types, Node.js modules only)
+    build/templates/   # what `chassis-assets init` writes into a repository of assets
     test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/)
   site/                # chassis-assets-site, the Astro documentation site
-build/                 # repository scripts (releases, the site's HTML checks, the font instancer)
-docs/                  # architecture.md, decisions.md, fonts.md
+build/                 # repository scripts: the release notes, the version references
+docs/                  # architecture.md, decisions.md
 ref/OPEN.md            # what is left to do, decide or check
 ```
+
+A repository of assets, such as `vendor/assets`, holds `source/`, `chassis.checks.json` and a
+`package.json` with the `chassis` block; `chassis-assets init` writes one.
 
 ## Setup and commands
 
 - Package manager: **pnpm**, with Node.js 22.12 or later. Do not use npm or yarn.
 - Run every command from the repository root.
-- `pnpm assets` builds `dist/`; `--brand`, `--app` and `--platform` build a part of it, and
-  `--dry-run` prints the jobs without writing. Every `pnpm assets*` command has `--help`.
+- `pnpm vendor` checks out the submodule and pulls its Git LFS files; without it `vendor/assets/`
+  is empty, or holds pointer files, and the build fails on them. The tests need no submodule
+  and no Git LFS file. Where the binaries are not needed, `--allow-lfs-pointers` or
+  `CHASSIS_ALLOW_LFS_POINTERS=1` lets the build and the source lint pass.
+- `pnpm assets` builds `vendor/assets/dist/`; `--brand`, `--app` and `--platform` build a part of
+  it, and `--dry-run` prints the jobs without writing. Every `pnpm assets*` command runs the
+  build of this checkout with `--cwd vendor/assets`, and has `--help`.
 - The build runs with nothing installed. `pnpm install` is for the tests, the checks, the site
   and the options that load a package.
-- `pnpm assets:archive` writes one zip per job of an existing `dist/` to `archives/`.
+- `pnpm assets:archive` writes one zip per job of an existing output to `vendor/assets/archives/`.
 - `node packages/assets/build/cli.js init <dir>` writes the baseline of a repository of assets
   for an adopting team; its templates are in `packages/assets/build/templates/`.
 - `pnpm dev` runs the site at `http://localhost:4325/assets/`.
-- A checkout without Git LFS has pointer files in `source/`, and the build fails on them. The
-  tests need no Git LFS files. Where the binaries are not needed, `--allow-lfs-pointers` or
-  `CHASSIS_ALLOW_LFS_POINTERS=1` lets the build and the source lint pass.
 
 ## Before a task is done
 
@@ -48,11 +55,11 @@ Run the checks of the area you changed, and report the ones that fail.
 
 | Area changed                                             | Run                                                                                                                                                         |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source/`                                                | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS for the build.                                                           |
 | `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
 | The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                                  |
+| `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
 | `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
-| `chassis.checks.json`                                    | `pnpm assets:lint:source`, `pnpm assets:verify` on a full build.                                                                                            |
+| The pin of `vendor/assets`                               | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS.                                                                         |
 | `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
 | Any Markdown, JSON, YAML or configuration file           | `pnpm lint:prettier`.                                                                                                                                       |
 
@@ -68,17 +75,20 @@ broke them and was reverted.
 - **The source layout stays.** `source/<brand>/<app>/<type>/`, `_default` as the fallback brand,
   `_shared` beside the apps of a brand for the files of every app, a brand file over the default
   file of the same path and an app file over the shared file. A name that starts with `_` is no
-  brand and no app (D36). Any folder name is a type.
-- **Every asset type the pages describe is kept.** Do not remove a file from `source/` because
-  no consumer of today reads it. Removing an asset is the maintainer's decision.
+  brand and no app (D36). Any folder name is a type. The layout is what every repository of
+  assets has, so a change to it is a change for every adopting team.
+- **Every asset type the pages describe is kept.** Do not remove a type from the build, or a
+  file from `vendor/assets`, because no consumer of today reads it. Removing an asset is the
+  maintainer's decision, made in website-assets.
 - **Add, do not replace.** The build in `packages/assets/build/` is the build. Do not rewrite
   it beside itself. Its commands and flags keep working.
 - **The pages are the specification, and they win over the code.** When the build does less
   than a page says, fix the build. When a page describes something the build never did, say
   so and ask; do not decide alone which one changes.
 - **`dist/` is not committed, and its layout is the output contract.**
-  `dist/<platform>/<app>/<brand>/`, the names in it and the commands are the public API. A
-  change to one of them is a minor bump whose changeset starts with `**Breaking.**`.
+  `dist/<platform>/<app>/<brand>/`, the names in it, the commands, the `chassis` block and the
+  schema of `chassis.checks.json` are the public API. A change to one of them is a minor bump
+  whose changeset starts with `**Breaking.**`.
 - **Match the siblings in tooling, not in product.** Tests, CI, Changesets and the docs site
   follow `chassis-tokens` and `chassis-website`. The product follows its own pages.
 - **The package has no dependencies.** `packages/assets/build/` imports Node.js modules
@@ -87,34 +97,36 @@ broke them and was reverted.
   import of a package to the build. A feature that needs one declares it as an optional entry
   of `peerDependencies`, lists it in `devDependencies` for the tests, and loads it when its
   option is given, with an error that names the package when it is not installed.
-- **The build names nothing of this repository.** No brand, app, job or file name of the
-  Chassis sites in `packages/assets/build/` or in the scripts of `build/`. Such data goes in
-  the `chassis` block of `package.json` or in `chassis.checks.json`. Tests run on the fixture.
+- **The build names nothing of any repository of assets.** No brand, app, job or file name of
+  the Chassis sites in `packages/assets/build/` or in the scripts of `build/`. Such data is the
+  `chassis` block and `chassis.checks.json` of the repository of assets. Tests run on the
+  fixture.
 
 And these:
 
-- **Do not break the consumer contract.** Every Chassis site builds this repository with
-  `pnpm install --ignore-workspace && pnpm assets:site` and reads the files listed in
-  `chassis.checks.json` from `dist/web/docs/chassis/`. The root scripts on that path run the
-  build with `node`, never through `pnpm --filter` or a workspace package.
-- **Never edit `dist/` or `packages/assets/test/golden/` by hand.** Change the source or the
-  build, then run `pnpm assets` or `pnpm test:golden`, and review the difference.
-- **Do not edit the copies of other projects.** `icons/icons/` and `icons/svgs/` under
-  `source/_default/` are the build output of `@chassis-ui/icons`; refresh them by the steps of
-  [docs/architecture.md](docs/architecture.md#refreshing-the-icons). The sibling repositories
-  are read, never edited; work for one is reported in its repository, not done from here.
-- **Keep the known oddities.** The list in
-  [docs/architecture.md](docs/architecture.md#known-oddities) is part of the output contract.
-  Do not add an entry to `lint.allow` of `chassis.checks.json` to get past the source lint.
+- **Do not break the consumer contract.** Every Chassis site builds website-assets with
+  `pnpm install --ignore-workspace && pnpm assets:site` and reads the files listed in its
+  `chassis.checks.json` from `dist/web/docs/chassis/`; `pnpm assets:verify` here checks them on
+  the pinned submodule. The commands, the flags and the output layout of the build are what
+  every repository of assets relies on.
+- **Do not edit `vendor/assets/`.** It is a checkout of chassis-ui/website-assets; a change to
+  an asset is made there, and this repository moves its pin. Never edit `dist/` or
+  `packages/assets/test/golden/` by hand either: change the source or the build, then run
+  `pnpm assets` or `pnpm test:golden`, and review the difference.
+- **Do not edit the copies of other projects.** The sibling repositories are read, never
+  edited; work for one is reported in its repository, not done from here. The copy of
+  `@chassis-ui/icons` in website-assets is refreshed by the steps of
+  [docs/architecture.md](docs/architecture.md#refreshing-the-icons), there.
+- **Keep the known oddities.** The list in the README of website-assets is part of its output
+  contract, and the build keeps the behaviour they rest on. Do not add an entry to
+  `lint.allow` of a `chassis.checks.json` to get past the source lint.
 - **Tests use real files.** No mocks. A new case of the build is a file of the fixture, and
   the golden output is written again with `pnpm test:golden`.
 - **Types are JSDoc.** The build is JavaScript checked with `checkJs`; do not convert it to
   TypeScript.
-- **Add a changeset** (`pnpm changeset`, or a file in `.changeset/`) to a change in `source/`
-  or `packages/assets/build/`. It names the files of `dist/` that are added, removed or renamed.
-- **Fonts keep their license beside them**, as `<role>-license.txt`. A brand replaces every
-  font file of a role under the same name and extension; follow
-  [docs/fonts.md](docs/fonts.md) to add or change a font.
+- **Add a changeset** (`pnpm changeset`, or a file in `.changeset/`) to a change in
+  `packages/assets/build/`. It names the files of `dist/` that are added, removed or renamed,
+  and what a repository of assets has to change.
 
 ## Documentation
 
@@ -128,26 +140,27 @@ And these:
 - **The guide is the reference, not the existing pages.** Most pages are older than the guide
   and break its rules. Do not copy a convention from a page.
 - Every path, file name, command and option in a page must exist as written. Check a
-  statement about the build by running it, and copy a tree of `dist/` from a build.
+  statement about the build by running it, and copy a tree of `dist/` from a build. A page
+  describes a repository of assets as `chassis-assets init` writes it, not this repository.
 - Do not remove a `work-in-progress` or `created-by-ai` callout from a page you have not
   checked line by line.
 - Run `pnpm site:lint` and `pnpm site:build` after editing `packages/site/`.
 
 ## Cautions
 
-- Never push, merge or tag without being asked. Pushing `main` with a new version starts the
-  release workflow, and pushing `app/docs` changes what every Chassis site builds. Commit only
-  when the task asks for it, as one local commit on `develop`. A change is recorded by its
-  changeset and its commit. A decision gets an entry in
+- Never push, merge or tag without being asked. Pushing `main` with a new version publishes
+  the package. Commit only when the task asks for it, as one local commit on `develop`. A
+  change is recorded by its changeset and its commit. A decision gets an entry in
   [docs/decisions.md](docs/decisions.md), and what a task leaves undone goes to
   [ref/OPEN.md](ref/OPEN.md), in the same commit.
 - Do not open a pull request unless asked. The maintainer merges locally into `develop`.
-- Do not edit generated or fetched files: `dist/`, `_site/`, `.cache/`, `node_modules/`.
+- Do not edit generated or fetched files: `vendor/assets/dist/`, `_site/`, `.cache/`,
+  `node_modules/`.
 - The version is in `packages/assets/package.json`. It and the references to it are written by
   `pnpm changeset:version`. Do not edit them by hand, and do not run it unless asked: releasing
   is the maintainer's.
-- `@chassis-ui/docs` and the other Chassis packages are separate repositories. Report a bug in
-  one of them there; do not work around it here.
+- `@chassis-ui/docs`, website-assets and the other Chassis packages are separate repositories.
+  Report a bug in one of them there; do not work around it here.
 - Commits follow `<type>(<scope>): <description>`, as described in
   [CONTRIBUTING.md](.github/CONTRIBUTING.md#branches-and-commits).
 
@@ -155,14 +168,12 @@ And these:
 
 Read the doc of an area before working in it, rather than deriving it from the code:
 
-- [README.md](README.md): the layout, the commands and their options, the configuration, what
-  consumers rely on
-- [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md): changing assets, the build and the site;
-  the checks per area; changesets and releases
-- [docs/architecture.md](docs/architecture.md): the modules of the build, the output contract
-  of every platform and the known oddities
-- [docs/fonts.md](docs/fonts.md): the font files a brand holds, and the steps that prepare
-  them
+- [README.md](README.md): the layout, the commands and their options, the configuration of a
+  repository of assets, what consumers rely on
+- [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md): changing the build and the site; the
+  checks per area; changesets and releases
+- [docs/architecture.md](docs/architecture.md): the modules of the build and the output
+  contract of every platform
 - [packages/assets/test/README.md](packages/assets/test/README.md): the tests, the fixture and
   the golden output
 - [docs/decisions.md](docs/decisions.md): the decisions behind the build, the layout and the
@@ -170,3 +181,5 @@ Read the doc of an area before working in it, rather than deriving it from the c
 - [ref/OPEN.md](ref/OPEN.md): what is left to do, decide or check, and what was considered
   and left out
 - [WRITING.md](WRITING.md): the style guide of the documentation
+- The README, `docs/fonts.md` and `ref/OPEN.md` of website-assets, in `vendor/assets/`: the
+  files of the brands, the known oddities of their output, and what is open about them

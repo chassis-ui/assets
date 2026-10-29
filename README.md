@@ -1,6 +1,6 @@
 # Chassis Assets
 
-> Fonts, images, icons and other design files of the Chassis Design System, built from one source tree into the names, formats and folders of the web, iOS and Android.
+> The build of the fonts, images, icons and other design files of the Chassis Design System, and of any team's: from one source tree into the names, formats and folders of the web, iOS and Android.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-blue.svg)](https://github.com/chassis-ui/assets)
@@ -8,35 +8,30 @@
 
 ## Overview
 
-Chassis Assets holds the design files a designer exports, in `source/<brand>/<app>/<type>/`, and a build that copies them to `dist/<platform>/<app>/<brand>/` with the naming and the formats of each platform. The build is file-driven: add a file to `source/` and it is in the output of the next build. There is no manifest to maintain.
+A repository of assets holds the design files a designer exports, in `source/<brand>/<app>/<type>/`, and `@chassis-ui/assets` copies them to `dist/<platform>/<app>/<brand>/` with the naming and the formats of each platform. The build is file-driven: add a file to `source/` and it is in the output of the next build. There is no manifest to maintain.
 
-The build is published to npm as [`@chassis-ui/assets`](https://www.npmjs.com/package/@chassis-ui/assets), with the `chassis-assets` command; the assets are not. The Chassis documentation sites vendor the repository as a Git submodule and build it; an app takes the archive of its platform, app and brand from a [GitHub release](https://github.com/chassis-ui/assets/releases), or vendors the repository too. The [documentation site](https://chassis-ui.com/assets/docs/getting-started/introduction/) covers the asset types and how to use the output on each platform.
+The build is published to npm as [`@chassis-ui/assets`](https://www.npmjs.com/package/@chassis-ui/assets), with the `chassis-assets` command, and `chassis-assets init` writes a repository of assets for a team. The assets of the Chassis sites are in [chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), which this repository vendors as `vendor/assets` to build, to check and to show in its documentation site. The [documentation site](https://chassis-ui.com/assets/docs/getting-started/introduction/) covers the asset types and how to use the output on each platform.
 
 ## Getting started
 
-The [Quick Start](https://chassis-ui.com/assets/docs/getting-started/quick-start/) page of the site has the same steps, and goes on to adding assets and using them in a project.
+To build the assets of your own brands and apps, install the package in an empty folder and let it write the repository; the [New Repository](https://chassis-ui.com/assets/docs/getting-started/new-repository/) page takes it from there:
 
-You need:
+```shell
+npx @chassis-ui/assets init --brand acme --app docs:web
+```
+
+To work on the build, the site or the Chassis assets, you need:
 
 - **Node.js** 22.12 or later, see `engines` in `package.json`. The repository pins 24 in `.nvmrc`.
 - **pnpm**, the version named by `packageManager` in `package.json`. Run `corepack enable` once and pnpm is used at that version.
-- **Git LFS**, from [git-lfs.com](https://git-lfs.com). Run `git lfs install` once on your machine before cloning. Fonts and raster images are Git LFS files.
+- **Git LFS**, from [git-lfs.com](https://git-lfs.com), for the submodule. Run `git lfs install` once on your machine. The fonts and the raster images of website-assets are Git LFS files.
 
-Clone the repository, or add it to a project as a Git submodule:
+Clone the repository, check out the submodule with its Git LFS files, and build the assets:
 
 ```shell
 git clone https://github.com/chassis-ui/assets.git chassis-assets
 cd chassis-assets
-```
-
-```shell
-git submodule add https://github.com/chassis-ui/assets.git assets
-cd assets
-```
-
-Build the assets:
-
-```shell
+pnpm vendor
 pnpm assets
 ```
 
@@ -46,37 +41,39 @@ The build imports Node.js modules only, so it runs on a fresh clone with nothing
 pnpm install
 ```
 
-A clone made without Git LFS has pointer files in place of the fonts and the images. The build fails on them and lists them; run `git lfs pull`.
+A submodule checked out without Git LFS has pointer files in place of the fonts and the images. The build fails on them and lists them; run `pnpm vendor`.
 
 ## Repository layout
 
 A pnpm workspace. Run every command from the root.
 
 ```
-source/                   -> The assets, as source/<brand>/<app>/<type>/
-dist/                     -> The build output, as dist/<platform>/<app>/<brand>/. Not committed
-package.json              -> The `chassis` configuration and the commands
-chassis.checks.json       -> What the checks verify: the consumer contracts, the names the lint keeps
-packages/assets/          -> @chassis-ui/assets: the build in build/, its tests in test/
+vendor/assets/            -> The chassis-ui/website-assets submodule: the assets of the Chassis sites
+vendor/assets/dist/       -> The build output, as dist/<platform>/<app>/<brand>/. Not committed
+package.json              -> The commands; the root scripts run the build on vendor/assets
+packages/assets/          -> @chassis-ui/assets: the build in build/, its templates in build/templates/, its tests in test/
 packages/site/            -> The documentation site, built with Astro
-build/                    -> Scripts of the repository: releases, the site's checks, the font instancer
+build/                    -> Scripts of the repository: the release notes, the version references
 docs/architecture.md      -> How the build works, module by module
 docs/decisions.md         -> The decisions behind the build, by number
-docs/fonts.md             -> How the fonts of a brand are prepared
 ref/OPEN.md               -> What is left to do, decide or check
 .changeset/               -> The changesets of the next version
 ```
 
 ### Source
 
+A repository of assets, `vendor/assets` here, has this layout. `chassis-assets init` writes the files around it.
+
 ```
+package.json              -> The `chassis` configuration: the brands, the apps and their platforms
+chassis.checks.json       -> What the checks verify: the consumer contracts, the names the lint keeps
 source/
 ├── _default/             -> The fallback brand: the files every brand gets
-│   ├── docs/             -> The app `docs`
-│   │   ├── images/       -> Images, with the @2x and @3x variants the designer exported
-│   │   └── icons/        -> cx-sprite.svg
-│   └── demo/             -> The app `demo`, with the build output of @chassis-ui/icons in icons/
-└── <brand>/              -> The files of a brand: `chassis` and `sinefil`
+│   ├── _shared/          -> The files every app gets
+│   └── <app>/            -> The files of one app, such as `docs` or `demo`
+│       ├── images/       -> Images, with the @2x and @3x variants the designer exported
+│       └── icons/        -> Icons
+└── <brand>/              -> The files of a brand, such as `chassis` and `sinefil`
     ├── _shared/          -> The files every app of the brand gets, such as the fonts and the logos
     └── <app>/
         ├── fonts/        -> Font files, their stylesheet and their licenses
@@ -84,9 +81,11 @@ source/
         └── other/        -> Any other folder name is copied as it is
 ```
 
-A job of a brand and an app reads four folders, and a file of a later folder replaces the file of the same path in an earlier one: `source/_default/_shared/`, `source/_default/<app>/`, `source/<brand>/_shared/`, `source/<brand>/<app>/`. A brand needs only the files that differ, and a file that every app of a brand uses is in its `_shared/` folder once. In this repository each brand holds its fonts, its logos and its favicons, and `_default` holds what every brand shares. A name that starts with `_` is no brand and no app.
+A job of a brand and an app reads four folders, and a file of a later folder replaces the file of the same path in an earlier one: `source/_default/_shared/`, `source/_default/<app>/`, `source/<brand>/_shared/`, `source/<brand>/<app>/`. A brand needs only the files that differ, and a file that every app of a brand uses is in its `_shared/` folder once. In website-assets each brand holds its fonts, its logos and its favicons, and `_default` holds what every brand shares. A name that starts with `_` is no brand and no app.
 
 ### Output
+
+The output of website-assets, in `vendor/assets/dist/` after `pnpm assets`:
 
 ```
 dist/
@@ -193,16 +192,16 @@ pnpm site:lint:vnu      # The Nu Html Checker over _site/, after a build; skippe
 ### Release
 
 ```shell
-pnpm changeset              # Describe a change to source/ or to the build
+pnpm changeset              # Describe a change to the build
 pnpm changeset:version      # Bump the version and write the changelog
-pnpm release:archives       # Write the archives of a release to .cache/release/, after pnpm assets --optimize
+pnpm assets:archive         # Write the archives of the submodule's output to vendor/assets/archives/, after pnpm assets --optimize
 ```
 
-See [Releases](.github/CONTRIBUTING.md#releases) and the [changelog](packages/assets/CHANGELOG.md).
+See [Releases](.github/CONTRIBUTING.md#releases) and the [changelog](packages/assets/CHANGELOG.md). The archives of the Chassis assets are released by website-assets.
 
 ## Configuration
 
-The `chassis` block of the root `package.json` names the brands and, for each app, its platforms:
+The `chassis` block of the `package.json` of a repository of assets names the brands and, for each app, its platforms. The one of website-assets:
 
 ```json
 "chassis": {
@@ -221,53 +220,43 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
 
 - `defaults.brandFolder` is the folder of `source/` that every brand falls back to, `_default` when it is not set.
 - `build.brands` and `build.apps` take no name that starts with `_`: such a name is a folder of `source/` that is no brand and no app, as `_default` and `_shared` are.
-- `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone, as `chassis` is.
+- `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone.
 - `build.apps` maps each app to its platforms: `web`, `ios` or `android`.
 - `optimize`, optional, holds the settings of `--optimize`, `--webp` and `--avif`, such as `"jpeg": { "quality": 80 }`. Without it the options change no visible pixel. It turns nothing on.
 - `ignore`, optional, lists names of files and folders that the build leaves out beside its own list, such as `["*.bak", "drafts"]`. A pattern is a name with `*` for any run of characters, and matches at any depth. The checks read the same list.
 - `formats`, optional, names for a platform and a type folder the extensions the platform keeps, such as `{ "web": { "fonts": [".woff2", ".ttf", ".css", ".txt"] } }`. The types are `fonts`, `images` and `icons`. A list replaces the rule of the platform for the type; what the block does not name keeps its rule.
 - `subset`, optional, holds the settings of `--subset`. `ranges` are the ranges, such as `["latin", "greek"]`; without it the option keeps `latin` and `latin-ext`. `axes` are the axes of a variable font that are fixed at a value for a brand, such as `{ "chassis": { "opsz": 14 } }`; without it no axis is fixed. `split`, `true` or `false`, writes a font that a stylesheet declares once per range too, as `ui-latin.woff2`, and the rule of the stylesheet once per range with its `unicode-range`; without it a font is one file, and `--split` and `--no-split` win over it. It turns nothing on.
 
-What the checks verify is in [chassis.checks.json](chassis.checks.json), beside `package.json`. The build does not read it, and the file is optional:
+What the checks verify is in `chassis.checks.json`, beside `package.json`. The build does not read it, and the file is optional:
 
 - `contracts` lists, for a job, the files that a consumer reads by name from its output. `pnpm assets:contract` checks them.
 - `lint.allow` lists the source files that break a naming rule and are kept, each with the reason. `pnpm assets:lint:source` warns about them instead of failing.
 
-A team that adopts the repository changes `source/`, the `chassis` block of `package.json` and this file, which it fills with its own lists or deletes. The build in `packages/assets/build/` names no brand, app or file. The [build system page](https://chassis-ui.com/assets/docs/getting-started/build-system/#configuration) has the schema of both.
+The build in `packages/assets/build/` names no brand, app or file: a team's repository holds its own `source/`, `chassis` block and checks file, which `chassis-assets init` writes. The [build system page](https://chassis-ui.com/assets/docs/getting-started/build-system/#configuration) has the schema of both.
 
 The build writes one job per brand, app and platform: the files of `source/_default/_shared/` and `source/_default/<app>/`, replaced by those of `source/<brand>/_shared/` and `source/<brand>/<app>/`, with the processing of the platform, into `dist/<platform>/<app>/<brand>/`.
 
 ## What consumers rely on
 
-Every Chassis site vendors this repository as the submodule `vendor/assets`, pinned to a commit of the `app/docs` branch, and builds it with the two commands below. A change that breaks a row breaks the sites; `pnpm assets:contract` checks the files on every commit.
+Every repository of assets relies on the commands, the flags and the output layout of the build, which are its public API: a change to one of them is a breaking change for every adopting team.
 
-| Consumers rely on                             | Detail                                                                                                                                                      |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The `app/docs` branch                         | `chassis-docs sync-submodules` moves the submodule of a site to its tip                                                                                     |
-| Git LFS                                       | `git lfs pull` gives the real fonts and images                                                                                                              |
-| `pnpm install --ignore-workspace`             | Installs the root package only. The build needs none of it                                                                                                  |
-| `pnpm assets:site`                            | Writes `dist/web/docs/chassis/`, which a site copies to `/static/`                                                                                          |
-| `images/` of that folder                      | `site-logo.svg`, `site-logomark.svg`, the favicons, `apple-touch-icon.png`, `social-image.png`, the home page images under `home/`, the logos under `logo/` |
-| `icons/cx-sprite.svg`                         | The sprite of the home page icons                                                                                                                           |
-| `images/figma/components/<component>/<mode>/` | The screenshots that the pages of chassis-figma read by name                                                                                                |
-
-sinefil.org takes the archive `chassis-assets-web-docs-sinefil-<version>.zip` of a release instead, and reads its fonts, logo, logomark, favicons, `other/manifest.json` and social image by name. The full list for both, with the code that reads each file, is `contracts` in [chassis.checks.json](chassis.checks.json).
+Every Chassis site vendors website-assets as the submodule `vendor/assets` and builds it with `pnpm install --ignore-workspace && pnpm assets:site`, which `chassis-docs vendor` of `@chassis-ui/docs` runs, then copies `dist/web/docs/chassis/` to `/static/`. The files a site reads by name are `contracts` of the `chassis.checks.json` of website-assets, and `pnpm assets:verify` checks them here on the pinned submodule on every commit. sinefil.org takes the archive of its job from a release of website-assets instead.
 
 ## Branches and CI
 
-Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, Assets, Site and Audit, and Changeset on pull requests. The commit that passed is then pushed to `staging`, `main` and `app/docs`, which accept only a commit with those checks. A push to `main` with a new version creates its tag and its GitHub release, see [Releases](.github/CONTRIBUTING.md#releases).
+Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, Assets, Site and Audit, and Changeset on pull requests. The Assets, Native iOS and Site jobs check out `vendor/assets` with its Git LFS files, so the pin of the submodule has to be pushed to website-assets first. The commit that passed is then pushed to `staging` and `main`, which accept only a commit with those checks. A push to `main` with a new version publishes the package and creates its tag and its GitHub release, see [Releases](.github/CONTRIBUTING.md#releases).
 
 ## Chassis ecosystem
 
-| Project                                                  | What it is                                                          | Docs                                       |
-| -------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------ |
-| [chassis-website](https://github.com/chassis-ui/website) | chassis-ui.com and `@chassis-ui/docs`, which every site is built on | [chassis-ui.com](https://chassis-ui.com)   |
-| [chassis-tokens](https://github.com/chassis-ui/tokens)   | Design tokens, published as `@chassis-ui/tokens`                    | [/tokens/](https://chassis-ui.com/tokens/) |
-| [chassis-css](https://github.com/chassis-ui/css)         | The CSS framework, published as `@chassis-ui/css`                   | [/css/](https://chassis-ui.com/css/)       |
-| [chassis-icons](https://github.com/chassis-ui/icons)     | The icon library, published as `@chassis-ui/icons`                  | [/icons/](https://chassis-ui.com/icons/)   |
-| **chassis-assets**                                       | This repository: fonts, images and other assets. Not on npm         | [/assets/](https://chassis-ui.com/assets/) |
-| [chassis-figma](https://github.com/chassis-ui/figma)     | Documentation of the Figma libraries                                | [/figma/](https://chassis-ui.com/figma/)   |
-| [chassis-react](https://github.com/chassis-ui/react)     | React components, published as `@chassis-ui/react`                  | Not yet routed on chassis-ui.com           |
+| Project                                                  | What it is                                                                  | Docs                                       |
+| -------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
+| [chassis-website](https://github.com/chassis-ui/website) | chassis-ui.com and `@chassis-ui/docs`, which every site is built on         | [chassis-ui.com](https://chassis-ui.com)   |
+| [chassis-tokens](https://github.com/chassis-ui/tokens)   | Design tokens, published as `@chassis-ui/tokens`                            | [/tokens/](https://chassis-ui.com/tokens/) |
+| [chassis-css](https://github.com/chassis-ui/css)         | The CSS framework, published as `@chassis-ui/css`                           | [/css/](https://chassis-ui.com/css/)       |
+| [chassis-icons](https://github.com/chassis-ui/icons)     | The icon library, published as `@chassis-ui/icons`                          | [/icons/](https://chassis-ui.com/icons/)   |
+| **chassis-assets**                                       | This repository: the build of the assets, published as `@chassis-ui/assets` | [/assets/](https://chassis-ui.com/assets/) |
+| [chassis-figma](https://github.com/chassis-ui/figma)     | Documentation of the Figma libraries                                        | [/figma/](https://chassis-ui.com/figma/)   |
+| [chassis-react](https://github.com/chassis-ui/react)     | React components, published as `@chassis-ui/react`                          | Not yet routed on chassis-ui.com           |
 
 ## Contributing
 

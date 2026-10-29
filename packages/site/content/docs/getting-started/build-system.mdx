@@ -4,6 +4,8 @@ description: The commands of the Chassis Assets build, its configuration, the ru
 toc: true
 ---
 
+<Callout name="work-in-progress" />
+
 ## Introduction
 
 The build copies the files of `source/<brand>/<app>/<type>/` to `dist/<platform>/<app>/<brand>/`. On the way it leaves out the formats a platform does not use, renames each file for the platform, and sorts Android image variants into density folders. By default it does not resize, convert or re-encode a file: the options of [Optimization](#optimization) and [Image formats](#image-formats) do the last two.

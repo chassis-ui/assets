@@ -1,7 +1,7 @@
 {
   "name": "chassis-assets-workspace",
   "private": true,
-  "description": "Workspace of @chassis-ui/assets, its source files and its documentation site",
+  "description": "Workspace of @chassis-ui/assets, the build of the assets of the Chassis Design System, and its documentation site",
   "type": "module",
   "repository": {
     "type": "git",
@@ -9,56 +9,29 @@
   },
   "author": "Ozgur Gunes <o.gunes@gmail.com>",
   "license": "MIT",
-  "chassis": {
-    "defaults": {
-      "brandFolder": "_default"
-    },
-    "build": {
-      "brands": [
-        "chassis",
-        "sinefil"
-      ],
-      "apps": {
-        "docs": [
-          "web"
-        ],
-        "demo": [
-          "ios",
-          "android"
-        ]
-      }
-    },
-    "subset": {
-      "axes": {
-        "chassis": {
-          "opsz": 14
-        }
-      }
-    }
-  },
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
     "build": "pnpm site:build",
-    "clean": "pnpm site:clean && rm -rf dist || true",
+    "clean": "pnpm site:clean && rm -rf vendor/assets/dist || true",
     "dev": "pnpm site:assets && pnpm astro:dev",
     "test": "pnpm -C packages/assets test",
-    "test:ci": "pnpm lint:prettier && pnpm site:lint && pnpm check:astro && pnpm assets:site && pnpm assets --brand sinefil --app docs --platform web && pnpm assets:contract && pnpm assets:lint && pnpm assets:lint:source && pnpm assets:typecheck && pnpm test && pnpm assets && pnpm assets:verify && pnpm site:build && pnpm check:pnpm",
-    "test:ios": "packages/assets/test/native/ios/check.sh",
+    "test:ci": "pnpm lint:prettier && pnpm site:lint && pnpm check:astro && pnpm assets:lint && pnpm assets:lint:source && pnpm assets:typecheck && pnpm test && pnpm assets && pnpm assets:verify && pnpm site:build && pnpm check:pnpm",
+    "test:ios": "packages/assets/test/native/ios/check.sh vendor/assets/dist",
     "test:golden": "node packages/assets/build/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet",
-    "assets": "node packages/assets/build/cli.js build",
-    "assets:analyze": "node packages/assets/build/cli.js analyze",
+    "assets": "node packages/assets/build/cli.js build --cwd vendor/assets",
+    "assets:analyze": "node packages/assets/build/cli.js analyze --cwd vendor/assets",
     "assets:lint": "eslint build packages/assets/build packages/assets/test --cache --cache-location .cache/.eslintcache",
-    "assets:lfs": "node packages/assets/build/cli.js lfs",
-    "assets:archive": "node packages/assets/build/cli.js archive",
-    "assets:lint:source": "node packages/assets/build/cli.js lint-source",
+    "assets:lfs": "node packages/assets/build/cli.js lfs --cwd vendor/assets",
+    "assets:archive": "node packages/assets/build/cli.js archive --cwd vendor/assets",
+    "assets:lint:source": "node packages/assets/build/cli.js lint-source --cwd vendor/assets",
     "assets:typecheck": "pnpm -C packages/assets typecheck",
-    "assets:contract": "node packages/assets/build/cli.js contract",
-    "assets:verify": "node packages/assets/build/cli.js verify",
+    "assets:contract": "node packages/assets/build/cli.js contract --cwd vendor/assets",
+    "assets:verify": "node packages/assets/build/cli.js verify --cwd vendor/assets",
     "assets:test": "pnpm test",
-    "assets:site": "node packages/assets/build/cli.js build --clean --brand chassis --app docs",
-    "assets:validate": "node packages/assets/build/cli.js validate",
+    "assets:site": "node packages/assets/build/cli.js build --cwd vendor/assets --clean --brand chassis --app docs",
+    "assets:validate": "node packages/assets/build/cli.js validate --cwd vendor/assets",
     "site": "pnpm site:build && pnpm site:lint",
     "site:assets": "pnpm assets:site --subset latin latin-ext symbols2 --split",
     "site:build": "pnpm site:assets && pnpm astro:build && pnpm site:pagefind",
@@ -81,7 +54,8 @@
     "changeset:version": "changeset version && node build/sync-version-refs.js",
     "release:archives": "pnpm assets:archive",
     "release:notes": "node build/release-notes.js",
-    "lint:prettier": "prettier -c --cache ."
+    "lint:prettier": "prettier -c --cache .",
+    "vendor": "git submodule update --init vendor/assets && git -C vendor/assets lfs pull"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",

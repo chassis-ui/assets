@@ -10,21 +10,22 @@ First written on 2026-09-30, at `develop` `2bcbd96`. A D-number is a decision of
 ## The layout
 
 ```
-package.json          The workspace root: the `chassis` block, the scripts, the lint tools
-source/               The assets, `<brand>/<app>/<type>/`
-dist/                 The output, not committed
-packages/assets/      `@chassis-ui/assets`: the build in `build/`, its tests in `test/`
+package.json          The workspace root: the scripts, the lint tools
+vendor/assets/        The chassis-ui/website-assets submodule: `source/`, `chassis.checks.json`, the `chassis` block
+vendor/assets/dist/   The output of the root scripts, not committed
+packages/assets/      `@chassis-ui/assets`: the build in `build/`, the templates of `init` in `build/templates/`, its tests in `test/`
 packages/site/        `chassis-assets-site`: the documentation site
-build/                The site's checks and the version script
+build/                The release notes and the version script
 ```
 
-A pnpm workspace, as `chassis-tokens` (D3). `source/`, `dist/` and the configuration
-stay at the root, where the designer and the consumers find them. The build runs from the
-root scripts with `node packages/assets/build/cli.js <command>`, never through
-`pnpm --filter` or a package name, and imports Node.js modules only: `pnpm install --ignore-workspace`, which
-is what `chassis-docs vendor` runs in a site, installs the root package and none of the
-build's or the site's packages, and `pnpm assets:site` works with nothing installed at all.
-CI builds that way first, in the Assets job.
+A pnpm workspace, as `chassis-tokens` (D3). The assets live in a repository of their own,
+chassis-ui/website-assets (D38), which `chassis-assets init` lays out: `source/`, `dist/`
+and the configuration at its root, where the designer and the consumers find them, and
+`@chassis-ui/assets` installed from npm. Here the root scripts run the build of the checkout
+on the submodule, `node packages/assets/build/cli.js <command> --cwd vendor/assets`, never
+through `pnpm --filter` or a package name, and the build imports Node.js modules only, so
+`pnpm assets` works with nothing installed. A site builds website-assets the same way,
+`pnpm install --ignore-workspace && pnpm assets:site`, which `chassis-docs vendor` runs.
 
 The repository root of a run is the nearest folder, from the working directory upward, whose
 `package.json` has a `chassis` block (`findRoot()` in `root.js`), so the build finds
@@ -146,8 +147,6 @@ jobs with their file counts.
 | `packages/assets/build/api/index.js`          | `ChassisAssets(configPath, { cwd, out })`: the configuration as an object, the combinations, an inventory of a brand and app, `build({ brands, apps, platforms, clean, quiet })`, `getStats()`, `validate()`.                                                                                                                                                                                                                                                                                                                                                                            |
 | `build/sync-version-refs.js`                  | Copies the version of `packages/assets/package.json` to `packages/site/config.yml` and to the badge of `README.md`. The second half of `pnpm changeset:version`.                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `build/release-notes.js`                      | Prints the entry of a version in `packages/assets/CHANGELOG.md`, for the text of the GitHub release. `pnpm release:notes`.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `build/check-changeset.js`                    | Fails when the commits since a base change `source/` or `packages/assets/build/` and add no changeset. The Changeset job of CI, on pull requests and on pushes to `develop`.                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `build/instance-font.py`                      | Writes a file by weight of a role from the variable font of the role, with fonttools: the font at the values given for its axes and at the default of the others, named as a download by weight is. A step of `docs/fonts.md`, run by hand in a Python environment; no command of `package.json` runs it, and no test.                                                                                                                                                                                                                                                                   |
 
 The processors are the only platform knowledge. Everything else is the same for every
 platform. A new platform is a new file in `packages/assets/build/processors/` and a key in the registry, as
@@ -674,10 +673,9 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 The version is made on `develop` and released from `main`, as in `chassis-website`. The
 steps are in `.github/CONTRIBUTING.md`, "Releases".
 
-- A change to `source/` or to `packages/assets/build/` carries a changeset in `.changeset/`.
-  `changeset status` sees the build only: `source/` is at the root, outside the package that
-  has the version, so `build/check-changeset.js` checks both, on a pull request against its
-  base branch and on a push to `develop` against the tip it replaced.
+- A change to `packages/assets/build/` carries a changeset in `.changeset/`, which
+  `changeset status` sees: the Changeset job of CI runs it against the base branch of a pull
+  request, or against the tip a push to `develop` replaced.
 - `pnpm changeset:version` runs `changeset version`, which bumps
   `packages/assets/package.json`, writes `packages/assets/CHANGELOG.md` with the entries of
   `.changeset/changelog.js` and deletes the changesets, then `build/sync-version-refs.js`.
@@ -700,48 +698,37 @@ its version commit is `992e47e`.
 
 ## Known oddities
 
-Kept on purpose until a [decision](decisions.md) says otherwise. Do not fix one without a
-changeset that says what breaks.
+The oddities of the output of the Chassis assets, kept on purpose, are listed in the README
+of chassis-ui/website-assets, with the files they concern. Two of them rest on the build:
 
 - A dot inside a source name becomes a hyphen on the web and an underscore on iOS and
-  Android. Since D33 no file of the output has one: `chassis-icons.min.css`, the one source
-  name with a dot, is in the `demo` app, whose platforms do not keep `.css` files.
-- Eight screenshots under `images/figma/` carry a Figma export number after the resolution
-  indicator, `card-orientation-top-2x-1.png`. The web build wrote that name from
-  `card-orientation-top@2x-1.png`, and the sources were renamed to the output names on 2026-09-30,
-  so `chassis-figma` keeps reading them. They are not `@2x` files to the build.
+  Android.
 - A collision of two source files on one output name warns and the file copied last wins.
-- On Android, a file with an indicator outside `images/` loses the indicator and gets no
-  density folder: `data/poster@2x.png` is `data/poster.png`. Beside a `poster.png` that is a
-  collision, and the build warns.
-- Eight screenshots under `images/figma/components/` are Figma export copies of another
-  screenshot, `card-orientation-top-1.png` and `card-orientation-top-2x-1.png` beside
-  `card-orientation-top.png`, in both modes and
-  without `@2x`. No page of `chassis-figma` reads them. The contract check requires both
-  modes for them, and not the `@2x`: they are the `except` patterns of the screenshot set in
-  `chassis.checks.json`.
-- `source/_default/demo/icons/icons/chassis-icons.min.css` breaks the naming rules;
-  `pnpm assets:lint:source` warns about it (`lint.allow` of `chassis.checks.json`).
-- The copy of `@chassis-ui/icons` under `icons/` is made by hand, so it is as new as its
-  last refresh: 0.3.1, on 2026-10-01. See "Refreshing the icons".
+  On Android, a file with an indicator outside `images/` loses the indicator and gets no
+  density folder: `data/poster@2x.png` is `data/poster.png`, a collision beside a
+  `poster.png`.
+
+Do not change either without a changeset that says what breaks.
 
 ## Refreshing the icons
 
-The `icons/` folder of `source/_default/demo/` holds the build output of `@chassis-ui/icons`.
-`source/_default/docs/icons/` holds `cx-sprite.svg` only, which is this repository's: the
-`docs` app has no copy of the package since D33. To bring the copy level with the package,
-on a machine with Git LFS:
+The `icons/` folder of `source/_default/demo/` of website-assets holds the build output of
+`@chassis-ui/icons`. `source/_default/docs/icons/` holds `cx-sprite.svg` only, which is the
+sites' own: the `docs` app has no copy of the package since D33. To bring the copy level with
+the package, in a checkout of website-assets with Git LFS, with the package installed beside
+it:
 
 ```shell
-pnpm install
-rm -rf source/_default/demo/icons/icons source/_default/demo/icons/svgs
-cp -r packages/site/node_modules/@chassis-ui/icons/icons source/_default/demo/icons/icons
-cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/_default/demo/icons/svgs
-pnpm assets && pnpm assets:validate
+SOURCE=source/_default/demo/icons
+rm -rf "$SOURCE/icons" "$SOURCE/svgs"
+cp -r node_modules/@chassis-ui/icons/icons "$SOURCE/icons"
+cp -r node_modules/@chassis-ui/icons/svgs "$SOURCE/svgs"
+pnpm build && pnpm verify
 ```
 
-Commit the result with a changeset: the icon output of every job changes, and the icon
-font files are Git LFS objects, so the commit must be made where `git lfs` is installed.
+Commit the result there, and say in its release notes that the icon output of every job
+changes; the icon font files are Git LFS objects, so the commit must be made where `git lfs`
+is installed.
 The package ships no `preview.html`, so the copy has none. Compare `dist/` before and after:
 a name that was under `icons/svgs/` and is gone breaks a site that reads it.
 

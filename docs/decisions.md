@@ -294,3 +294,19 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   runs; `--release <version>` names the version where the root `package.json` has none, as
   here. The release workflow publishes with npm trusted publishing, as `chassis-tokens`. The
   maintainer, 2026-10-29.
+- **D38. Where do the assets of the Chassis sites live?** In `chassis-ui/website-assets`, a
+  repository of files made with `chassis-assets init` and holding `source/`,
+  `chassis.checks.json` and the `chassis` block with their history, 38 commits filtered from
+  `develop` of this repository at 812c5d2 with `git filter-branch` and merged with unrelated
+  histories; `docs/fonts.md`, `build/instance-font.py` and the entries of `ref/OPEN.md` about
+  the files of the brands went with them. This repository keeps the package and the site,
+  and builds the assets from the `vendor/assets` submodule, pinned to `main` of
+  website-assets, with the root scripts on `--cwd vendor/assets`: the site reads
+  `vendor/assets/dist/web/docs/chassis/` as every Chassis site does, and CI runs the lint,
+  the build, the verification and the iOS catalogs on the real files, with the build of the
+  checkout and not of npm. The archives of a release come from website-assets; the release
+  here is the package, its tag and its notes. `app/docs` has no use once the sites pin
+  website-assets, and `build/check-changeset.js` is gone: Changesets sees every released
+  change. The attributes keep the fixture lines only, since no Git LFS file is left.
+  Supersedes D3 for the place of `source/` and `dist/`; the layout rule of AGENTS.md now
+  describes a repository of files. The maintainer, 2026-10-29.

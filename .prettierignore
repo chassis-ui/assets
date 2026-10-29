@@ -2,7 +2,7 @@
 *.scss
 packages/site/config.yml
 packages/site/src/assets
-/source
+vendor/
 pnpm-lock.yaml
 packages/assets/test/fixtures/source
 packages/assets/test/golden

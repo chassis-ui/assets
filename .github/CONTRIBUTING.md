@@ -8,12 +8,13 @@ documents that are kept up to date, rather than repeating them.
 
 You need Node.js 22.12 or later (the repository pins 24 in `.nvmrc`), pnpm (the version in
 `packageManager` of the root `package.json`; `corepack enable` picks it up) and
-[Git LFS](https://git-lfs.com). Run `git lfs install` once on your machine before cloning:
-fonts and raster images are Git LFS files.
+[Git LFS](https://git-lfs.com). Run `git lfs install` once on your machine: the fonts and the
+raster images of the `vendor/assets` submodule are Git LFS files.
 
 ```sh
 git clone https://github.com/chassis-ui/assets.git chassis-assets
 cd chassis-assets
+pnpm vendor
 pnpm install
 ```
 
@@ -23,11 +24,13 @@ The repository is a pnpm workspace with two packages:
   tests in `test/`. It is published to npm, with the `chassis-assets` command.
 - [`packages/site`](../packages/site/): `chassis-assets-site`, the Astro documentation site.
 
-The root holds what a designer and a consumer work with: the assets in `source/`, the
-`chassis` configuration in `package.json`, what the checks verify in `chassis.checks.json`,
-and the output in `dist/`, which is not committed. It also holds the lint and format
-configurations, the repository scripts in `build/` and the CI workflows. Run every command
-from the root. The [README](../README.md#commands) lists the commands with their options.
+The root holds the `vendor/assets` submodule, a checkout of
+[chassis-ui/website-assets](https://github.com/chassis-ui/website-assets): the assets of the
+Chassis sites in `source/`, their `chassis` configuration in `package.json`, what the checks
+verify in `chassis.checks.json`, and the output in `dist/`, which is not committed. The root
+scripts run the build of this checkout on it, with `--cwd vendor/assets`. The root also holds
+the lint and format configurations, the repository scripts in `build/` and the CI workflows.
+Run every command from the root. The [README](../README.md#commands) lists the commands with their options.
 
 The build imports Node.js modules only, so `pnpm assets` runs before `pnpm install`. The
 install is for the tests, the checks and the site.
@@ -35,8 +38,8 @@ install is for the tests, the checks and the site.
 ## Branches and commits
 
 Work goes to `develop`. Branch from it, and open a pull request against it. The maintainer
-merges locally into `develop` too; both ways run the same checks. A commit reaches `staging`,
-`main` and `app/docs` only after CI passed on it, see [Releases](#releases).
+merges locally into `develop` too; both ways run the same checks. A commit reaches `staging` and
+`main` only after CI passed on it, see [Releases](#releases).
 
 Commits follow a loose `<type>(<scope>): <description>` convention:
 
@@ -49,44 +52,24 @@ Commits follow a loose `<type>(<scope>): <description>` convention:
 
 Branch names aren't templated; name yours descriptively, for example `fix/android-density`.
 
-## Changing assets
+## Changing the assets of the Chassis sites
 
-The assets are the files in `source/<brand>/<app>/<type>/`. The build is file-driven: a file
-added there is in the output of the next build, and no list has to be updated. The
-[design guidelines](https://chassis-ui.com/assets/docs/getting-started/design-guidelines/)
-have the naming conventions and the formats of each asset type.
+The assets of the Chassis sites are in
+[chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), a repository of
+assets made with `chassis-assets init`, and `vendor/assets` is a checkout of it. Change an
+asset there, by its README and `docs/fonts.md`, and release it there. Then move the pin of the
+submodule here, and check the build on it:
 
-1. Add, replace or remove the files. A file under `source/_default/` goes to every brand; a
-   file under `source/<brand>/` replaces the default file of the same path for that brand. A
-   file under the `_shared/` folder of a brand, beside its apps, goes to every app of the
-   brand, and a file of an app replaces the shared file of the same path.
-2. Check the names and the layout, build, and verify the output:
+```sh
+git -C vendor/assets fetch origin main && git -C vendor/assets checkout origin/main
+pnpm vendor
+pnpm assets:lint:source
+pnpm assets
+pnpm assets:verify
+```
 
-   ```sh
-   pnpm assets:lint:source
-   pnpm assets
-   pnpm assets:verify
-   ```
-
-   `pnpm assets --dry-run` prints the jobs and their file counts without writing.
-
-3. Add a changeset (see [Changesets](#changesets)) that names the files of `dist/` that are
-   added, removed or renamed.
-
-Three things to know:
-
-- **Fonts come with their license.** A font is redistributed with the text of its license,
-  `<role>-license.txt` beside the font files. The build copies it to every platform.
-  [docs/fonts.md](../docs/fonts.md) has the steps that prepare the fonts of a brand.
-- **Icons are copied, not drawn here.** `icons/icons/` and `icons/svgs/` of the default brand
-  are the build output of `@chassis-ui/icons`. Do not edit a file there; refresh the copy by
-  the steps of [docs/architecture.md](../docs/architecture.md#refreshing-the-icons).
-- **Some files are read by name.** `chassis.checks.json` lists the files that the Chassis
-  sites read from `dist/web/docs/chassis/`. `pnpm assets:verify` fails when one is missing.
-  Renaming or removing one of them needs the consumer to change first.
-
-A name that breaks a naming rule on purpose is listed in `lint.allow` of
-`chassis.checks.json`, with the reason. Do not add one to get past the lint.
+Commit the new pin with a changeset only when the output of the site changes; a pin alone
+releases nothing. Never edit a file under `vendor/assets/` from here.
 
 ## Changing the build
 
@@ -150,11 +133,11 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 
 | Changed                                                  | Run                                                                                                                                                         |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source/`                                                | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS for the build.                                                           |
+| The pin of `vendor/assets`                               | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS.                                                                         |
 | `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
 | The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                                  |
+| `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
 | `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
-| `chassis.checks.json`                                    | `pnpm assets:lint:source`, `pnpm assets:verify` on a full build.                                                                                            |
 | `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
 | Anything                                                 | `pnpm lint:prettier`.                                                                                                                                       |
 
@@ -180,7 +163,7 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 - **No vulnerable dependency added**: on a pull request, the Dependency Review job fails
   when the change adds a dependency with a known vulnerability of moderate severity or
   above.
-- **A changeset** for a change to `source/` or to `packages/assets/build/`. The Changeset job
+- **A changeset** for a change to `packages/assets/build/`. The Changeset job
   fails without one, on a pull request, which it compares with its base branch, and on a
   push to `develop`, which it compares with the tip the push replaced. A change that only
   touches the site, the documents, the tests or the tooling needs none. The release commit
@@ -215,8 +198,8 @@ checks it on every commit.
 ## Releases
 
 `@chassis-ui/assets` is released with [Changesets](https://changesets.dev). A version is the
-package on npm, a tag, `v<version>`, and a GitHub release with one archive per platform, app
-and brand. The sites read the `app/docs` branch, not a release.
+package on npm, a tag, `v<version>`, and a GitHub release with the changelog entry. The
+assets of the Chassis sites are released by chassis-ui/website-assets, with their archives.
 
 ### Release a version
 
@@ -237,20 +220,14 @@ Push the commit to `develop` and wait for CI. Then push the same commit on:
 ```bash
 git push origin develop:staging
 git push origin develop:main
-git push origin develop:app/docs
 ```
 
 The push to `main` runs `.github/workflows/release.yml`. When npm does not have the version
-or the version has no tag yet, and the checks of CI passed on the commit, it builds every
-brand, app and platform with `--optimize`, runs `pnpm assets:verify` and
-`pnpm assets:archive`, publishes `@chassis-ui/assets` with npm trusted publishing and
-provenance (no npm token), and creates the tag and the GitHub release with
-`gh release create`, with the changelog entry as its text and the archives attached:
-`chassis-assets-<platform>-<app>-<brand>-<version>.zip`, which holds the content of
-`dist/<platform>/<app>/<brand>/`. The start of the name is the name of the root
-`package.json` without `-workspace`, and the version is the one of the build, given with
-`--release`, since the root `package.json` has none. A version without a changelog entry is
-not released. A prerelease goes to the dist-tag `next`.
+or the version has no tag yet, and the checks of CI passed on the commit, it publishes
+`@chassis-ui/assets` with npm trusted publishing and provenance (no npm token), and creates
+the tag and the GitHub release with `gh release create`, with the changelog entry as its
+text. A version without a changelog entry is not released. A prerelease goes to the dist-tag
+`next`.
 
 - The file name `release.yml` is the trusted publisher of `@chassis-ui/assets` on npmjs.com.
   Renaming the file breaks publishing until the trusted publisher names the new file.
@@ -258,12 +235,10 @@ not released. A prerelease goes to the dist-tag `next`.
   publisher on a package that is published, so the first version is published by the
   maintainer with `npm publish` in `packages/assets/`.
 
-The push to `app/docs` is what the sites receive: `chassis-docs sync-submodules` moves their
-`vendor/assets` to the tip of that branch.
-
-To see the archives before a release, run
-`pnpm assets --optimize && pnpm assets:archive --release <version>`. It writes them to
-`archives/`, which is not committed.
+The archives of the Chassis assets, one per platform, app and brand, are made by the release
+workflow of website-assets on a tag there. To see what one holds, run
+`pnpm assets --optimize && pnpm assets:archive` here: it writes them to
+`vendor/assets/archives/`, which is not committed.
 
 ### Prereleases
 
