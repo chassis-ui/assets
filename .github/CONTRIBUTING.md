@@ -231,9 +231,9 @@ text. A version without a changelog entry is not released. A prerelease goes to 
 
 - The file name `release.yml` is the trusted publisher of `@chassis-ui/assets` on npmjs.com.
   Renaming the file breaks publishing until the trusted publisher names the new file.
-- Before the first release, the package has to exist on npm: npm configures a trusted
-  publisher on a package that is published, so the first version is published by the
-  maintainer with `npm publish` in `packages/assets/`.
+- The package was created on npmjs.com as a placeholder for staged publishing, `0.0.0-stage`,
+  which the registry does not serve, so that the trusted publisher could be set before the
+  first version; the first version was published by the workflow.
 
 The archives of the Chassis assets, one per platform, app and brand, are made by the release
 workflow of website-assets on a tag there. To see what one holds, run

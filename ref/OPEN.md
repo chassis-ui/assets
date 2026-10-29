@@ -8,10 +8,11 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 ## For the maintainer
 
 - **The first publish of `@chassis-ui/assets`.** D37 publishes the package from
-  `release.yml` with npm trusted publishing, which npm configures on a package that exists.
-  Before the first release: `npm publish` in `packages/assets/` from the maintainer's
-  machine, then on npmjs.com add the trusted publisher `chassis-ui/assets`, workflow
-  `release.yml`. The name is free on npm as of 2026-10-29.
+  `release.yml` with npm trusted publishing. The maintainer created the package on npmjs.com
+  on 2026-10-29 as a placeholder for staged publishing, `0.0.0-stage`, which the registry
+  does not serve: the trusted publisher `chassis-ui/assets`, workflow `release.yml`, is set
+  on it, and the push of the release commit `chore(release): 0.6.0` to `main` publishes
+  0.6.0. Remove this entry once 0.6.0 is on npm.
 - **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
   commands, `chassis-ui/website-assets` holds the assets with their history, and this
