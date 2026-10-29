@@ -34,7 +34,7 @@ export async function loadConverter() {
     convert = (await import(CONVERTER_PACKAGE)).default
   } catch (error) {
     throw new Error(
-      `--vector-drawables needs the package ${CONVERTER_PACKAGE}, which is not installed. Run \`pnpm install\` in the repository root.`,
+      `--vector-drawables needs the package ${CONVERTER_PACKAGE}, which is not installed. Install it beside @chassis-ui/assets.`,
       { cause: error }
     )
   }

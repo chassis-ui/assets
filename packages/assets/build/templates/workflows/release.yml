@@ -1,0 +1,78 @@
+name: Release
+
+# On a tag v<version>, builds every brand, app and platform, verifies the output and creates
+# the GitHub release of the tag, with one archive per platform, app and brand attached:
+# <name>-<platform>-<app>-<brand>-<version>.zip. The tag has to be the version of
+# package.json. Written by `chassis-assets init`.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # to create the GitHub release
+
+# Never cancel a run that may be releasing
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Fonts and images are Git LFS files
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: true
+          persist-credentials: false
+
+      - name: Check the tag against the version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME is not the version of package.json, v$VERSION"
+            exit 1
+          fi
+
+      # __PNPM_SETUP__
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: __PM__
+
+      - name: Install
+        run: __INSTALL_CI__
+
+      - name: Lint source
+        run: __RUN__ lint
+
+      - name: Build
+        run: __RUN__ build
+
+      - name: Verify
+        run: __RUN__ verify
+
+      # <name>-<platform>-<app>-<brand>-<version>.zip, the name and the version of package.json
+      - name: Archive each platform, app and brand
+        run: npx chassis-assets archive --to "$RUNNER_TEMP/archives"
+
+      # A tag with a prerelease part, such as v0.2.0-next.0, is marked as a prerelease and
+      # does not become the latest release. The notes are generated from the commits
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "$GITHUB_REF_NAME" in
+            *-*) FLAGS=(--prerelease --latest=false) ;;
+            *) FLAGS=(--latest) ;;
+          esac
+
+          gh release create "$GITHUB_REF_NAME" \
+            "$RUNNER_TEMP"/archives/*.zip \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            "${FLAGS[@]}"

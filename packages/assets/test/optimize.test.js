@@ -749,7 +749,7 @@ describe('pnpm assets --optimize, --webp and --avif', () => {
       const result = run(flags)
       expect(result.status).toBe(1)
       expect(result.stderr).toContain(message)
-      expect(result.stderr).toContain('Run `pnpm install` in the repository root')
+      expect(result.stderr).toContain('Install it beside @chassis-ui/assets')
       expect(listFiles(out)).toEqual(before)
     }
   )

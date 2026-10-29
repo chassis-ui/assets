@@ -39,6 +39,16 @@ export const COMMANDS = {
     script: 'pnpm assets:lfs',
     about: 'Print the Git LFS paths a build reads, for git lfs pull --include'
   },
+  archive: {
+    module: './archive.js',
+    script: 'pnpm assets:archive',
+    about: 'One zip per platform, app and brand of an existing output, for a release'
+  },
+  init: {
+    module: './init.js',
+    script: 'chassis-assets init',
+    about: 'Write the baseline of a repository of assets into a folder'
+  },
   'lint-source': {
     module: './lint-source.js',
     script: 'pnpm assets:lint:source',

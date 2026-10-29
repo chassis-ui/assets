@@ -1184,7 +1184,7 @@ describe('pnpm assets --subset', () => {
     const result = run(['--subset'])
     expect(result.status).toBe(1)
     expect(result.stderr).toContain('--subset needs the package subset-font')
-    expect(result.stderr).toContain('Run `pnpm install` in the repository root')
+    expect(result.stderr).toContain('Install it beside @chassis-ui/assets')
     expect(listFiles(out)).toEqual(before)
   })
 })

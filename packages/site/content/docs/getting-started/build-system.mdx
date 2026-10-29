@@ -12,7 +12,7 @@ This page is the reference of the build: its commands and options, the `chassis`
 
 ## Prerequisites
 
-The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only. Run `pnpm install` for the tests, the type check, the documentation site and the options that use a package: `--vector-drawables`, `--optimize`, `--webp`, `--avif` and `--subset`.
+The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only, and the package has no dependencies. Run `pnpm install` for the tests, the type check, the documentation site and the options that use a package, each an optional peer dependency of `@chassis-ui/assets`: `--vector-drawables`, `--optimize`, `--webp`, `--avif` and `--subset`.
 
 Run every command from the repository root. A clone needs its Git LFS files, see [Build fails on pointers](#build-fails-on-pointers).
 
@@ -26,6 +26,8 @@ Each command is a script of the root `package.json`, and each `pnpm assets*` com
 | `pnpm assets` | Builds every job of the configuration into `dist/` |
 | `pnpm assets:site` | Builds the web output of the configured docs app for the `chassis` brand, which the Chassis sites read |
 | `pnpm assets:lfs` | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include` |
+| `pnpm assets:archive` | Writes one zip per platform, app and brand of an existing output, for a release |
+| `node packages/assets/build/cli.js init` | Writes the baseline of a repository of assets into a folder, see [New Repository]([[docsref:/getting-started/new-repository]]) |
 | `pnpm assets:validate` | Checks an existing output against the source and the configuration |
 | `pnpm assets:contract` | Checks that an existing output has the files its consumers read by name |
 | `pnpm assets:verify` | Runs the validator, then the contract check |

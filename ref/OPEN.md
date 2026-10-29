@@ -6,6 +6,24 @@ out. An entry is removed when it is done. A D-number is a decision of
 
 ## For the maintainer
 
+- **The first publish of `@chassis-ui/assets`.** D37 publishes the package from
+  `release.yml` with npm trusted publishing, which npm configures on a package that exists.
+  Before the first release: `npm publish` in `packages/assets/` from the maintainer's
+  machine, then on npmjs.com add the trusted publisher `chassis-ui/assets`, workflow
+  `release.yml`. The name is free on npm as of 2026-10-29.
+- **The split of the repository, steps 3 to 6.** Steps 1 and 2 are done with D37: the
+  package is publishable, `chassis-assets archive` replaces `build/release-archives.js`, and
+  `chassis-assets init` writes the baseline of a repository of files from the templates in
+  `packages/assets/build/templates/`, with a page, "New Repository". Left, in order: (3)
+  `chassis-ui/website-assets` made with `init`, then `source/`, `chassis.checks.json` and the
+  `chassis` block moved there with their history, `git filter-repo` on a clone and a merge
+  with unrelated histories, the LFS objects pushed; (4) this repository without `source/`,
+  the checks file, `check-changeset.js` and the `chassis` block, the site vendoring
+  website-assets as `vendor/assets`, the iOS catalog check moved or run on the fixture,
+  `docs/fonts.md` and `build/instance-font.py` moved with the fonts, `app/docs` dropped,
+  AGENTS.md, README.md and the decisions updated; (5) the getting-started pages rewritten
+  around `init` for an adopting team; (6) the submodule of each Chassis site pointed at
+  `main` of website-assets. Agreed on 2026-10-29.
 - **The weights of the `display` role of the `chassis` brand.** Its Montserrat files, taken
   from `feat/new-chassis-brand` on 2026-10-19, are at 300, 400, 600 and 700, the weights of
   the `ui` role, while `typography.fontWeight.display` of `source/brand-chassis/brand-base.json`

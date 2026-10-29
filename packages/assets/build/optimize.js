@@ -187,7 +187,7 @@ async function loadPackage(name, option) {
     return await import(name)
   } catch (error) {
     throw new Error(
-      `${option} needs the package ${name}, which is not installed. Run \`pnpm install\` in the repository root.`,
+      `${option} needs the package ${name}, which is not installed. Install it beside @chassis-ui/assets.`,
       { cause: error }
     )
   }

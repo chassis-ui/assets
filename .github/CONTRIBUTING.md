@@ -20,7 +20,7 @@ pnpm install
 The repository is a pnpm workspace with two packages:
 
 - [`packages/assets`](../packages/assets/): `@chassis-ui/assets`, the build in `build/` and its
-  tests in `test/`. It is private and never published to npm.
+  tests in `test/`. It is published to npm, with the `chassis-assets` command.
 - [`packages/site`](../packages/site/): `chassis-assets-site`, the Astro documentation site.
 
 The root holds what a designer and a consumer work with: the assets in `source/`, the
@@ -98,8 +98,10 @@ each platform and the known oddities.
 - **The build stays file-driven.** No manifest and no list beside the assets. A feature that
   needs input beyond the file tree is an option, off by default, and leaves the output of the
   default build as it is.
-- **The build needs nothing installed.** It imports Node.js modules only. A feature that needs
-  a package loads it when its option is given, never at import time.
+- **The package has no dependencies.** The build imports Node.js modules only, and a plain
+  install of `@chassis-ui/assets` brings nothing else. A feature that needs a package declares
+  it as an optional entry of `peerDependencies`, lists it in `devDependencies` for the tests,
+  and loads it when its option is given, never at import time.
 - **The build names nothing of this repository.** No brand, app, job or file name of the
   Chassis sites in `packages/assets/build/` or in the scripts of `build/`. What is particular
   to this repository is data: the `chassis` block of `package.json` and `chassis.checks.json`.
@@ -161,7 +163,8 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 - **Passing CI**: `.github/workflows/ci.yml` runs on pushes to `develop` and on pull
   requests. Lint: `pnpm lint:prettier`, `pnpm site:lint` and `pnpm check:astro`. Assets: the
   build as a site runs it, with nothing installed, then `pnpm assets:lint`,
-  `pnpm assets:lint:source`, `pnpm assets:typecheck`, `pnpm test`, `pnpm assets` and
+  `pnpm assets:lint:source`, `pnpm assets:typecheck`, `pnpm test`, a pack of the package
+  installed into an empty folder and run on the fixture, `pnpm assets` and
   `pnpm assets:verify`. Site: `pnpm site:build`. Native iOS, on a macOS runner: a build of the
   iOS jobs with `--asset-catalog`, then `pnpm test:ios`, which compiles the catalogs with
   `actool` and needs Xcode. The commands above run the same checks locally, and
@@ -170,7 +173,8 @@ What to run before a commit, by what the commit changes. CI runs all of it.
   its install and its check of a clean checkout, which would change a local `node_modules`.
 - **A clean audit**: the Audit job runs `pnpm check:pnpm`, which is
   `pnpm audit --prod --audit-level moderate` and fails on an advisory in a package that an
-  option of the build loads, the `optionalDependencies` of `packages/assets/package.json`. A
+  option of the build loads, the optional `peerDependencies` of `packages/assets/package.json`,
+  installed here as its `devDependencies`. A
   second step runs `pnpm audit` over every dependency and reports only: the tooling of the
   tests and the site writes no file of `dist/`.
 - **No vulnerable dependency added**: on a pull request, the Dependency Review job fails
@@ -210,9 +214,9 @@ checks it on every commit.
 
 ## Releases
 
-`@chassis-ui/assets` is released with [Changesets](https://changesets.dev). It is not
-published to npm. A version is a tag, `v<version>`, and a GitHub release with one archive
-per platform, app and brand. The sites read the `app/docs` branch, not a release.
+`@chassis-ui/assets` is released with [Changesets](https://changesets.dev). A version is the
+package on npm, a tag, `v<version>`, and a GitHub release with one archive per platform, app
+and brand. The sites read the `app/docs` branch, not a release.
 
 ### Release a version
 
@@ -236,19 +240,30 @@ git push origin develop:main
 git push origin develop:app/docs
 ```
 
-The push to `main` runs `.github/workflows/release.yml`. When the version has no tag yet and
-the checks of CI passed on the commit, it builds every brand, app and platform with
-`--optimize`, runs `pnpm assets:verify`, and creates the tag and the GitHub release with
+The push to `main` runs `.github/workflows/release.yml`. When npm does not have the version
+or the version has no tag yet, and the checks of CI passed on the commit, it builds every
+brand, app and platform with `--optimize`, runs `pnpm assets:verify` and
+`pnpm assets:archive`, publishes `@chassis-ui/assets` with npm trusted publishing and
+provenance (no npm token), and creates the tag and the GitHub release with
 `gh release create`, with the changelog entry as its text and the archives attached:
 `chassis-assets-<platform>-<app>-<brand>-<version>.zip`, which holds the content of
 `dist/<platform>/<app>/<brand>/`. The start of the name is the name of the root
-`package.json` without `-workspace`. A version without a changelog entry is not released.
+`package.json` without `-workspace`, and the version is the one of the build, given with
+`--release`, since the root `package.json` has none. A version without a changelog entry is
+not released. A prerelease goes to the dist-tag `next`.
+
+- The file name `release.yml` is the trusted publisher of `@chassis-ui/assets` on npmjs.com.
+  Renaming the file breaks publishing until the trusted publisher names the new file.
+- Before the first release, the package has to exist on npm: npm configures a trusted
+  publisher on a package that is published, so the first version is published by the
+  maintainer with `npm publish` in `packages/assets/`.
 
 The push to `app/docs` is what the sites receive: `chassis-docs sync-submodules` moves their
 `vendor/assets` to the tip of that branch.
 
 To see the archives before a release, run
-`pnpm assets --optimize && pnpm release:archives`. It writes them to `.cache/release/`.
+`pnpm assets --optimize && pnpm assets:archive --release <version>`. It writes them to
+`archives/`, which is not committed.
 
 ### Prereleases
 

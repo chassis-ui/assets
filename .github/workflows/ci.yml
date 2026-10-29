@@ -117,6 +117,25 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # The package as npm publishes it: packed, installed into an empty folder with nothing
+      # else, and its bin run on the fixture. Proves that `files` and `bin` of
+      # packages/assets/package.json hold what a consumer needs, which the tests on the
+      # checkout cannot
+      - name: Pack and run the package
+        run: |
+          PACK="$RUNNER_TEMP/pack"
+          FIXTURE="$GITHUB_WORKSPACE/packages/assets/test/fixtures"
+          mkdir -p "$PACK/consumer"
+          pnpm -C packages/assets pack --pack-destination "$PACK"
+          cd "$PACK/consumer"
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund "$PACK"/chassis-ui-assets-*.tgz
+          test ! -e node_modules/sharp
+          npx chassis-assets --version
+          npx chassis-assets build --cwd "$FIXTURE" --out "$PACK/out" --quiet
+          npx chassis-assets verify --cwd "$FIXTURE" --out "$PACK/out"
+          npx chassis-assets archive --cwd "$FIXTURE" --out "$PACK/out" --to "$PACK/archives"
+
       - name: Build all assets
         run: pnpm assets
 

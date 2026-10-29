@@ -1,10 +1,14 @@
 name: Release
 
-# On a push to main, releases the version in packages/assets/package.json when it has no tag
-# yet: creates the tag v<version> and the GitHub release from the CHANGELOG entry of the
-# version, with one archive per platform, app and brand attached. The version and the
+# On a push to main, releases the version in packages/assets/package.json: publishes
+# @chassis-ui/assets to npm when npm does not have the version, and creates the tag
+# v<version> and the GitHub release from the CHANGELOG entry of the version, with one archive
+# per platform, app and brand attached, when the tag does not exist. The version and the
 # CHANGELOG are made on develop with Changesets. See "Releases" in .github/CONTRIBUTING.md.
-# Nothing is published to npm.
+#
+# npm trusted publishing: the package trusts this workflow file of chassis-ui/assets, so no
+# npm token is needed, and every version has provenance. Renaming this file breaks publishing
+# until the trusted publisher on npmjs.com is updated to match.
 #
 # The checks of ci.yml ran on this commit when it was pushed to develop, and the ruleset of
 # main requires them before the commit can reach main. This workflow does not run them
@@ -31,7 +35,9 @@ jobs:
     timeout-minutes: 5
     outputs:
       version: ${{ steps.version.outputs.version }}
+      dist-tag: ${{ steps.version.outputs.dist-tag }}
       prerelease: ${{ steps.version.outputs.prerelease }}
+      publish: ${{ steps.npm.outputs.publish }}
       release: ${{ steps.tag.outputs.release }}
 
     steps:
@@ -41,17 +47,43 @@ jobs:
         with:
           persist-credentials: false
 
-      # A version with a prerelease part, such as 0.2.0-next.0, is a prerelease
+      # A prerelease such as 0.6.0-next.0 goes to the dist-tag `next`, and a version without a
+      # prerelease part to `latest`. A numeric prerelease such as 0.6.0-0 goes to `next`,
+      # because npm rejects a dist-tag that is a version range.
       - name: Read the version
         id: version
         run: |
           VERSION=$(node -p "require('./packages/assets/package.json').version")
+          PRERELEASE=${VERSION#*-}
+
+          if [ "$PRERELEASE" = "$VERSION" ]; then
+            DIST_TAG=latest
+          else
+            DIST_TAG=${PRERELEASE%%.*}
+            case "$DIST_TAG" in
+              '' | *[!0-9A-Za-z-]* | [0-9]*) DIST_TAG=next ;;
+            esac
+          fi
 
           {
             echo "version=$VERSION"
-            echo "prerelease=$([ "${VERSION#*-}" = "$VERSION" ] && echo false || echo true)"
+            echo "dist-tag=$DIST_TAG"
+            echo "prerelease=$([ "$DIST_TAG" = latest ] && echo false || echo true)"
           } >> "$GITHUB_OUTPUT"
-          echo "Version $VERSION"
+          echo "Version $VERSION, dist-tag $DIST_TAG"
+
+      - name: Check whether npm has the version
+        id: npm
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if npm view "@chassis-ui/assets@$VERSION" version 2>/dev/null | grep -qx "$VERSION"; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "npm has $VERSION. Nothing to publish."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "npm does not have $VERSION. It will be published."
+          fi
 
       - name: Check whether the version has a tag
         id: tag
@@ -70,7 +102,7 @@ jobs:
   checks:
     name: Checks Passed
     needs: detect
-    if: needs.detect.outputs.release == 'true'
+    if: needs.detect.outputs.publish == 'true' || needs.detect.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -110,6 +142,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write # to create the GitHub release and its tag
+      id-token: write # for npm trusted publishing and provenance
 
     steps:
       - name: Checkout
@@ -134,18 +167,22 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
+      # Node.js 24 of .nvmrc ships npm 11, which trusted publishing needs (11.5.1 or later)
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+          registry-url: 'https://registry.npmjs.org'
           cache: pnpm
 
       # The archives hold optimized images, and --optimize needs the packages of the build:
-      # sharp and svgo. The package of the build only, not the site
+      # sharp and svgo, its development dependencies. The package of the build only, not the
+      # site
       - name: Install the packages of the build
         run: pnpm install --frozen-lockfile --filter @chassis-ui/assets...
 
-      # Before anything is built, so a version without a CHANGELOG entry is not released
+      # Before anything is built or published, so a version without a CHANGELOG entry is not
+      # released
       - name: Release notes
         env:
           VERSION: ${{ needs.detect.outputs.version }}
@@ -160,13 +197,26 @@ jobs:
       - name: Verify distribution
         run: node packages/assets/build/cli.js verify
 
-      # chassis-assets-<platform>-<app>-<brand>-<version>.zip
+      # chassis-assets-<platform>-<app>-<brand>-<version>.zip. The root package.json has no
+      # version: the one of the build names the archives
       - name: Archive each platform, app and brand
-        run: node build/release-archives.js --to "$RUNNER_TEMP/archives"
+        env:
+          VERSION: ${{ needs.detect.outputs.version }}
+        run: node packages/assets/build/cli.js archive --to "$RUNNER_TEMP/archives" --release "$VERSION"
+
+      # Only when npm does not have the version: a run after a failed GitHub release does not
+      # publish twice
+      - name: Publish to npm
+        if: needs.detect.outputs.publish == 'true'
+        working-directory: packages/assets
+        env:
+          DIST_TAG: ${{ needs.detect.outputs.dist-tag }}
+        run: npm publish --provenance --access public --tag "$DIST_TAG"
 
       # The tag is created with the release, on this commit. A prerelease is marked as one
       # and does not become the latest release
       - name: Create the GitHub release
+        if: needs.detect.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.detect.outputs.version }}

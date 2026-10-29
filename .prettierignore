@@ -6,3 +6,5 @@ packages/site/src/assets
 pnpm-lock.yaml
 packages/assets/test/fixtures/source
 packages/assets/test/golden
+# A template: __NAME__ outside a code span is a placeholder, not bold text
+packages/assets/build/templates/README.md

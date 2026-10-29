@@ -17,7 +17,7 @@ dist/                  # the build output, not committed
 package.json           # the `chassis` configuration (brands, apps, platforms) and the commands
 chassis.checks.json    # what the checks verify: the consumer contracts, the names the lint keeps
 packages/
-  assets/              # @chassis-ui/assets, private, never published to npm
+  assets/              # @chassis-ui/assets, published to npm with the `chassis-assets` command
     build/             # the build and its checks (JavaScript with JSDoc types, Node.js modules only)
     test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/)
   site/                # chassis-assets-site, the Astro documentation site
@@ -32,7 +32,11 @@ ref/OPEN.md            # what is left to do, decide or check
 - Run every command from the repository root.
 - `pnpm assets` builds `dist/`; `--brand`, `--app` and `--platform` build a part of it, and
   `--dry-run` prints the jobs without writing. Every `pnpm assets*` command has `--help`.
-- The build runs with nothing installed. `pnpm install` is for the tests, the checks and the site.
+- The build runs with nothing installed. `pnpm install` is for the tests, the checks, the site
+  and the options that load a package.
+- `pnpm assets:archive` writes one zip per job of an existing `dist/` to `archives/`.
+- `node packages/assets/build/cli.js init <dir>` writes the baseline of a repository of assets
+  for an adopting team; its templates are in `packages/assets/build/templates/`.
 - `pnpm dev` runs the site at `http://localhost:4325/assets/`.
 - A checkout without Git LFS has pointer files in `source/`, and the build fails on them. The
   tests need no Git LFS files. Where the binaries are not needed, `--allow-lfs-pointers` or
@@ -77,9 +81,12 @@ broke them and was reverted.
   change to one of them is a minor bump whose changeset starts with `**Breaking.**`.
 - **Match the siblings in tooling, not in product.** Tests, CI, Changesets and the docs site
   follow `chassis-tokens` and `chassis-website`. The product follows its own pages.
-- **The default build needs nothing installed.** `packages/assets/build/` imports Node.js
-  modules only, and the root `package.json` has no `dependencies`. Do not add an import of a
-  package to the build. A feature that needs one loads it when its option is given.
+- **The package has no dependencies.** `packages/assets/build/` imports Node.js modules
+  only, and neither the root `package.json` nor `packages/assets/package.json` has
+  `dependencies`: a plain install of `@chassis-ui/assets` brings nothing else. Do not add an
+  import of a package to the build. A feature that needs one declares it as an optional entry
+  of `peerDependencies`, lists it in `devDependencies` for the tests, and loads it when its
+  option is given, with an error that names the package when it is not installed.
 - **The build names nothing of this repository.** No brand, app, job or file name of the
   Chassis sites in `packages/assets/build/` or in the scripts of `build/`. Such data goes in
   the `chassis` block of `package.json` or in `chassis.checks.json`. Tests run on the fixture.

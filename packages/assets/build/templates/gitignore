@@ -1,0 +1,7 @@
+# The output of `chassis-assets build` and of `chassis-assets archive`
+dist/
+archives/
+
+node_modules/
+.DS_Store
+Thumbs.db

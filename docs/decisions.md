@@ -281,3 +281,16 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   differ by app, so that the set is in one folder. The output is byte for byte the one
   before. The source paths, `--include` and the paths `pnpm assets:lfs` prints change, so the
   changeset is a minor one that starts with **Breaking.**. The maintainer, 2026-10-29.
+- **D37. Is the build published to npm?** Yes, as `@chassis-ui/assets` with the
+  `chassis-assets` command, so that a team installs it in a repository of its own assets and
+  runs the build there; the assets of this repository are not published (D2 holds for them).
+  The first step of a split: `source/`, `chassis.checks.json` and the `chassis` block move to
+  a repository of files, `chassis-ui/website-assets`, and this one keeps the package and the
+  site. The packages that an option loads are optional entries of `peerDependencies`, and
+  `devDependencies` for the tests, not `optionalDependencies`: a plain install of the package
+  brings nothing else, and a team installs the one package the option it uses names. The
+  archives of a release are written by `chassis-assets archive` with `node:zlib`, not by a
+  script with the `zip` command, so that a repository of files releases them wherever Node.js
+  runs; `--release <version>` names the version where the root `package.json` has none, as
+  here. The release workflow publishes with npm trusted publishing, as `chassis-tokens`. The
+  maintainer, 2026-10-29.

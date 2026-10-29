@@ -326,7 +326,9 @@ describe('cli.js', () => {
     ['validate', ['--out', '../golden']],
     ['contract', ['--out', '../golden']],
     ['verify', ['--out', '../golden']],
-    ['lint-source', ['--help']]
+    ['lint-source', ['--help']],
+    ['archive', ['--help']],
+    ['init', ['--help']]
   ])('%s runs its module', (command, args) => {
     expect(cli(command, ...args).code).toBe(0)
   })
@@ -339,7 +341,17 @@ describe('cli.js', () => {
   test('--help names every command and exits 0', () => {
     const { code, stdout } = cli('--help')
     expect(code).toBe(0)
-    for (const command of ['build', 'analyze', 'validate', 'contract', 'verify', 'lint-source']) {
+    for (const command of [
+      'build',
+      'analyze',
+      'validate',
+      'contract',
+      'verify',
+      'lfs',
+      'lint-source',
+      'archive',
+      'init'
+    ]) {
       expect(stdout).toContain(`  ${command} `)
     }
   })

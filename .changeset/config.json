@@ -4,10 +4,9 @@
   "commit": false,
   "fixed": [],
   "linked": [],
-  "access": "restricted",
+  "access": "public",
   "baseBranch": "develop",
   "changedFilePatterns": ["build/**"],
   "updateInternalDependencies": "patch",
-  "ignore": ["chassis-assets-site"],
-  "privatePackages": { "version": true, "tag": false }
+  "ignore": ["chassis-assets-site"]
 }

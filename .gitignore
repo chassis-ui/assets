@@ -54,3 +54,6 @@ lerna-debug.log*
 
 # CI: the list of Git LFS object ids that keys the LFS cache
 .lfs-ids
+
+# The archives of `pnpm assets:archive`
+archives/

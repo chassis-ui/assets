@@ -36,9 +36,6 @@
       }
     }
   },
-  "bin": {
-    "chassis-assets": "packages/assets/build/cli.js"
-  },
   "engines": {
     "node": ">=22.12.0"
   },
@@ -54,6 +51,7 @@
     "assets:analyze": "node packages/assets/build/cli.js analyze",
     "assets:lint": "eslint build packages/assets/build packages/assets/test --cache --cache-location .cache/.eslintcache",
     "assets:lfs": "node packages/assets/build/cli.js lfs",
+    "assets:archive": "node packages/assets/build/cli.js archive",
     "assets:lint:source": "node packages/assets/build/cli.js lint-source",
     "assets:typecheck": "pnpm -C packages/assets typecheck",
     "assets:contract": "node packages/assets/build/cli.js contract",
@@ -81,7 +79,7 @@
     "check:pnpm": "pnpm audit --prod --audit-level moderate",
     "changeset": "changeset",
     "changeset:version": "changeset version && node build/sync-version-refs.js",
-    "release:archives": "node build/release-archives.js",
+    "release:archives": "pnpm assets:archive",
     "release:notes": "node build/release-notes.js",
     "lint:prettier": "prettier -c --cache ."
   },

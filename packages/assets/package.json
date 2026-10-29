@@ -1,12 +1,11 @@
 {
   "name": "@chassis-ui/assets",
   "version": "0.5.0",
-  "private": true,
   "description": "A multi-brand, multi-product asset management system for distributing fonts, images, icons, and other design files across web, iOS, and Android platforms.",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chassis-ui/assets.git",
+    "url": "git+https://github.com/chassis-ui/assets.git",
     "directory": "packages/assets"
   },
   "bugs": {
@@ -15,22 +14,70 @@
   "homepage": "https://chassis-ui.com",
   "author": "Ozgur Gunes <o.gunes@gmail.com>",
   "license": "MIT",
+  "keywords": [
+    "chassis",
+    "design system",
+    "design assets",
+    "assets",
+    "fonts",
+    "icons",
+    "images",
+    "multi-brand",
+    "ios",
+    "android"
+  ],
+  "bin": {
+    "chassis-assets": "build/cli.js"
+  },
+  "files": [
+    "build",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    ".": "./build/api/index.js",
+    "./api": "./build/api/index.js",
+    "./build/*": "./build/*",
+    "./package.json": "./package.json"
+  },
   "engines": {
     "node": ">=22.12.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "scripts": {
     "test": "vitest run --dir test",
     "typecheck": "tsc -p tsconfig.json"
   },
-  "optionalDependencies": {
+  "peerDependencies": {
     "sharp": "^0.35.5",
     "subset-font": "^2.9.0",
     "svg2vectordrawable": "^2.9.1",
     "svgo": "^4.1.0"
   },
+  "peerDependenciesMeta": {
+    "sharp": {
+      "optional": true
+    },
+    "subset-font": {
+      "optional": true
+    },
+    "svg2vectordrawable": {
+      "optional": true
+    },
+    "svgo": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^22.20.5",
     "inter-ui": "^4.1.1",
+    "sharp": "^0.35.5",
+    "subset-font": "^2.9.0",
+    "svg2vectordrawable": "^2.9.1",
+    "svgo": "^4.1.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   }

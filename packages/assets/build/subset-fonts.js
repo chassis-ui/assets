@@ -265,7 +265,7 @@ export async function loadSubsetter() {
     subsetFont = (await import(SUBSET_PACKAGE)).default
   } catch (error) {
     throw new Error(
-      `--subset needs the package ${SUBSET_PACKAGE}, which is not installed. Run \`pnpm install\` in the repository root.`,
+      `--subset needs the package ${SUBSET_PACKAGE}, which is not installed. Install it beside @chassis-ui/assets.`,
       { cause: error }
     )
   }
