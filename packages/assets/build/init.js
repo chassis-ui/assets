@@ -33,12 +33,14 @@ export const FIRST_VERSION = '0.1.0'
 
 /** The package managers of `--pm`, with the commands the templates name. */
 export const PACKAGE_MANAGERS = {
-  npm: { install: 'npm install', ci: 'npm ci', run: 'npm run', cache: 'npm', setup: '' },
+  // The install of the workflows is the plain one: a new repository has no lockfile until
+  // its first install is committed, and `npm ci`, `--frozen-lockfile` and the cache of
+  // setup-node fail without one. With a lockfile, pnpm freezes it in CI by itself
+  npm: { install: 'npm install', ci: 'npm install', run: 'npm run', setup: '' },
   pnpm: {
     install: 'pnpm install',
-    ci: 'pnpm install --frozen-lockfile',
+    ci: 'pnpm install',
     run: 'pnpm',
-    cache: 'pnpm',
     setup: [
       '      - name: Setup pnpm',
       '        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0',
@@ -155,7 +157,6 @@ export function planFiles(options = {}) {
     INSTALL: commands.install,
     INSTALL_CI: commands.ci,
     RUN: commands.run,
-    PM: commands.cache,
     PNPM_SETUP: commands.setup
   }
   const template = (file) => render(fs.readFileSync(path.join(TEMPLATES, file), 'utf-8'), values)

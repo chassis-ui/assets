@@ -43,7 +43,7 @@ source/_default/_shared/other/readme.txt  -> A stand-in for the first asset
 
 It writes nothing when one of them exists; `--force` writes over the files that exist, and `--dry-run` prints them without writing. `--name` sets the package name, by default the name of the folder, and `--pm pnpm` makes the README and the workflows use pnpm.
 
-Then make it a repository, and install the package:
+Then make it a repository, and install the package. Commit the lockfile the install writes with the rest: the workflows install from it.
 
 ```bash
 git init && git lfs install

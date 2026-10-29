@@ -77,8 +77,8 @@ describe('chassis-assets init', () => {
     const npm = path.join(tempDir(), 'npm-assets')
     await init({ dir: npm })
     const ci = read(npm, '.github/workflows/ci.yml')
-    expect(ci).toContain('cache: npm')
-    expect(ci).toContain('run: npm ci')
+    expect(ci).not.toContain('cache:')
+    expect(ci).toContain('run: npm install')
     expect(ci).toContain('run: npm run verify')
     expect(ci).not.toContain('pnpm')
     expect(ci).not.toContain('__')
@@ -93,8 +93,8 @@ describe('chassis-assets init', () => {
     for (const file of ['.github/workflows/ci.yml', '.github/workflows/release.yml']) {
       const text = read(pnpm, file)
       expect(text).toContain('uses: pnpm/action-setup@')
-      expect(text).toContain('cache: pnpm')
-      expect(text).toContain('run: pnpm install --frozen-lockfile')
+      expect(text).not.toContain('cache:')
+      expect(text).toContain('run: pnpm install\n')
       expect(text).toContain('run: pnpm verify')
       // The setup step sits before Node.js, and a blank line separates the two
       expect(text).toMatch(/version: 10\n\n {6}- name: Setup Node\.js/)
