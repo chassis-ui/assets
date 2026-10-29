@@ -165,8 +165,9 @@ jobs:
       - name: Build the iOS jobs with asset catalogs
         run: node packages/assets/build/cli.js build --cwd vendor/assets --platform ios --asset-catalog --quiet
 
+      # The script itself: the job sets up no pnpm
       - name: Compile the asset catalogs
-        run: pnpm test:ios
+        run: packages/assets/test/native/ios/check.sh vendor/assets/dist
 
   # The documentation site, with the fonts and the images of the chassis brand built from
   # the submodule by pnpm site:assets.
