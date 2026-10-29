@@ -7,12 +7,12 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 
 ## For the maintainer
 
-- **The first publish of `@chassis-ui/assets`.** D37 publishes the package from
-  `release.yml` with npm trusted publishing. The maintainer created the package on npmjs.com
-  on 2026-10-29 as a placeholder for staged publishing, `0.0.0-stage`, which the registry
-  does not serve: the trusted publisher `chassis-ui/assets`, workflow `release.yml`, is set
-  on it, and the push of the release commit `chore(release): 0.6.0` to `main` publishes
-  0.6.0. Remove this entry once 0.6.0 is on npm.
+- **The trusted publisher of `@chassis-ui/assets` is not yet proven.** 0.6.0 was published by
+  the maintainer from the checkout at `f5894d0`, the release commit before its amend, so the
+  release workflow of 2026-10-29 found it on npm and created the tag and the release only.
+  The first version the workflow publishes, with provenance, is the next one. 0.6.0 ships
+  the templates of `init` before the lockfile fix of `fe07627`: a repository made with it
+  needs its lockfile committed before its first CI run passes, which the quick start says.
 - **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
   commands, `chassis-ui/website-assets` holds the assets with their history, and this
@@ -21,8 +21,8 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   submodule, ac9bf32, exists on this machine only, and CI cannot check it out. The pages
   describe a repository of assets as `init` writes it since step 5, on 2026-10-29; the
   build-system and the use-in-project pages keep their `work-in-progress` callout, since
-  their CI samples and the workflows of `init` were not run on GitHub Actions, and
-  `npx @chassis-ui/assets init` was not run before the first publish. Left: (6) the submodule of
+  their CI samples and the workflows of `init` were not run on GitHub Actions, ; `npx @chassis-ui/assets init` was run from the registry on 2026-10-29, and the
+  repository it wrote passed lint, build, verify and archive. Left: (6) the submodule of
   each Chassis site pointed at `main` of website-assets, with the report on
   `chassis-docs vendor` in `ref/OPEN.md` there, and the `app/docs` branch of this repository
   deleted on GitHub once no site pins it. Agreed on 2026-10-29.
