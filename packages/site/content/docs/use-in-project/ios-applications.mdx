@@ -95,7 +95,7 @@ The type of a file decides whether iOS gets it:
 
 ### Output names
 
-An app reads a file by its path in the folder of the job, and the build derives that path from the source. A file of `source/<brand>/<app>/<type>/` or `source/default/<app>/<type>/` is at `<type>/` of the job, in the same subfolders, with its name in snake_case. The build renames files, not folders: `HeroBanner@2x.png` becomes `hero_banner@2x.png`, the indicator stays, and a dot inside a name becomes an underscore. A path so stays the same in every brand that has the file, whether the file comes from the folder of the brand or from the default brand.
+An app reads a file by its path in the folder of the job, and the build derives that path from the source. A file of `source/<brand>/<app>/<type>/` or `source/_default/<app>/<type>/`, or of the `_shared/<type>/` folder of either brand, is at `<type>/` of the job, in the same subfolders, with its name in snake_case. The build renames files, not folders: `HeroBanner@2x.png` becomes `hero_banner@2x.png`, the indicator stays, and a dot inside a name becomes an underscore. A path so stays the same in every brand that has the file, whether the file comes from the folder of the brand or from the default brand.
 
 To find the name of a file, list the output of the job:
 

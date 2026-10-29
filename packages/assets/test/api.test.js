@@ -16,7 +16,7 @@ const api = new ChassisAssets('package.json', { cwd: FIXTURE, out: '../golden' }
 
 describe('ChassisAssets', () => {
   test('reads the configuration and the package', () => {
-    expect(api.config.defaults.brandFolder).toBe('default')
+    expect(api.config.defaults.brandFolder).toBe('_default')
     expect(api.packageInfo).toEqual({ name: 'chassis-assets-fixture', version: '0.0.0-fixture' })
   })
 
@@ -49,7 +49,8 @@ describe('ChassisAssets', () => {
   test('assetsExist() in source/ and in the output', () => {
     // beta has no folder of its own and falls back to default
     expect(api.assetsExist('beta', 'site')).toBe(true)
-    expect(api.assetsExist('alpha', 'nope')).toBe(false)
+    // A shared folder holds files of every app
+    expect(api.assetsExist('alpha', 'nope')).toBe(true)
     expect(api.assetsExist('alpha', 'mobile', 'dist')).toBe(true)
     expect(api.assetsExist('gamma', 'mobile', 'dist')).toBe(false)
   })
@@ -58,7 +59,8 @@ describe('ChassisAssets', () => {
     const inventory = api.getAssetInventory('alpha', 'site')
     expect(inventory).toMatchObject({ brand: 'alpha', app: 'site', platform: null })
     // By the type folder, as the build decides it: the SVG under images/logo/ is an image.
-    // An override is listed twice, once from default and once from the brand.
+    // An override is listed once per folder that has it: the default brand, the shared folder
+    // of the brand and the brand.
     expect(inventory.fonts).toHaveLength(6)
     expect(inventory.icons.map((a) => a.name).sort()).toEqual([
       'arrow-right.pdf',
@@ -72,12 +74,17 @@ describe('ChassisAssets', () => {
       'mark.png',
       'mark.svg',
       'mark.svg',
+      'mark.svg',
       'mark@2x.png',
       'mark@3x.png',
       'photo.jpg',
       'photo.webp'
     ])
-    expect(inventory.other.map((a) => a.name)).toEqual(['brand.tokens.json'])
+    expect(inventory.other.map((a) => a.name)).toEqual([
+      'notice.txt',
+      'brand.tokens.json',
+      'notice.txt'
+    ])
   })
 
   test('getAssetInventory() of an output', () => {
@@ -123,7 +130,7 @@ describe('ChassisAssets', () => {
     fs.copyFileSync(path.join(FIXTURE, 'package.json'), path.join(root, 'package.json'))
     const result = new ChassisAssets('package.json', { cwd: root }).validate()
     expect(result.valid).toBe(true)
-    expect(result.warnings).toContain('Default brand directory not found: source/default')
+    expect(result.warnings).toContain('Default brand directory not found: source/_default')
   })
 
   test('build() writes the golden output into its out', async () => {

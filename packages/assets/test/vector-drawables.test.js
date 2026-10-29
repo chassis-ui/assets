@@ -56,7 +56,7 @@ afterAll(removeTempDirs)
  */
 function fixtureWithIcons() {
   const root = copyFixture()
-  const icons = path.join(root, 'source/default/mobile/icons')
+  const icons = path.join(root, 'source/_default/mobile/icons')
   fs.writeFileSync(path.join(icons, 'arrow-right.svg'), ARROW)
   fs.writeFileSync(path.join(icons, 'svgs/check_mark.svg'), CHECK)
   fs.writeFileSync(path.join(icons, 'ic_close.svg'), SHAPELESS)

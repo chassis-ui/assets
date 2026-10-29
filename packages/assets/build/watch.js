@@ -10,7 +10,13 @@
 
 import fs from 'fs'
 import path from 'path'
-import { generateAssets, loadConfig, planJobs, shouldIgnoreFile } from './build-assets.js'
+import {
+  SHARED_FOLDER,
+  generateAssets,
+  loadConfig,
+  planJobs,
+  shouldIgnoreFile
+} from './build-assets.js'
 import { createFileFilter } from './filters.js'
 import { resolveRoot } from './root.js'
 
@@ -21,21 +27,24 @@ const SETTLE = 150
 
 /**
  * The jobs a changed path of `source/` belongs to: those of its app, for its brand, or for
- * every brand when it is a file of the default brand, which every brand gets.
+ * every brand when it is a file of the default brand, which every brand gets. A file of the
+ * shared folder of a brand belongs to every app.
  * @param {BuildConfig} config
  * @param {Job[]} jobs - The jobs of the run
  * @param {string} relative - The path of the change, relative to `source/`, with forward
  *   slashes. An empty path stands for a change the system did not name
  * @returns {Job[]}
  * @example
- * affectedJobs(config, jobs, 'default/docs/images/logo.svg') // The docs jobs of every brand
+ * affectedJobs(config, jobs, '_default/docs/images/logo.svg') // The docs jobs of every brand
  * affectedJobs(config, jobs, 'acme/docs/images/logo.svg') // The docs jobs of acme
+ * affectedJobs(config, jobs, 'acme/_shared/images/logo.svg') // Every job of acme
  */
 export function affectedJobs(config, jobs, relative) {
   const [brand, app] = relative.split('/')
   return jobs.filter(
     (job) =>
-      (!brand || brand === config.brandFolder || brand === job.brand) && (!app || app === job.app)
+      (!brand || brand === config.brandFolder || brand === job.brand) &&
+      (!app || app === SHARED_FOLDER || app === job.app)
   )
 }
 

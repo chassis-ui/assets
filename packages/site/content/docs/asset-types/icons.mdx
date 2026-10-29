@@ -64,13 +64,13 @@ Do not edit a file under `icons/icons/` or `icons/svgs/` by hand. The next copy 
 
 ### Refreshing the copy
 
-The package `@chassis-ui/icons` ships the two folders as they are. Install the dependencies, replace the folders of each app that holds a copy with those of the package, and build. For a copy in `source/default/<app>/icons/`:
+The package `@chassis-ui/icons` ships the two folders as they are. Install the dependencies, replace the folders of each app that holds a copy with those of the package, and build. For a copy in `source/_default/<app>/icons/`:
 
 ```bash
 pnpm install
-rm -rf source/default/<app>/icons/icons source/default/<app>/icons/svgs
-cp -r packages/site/node_modules/@chassis-ui/icons/icons source/default/<app>/icons/icons
-cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/default/<app>/icons/svgs
+rm -rf source/_default/<app>/icons/icons source/_default/<app>/icons/svgs
+cp -r packages/site/node_modules/@chassis-ui/icons/icons source/_default/<app>/icons/icons
+cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/_default/<app>/icons/svgs
 pnpm assets
 ```
 

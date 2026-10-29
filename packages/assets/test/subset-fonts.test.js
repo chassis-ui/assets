@@ -91,7 +91,7 @@ function root(subset, { variable = false, sheet = '@font-face { font-family: "Te
       }
     })
   )
-  const site = path.join(dir, 'source/default/site')
+  const site = path.join(dir, 'source/_default/site')
   fs.mkdirSync(path.join(site, 'fonts'), { recursive: true })
   fs.mkdirSync(path.join(site, 'icons'))
   for (const name of ['text.woff2', 'text.woff', 'greek.woff2']) {
@@ -102,7 +102,7 @@ function root(subset, { variable = false, sheet = '@font-face { font-family: "Te
   fs.writeFileSync(path.join(site, 'fonts/text-license.txt'), 'The license of the font\n')
   fs.writeFileSync(path.join(site, 'icons/icons.woff2'), fonts['text.woff2'])
 
-  const mobile = path.join(dir, 'source/default/mobile/fonts')
+  const mobile = path.join(dir, 'source/_default/mobile/fonts')
   fs.mkdirSync(mobile, { recursive: true })
   fs.writeFileSync(path.join(mobile, 'text.ttf'), fonts['text.ttf'])
   return dir

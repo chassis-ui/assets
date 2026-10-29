@@ -28,8 +28,8 @@ body:
     id: where
     attributes:
       label: Brand, app and platforms
-      description: Where it is needed. `default` when every brand gets it.
-      placeholder: default / docs / web
+      description: Where it is needed. `_default` when every brand gets it, `_shared` when every app of the brand does.
+      placeholder: _default / docs / web
     validations:
       required: true
   - type: textarea

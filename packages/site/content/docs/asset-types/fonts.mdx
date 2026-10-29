@@ -16,7 +16,7 @@ Fonts live in `source/<brand>/<app>/fonts/`. The default brand holds the fonts t
 
 ```text
 source/
-├── default/
+├── _default/
 │   └── <app>/
 │       └── fonts/
 │           ├── ui-normal.woff2       -> copied to the web output
@@ -30,6 +30,8 @@ source/
 ```
 
 A brand file replaces the default file of the same path. A brand without a `fonts/` folder gets the default fonts as they are. A default brand without fonts leaves every brand to hold all of its own, with a `fonts.css` of its own.
+
+A font that every app of a brand uses lives once, in `source/<brand>/_shared/fonts/`, and every app of the brand gets it. A file of the same name in the `fonts/` folder of an app replaces it for that app, so each app can hold a `fonts.css` of its own beside the shared fonts.
 
 ## Formats
 

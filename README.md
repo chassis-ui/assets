@@ -71,19 +71,20 @@ ref/OPEN.md               -> What is left to do, decide or check
 
 ```
 source/
-├── default/              -> The fallback brand: the files every brand gets
+├── _default/             -> The fallback brand: the files every brand gets
 │   ├── docs/             -> The app `docs`
 │   │   ├── images/       -> Images, with the @2x and @3x variants the designer exported
 │   │   └── icons/        -> cx-sprite.svg
 │   └── demo/             -> The app `demo`, with the build output of @chassis-ui/icons in icons/
 └── <brand>/              -> The files of a brand: `chassis` and `sinefil`
+    ├── _shared/          -> The files every app of the brand gets, such as the fonts and the logos
     └── <app>/
         ├── fonts/        -> Font files, their stylesheet and their licenses
-        ├── images/       -> The logos, the favicons and the other images of the brand
+        ├── images/       -> The logos, the favicons and the other images of the app
         └── other/        -> Any other folder name is copied as it is
 ```
 
-A file under `source/<brand>/<app>/` replaces the file of the same path under `source/default/<app>/`. A brand needs only the files that differ. In this repository each brand holds its fonts, its logos and its favicons, and `default` holds what every brand shares.
+A job of a brand and an app reads four folders, and a file of a later folder replaces the file of the same path in an earlier one: `source/_default/_shared/`, `source/_default/<app>/`, `source/<brand>/_shared/`, `source/<brand>/<app>/`. A brand needs only the files that differ, and a file that every app of a brand uses is in its `_shared/` folder once. In this repository each brand holds its fonts, its logos and its favicons, and `_default` holds what every brand shares. A name that starts with `_` is no brand and no app.
 
 ### Output
 
@@ -204,7 +205,7 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
 ```json
 "chassis": {
   "defaults": {
-    "brandFolder": "default"
+    "brandFolder": "_default"
   },
   "build": {
     "brands": ["chassis", "sinefil"],
@@ -216,7 +217,8 @@ The `chassis` block of the root `package.json` names the brands and, for each ap
 }
 ```
 
-- `defaults.brandFolder` is the folder of `source/` that every brand falls back to.
+- `defaults.brandFolder` is the folder of `source/` that every brand falls back to, `_default` when it is not set.
+- `build.brands` and `build.apps` take no name that starts with `_`: such a name is a folder of `source/` that is no brand and no app, as `_default` and `_shared` are.
 - `build.brands` are the brands to build. A brand without a folder in `source/` is built from the fallback alone, as `chassis` is.
 - `build.apps` maps each app to its platforms: `web`, `ios` or `android`.
 - `optimize`, optional, holds the settings of `--optimize`, `--webp` and `--avif`, such as `"jpeg": { "quality": 80 }`. Without it the options change no visible pixel. It turns nothing on.
@@ -231,7 +233,7 @@ What the checks verify is in [chassis.checks.json](chassis.checks.json), beside 
 
 A team that adopts the repository changes `source/`, the `chassis` block of `package.json` and this file, which it fills with its own lists or deletes. The build in `packages/assets/build/` names no brand, app or file. The [build system page](https://chassis-ui.com/assets/docs/getting-started/build-system/#configuration) has the schema of both.
 
-The build writes one job per brand, app and platform: the files of `source/default/<app>/`, replaced by those of `source/<brand>/<app>/`, with the processing of the platform, into `dist/<platform>/<app>/<brand>/`.
+The build writes one job per brand, app and platform: the files of `source/_default/_shared/` and `source/_default/<app>/`, replaced by those of `source/<brand>/_shared/` and `source/<brand>/<app>/`, with the processing of the platform, into `dist/<platform>/<app>/<brand>/`.
 
 ## What consumers rely on
 

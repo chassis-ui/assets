@@ -12,12 +12,14 @@ procedure, and no part of the build.
 
 ## What a brand holds
 
-Every brand holds all of its fonts, in `source/<brand>/<app>/fonts/`, and `source/default/`
-holds none. The brands name their files by role and weight, so a page or an app that reads
+Every brand holds all of its fonts, in `source/<brand>/_shared/fonts/` and
+`source/<brand>/<app>/fonts/`, and `source/_default/` holds none. A file that every app of the
+brand takes is in `_shared/fonts/` once, and the folder of an app holds what that app alone
+takes (D36). The brands name their files by role and weight, so a page or an app that reads
 `fonts/fonts.css` or `ui_normal.ttf` gets the font of the brand it was built for, with no
 change to its code.
 
-The web app, `source/<brand>/docs/fonts/`, holds for each role that has a family of its own:
+The web app, `docs`, takes for each role that has a family of its own:
 
 | File                                                    | What it is                                                         |
 | ------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -31,21 +33,24 @@ or the files by weight of a family without one. A role that the tokens of the br
 the family of another role, as `prose` is set in `ui` for `chassis` and `display` in `prose`
 for `sinefil`, has no files: the files of a family are under the role that owns it,
 and the stylesheet declares the family once. Which roles have files so differs by brand (D31).
+The variable files and `fonts.css` are in `source/<brand>/docs/fonts/`; the files by weight,
+their `.ttf` files and the licenses, which the other app takes too, are in
+`source/<brand>/_shared/fonts/`.
 
 The files by weight of a family with a variable font are written from the variable file, by
 step 4, or copied from its download where the license reserves the name of the family, so
 every file of a role is one version of one design. The `.woff2` of a font is
 written from the `.ttf` beside it, by step 5.
 
-The iOS and Android app, `source/<brand>/demo/fonts/`, holds the files by weight only, as
-`.ttf` and `.woff2`, with a `fonts.css` that declares the files by weight, and the licenses.
-It has no variable file.
+The iOS and Android app, `demo`, takes the files by weight only, as `.ttf` and `.woff2`, and
+the licenses, from `source/<brand>/_shared/fonts/`, with a `fonts.css` of its own in
+`source/<brand>/demo/fonts/` that declares the files by weight. It has no variable file.
 
 Three rules keep the brands in step:
 
-- **A brand holds every font it ships.** No font is in `source/default/`, so a brand gets no
+- **A brand holds every font it ships.** No font is in `source/_default/`, so a brand gets no
   font it does not hold, and the font of one brand never reaches the output of another
-  (D33). A font put in `source/default/` would reach every brand that has no file of its
+  (D33). A font put in `source/_default/` would reach every brand that has no file of its
   name, and a brand that replaces half the files of a role would ship two families.
 - **Same names, same extension.** The file of a role and a weight has one name in every
   brand. The app fonts are `.ttf` in every brand.
@@ -128,7 +133,8 @@ not committed: only the files of the next step enter the repository.
 
 ### 3. Copy the files by role
 
-Copy each file to `source/<brand>/docs/fonts/` under its role name. A family with a variable
+Copy each file under its role name: a variable file to `source/<brand>/docs/fonts/`, and a
+file by weight and the license to `source/<brand>/_shared/fonts/`. A family with a variable
 font gives its variable files and its license. For the `ui` role of the `sinefil` brand:
 
 | File of the download                 | Name in `fonts/` |
@@ -178,9 +184,10 @@ Give it the variable file, the file to write and the weight the tokens give the 
 `ui-strong` of a role whose `strong` is 600:
 
 ```shell
-fonts=source/<brand>/docs/fonts
-.cache/fonttools/bin/python build/instance-font.py $fonts/ui.ttf $fonts/ui-strong.ttf wght=600
-.cache/fonttools/bin/python build/instance-font.py $fonts/ui-italic.ttf $fonts/ui-strong-italic.ttf wght=600
+docs=source/<brand>/docs/fonts
+shared=source/<brand>/_shared/fonts
+.cache/fonttools/bin/python build/instance-font.py $docs/ui.ttf $shared/ui-strong.ttf wght=600
+.cache/fonttools/bin/python build/instance-font.py $docs/ui-italic.ttf $shared/ui-strong-italic.ttf wght=600
 ```
 
 The script writes the font as it is at that weight, without an axis, and prints the names it
@@ -200,19 +207,22 @@ brand whose tokens give `normal` 500 has the Medium of its family in `display-no
 On a Mac, the names inside a file say which font it is:
 
 ```shell
-mdimport -t -d2 source/sinefil/docs/fonts/ui-strong.ttf 2>&1 | grep -A 2 -E 'name_(family|postscript)'
+mdimport -t -d2 source/sinefil/_shared/fonts/ui-strong.ttf 2>&1 | grep -A 2 -E 'name_(family|postscript)'
 ```
 
 ### 5. Write the WOFF2 files
 
-Write a `.woff2` beside each `.ttf`, with the WOFF2 encoder of Google as a package:
+Write a `.woff2` beside each `.ttf`, with the WOFF2 encoder of Google as a package, in
+`source/<brand>/_shared/fonts/`:
 
 ```shell
-cd source/<brand>/docs/fonts
+cd source/<brand>/_shared/fonts
 for f in <role>*.ttf; do
   pnpm --package=wawoff2@2.0.1 dlx woff2_compress.js "$f" "${f%.ttf}.woff2"
 done
 ```
+
+and in the same way in `source/<brand>/docs/fonts/`, for the variable files.
 
 The conversion keeps every character, every layout feature and the axes of a variable font.
 The same command on the same file gives the same bytes. Do not subset here, and fix no axis
@@ -269,15 +279,16 @@ role:
 
 ### 7. Fill the app folder
 
-Copy the files by weight, as `.ttf` and `.woff2`, and the license to
-`source/<brand>/demo/fonts/`. Its `fonts.css` declares the files by weight, one rule per
-file, also for a family that has a variable font.
+The `demo` app takes the files by weight and the licenses of `source/<brand>/_shared/fonts/`,
+and copies none of them. Its stylesheet, `source/<brand>/demo/fonts/fonts.css`, declares the
+files by weight, one rule per file, also for a family that has a variable font.
 
 ### 8. Compare with another brand
 
-The two folders of a brand hold the names of the other brands:
+The three font folders of a brand hold the names of the other brands:
 
 ```shell
+diff <(command ls source/chassis/_shared/fonts) <(command ls source/<brand>/_shared/fonts)
 diff <(command ls source/chassis/docs/fonts) <(command ls source/<brand>/docs/fonts)
 diff <(command ls source/chassis/demo/fonts) <(command ls source/<brand>/demo/fonts)
 ```
@@ -285,8 +296,9 @@ diff <(command ls source/chassis/demo/fonts) <(command ls source/<brand>/demo/fo
 `command ls` lists the names alone, also in a shell that has an alias for `ls`. The commands
 print the files of a role that one of the two brands sets in the family of another role,
 and the variable files of a family that has none. For the `sinefil` brand, the first prints
-`code.ttf`, `code.woff2` and the files of `display` of `chassis`, and the files of `prose`
-of `sinefil`; the second prints the files of `display` and of `prose`.
+the files by weight and the licenses of `display` and of `prose`; the second prints
+`code.ttf`, `code.woff2` and the variable files of `display` of `chassis`, and the variable
+files of `prose` of `sinefil`; the third prints nothing.
 
 ### 9. Build and check
 
@@ -303,14 +315,14 @@ that was not written again with its fonts. The `.ttf` file of a declared `.woff2
 checked against the same rule, and the two against each other: the lint fails when they
 differ in the family, the weight, the style, the axes, the version or the number of glyphs,
 as they do when one of the two was not written again. It warns about a font of
-`source/default/` that is left in the output of a brand and that no stylesheet of the brand
+`source/_default/` that is left in the output of a brand and that no stylesheet of the brand
 declares, which this repository, with no font there, does not have.
 
 Then check the output:
 
 - The web output of the brand has the font names of its source, without the `.ttf` files.
-  Against `chassis`, this prints what the comparison of step 8 printed for `docs`, less the
-  `.ttf` files:
+  Against `chassis`, this prints what the comparisons of step 8 printed for `_shared` and
+  `docs`, less the `.ttf` files:
 
   ```shell
   diff <(command ls dist/web/docs/chassis/fonts) <(command ls dist/web/docs/<brand>/fonts)
@@ -337,7 +349,8 @@ ships, and two more:
 
 - Add the name to `chassis.build.brands` of `package.json`.
 - Add the other files of the brand, such as its logos and favicons under `images/`, to
-  `source/<brand>/<app>/`.
+  `source/<brand>/<app>/`, or to `source/<brand>/_shared/` when every app takes the same
+  file.
 - Where a variable font of the brand has an axis that its pages are not to show, such as the
   optical size, add the brand and the value to `axes` of `chassis.subset` in `package.json`.
   A build with `--subset` fixes it.

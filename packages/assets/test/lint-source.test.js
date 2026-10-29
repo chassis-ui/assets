@@ -32,39 +32,40 @@ afterEach(() => vi.unstubAllEnvs())
 
 describe('checkName()', () => {
   test.each([
-    'default/docs/images/hero-background.jpg',
-    'default/docs/images/illustration-onboarding-step-1.svg',
-    'default/docs/images/logo-light.svg',
-    'default/docs/images/hero-image@2x.png',
-    'default/docs/images/hero-image@3x.png',
-    'default/docs/images/badge@1.5x.png',
+    '_default/docs/images/hero-background.jpg',
+    '_default/docs/images/illustration-onboarding-step-1.svg',
+    '_default/docs/images/logo-light.svg',
+    '_default/docs/images/hero-image@2x.png',
+    '_default/docs/images/hero-image@3x.png',
+    '_default/docs/images/badge@1.5x.png',
     'brand-a/docs/images/logo/mark.svg',
-    'default/docs/images/figma/components/card/light/card-orientation-top-2x-1.png',
-    'default/docs/fonts/text-license.txt'
+    'brand-a/_shared/images/logo/mark.svg',
+    '_default/docs/images/figma/components/card/light/card-orientation-top-2x-1.png',
+    '_default/docs/fonts/text-license.txt'
   ])('%s keeps the rules', (file) => {
     expect(checkName(file)).toEqual([])
   })
 
   test.each([
     [
-      'default/docs/images/Hero Background.jpg',
+      '_default/docs/images/Hero Background.jpg',
       'has the name "Hero Background"',
       'hero-background.jpg'
     ],
     [
-      'default/docs/images/hero_background.jpg',
+      '_default/docs/images/hero_background.jpg',
       'has the name "hero_background"',
       'hero-background.jpg'
     ],
     [
-      'default/docs/images/hero@background.jpg',
+      '_default/docs/images/hero@background.jpg',
       'has the name "hero@background"',
       'hero-background.jpg'
     ],
-    ['default/docs/images/HeroBanner.png', 'has the name "HeroBanner"', 'hero-banner.png'],
-    ['default/docs/images/card@2x-1.png', 'has the name "card@2x-1"', 'card-2x-1.png'],
-    ['default/docs/images/logo.min.svg', 'has the name "logo.min"', 'logo-min.svg'],
-    ['default/docs/images/logo--dark.svg', 'has the name "logo--dark"', 'logo-dark.svg']
+    ['_default/docs/images/HeroBanner.png', 'has the name "HeroBanner"', 'hero-banner.png'],
+    ['_default/docs/images/card@2x-1.png', 'has the name "card@2x-1"', 'card-2x-1.png'],
+    ['_default/docs/images/logo.min.svg', 'has the name "logo.min"', 'logo-min.svg'],
+    ['_default/docs/images/logo--dark.svg', 'has the name "logo--dark"', 'logo-dark.svg']
   ])('%s', (file, message, suggestion) => {
     const [problem] = checkName(file)
     expect(problem).toContain(message)
@@ -72,12 +73,13 @@ describe('checkName()', () => {
   })
 
   test.each([
-    ['default/docs/images/logo.SVG', 'has the extension .SVG, which is not in lowercase'],
-    ['default/docs/images/logo', 'has no extension'],
-    ['default/docs/Images/logo.svg', 'the folder "Images" is not of lowercase letters'],
-    ['default/docs/images/Logos/logo.svg', 'the folder "Logos" is not of lowercase letters'],
-    ['default/docs/logo.svg', 'is not in a type folder'],
-    ['default/logo.svg', 'is not in a type folder']
+    ['_default/docs/images/logo.SVG', 'has the extension .SVG, which is not in lowercase'],
+    ['_default/docs/images/logo', 'has no extension'],
+    ['_default/docs/Images/logo.svg', 'the folder "Images" is not of lowercase letters'],
+    ['_default/docs/images/Logos/logo.svg', 'the folder "Logos" is not of lowercase letters'],
+    ['_default/docs/_images/logo.svg', 'the folder "_images" is not of lowercase letters'],
+    ['_default/docs/logo.svg', 'is not in a type folder'],
+    ['_default/logo.svg', 'is not in a type folder']
   ])('%s: %s', (file, message) => {
     expect(checkName(file).join('\n')).toContain(message)
   })
@@ -85,14 +87,14 @@ describe('checkName()', () => {
 
 describe('matchesPattern()', () => {
   test.each([
-    ['default/docs/other/default.tokens.json', '*/*/other/default.tokens.json', true],
+    ['_default/docs/other/default.tokens.json', '*/*/other/default.tokens.json', true],
     [
-      'default/demo/icons/icons/chassis-icons.min.css',
+      '_default/demo/icons/icons/chassis-icons.min.css',
       '*/*/icons/icons/chassis-icons.min.css',
       true
     ],
-    ['default/docs/other/nested/default.tokens.json', '*/*/other/default.tokens.json', false],
-    ['default/docs/images/default.tokens.json', '*/*/other/default.tokens.json', false]
+    ['_default/docs/other/nested/default.tokens.json', '*/*/other/default.tokens.json', false],
+    ['_default/docs/images/default.tokens.json', '*/*/other/default.tokens.json', false]
   ])('%s matches %s: %s', (file, pattern, expected) => {
     expect(matchesPattern(file, pattern)).toBe(expected)
   })
@@ -101,31 +103,31 @@ describe('matchesPattern()', () => {
 describe('lintSource()', () => {
   test('finds the names of the fixture that break the rules', () => {
     const { errors, warnings, files } = lintSource({ cwd: FIXTURE })
-    expect(files).toBe(42)
+    expect(files).toBe(45)
     expect(warnings).toEqual([])
     expect(errors.map((e) => e.file)).toEqual([
-      'default/mobile/data/brand.tokens.json',
-      'default/mobile/icons/ic_close.svg',
-      'default/mobile/icons/svgs/check_mark.svg',
-      'default/mobile/images/HeroBanner.png',
-      'default/site/data/brand.tokens.json',
-      'default/site/icons/svgs/check_mark.svg',
-      'default/site/images/HeroBanner.png'
+      '_default/mobile/data/brand.tokens.json',
+      '_default/mobile/icons/ic_close.svg',
+      '_default/mobile/icons/svgs/check_mark.svg',
+      '_default/mobile/images/HeroBanner.png',
+      '_default/site/data/brand.tokens.json',
+      '_default/site/icons/svgs/check_mark.svg',
+      '_default/site/images/HeroBanner.png'
     ])
   })
 
   /** A copy of the fixture with a file whose name has a dot, and `lint.allow` set. */
   function withTokensFile(allow) {
     const root = copyFixture()
-    fs.mkdirSync(path.join(root, 'source/default/site/other'))
-    fs.writeFileSync(path.join(root, 'source/default/site/other/default.tokens.json'), '{}')
+    fs.mkdirSync(path.join(root, 'source/_default/site/other'))
+    fs.writeFileSync(path.join(root, 'source/_default/site/other/default.tokens.json'), '{}')
     fs.writeFileSync(path.join(root, 'chassis.checks.json'), JSON.stringify({ lint: { allow } }))
     return root
   }
 
   test('a name that breaks a rule is an error', () => {
     const { errors } = lintSource({ cwd: withTokensFile([]) })
-    expect(errors.map((e) => e.file)).toContain('default/site/other/default.tokens.json')
+    expect(errors.map((e) => e.file)).toContain('_default/site/other/default.tokens.json')
   })
 
   test('warns about a name of lint.allow instead of failing, with its reason', () => {
@@ -133,10 +135,10 @@ describe('lintSource()', () => {
       { pattern: '*/*/other/default.tokens.json', reason: 'a Figma variables export' }
     ])
     const { errors, warnings } = lintSource({ cwd: root })
-    expect(errors.map((e) => e.file)).not.toContain('default/site/other/default.tokens.json')
+    expect(errors.map((e) => e.file)).not.toContain('_default/site/other/default.tokens.json')
     expect(warnings).toEqual([
       {
-        file: 'default/site/other/default.tokens.json',
+        file: '_default/site/other/default.tokens.json',
         message: expect.stringContaining('Kept: a Figma variables export')
       }
     ])
@@ -146,14 +148,22 @@ describe('lintSource()', () => {
     const root = copyFixture()
     fs.mkdirSync(path.join(root, 'source/gamma/site/images'), { recursive: true })
     fs.mkdirSync(path.join(root, 'source/alpha/docs/images'), { recursive: true })
+    fs.mkdirSync(path.join(root, 'source/alpha/_common/images'), { recursive: true })
+    fs.mkdirSync(path.join(root, 'source/_shared/site/images'), { recursive: true })
     const { warnings } = lintSource({ cwd: root })
-    expect(warnings.map((w) => w.file)).toEqual(['alpha/docs/', 'gamma/'])
+    // _shared is a folder of a brand, not of source/
+    expect(warnings.map((w) => w.file)).toEqual([
+      '_shared/',
+      'alpha/_common/',
+      'alpha/docs/',
+      'gamma/'
+    ])
   })
 
   test('the ignored files are left out', () => {
     const root = copyFixture()
-    fs.writeFileSync(path.join(root, 'source/default/site/images/.DS_Store'), '')
-    fs.writeFileSync(path.join(root, 'source/default/site/images/Thumbs.db'), '')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/.DS_Store'), '')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/Thumbs.db'), '')
     const before = lintSource({ cwd: FIXTURE })
     expect(lintSource({ cwd: root })).toEqual(before)
   })
@@ -162,15 +172,15 @@ describe('lintSource()', () => {
     vi.stubEnv('CHASSIS_ALLOW_LFS_POINTERS', '')
     const root = copyFixture()
     fs.writeFileSync(
-      path.join(root, 'source/default/site/images/pointer.png'),
+      path.join(root, 'source/_default/site/images/pointer.png'),
       'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 1\n'
     )
     expect(lintSource({ cwd: root }).errors).toContainEqual({
-      file: 'default/site/images/pointer.png',
+      file: '_default/site/images/pointer.png',
       message: expect.stringContaining('is a Git LFS pointer')
     })
     const allowed = lintSource({ cwd: root, allowLfsPointers: true })
-    expect(allowed.errors.map((e) => e.file)).not.toContain('default/site/images/pointer.png')
+    expect(allowed.errors.map((e) => e.file)).not.toContain('_default/site/images/pointer.png')
   })
 })
 
@@ -405,7 +415,7 @@ describe('lintSource() on fonts', () => {
   })
 
   test('passes a stylesheet that says what its fonts are', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.css':
         TEXT +
         rule(
@@ -423,50 +433,50 @@ describe('lintSource() on fonts', () => {
   })
 
   test('names a font that is not what its rule says, with the stylesheet', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.css': TEXT,
       'text.woff2': 'web/Inter-BoldItalic.woff2'
     })
     expect(problems(root).errors).toEqual([
       {
-        file: 'default/site/fonts/text.woff2',
-        message: 'is an italic, declared as normal by default/site/fonts/text.css'
+        file: '_default/site/fonts/text.woff2',
+        message: 'is an italic, declared as normal by _default/site/fonts/text.css'
       },
       {
-        file: 'default/site/fonts/text.woff2',
-        message: 'has the weight 700, declared with 400 by default/site/fonts/text.css'
+        file: '_default/site/fonts/text.woff2',
+        message: 'has the weight 700, declared with 400 by _default/site/fonts/text.css'
       }
     ])
   })
 
   test('names a font of another family than its rule says', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.scss': `// The text font\n${TEXT.replace('"Inter"', '"DM Sans"')}`,
       'text.woff2': 'web/Inter-Regular.woff2'
     })
     expect(problems(root).errors).toEqual([
       {
-        file: 'default/site/fonts/text.woff2',
-        message: 'is of the family "Inter", declared as "DM Sans" by default/site/fonts/text.scss'
+        file: '_default/site/fonts/text.woff2',
+        message: 'is of the family "Inter", declared as "DM Sans" by _default/site/fonts/text.scss'
       }
     ])
   })
 
   test('names a file that a rule declares and the folder has not, or that is no font', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'display.css': rule(
         '  font-family: "Display";\n  src: url("display.woff2"), url("text.woff");'
       )
     })
     expect(problems(root).errors).toEqual([
       {
-        file: 'default/site/fonts/display.css',
+        file: '_default/site/fonts/display.css',
         message: 'declares display.woff2, which is not in the fonts folder'
       },
       {
-        file: 'default/site/fonts/text.woff',
+        file: '_default/site/fonts/text.woff',
         message: expect.stringContaining(
-          'is declared by default/site/fonts/display.css and is no font: the file is not a TrueType'
+          'is declared by _default/site/fonts/display.css and is no font: the file is not a TrueType'
         )
       }
     ])
@@ -475,46 +485,46 @@ describe('lintSource() on fonts', () => {
   test('a rule is checked against the files of its name in another format', () => {
     // The fixture has `text.ttf`, `text.otf` and `text.woff` as lines of text: a file
     // beside the declared one that is no font is not held against the rule
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.css': TEXT,
       'text.woff2': made['regular.woff2']
     })
     expect(problems(root)).toEqual({ errors: [], warnings: [] })
 
-    fonts(root, 'default/site', { 'text.ttf': made['regular.ttf'] })
+    fonts(root, '_default/site', { 'text.ttf': made['regular.ttf'] })
     expect(problems(root)).toEqual({ errors: [], warnings: [] })
 
     // The file an app gets is another weight than the rule of the web file says
-    fonts(root, 'default/site', { 'text.ttf': made['bold.ttf'] })
+    fonts(root, '_default/site', { 'text.ttf': made['bold.ttf'] })
     expect(problems(root).errors).toEqual([
       {
-        file: 'default/site/fonts/text.ttf',
-        message: 'has the weight 700, declared with 400 by default/site/fonts/text.css'
+        file: '_default/site/fonts/text.ttf',
+        message: 'has the weight 700, declared with 400 by _default/site/fonts/text.css'
       },
       {
-        file: 'default/site/fonts/text.woff2',
-        message: 'is another font than default/site/fonts/text.ttf: the weight 400 against 700'
+        file: '_default/site/fonts/text.woff2',
+        message: 'is another font than _default/site/fonts/text.ttf: the weight 400 against 700'
       }
     ])
   })
 
   test('a rule that declares a format the lint does not read checks the files it reads', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'strong.css': rule('  font-family: "Inter";\n  font-weight: 700;\n  src: url(strong.eot);'),
       'strong.eot': 'web/Inter-Bold.woff2',
       'strong.ttf': made['regular.ttf']
     })
     expect(problems(root).errors).toEqual([
       {
-        file: 'default/site/fonts/strong.ttf',
-        message: 'has the weight 400, declared with 700 by default/site/fonts/strong.css'
+        file: '_default/site/fonts/strong.ttf',
+        message: 'has the weight 400, declared with 700 by _default/site/fonts/strong.css'
       }
     ])
   })
 
   test('names two files of one name that are not one font, with what differs', () => {
     // No rule declares them: the fonts of an app have no stylesheet
-    const root = fonts(copyFixture(), 'default/mobile', {
+    const root = fonts(copyFixture(), '_default/mobile', {
       'strong.ttf': made['regular.ttf'],
       'strong.woff2': 'web/Inter-SemiBoldItalic.woff2',
       'nested/more.ttf': made['regular.ttf'],
@@ -527,13 +537,14 @@ describe('lintSource() on fonts', () => {
     expect(problems(root)).toEqual({
       errors: [
         {
-          file: 'default/mobile/fonts/nested/more.woff2',
-          message: 'is another font than default/mobile/fonts/nested/more.ttf: 15 glyphs against 12'
+          file: '_default/mobile/fonts/nested/more.woff2',
+          message:
+            'is another font than _default/mobile/fonts/nested/more.ttf: 15 glyphs against 12'
         },
         {
-          file: 'default/mobile/fonts/strong.woff2',
+          file: '_default/mobile/fonts/strong.woff2',
           message:
-            'is another font than default/mobile/fonts/strong.ttf: the weight 600 against 400, an italic against an upright, 2901 glyphs against 12'
+            'is another font than _default/mobile/fonts/strong.ttf: the weight 600 against 400, an italic against an upright, 2901 glyphs against 12'
         }
       ],
       warnings: []
@@ -541,7 +552,7 @@ describe('lintSource() on fonts', () => {
   })
 
   test('a brand that replaces one file of a name is checked with the file it keeps', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.css': TEXT,
       'text.woff2': made['regular.woff2'],
       'text.ttf': made['regular.ttf']
@@ -550,11 +561,11 @@ describe('lintSource() on fonts', () => {
     expect(problems(root).errors).toEqual([
       {
         file: 'alpha/site/fonts/text.woff2',
-        message: 'has the weight 700, declared with 400 by default/site/fonts/text.css'
+        message: 'has the weight 700, declared with 400 by _default/site/fonts/text.css'
       },
       {
         file: 'alpha/site/fonts/text.woff2',
-        message: 'is another font than default/site/fonts/text.ttf: the weight 700 against 400'
+        message: 'is another font than _default/site/fonts/text.ttf: the weight 700 against 400'
       }
     ])
     // With every file of the name and the stylesheet, the brand has a font of its own
@@ -566,7 +577,7 @@ describe('lintSource() on fonts', () => {
   })
 
   test('warns about a format() that is not the format of its file', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.css': rule(
         '  font-family: "Inter";\n  src: url("text.woff2") format("truetype"),\n    url(text.ttf) format(opentype),\n    url("https://example.com/far.woff2") format("woff");'
       ),
@@ -577,7 +588,7 @@ describe('lintSource() on fonts', () => {
       errors: [],
       warnings: [
         {
-          file: 'default/site/fonts/text.css',
+          file: '_default/site/fonts/text.css',
           message: 'declares text.woff2 as format("truetype"), which the file is not'
         }
       ]
@@ -586,7 +597,7 @@ describe('lintSource() on fonts', () => {
 
   test('a brand is checked with the files of the default brand it does not replace', () => {
     // The brand replaces the font and keeps the stylesheet of the default brand
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.css': TEXT,
       'text.woff2': 'web/Inter-Regular.woff2'
     })
@@ -594,7 +605,7 @@ describe('lintSource() on fonts', () => {
     expect(problems(root).errors).toEqual([
       {
         file: 'alpha/site/fonts/text.woff2',
-        message: 'has the weight 700, declared with 400 by default/site/fonts/text.css'
+        message: 'has the weight 700, declared with 400 by _default/site/fonts/text.css'
       }
     ])
     // With a stylesheet of its own, the brand says what its font is
@@ -602,8 +613,26 @@ describe('lintSource() on fonts', () => {
     expect(problems(root)).toEqual({ errors: [], warnings: [] })
   })
 
+  test('a stylesheet of an app is checked with the fonts of the shared folder', () => {
+    // The fonts are shared by the apps of the brand, and each app has its stylesheet
+    const root = fonts(copyFixture(), 'alpha/_shared', {
+      'text.woff2': 'web/Inter-Bold.woff2'
+    })
+    fonts(root, 'alpha/site', { 'text.css': TEXT })
+    fonts(root, 'alpha/mobile', { 'text.css': TEXT.replace('400', '700') })
+    expect(problems(root).errors).toEqual([
+      {
+        file: 'alpha/_shared/fonts/text.woff2',
+        message: 'has the weight 700, declared with 400 by alpha/site/fonts/text.css'
+      }
+    ])
+    // A font of the app wins over the shared one
+    fonts(root, 'alpha/site', { 'text.woff2': 'web/Inter-Regular.woff2' })
+    expect(problems(root)).toEqual({ errors: [], warnings: [] })
+  })
+
   test('warns about a font of the default brand that a brand gets and does not declare', () => {
-    const root = fonts(copyFixture(), 'default/site', {
+    const root = fonts(copyFixture(), '_default/site', {
       'text.css': TEXT,
       'text.woff2': 'web/Inter-Regular.woff2',
       'text-display.woff2': 'display/InterDisplay-Regular.woff2',
@@ -619,12 +648,12 @@ describe('lintSource() on fonts', () => {
       errors: [],
       warnings: [
         {
-          file: 'default/site/fonts/text-display.woff2',
+          file: '_default/site/fonts/text-display.woff2',
           message:
             'is in the output of the brand alpha, and no stylesheet of the brand declares its family, "Inter Display"'
         },
         {
-          file: 'default/site/fonts/text.woff2',
+          file: '_default/site/fonts/text.woff2',
           message:
             'is in the output of the brand alpha, and no stylesheet of the brand declares its family, "Inter"'
         }
@@ -637,20 +666,20 @@ describe('lintSource() on fonts', () => {
 
   test('a Git LFS pointer in the place of a font is not read as one', () => {
     vi.stubEnv('CHASSIS_ALLOW_LFS_POINTERS', '')
-    const root = fonts(copyFixture(), 'default/site', { 'text.css': TEXT })
+    const root = fonts(copyFixture(), '_default/site', { 'text.css': TEXT })
     fs.writeFileSync(
-      path.join(root, 'source/default/site/fonts/text.woff2'),
+      path.join(root, 'source/_default/site/fonts/text.woff2'),
       'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 1\n'
     )
     // The pointer is the one problem: the rule that declares it is not held against it
     expect(problems(root).errors).toEqual([
       {
-        file: 'default/site/fonts/text.woff2',
+        file: '_default/site/fonts/text.woff2',
         message: expect.stringContaining('is a Git LFS pointer')
       }
     ])
     const allowed = lintSource({ cwd: root, allowLfsPointers: true })
-    expect(allowed.errors.map((e) => e.file)).not.toContain('default/site/fonts/text.woff2')
+    expect(allowed.errors.map((e) => e.file)).not.toContain('_default/site/fonts/text.woff2')
   })
 
   test('a brand the build does not read is not checked', () => {

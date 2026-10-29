@@ -329,8 +329,9 @@ describe('generateAssets() with assetCatalog', () => {
 
   test('removes images/ when every image is in the catalog', async () => {
     const root = copyFixture()
-    fs.rmSync(path.join(root, 'source/default/mobile/images/badge@1.5x.png'))
-    fs.rmSync(path.join(root, 'source/default/mobile/images/logo/mark.svg'))
+    fs.rmSync(path.join(root, 'source/_default/mobile/images/badge@1.5x.png'))
+    fs.rmSync(path.join(root, 'source/_default/mobile/images/logo/mark.svg'))
+    fs.rmSync(path.join(root, 'source/alpha/_shared/images/logo/mark.svg'))
 
     const { out, stats } = await build(root, { assetCatalog: true })
     expect(stats.warnings).toEqual([])

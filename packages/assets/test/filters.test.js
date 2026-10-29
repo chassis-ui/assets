@@ -190,7 +190,7 @@ describe('generateAssets() with types and include', () => {
 
   test('a Git LFS pointer fails the build only when the filters read it', async () => {
     const root = copyFixture()
-    fs.writeFileSync(path.join(root, 'source/default/site/images/photo.jpg'), LFS_POINTER)
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/photo.jpg'), LFS_POINTER)
 
     await expect(
       generateAssets({ cwd: root, quiet: true, out: tempDir(), apps: ['site'] })
@@ -211,7 +211,7 @@ describe('generateAssets() with types and include', () => {
         apps: ['site'],
         include: ['images/*']
       })
-    ).rejects.toThrow('source/default/site/images/photo.jpg')
+    ).rejects.toThrow('source/_default/site/images/photo.jpg')
   })
 
   test('filters that select no file fail the build', async () => {
@@ -257,14 +257,16 @@ describe('generateAssets() with types and include', () => {
 describe('lfsInclude()', () => {
   test('names the app folders of a job that is read whole', () => {
     expect(lfsInclude({ cwd: FIXTURE, apps: ['site'], brands: ['alpha'] })).toEqual([
-      'source/alpha/site/**',
-      'source/default/site/data/**',
-      'source/default/site/fonts/text-license.txt',
-      'source/default/site/fonts/text.css',
-      'source/default/site/fonts/text.woff',
-      'source/default/site/fonts/text.woff2',
-      'source/default/site/icons/**',
-      'source/default/site/images/**'
+      'source/_default/_shared/**',
+      'source/_default/site/data/**',
+      'source/_default/site/fonts/text-license.txt',
+      'source/_default/site/fonts/text.css',
+      'source/_default/site/fonts/text.woff',
+      'source/_default/site/fonts/text.woff2',
+      'source/_default/site/icons/**',
+      'source/_default/site/images/**',
+      'source/alpha/_shared/**',
+      'source/alpha/site/**'
     ])
   })
 
@@ -272,17 +274,18 @@ describe('lfsInclude()', () => {
     expect(
       lfsInclude({ cwd: FIXTURE, apps: ['site'], include: ['images/logo', 'images/*.png'] })
     ).toEqual([
-      'source/alpha/site/**',
-      'source/default/site/images/HeroBanner.png',
-      'source/default/site/images/logo/**'
+      'source/_default/site/images/HeroBanner.png',
+      'source/_default/site/images/logo/**',
+      'source/alpha/_shared/images/**',
+      'source/alpha/site/**'
     ])
   })
 
   test('leaves out what the platform does not keep', () => {
     const paths = lfsInclude({ cwd: FIXTURE, platforms: ['ios'], types: ['images'] })
-    expect(paths).toContain('source/default/mobile/images/badge.png')
-    expect(paths).not.toContain('source/default/mobile/images/photo.webp')
-    expect(paths).not.toContain('source/default/mobile/images/**')
+    expect(paths).toContain('source/_default/mobile/images/badge.png')
+    expect(paths).not.toContain('source/_default/mobile/images/photo.webp')
+    expect(paths).not.toContain('source/_default/mobile/images/**')
   })
 
   test('the paths are those a build with the same filters reads', async () => {
@@ -296,8 +299,8 @@ describe('lfsInclude()', () => {
     })
     const paths = lfsInclude({ cwd: FIXTURE, ...options })
     expect(paths).toEqual([
-      'source/default/site/fonts/text.woff2',
-      'source/default/site/images/logo/**'
+      'source/_default/site/fonts/text.woff2',
+      'source/_default/site/images/logo/**'
     ])
     expect(stats.filesProcessed).toBe(5)
   })
@@ -327,7 +330,7 @@ describe('pnpm assets:lfs and the filters of pnpm assets', () => {
     ])
     expect(result.status).toBe(0)
     expect(result.stdout).toBe(
-      'source/alpha/site/images/logo/**,source/default/site/icons/icons.css,source/default/site/images/logo/**\n'
+      'source/_default/site/icons/icons.css,source/_default/site/images/logo/**,source/alpha/_shared/images/**,source/alpha/site/images/logo/**\n'
     )
   })
 

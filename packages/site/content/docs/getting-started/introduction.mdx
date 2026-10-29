@@ -25,7 +25,7 @@ The repository is meant to be owned by the team that adopts it. The brands and a
 
 Three names place every file, in the source and in the output.
 
-- A **brand** is a visual identity with files of its own. The default brand holds the files that every brand gets, and a brand folder holds only the files that differ.
+- A **brand** is a visual identity with files of its own. The default brand holds the files that every brand gets, and a brand folder holds only the files that differ. The `_shared` folder of a brand holds the files that all its apps use.
 - An **app** is a product that uses the files, such as a website or a mobile app. Each app has its own folders and its own list of platforms.
 - A **platform** is what the output is built for: `web`, `ios` or `android`.
 
@@ -39,7 +39,7 @@ The source is organized by brand, then by app, then by type. The output turns th
 source/<brand>/<app>/<type>/      ->  dist/<platform>/<app>/<brand>/<type>/
 ```
 
-For each job, the build takes the files of the default brand and then the files of the brand, so a brand file replaces the default file of the same path. It leaves out the formats the platform does not use, and renames what it copies:
+For each job, the build takes the files of the default brand and then the files of the brand, each from its `_shared` folder first and then from the folder of the app, so a brand file replaces the default file of the same path. It leaves out the formats the platform does not use, and renames what it copies:
 
 <CxTable>
 | Platform | Names | Also |

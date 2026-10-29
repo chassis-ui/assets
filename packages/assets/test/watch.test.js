@@ -86,16 +86,31 @@ describe('affectedJobs()', () => {
   const jobs = planJobs(config)
 
   test.each([
-    ['default/site/images/photo.jpg', ['web/site/alpha', 'web/site/beta']],
+    ['_default/site/images/photo.jpg', ['web/site/alpha', 'web/site/beta']],
     ['alpha/site/images/logo/mark.svg', ['web/site/alpha']],
     ['beta/mobile/fonts/text.ttf', ['ios/mobile/beta', 'android/mobile/beta']],
     [
-      'default/mobile',
+      '_default/mobile',
       ['ios/mobile/alpha', 'android/mobile/alpha', 'ios/mobile/beta', 'android/mobile/beta']
     ],
     ['alpha', ['web/site/alpha', 'ios/mobile/alpha', 'android/mobile/alpha']],
+    [
+      'alpha/_shared/images/logo/mark.svg',
+      ['web/site/alpha', 'ios/mobile/alpha', 'android/mobile/alpha']
+    ],
+    [
+      '_default/_shared/data/notice.txt',
+      [
+        'web/site/alpha',
+        'ios/mobile/alpha',
+        'android/mobile/alpha',
+        'web/site/beta',
+        'ios/mobile/beta',
+        'android/mobile/beta'
+      ]
+    ],
     ['gamma/site/images/photo.jpg', []],
-    ['default/shop/images/photo.jpg', []]
+    ['_default/shop/images/photo.jpg', []]
   ])('%s → %j', (relative, expected) => {
     expect(names(affectedJobs(config, jobs, relative))).toEqual(expected)
   })
@@ -106,7 +121,7 @@ describe('affectedJobs()', () => {
 
   test('only the jobs of the run', () => {
     const web = planJobs(config, { platforms: ['web'] })
-    expect(names(affectedJobs(config, web, 'default/mobile/images/badge.png'))).toEqual([])
+    expect(names(affectedJobs(config, web, '_default/mobile/images/badge.png'))).toEqual([])
   })
 })
 
@@ -114,32 +129,32 @@ describe('isRelevant()', () => {
   const all = createFileFilter()
 
   test.each([
-    ['default/site/images/photo.jpg', true],
-    ['default/site/images', true],
-    ['default/site/.DS_Store', false],
-    ['default/site/images/.hidden/photo.jpg', false],
-    ['default/site/images/photo.jpg~', false],
-    ['default/site/images/photo.tmp', false]
+    ['_default/site/images/photo.jpg', true],
+    ['_default/site/images', true],
+    ['_default/site/.DS_Store', false],
+    ['_default/site/images/.hidden/photo.jpg', false],
+    ['_default/site/images/photo.jpg~', false],
+    ['_default/site/images/photo.tmp', false]
   ])('%s → %s', (relative, expected) => {
     expect(isRelevant(relative, all)).toBe(expected)
   })
 
   test('a name of chassis.ignore is no change, as a file or as a folder', () => {
     const ignore = ['*.bak', 'drafts']
-    expect(isRelevant('default/site/images/photo.bak', all, ignore)).toBe(false)
-    expect(isRelevant('default/site/images/drafts/photo.jpg', all, ignore)).toBe(false)
-    expect(isRelevant('default/site/images/photo.jpg', all, ignore)).toBe(true)
-    expect(isRelevant('default/site/images/photo.bak', all)).toBe(true)
+    expect(isRelevant('_default/site/images/photo.bak', all, ignore)).toBe(false)
+    expect(isRelevant('_default/site/images/drafts/photo.jpg', all, ignore)).toBe(false)
+    expect(isRelevant('_default/site/images/photo.jpg', all, ignore)).toBe(true)
+    expect(isRelevant('_default/site/images/photo.bak', all)).toBe(true)
   })
 
   test('the file filters of the run leave a change out', () => {
     const filter = createFileFilter({ types: ['images'], include: ['images/logo'] })
-    expect(isRelevant('default/site/images/logo/mark.svg', filter)).toBe(true)
-    expect(isRelevant('default/site/images/photo.jpg', filter)).toBe(false)
-    expect(isRelevant('default/site/fonts/text.woff2', filter)).toBe(false)
-    expect(isRelevant('default/site/fonts', filter)).toBe(false)
+    expect(isRelevant('_default/site/images/logo/mark.svg', filter)).toBe(true)
+    expect(isRelevant('_default/site/images/photo.jpg', filter)).toBe(false)
+    expect(isRelevant('_default/site/fonts/text.woff2', filter)).toBe(false)
+    expect(isRelevant('_default/site/fonts', filter)).toBe(false)
     // A folder is taken as it is
-    expect(isRelevant('default/site/images/logo', filter)).toBe(true)
+    expect(isRelevant('_default/site/images/logo', filter)).toBe(true)
   })
 })
 
@@ -151,7 +166,7 @@ describe('watchAssets()', () => {
 
   test('a change in the default brand builds the jobs of the app for every brand', async () => {
     const { root, out, next } = await watchFixture()
-    fs.writeFileSync(path.join(root, 'source/default/mobile/images/badge.png'), 'a new badge')
+    fs.writeFileSync(path.join(root, 'source/_default/mobile/images/badge.png'), 'a new badge')
 
     const build = await next()
     expect(build.jobs).toEqual([
@@ -160,7 +175,7 @@ describe('watchAssets()', () => {
       'ios/mobile/beta',
       'android/mobile/beta'
     ])
-    expect(build.changed).toEqual(['default/mobile/images/badge.png'])
+    expect(build.changed).toEqual(['_default/mobile/images/badge.png'])
     expect(read(out, 'ios/mobile/beta/images/badge.png')).toBe('a new badge')
     expect(read(out, 'android/mobile/alpha/images/drawable/badge.png')).toBe('a new badge')
   })
@@ -178,8 +193,8 @@ describe('watchAssets()', () => {
 
   test('a new file is in the output, and a file that is removed is gone from it', async () => {
     const { root, out, next } = await watchFixture()
-    fs.writeFileSync(path.join(root, 'source/default/site/images/NewImage.png'), 'new')
-    fs.rmSync(path.join(root, 'source/default/site/images/photo.jpg'))
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/NewImage.png'), 'new')
+    fs.rmSync(path.join(root, 'source/_default/site/images/photo.jpg'))
 
     const build = await next()
     expect(build.jobs).toEqual(['web/site/alpha', 'web/site/beta'])
@@ -199,20 +214,20 @@ describe('watchAssets()', () => {
   test('changes that come together are one build', async () => {
     const { root, next } = await watchFixture()
     for (const name of ['a.png', 'b.png', 'c.png']) {
-      fs.writeFileSync(path.join(root, 'source/default/site/images', name), name)
+      fs.writeFileSync(path.join(root, 'source/_default/site/images', name), name)
     }
     const build = await next()
     expect(build.changed).toEqual([
-      'default/site/images/a.png',
-      'default/site/images/b.png',
-      'default/site/images/c.png'
+      '_default/site/images/a.png',
+      '_default/site/images/b.png',
+      '_default/site/images/c.png'
     ])
   })
 
   test('a file of the ignore list builds nothing', async () => {
     const { root, next } = await watchFixture()
-    fs.writeFileSync(path.join(root, 'source/default/site/.DS_Store'), '')
-    fs.writeFileSync(path.join(root, 'source/default/site/images/photo.jpg~'), '')
+    fs.writeFileSync(path.join(root, 'source/_default/site/.DS_Store'), '')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/photo.jpg~'), '')
     await new Promise((resolve) => setTimeout(resolve, 400))
     fs.writeFileSync(path.join(root, 'source/alpha/site/images/marker.png'), 'marker')
 
@@ -224,19 +239,19 @@ describe('watchAssets()', () => {
 
   test('watches the jobs of its filters only', async () => {
     const { root, next } = await watchFixture({ brands: ['beta'], platforms: ['web'] })
-    fs.writeFileSync(path.join(root, 'source/default/mobile/images/badge.png'), 'ignored')
+    fs.writeFileSync(path.join(root, 'source/_default/mobile/images/badge.png'), 'ignored')
     fs.writeFileSync(path.join(root, 'source/alpha/site/images/alpha-only.png'), 'ignored')
     await new Promise((resolve) => setTimeout(resolve, 400))
-    fs.writeFileSync(path.join(root, 'source/default/site/images/photo.jpg'), 'watched')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/photo.jpg'), 'watched')
 
     const build = await next()
-    expect(build.changed).toEqual(['default/site/images/photo.jpg'])
+    expect(build.changed).toEqual(['_default/site/images/photo.jpg'])
     expect(build.jobs).toEqual(['web/site/beta'])
   })
 
   test('a build that fails is reported, and the watch goes on', async () => {
     const { root, out, next } = await watchFixture()
-    const file = path.join(root, 'source/default/site/images/photo.jpg')
+    const file = path.join(root, 'source/_default/site/images/photo.jpg')
     fs.writeFileSync(file, LFS_POINTER)
 
     const failed = await next()
@@ -252,7 +267,7 @@ describe('watchAssets()', () => {
   test('close() stops the watch', async () => {
     const { root, out } = await watchFixture()
     await watches[0].close()
-    fs.writeFileSync(path.join(root, 'source/default/site/images/photo.jpg'), 'after the end')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/photo.jpg'), 'after the end')
     await new Promise((resolve) => setTimeout(resolve, 400))
     expect(read(out, 'web/site/alpha/images/photo.jpg')).toBe(
       read(GOLDEN, 'web/site/alpha/images/photo.jpg')

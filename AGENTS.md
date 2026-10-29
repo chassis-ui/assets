@@ -61,8 +61,10 @@ broke them and was reverted.
   the build does the rest. Do not add a manifest, a declaration file or a list that has to be
   maintained beside the assets. A feature that needs input beyond the file tree is an option,
   off by default, and leaves the output of the default build untouched.
-- **The source layout stays.** `source/<brand>/<app>/<type>/`, `default` as the fallback brand,
-  a brand file over the default file of the same path. Any folder name is a type.
+- **The source layout stays.** `source/<brand>/<app>/<type>/`, `_default` as the fallback brand,
+  `_shared` beside the apps of a brand for the files of every app, a brand file over the default
+  file of the same path and an app file over the shared file. A name that starts with `_` is no
+  brand and no app (D36). Any folder name is a type.
 - **Every asset type the pages describe is kept.** Do not remove a file from `source/` because
   no consumer of today reads it. Removing an asset is the maintainer's decision.
 - **Add, do not replace.** The build in `packages/assets/build/` is the build. Do not rewrite
@@ -91,7 +93,7 @@ And these:
 - **Never edit `dist/` or `packages/assets/test/golden/` by hand.** Change the source or the
   build, then run `pnpm assets` or `pnpm test:golden`, and review the difference.
 - **Do not edit the copies of other projects.** `icons/icons/` and `icons/svgs/` under
-  `source/default/` are the build output of `@chassis-ui/icons`; refresh them by the steps of
+  `source/_default/` are the build output of `@chassis-ui/icons`; refresh them by the steps of
   [docs/architecture.md](docs/architecture.md#refreshing-the-icons). The sibling repositories
   are read, never edited; work for one is reported in its repository, not done from here.
 - **Keep the known oddities.** The list in

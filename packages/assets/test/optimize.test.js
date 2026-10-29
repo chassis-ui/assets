@@ -86,15 +86,15 @@ function root(optimize) {
     })
   )
   for (const app of ['site', 'mobile']) {
-    const folder = path.join(dir, 'source/default', app)
+    const folder = path.join(dir, 'source/_default', app)
     fs.mkdirSync(path.join(folder, 'images/logo'), { recursive: true })
     for (const [name, content] of Object.entries(images)) {
       fs.writeFileSync(path.join(folder, 'images', name), content)
     }
     fs.writeFileSync(path.join(folder, 'images/logo/mark.png'), images['kept.png'])
   }
-  fs.mkdirSync(path.join(dir, 'source/default/site/icons'))
-  fs.writeFileSync(path.join(dir, 'source/default/site/icons/star.png'), images['kept.png'])
+  fs.mkdirSync(path.join(dir, 'source/_default/site/icons'))
+  fs.writeFileSync(path.join(dir, 'source/_default/site/icons/star.png'), images['kept.png'])
   return dir
 }
 

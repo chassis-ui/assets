@@ -115,7 +115,7 @@ dist/android/<app>/<brand>/
             └── welcome_light.png
 ```
 
-A file of `source/<brand>/<app>/<type>/` or `source/default/<app>/<type>/` is under `<type>/` of the job, in the same subfolders, with its name in snake_case, so a path is the same in every brand that has the file. To find the name of a file, list the output of the job: `find dist/android/demo/chassis -name 'hero_banner*'`.
+A file of `source/<brand>/<app>/<type>/` or `source/_default/<app>/<type>/`, or of the `_shared/<type>/` folder of either brand, is under `<type>/` of the job, in the same subfolders, with its name in snake_case, so a path is the same in every brand that has the file. To find the name of a file, list the output of the job: `find dist/android/demo/chassis -name 'hero_banner*'`.
 
 ### Res folder
 

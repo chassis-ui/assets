@@ -27,11 +27,11 @@ never touches `dist/` or `source/`.
 
 ## The fixture
 
-| Brand   | Folder in `source/`                | What it tests                                       |
-| ------- | ---------------------------------- | --------------------------------------------------- |
-| default | `default/site/`, `default/mobile/` | The fallback of every brand                         |
-| `alpha` | `alpha/site/`, `alpha/mobile/`     | An override of a default file, and files of its own |
-| `beta`  | none                               | A brand that builds from `default` alone            |
+| Brand   | Folder in `source/`                                       | What it tests                                                                            |
+| ------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| default | `_default/_shared/`, `_default/site/`, `_default/mobile/` | The fallback of every brand, with a file every app gets                                  |
+| `alpha` | `alpha/_shared/`, `alpha/site/`, `alpha/mobile/`          | An override of a default file, files of its own, and a shared file that one app replaces |
+| `beta`  | none                                                      | A brand that builds from `_default` alone                                                |
 
 The apps are `site`, built for the web, and `mobile`, built for iOS and Android: six jobs.
 Between them the fixture has a font in four formats with its stylesheet and its license, a
@@ -40,7 +40,12 @@ image folder (`images/logo/`), icons in SVG, PDF and PNG with an icon font and i
 stylesheet, a nested icon folder (`icons/svgs/`), an icon that already has `ic_`, and a folder
 that is not one of the three types (`data/`) with a dot inside a name.
 
-`default/site/images/logo/mark.svg` and `default/mobile/images/logo/mark.svg` have the same
+The shared folders hold the order of the folders a job reads: `_default/_shared/data/notice.txt`
+is in every job, `alpha/_shared/data/notice.txt` replaces it in every job of `alpha`, and
+`alpha/_shared/images/logo/mark.svg` replaces the logo of `_default/mobile/` in the `mobile`
+jobs of `alpha` and gives way to `alpha/site/images/logo/mark.svg` in its `site` job.
+
+`_default/site/images/logo/mark.svg` and `_default/mobile/images/logo/mark.svg` have the same
 content, so that the analyzer has one duplicate to find. The Git LFS pointer is not in the
 fixture: the test that needs it writes one into a copy, so that the golden output stays the
 output of a build with the default options. The same goes for the real SVG icons that the

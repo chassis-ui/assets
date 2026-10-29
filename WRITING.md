@@ -116,24 +116,25 @@ Prefer active voice, with the actor named: the build, the processor, the platfor
 
 The project has one word for each concept. Using a synonym makes the reader wonder whether it's a second concept.
 
-| Use           | For                                                                                       | Not                                          |
-| ------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
-| brand         | A name of `chassis.build.brands`, and its folder in `source/`                             | product, tenant, theme                       |
-| default brand | The fallback folder of `source/`, `default` unless `chassis.defaults.brandFolder` says so | base, shared, common                         |
-| app           | A key of `chassis.build.apps`, and its folder under a brand                               | project, application (except in page titles) |
-| type          | A folder under an app: `fonts`, `images`, `icons`, or any other name                      | category, kind                               |
-| platform      | A build target: `web`, `ios`, `android`                                                   | target, output format                        |
-| job           | One brand, one app and one platform: the folder `dist/<platform>/<app>/<brand>/`          | combination, build, target                   |
-| source        | The files under `source/`                                                                 | input, originals                             |
-| output        | The files under `dist/`                                                                   | distribution (except in the name of a check) |
-| variant       | A file exported at another resolution, `@2x` or `@3x`                                     | version, size                                |
-| indicator     | The `@2x` or `@3x` at the end of a name                                                   | suffix, scale                                |
-| density       | An Android density folder, `drawable-xhdpi/`                                              | resolution, bucket                           |
-| override      | A brand file that replaces the default file of the same path                              | overwrite, customization                     |
-| processor     | The module of a platform in `packages/assets/build/processors/`                           | plugin, transformer                          |
-| the build     | The build in `packages/assets/build/`, `pnpm assets`                                      | the pipeline, the generator, the script      |
-| consumer      | A site or an app that reads the output                                                    | client, user                                 |
-| contract      | The files a consumer reads by name, in `chassis.checks.json`                              | manifest, requirements                       |
+| Use           | For                                                                                        | Not                                          |
+| ------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| brand         | A name of `chassis.build.brands`, and its folder in `source/`                              | product, tenant, theme                       |
+| default brand | The fallback folder of `source/`, `_default` unless `chassis.defaults.brandFolder` says so | base, common                                 |
+| shared folder | The `_shared` folder of a brand, beside its apps, whose files every app of the brand gets  | common, global                               |
+| app           | A key of `chassis.build.apps`, and its folder under a brand                                | project, application (except in page titles) |
+| type          | A folder under an app: `fonts`, `images`, `icons`, or any other name                       | category, kind                               |
+| platform      | A build target: `web`, `ios`, `android`                                                    | target, output format                        |
+| job           | One brand, one app and one platform: the folder `dist/<platform>/<app>/<brand>/`           | combination, build, target                   |
+| source        | The files under `source/`                                                                  | input, originals                             |
+| output        | The files under `dist/`                                                                    | distribution (except in the name of a check) |
+| variant       | A file exported at another resolution, `@2x` or `@3x`                                      | version, size                                |
+| indicator     | The `@2x` or `@3x` at the end of a name                                                    | suffix, scale                                |
+| density       | An Android density folder, `drawable-xhdpi/`                                               | resolution, bucket                           |
+| override      | A brand file that replaces the default file of the same path                               | overwrite, customization                     |
+| processor     | The module of a platform in `packages/assets/build/processors/`                            | plugin, transformer                          |
+| the build     | The build in `packages/assets/build/`, `pnpm assets`                                       | the pipeline, the generator, the script      |
+| consumer      | A site or an app that reads the output                                                     | client, user                                 |
+| contract      | The files a consumer reads by name, in `chassis.checks.json`                               | manifest, requirements                       |
 
 **The build copies.** It copies, renames and sorts files into folders. It does not convert, resize, optimize or generate anything, so don't use those words for it. An image has the variants the designer exported.
 

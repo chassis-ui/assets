@@ -56,8 +56,10 @@ added there is in the output of the next build, and no list has to be updated. T
 [design guidelines](https://chassis-ui.com/assets/docs/getting-started/design-guidelines/)
 have the naming conventions and the formats of each asset type.
 
-1. Add, replace or remove the files. A file under `source/default/` goes to every brand; a
-   file under `source/<brand>/` replaces the default file of the same path for that brand.
+1. Add, replace or remove the files. A file under `source/_default/` goes to every brand; a
+   file under `source/<brand>/` replaces the default file of the same path for that brand. A
+   file under the `_shared/` folder of a brand, beside its apps, goes to every app of the
+   brand, and a file of an app replaces the shared file of the same path.
 2. Check the names and the layout, build, and verify the output:
 
    ```sh

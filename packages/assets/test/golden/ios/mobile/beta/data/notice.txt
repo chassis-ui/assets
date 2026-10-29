@@ -1,0 +1,1 @@
+fixture: _default/_shared/data/notice.txt

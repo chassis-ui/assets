@@ -82,20 +82,22 @@ dist/
 A file added to `source/` is in the output of the next build. No list or configuration names it.
 
 1. Export the file from the design tool, named in lowercase with hyphens.
-2. Put it in `source/default/<app>/<type>/` when every brand gets it, or in `source/<brand>/<app>/<type>/` when it belongs to one brand.
+2. Put it in `source/_default/<app>/<type>/` when every brand gets it, or in `source/<brand>/<app>/<type>/` when it belongs to one brand. Use `_shared` in place of `<app>` when every app gets it.
 3. Run `pnpm assets:lint:source` to check the name, and `pnpm assets` to build.
 4. Find the file in `dist/`, under the name of each platform.
 5. Commit the file of `source/` with a changeset from `pnpm changeset`.
 
 ```text
 source/
-├── default/              -> the default brand, used by every brand
+├── _default/             -> the default brand, used by every brand
+│   ├── _shared/          -> the files of every app
 │   └── <app>/            -> an app of the configuration
 │       ├── fonts/
 │       ├── icons/
 │       ├── images/
 │       └── <folder>/     -> any other folder is a type too
 └── <brand>/              -> a brand: the files that differ
+    ├── _shared/
     └── <app>/
         └── <type>/
 ```
@@ -130,7 +132,7 @@ Name your brands and apps in the `chassis` block of `package.json`. Each app lis
 {
   "chassis": {
     "defaults": {
-      "brandFolder": "default"
+      "brandFolder": "_default"
     },
     "build": {
       "brands": ["chassis", "sinefil"],
@@ -143,7 +145,7 @@ Name your brands and apps in the `chassis` block of `package.json`. Each app lis
 }
 ```
 
-Then give `source/` the same names: a folder per app under `source/default/`, and a folder per brand for the files that differ. See [configuration]([[docsref:/getting-started/build-system#configuration]]).
+Then give `source/` the same names: a folder per app under `source/_default/`, and a folder per brand for the files that differ. See [configuration]([[docsref:/getting-started/build-system#configuration]]).
 
 ### Checks
 

@@ -2,7 +2,13 @@ import fs from 'fs'
 import path from 'path'
 import ChassisAssets from './api/index.js'
 import { catalogPath } from './asset-catalog.js'
-import { resolveFormats, resolveIgnore, shouldIgnoreFile } from './build-assets.js'
+import {
+  BRAND_FOLDER,
+  resolveFormats,
+  resolveIgnore,
+  shouldIgnoreFile,
+  sourceLayers
+} from './build-assets.js'
 import { formatName } from './optimize.js'
 import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
 import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
@@ -253,36 +259,25 @@ class DistValidator {
    * @returns {string[]} Array of asset type folder names
    */
   getAssetTypesInSource(brand, app) {
-    const assetTypes = []
-    const defaultBrandFolder = this.api.config.defaults?.brandFolder || 'default'
+    /** @type {Set<string>} */
+    const assetTypes = new Set()
+    const defaultBrandFolder = this.api.config.defaults?.brandFolder || BRAND_FOLDER
 
-    // Check brand-specific source first, then fall back to default
-    const brandPath = path.join(this.sourceDir, brand, app)
-    const defaultPath = path.join(this.sourceDir, defaultBrandFolder, app)
+    // The type folders of every folder the job reads: the default brand and the brand, each
+    // with its shared folder
+    for (const layer of sourceLayers(defaultBrandFolder, brand, app)) {
+      const sourcePath = path.join(this.sourceDir, layer)
+      if (!fs.existsSync(sourcePath)) continue
 
-    const sourcePath = fs.existsSync(brandPath)
-      ? brandPath
-      : fs.existsSync(defaultPath)
-        ? defaultPath
-        : null
-
-    if (!sourcePath || !fs.existsSync(sourcePath)) {
-      return assetTypes
-    }
-
-    const items = fs.readdirSync(sourcePath)
-    for (const item of items) {
-      if (shouldIgnoreFile(item, this.ignore)) continue
-
-      const itemPath = path.join(sourcePath, item)
-      const stat = fs.statSync(itemPath)
-
-      if (stat.isDirectory()) {
-        assetTypes.push(item)
+      for (const item of fs.readdirSync(sourcePath)) {
+        if (shouldIgnoreFile(item, this.ignore)) continue
+        if (fs.statSync(path.join(sourcePath, item)).isDirectory()) {
+          assetTypes.add(item)
+        }
       }
     }
 
-    return assetTypes
+    return [...assetTypes]
   }
 
   /**
@@ -321,7 +316,7 @@ class DistValidator {
 
     const brands = this.api.getBrands()
     const apps = this.api.getApps()
-    const defaultBrandFolder = this.api.config.defaults?.brandFolder || 'default'
+    const defaultBrandFolder = this.api.config.defaults?.brandFolder || BRAND_FOLDER
 
     let missingFiles = 0
     const missingDetails = []
@@ -331,7 +326,7 @@ class DistValidator {
         // Get platforms for this app
         const platforms = this.api.getPlatforms(app)
 
-        // Collect source files from both brand and default folders
+        // Collect source files from the brand and the default folders, with their shared folders
         const sourceFiles = this.collectSourceFiles(brand, app, defaultBrandFolder)
 
         // For each platform, check if files exist in dist
@@ -484,30 +479,25 @@ class DistValidator {
   collectSourceFiles(brand, app, defaultBrandFolder) {
     const files = []
 
-    // Check brand-specific source first
-    const brandPath = path.join(this.sourceDir, brand, app)
-    const defaultPath = path.join(this.sourceDir, defaultBrandFolder, app)
+    // From the folder that wins to the last fallback: the brand app, the brand shared folder,
+    // the default app, the default shared folder
+    for (const layer of sourceLayers(defaultBrandFolder, brand, app).reverse()) {
+      const layerPath = path.join(this.sourceDir, layer)
+      if (!fs.existsSync(layerPath)) continue
 
-    // Collect from brand-specific folder (overrides)
-    if (fs.existsSync(brandPath)) {
-      this.collectFilesRecursive(brandPath, '', files)
-    }
+      const layerFiles = []
+      this.collectFilesRecursive(layerPath, '', layerFiles)
 
-    // Collect from default folder (base files)
-    if (fs.existsSync(defaultPath)) {
-      const defaultFiles = []
-      this.collectFilesRecursive(defaultPath, '', defaultFiles)
-
-      // Only add default files that aren't already in brand overrides
-      for (const defaultFile of defaultFiles) {
+      // Only add the files that a folder before it does not replace
+      for (const layerFile of layerFiles) {
         const alreadyExists = files.some(
           (f) =>
-            f.assetType === defaultFile.assetType &&
-            f.subFolder === defaultFile.subFolder &&
-            f.filename === defaultFile.filename
+            f.assetType === layerFile.assetType &&
+            f.subFolder === layerFile.subFolder &&
+            f.filename === layerFile.filename
         )
         if (!alreadyExists) {
-          files.push(defaultFile)
+          files.push(layerFile)
         }
       }
     }

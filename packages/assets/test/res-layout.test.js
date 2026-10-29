@@ -300,6 +300,7 @@ describe('generateAssets() with res', () => {
     ])
     expect(listFiles(path.join(moved.out, 'android/mobile/alpha'))).toEqual([
       'data/brand_tokens.json',
+      'data/notice.txt',
       'fonts/text.otf',
       'fonts/text_license.txt',
       'icons/ic_arrow_right.svg',
@@ -346,7 +347,7 @@ describe('generateAssets() with res', () => {
 
   test('with vectorDrawables, the icons are in res/drawable/', async () => {
     const root = copyFixture()
-    const icons = path.join(root, 'source/default/mobile/icons')
+    const icons = path.join(root, 'source/_default/mobile/icons')
     for (const file of ['arrow-right.svg', 'ic_close.svg', 'svgs/check_mark.svg']) {
       fs.writeFileSync(path.join(icons, file), ARROW)
     }

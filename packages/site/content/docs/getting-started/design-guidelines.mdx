@@ -22,21 +22,30 @@ Every file has a brand, an app and a type, and its path says all three.
 
 ```text
 source/
-├── default/          -> the default brand: files that every brand gets
+├── _default/         -> the default brand: files that every brand gets
+│   ├── _shared/      -> files that every app gets
+│   │   └── <type>/
 │   └── <app>/        -> one folder per app
 │       └── <type>/   -> fonts, images, icons, or any other folder
 └── <brand>/          -> one folder per brand: only the files that differ
+    ├── _shared/      -> files that every app of the brand gets
+    │   └── <type>/
     └── <app>/
         └── <type>/
 ```
 
-The brands and the apps are those of the `chassis` block of `package.json`. A folder that the configuration does not name is not read by the build, and the source lint warns about it.
+The brands and the apps are those of the `chassis` block of `package.json`. A folder that the configuration does not name is not read by the build, and the source lint warns about it. A name that starts with `_` is no brand and no app: `_default` is the default brand, and `_shared` is the folder of a brand for the files of all its apps.
 
 ### Overrides
 
-A brand file replaces the default file of the same path. For each brand, the build takes the files of `source/default/<app>/` first and then the files of `source/<brand>/<app>/` over them.
+A brand file replaces the default file of the same path, and the file of an app replaces the shared file of the same path. For each brand and app, the build takes the files of four folders, each over the one before:
 
-Add a file to a brand only when it differs from the default one. A logo that every brand shares belongs in `source/default/`, once, and a brand with a logo of its own adds a file with the same subfolder and the same name to its folder.
+1. `source/_default/_shared/`
+2. `source/_default/<app>/`
+3. `source/<brand>/_shared/`
+4. `source/<brand>/<app>/`
+
+Add a file to a brand only when it differs from the default one. A logo that every brand shares belongs in `source/_default/`, once, and a brand with a logo of its own adds a file with the same subfolder and the same name to its folder. A file that every app of a brand uses, such as its fonts, belongs in `_shared/` of the brand, once, rather than in the folder of each app.
 
 ## Naming
 
@@ -117,7 +126,7 @@ git checkout -b feature/onboarding-assets develop
 pnpm assets:lint:source
 pnpm assets
 pnpm changeset
-git add source/default/docs/images/onboarding.svg .changeset
+git add source/_default/docs/images/onboarding.svg .changeset
 git commit -m "feat: add the onboarding illustration"
 git push origin feature/onboarding-assets
 ```

@@ -240,15 +240,15 @@ describe('pnpm assets:lint:source', () => {
   test('exits 1 on the fixture, whose names break the rules on purpose, and names them', () => {
     const { code, stdout, stderr } = run(LINT_SOURCE_CLI, [])
     expect(code).toBe(1)
-    expect(stderr).toContain('source/default/site/images/HeroBanner.png has the name "HeroBanner"')
-    expect(stdout).toContain('42 files checked: 7 error(s), 0 warning(s)')
+    expect(stderr).toContain('source/_default/site/images/HeroBanner.png has the name "HeroBanner"')
+    expect(stdout).toContain('45 files checked: 7 error(s), 0 warning(s)')
   })
 
   test('exits 0 on a source that keeps the rules', () => {
     const root = tempDir()
     fs.copyFileSync(path.join(FIXTURE, 'package.json'), path.join(root, 'package.json'))
-    fs.mkdirSync(path.join(root, 'source/default/site/images'), { recursive: true })
-    fs.writeFileSync(path.join(root, 'source/default/site/images/hero-banner@2x.png'), 'png')
+    fs.mkdirSync(path.join(root, 'source/_default/site/images'), { recursive: true })
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/hero-banner@2x.png'), 'png')
     const { code, stdout } = run(LINT_SOURCE_CLI, ['--cwd', root])
     expect(code).toBe(0)
     expect(stdout).toContain('1 files checked: 0 error(s), 0 warning(s)')

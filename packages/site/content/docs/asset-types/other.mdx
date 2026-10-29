@@ -16,7 +16,7 @@ A folder of any name lives beside the three known types, in `source/<brand>/<app
 
 ```text
 source/
-├── default/
+├── _default/
 │   └── <app>/
 │       ├── fonts/
 │       ├── images/
@@ -58,8 +58,8 @@ Keep resolution variants under `images/`. In any other folder the Android output
 Create the folder under the app, put the files in it, and run the build. No configuration names the folder.
 
 ```bash
-mkdir -p source/default/docs/videos
-cp onboarding-intro.mp4 source/default/docs/videos/
+mkdir -p source/_default/docs/videos
+cp onboarding-intro.mp4 source/_default/docs/videos/
 pnpm assets
 ```
 

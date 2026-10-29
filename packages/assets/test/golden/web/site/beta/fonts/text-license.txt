@@ -1,1 +1,1 @@
-fixture: default/site/fonts/text-license.txt
+fixture: _default/site/fonts/text-license.txt

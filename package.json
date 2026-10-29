@@ -11,7 +11,7 @@
   "license": "MIT",
   "chassis": {
     "defaults": {
-      "brandFolder": "default"
+      "brandFolder": "_default"
     },
     "build": {
       "brands": [

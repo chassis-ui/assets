@@ -19,13 +19,15 @@ import {
   hasAllowedExtension,
   isExcluded,
   isLfsPointer,
+  isReservedName,
   keepsFile,
   loadConfig,
   parseArgs,
   planJobs,
   resolveFormats,
   resolveIgnore,
-  shouldIgnoreFile
+  shouldIgnoreFile,
+  sourceLayers
 } from '../build/build-assets.js'
 import { lfsInclude } from '../build/lfs-include.js'
 import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
@@ -73,6 +75,36 @@ function withChassis(block) {
   fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify(pkg))
   return root
 }
+
+describe('sourceLayers()', () => {
+  test('the default brand, then the brand, each shared folder before the app', () => {
+    expect(sourceLayers('_default', 'alpha', 'site')).toEqual([
+      '_default/_shared',
+      '_default/site',
+      'alpha/_shared',
+      'alpha/site'
+    ])
+  })
+
+  test('the default brand once, when it is the brand', () => {
+    expect(sourceLayers('_default', '_default', 'site')).toEqual([
+      '_default/_shared',
+      '_default/site'
+    ])
+  })
+})
+
+describe('isReservedName()', () => {
+  test.each([
+    ['_default', true],
+    ['_shared', true],
+    ['_', true],
+    ['default', false],
+    ['alpha_beta', false]
+  ])('%s is %s', (name, reserved) => {
+    expect(isReservedName(name)).toBe(reserved)
+  })
+})
 
 describe('shouldIgnoreFile()', () => {
   test.each([
@@ -332,7 +364,7 @@ describe('loadConfig()', () => {
     expect(loadConfig(FIXTURE)).toEqual({
       brands: ['alpha', 'beta'],
       apps: { site: ['web'], mobile: ['ios', 'android'] },
-      brandFolder: 'default',
+      brandFolder: '_default',
       contracts: [
         expect.objectContaining({ job: 'web/site/alpha', files: expect.any(Array) }),
         expect.objectContaining({ job: 'web/site/alpha', sets: expect.any(Array) })
@@ -362,13 +394,13 @@ describe('loadConfig()', () => {
     )
   })
 
-  test('defaults the fallback brand folder to default', () => {
+  test('defaults the fallback brand folder to _default', () => {
     const dir = tempDir()
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'x' }))
     expect(loadConfig(dir)).toMatchObject({
       brands: [],
       apps: {},
-      brandFolder: 'default',
+      brandFolder: '_default',
       contracts: [],
       lintAllow: []
     })
@@ -502,13 +534,13 @@ describe('generateAssets()', () => {
       read(source, 'alpha/site/images/logo/mark.svg')
     )
     expect(read(out, 'web/site/beta/images/logo/mark.svg')).toBe(
-      read(source, 'default/site/images/logo/mark.svg')
+      read(source, '_default/site/images/logo/mark.svg')
     )
     expect(read(out, 'android/mobile/alpha/images/logo/drawable-xhdpi/mark.png')).toBe(
       read(source, 'alpha/mobile/images/logo/mark@2x.png')
     )
     expect(read(out, 'ios/mobile/beta/images/logo/mark@2x.png')).toBe(
-      read(source, 'default/mobile/images/logo/mark@2x.png')
+      read(source, '_default/mobile/images/logo/mark@2x.png')
     )
   })
 
@@ -520,6 +552,54 @@ describe('generateAssets()', () => {
     expect(fs.existsSync(path.join(out, 'ios/mobile/beta/fonts/display.ttf'))).toBe(false)
   })
 
+  test('a shared file goes to every app of its brand, under the files of the app', async () => {
+    const { out } = await build()
+    const source = path.join(FIXTURE, 'source')
+    // The shared folder of the default brand reaches every brand and app
+    for (const job of ['web/site/beta', 'ios/mobile/beta', 'android/mobile/beta']) {
+      expect(read(out, `${job}/data/notice.txt`)).toBe(
+        read(source, '_default/_shared/data/notice.txt')
+      )
+    }
+    // The shared folder of a brand wins over the default brand, in every app
+    for (const job of ['web/site/alpha', 'ios/mobile/alpha', 'android/mobile/alpha']) {
+      expect(read(out, `${job}/data/notice.txt`)).toBe(
+        read(source, 'alpha/_shared/data/notice.txt')
+      )
+    }
+    expect(read(out, 'ios/mobile/alpha/images/logo/mark.svg')).toBe(
+      read(source, 'alpha/_shared/images/logo/mark.svg')
+    )
+    expect(read(out, 'android/mobile/alpha/images/logo/drawable/mark.svg')).toBe(
+      read(source, 'alpha/_shared/images/logo/mark.svg')
+    )
+    // An app file of the brand wins over its shared file
+    expect(read(out, 'web/site/alpha/images/logo/mark.svg')).toBe(
+      read(source, 'alpha/site/images/logo/mark.svg')
+    )
+    // A shared folder is no app, and no output folder is named after it
+    expect(fs.existsSync(path.join(out, 'web/_shared'))).toBe(false)
+  })
+
+  test('a default brand with a shared folder and no folder for an app builds the app', async () => {
+    const root = copyFixture()
+    fs.rmSync(path.join(root, 'source/_default/site'), { recursive: true })
+    const { out, stats } = await build({ cwd: root, apps: ['site'] })
+    expect(stats.errors).toEqual([])
+    expect(listFiles(path.join(out, 'web/site/beta'))).toEqual(['data/notice.txt'])
+  })
+
+  test('a default brand without the app and without a shared folder is an error', async () => {
+    const root = copyFixture()
+    fs.rmSync(path.join(root, 'source/_default/site'), { recursive: true })
+    fs.rmSync(path.join(root, 'source/_default/_shared'), { recursive: true })
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    await expect(build({ cwd: root, apps: ['site'] })).rejects.toThrow(
+      'Default source path does not exist: source/_default/site'
+    )
+  })
+
   test('the source is not changed', async () => {
     const before = listFiles(path.join(FIXTURE, 'source'))
     await build()
@@ -528,11 +608,22 @@ describe('generateAssets()', () => {
 
   test('fails for a configuration without the default brand folder', async () => {
     const root = copyFixture()
-    fs.rmSync(path.join(root, 'source/default'), { recursive: true })
+    fs.rmSync(path.join(root, 'source/_default'), { recursive: true })
     vi.spyOn(console, 'error').mockImplementation(() => {})
     await expect(build({ cwd: root })).rejects.toThrow(
-      'Default brand folder does not exist: source/default'
+      'Default brand folder does not exist: source/_default'
     )
+  })
+
+  test.each([
+    [{ brands: ['alpha', '_beta'] }, 'The brand "_beta" starts with _'],
+    [{ apps: { site: ['web'], _shared: ['web'] } }, 'The app "_shared" starts with _']
+  ])('fails for a reserved name in chassis.build: %j', async (block, message) => {
+    const root = copyFixture()
+    const pkg = JSON.parse(read(root, 'package.json'))
+    Object.assign(pkg.chassis.build, block)
+    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify(pkg))
+    await expect(build({ cwd: root })).rejects.toThrow(message)
   })
 
   test('fails for a platform without a processor', async () => {
@@ -551,8 +642,8 @@ describe('generateAssets()', () => {
 
   test('warns when two files are renamed to the same name', async () => {
     const root = copyFixture()
-    fs.writeFileSync(path.join(root, 'source/default/site/images/my_icon.png'), 'one')
-    fs.writeFileSync(path.join(root, 'source/default/site/images/my icon.png'), 'two')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/my_icon.png'), 'one')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/my icon.png'), 'two')
     const { out, stats } = await build({ cwd: root, apps: ['site'], brands: ['beta'] })
     expect(stats.warnings).toHaveLength(1)
     expect(stats.warnings[0]).toMatch(/^Filename collision: "my[ _]icon\.png" → "my-icon\.png"/)
@@ -561,8 +652,8 @@ describe('generateAssets()', () => {
 
   test('warns when a renamed file takes the name of a file that keeps its name', async () => {
     const root = copyFixture()
-    fs.writeFileSync(path.join(root, 'source/default/site/images/my-icon.png'), 'one')
-    fs.writeFileSync(path.join(root, 'source/default/site/images/My Icon.png'), 'two')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/my-icon.png'), 'one')
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/My Icon.png'), 'two')
     const { out, stats } = await build({ cwd: root, apps: ['site'], brands: ['beta'] })
     expect(stats.warnings).toHaveLength(1)
     expect(stats.warnings[0]).toMatch(/^Filename collision: ".+" → "my-icon\.png" \(conflicts with/)
@@ -572,8 +663,8 @@ describe('generateAssets()', () => {
 
   test('warns when Android drops the indicator of two variants outside images/', async () => {
     const root = copyFixture()
-    fs.writeFileSync(path.join(root, 'source/default/mobile/data/poster.png'), 'one')
-    fs.writeFileSync(path.join(root, 'source/default/mobile/data/poster@2x.png'), 'two')
+    fs.writeFileSync(path.join(root, 'source/_default/mobile/data/poster.png'), 'one')
+    fs.writeFileSync(path.join(root, 'source/_default/mobile/data/poster@2x.png'), 'two')
     const { out, stats } = await build({ cwd: root, apps: ['mobile'], brands: ['beta'] })
     // iOS keeps the indicator, so only the Android job has a collision
     expect(stats.warnings).toHaveLength(1)
@@ -584,8 +675,8 @@ describe('generateAssets()', () => {
 
   test('warns when two Android images meet in one density folder', async () => {
     const root = copyFixture()
-    fs.writeFileSync(path.join(root, 'source/default/mobile/images/Side Bar@2x.png'), 'one')
-    fs.writeFileSync(path.join(root, 'source/default/mobile/images/side-bar@2x.png'), 'two')
+    fs.writeFileSync(path.join(root, 'source/_default/mobile/images/Side Bar@2x.png'), 'one')
+    fs.writeFileSync(path.join(root, 'source/_default/mobile/images/side-bar@2x.png'), 'two')
     const { stats } = await build({ cwd: root, apps: ['mobile'], platforms: ['android'] })
     // Once per brand
     expect(stats.warnings).toHaveLength(2)
@@ -654,8 +745,8 @@ describe('chassis.ignore and chassis.formats', () => {
     expect(validator.errors).toEqual([])
 
     const paths = lfsInclude({ cwd: root, apps: ['site'], types: ['fonts', 'images'] })
-    expect(paths).toContain('source/default/site/fonts/text.ttf')
-    expect(paths).not.toContain('source/default/site/fonts/text.woff')
+    expect(paths).toContain('source/_default/site/fonts/text.ttf')
+    expect(paths).not.toContain('source/_default/site/fonts/text.woff')
     expect(paths.join(',')).not.toContain('photo')
   })
 
@@ -667,7 +758,7 @@ describe('chassis.ignore and chassis.formats', () => {
       'chassis.formats is not valid:\n  - "fonts" of "web" is a list of extensions'
     )
     await expect(
-      build({ cwd: withChassis({ ignore: ['source/default'] }), out: 'dist' })
+      build({ cwd: withChassis({ ignore: ['source/_default'] }), out: 'dist' })
     ).rejects.toThrow('chassis.ignore is not valid')
     expect(read(root, 'dist/keep.txt')).toBe('kept')
   })
@@ -722,14 +813,14 @@ describe('dry run', () => {
     const { stats } = await build({ out, dryRun: true })
     expect(fs.existsSync(out)).toBe(false)
     expect(stats.jobs).toEqual([
-      // The files of the output: the brand has one file of its own per job, and its
-      // override of a default file is counted once
-      { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 1 },
-      { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 },
-      { brand: 'alpha', app: 'mobile', platform: 'android', files: 15 + 1 },
-      { brand: 'beta', app: 'site', platform: 'web', files: 16 },
-      { brand: 'beta', app: 'mobile', platform: 'ios', files: 16 },
-      { brand: 'beta', app: 'mobile', platform: 'android', files: 15 }
+      // The files of the output: the default brand has one shared file, the brand has one
+      // file of its own per job, and a file that replaces another is counted once
+      { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 1 + 1 },
+      { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 + 1 },
+      { brand: 'alpha', app: 'mobile', platform: 'android', files: 15 + 1 + 1 },
+      { brand: 'beta', app: 'site', platform: 'web', files: 16 + 1 },
+      { brand: 'beta', app: 'mobile', platform: 'ios', files: 16 + 1 },
+      { brand: 'beta', app: 'mobile', platform: 'android', files: 15 + 1 }
     ])
   })
 
@@ -744,7 +835,7 @@ describe('dry run', () => {
 describe('Git LFS pointers', () => {
   function withPointer() {
     const root = copyFixture()
-    fs.writeFileSync(path.join(root, 'source/default/site/images/pointer.png'), LFS_POINTER)
+    fs.writeFileSync(path.join(root, 'source/_default/site/images/pointer.png'), LFS_POINTER)
     return root
   }
 
@@ -753,7 +844,7 @@ describe('Git LFS pointers', () => {
     const error = await build({ cwd: withPointer() }).catch((e) => e)
     expect(error).toBeInstanceOf(Error)
     expect(error.message).toContain('are Git LFS pointers')
-    expect(error.message).toContain('source/default/site/images/pointer.png')
+    expect(error.message).toContain('source/_default/site/images/pointer.png')
     expect(error.message).toContain('git lfs pull')
     expect(error.message).toContain('--allow-lfs-pointers')
   })

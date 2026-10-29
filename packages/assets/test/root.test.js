@@ -19,7 +19,7 @@ describe('findRoot()', () => {
   })
 
   test('the root is found from a folder below it', () => {
-    expect(findRoot(path.join(FIXTURE, 'source', 'default', 'site', 'images'))).toBe(FIXTURE)
+    expect(findRoot(path.join(FIXTURE, 'source', '_default', 'site', 'images'))).toBe(FIXTURE)
   })
 
   test('a package.json without a chassis block is passed over', () => {

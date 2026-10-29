@@ -27,16 +27,16 @@ function analyze(options = {}) {
 
 describe('AssetAnalyzer', () => {
   test('the fixture is what the counts below assume', () => {
-    expect(SOURCE_FILES).toBe(42)
-    expect(GOLDEN_FILES).toBe(97)
+    expect(SOURCE_FILES).toBe(45)
+    expect(GOLDEN_FILES).toBe(103)
   })
 
   test('counts source/ and the output together', () => {
     const stats = analyze()
     expect(stats.totalFiles).toBe(SOURCE_FILES + GOLDEN_FILES)
-    expect(stats.platforms).toEqual({ android: 31, ios: 33, web: 33 })
-    expect(stats.apps).toEqual({ mobile: 64, site: 33 })
-    expect(stats.brands).toEqual({ alpha: 50, beta: 47 })
+    expect(stats.platforms).toEqual({ android: 33, ios: 35, web: 35 })
+    expect(stats.apps).toEqual({ mobile: 68, site: 35 })
+    expect(stats.brands).toEqual({ alpha: 53, beta: 50 })
     expect(stats.fileTypes['.webp']).toBe(2 + 4)
     expect(stats.fileTypes['.woff']).toBe(1 + 2)
     expect(stats.filtered).toBe(false)
@@ -56,8 +56,8 @@ describe('AssetAnalyzer', () => {
     expect(
       group.paths.map((p) => path.relative(FIXTURE, p).split(path.sep).join('/')).sort()
     ).toEqual([
-      'source/default/mobile/images/logo/mark.svg',
-      'source/default/site/images/logo/mark.svg'
+      'source/_default/mobile/images/logo/mark.svg',
+      'source/_default/site/images/logo/mark.svg'
     ])
   })
 
@@ -65,8 +65,8 @@ describe('AssetAnalyzer', () => {
     const root = tempDir()
     fs.cpSync(FIXTURE, root, { recursive: true })
     fs.copyFileSync(
-      path.join(root, 'source/default/site/images/photo.jpg'),
-      path.join(root, 'source/default/site/images/photo-copy.jpg')
+      path.join(root, 'source/_default/site/images/photo.jpg'),
+      path.join(root, 'source/_default/site/images/photo-copy.jpg')
     )
     const stats = analyze({ cwd: root, out: 'missing' })
     expect(stats.duplicatesInSource).toHaveLength(2)
@@ -81,12 +81,12 @@ describe('AssetAnalyzer', () => {
   })
 
   test.each([
-    [{ platforms: ['web'] }, { web: 33 }],
-    [{ platforms: ['ios', 'android'] }, { android: 31, ios: 33 }],
-    [{ brands: ['beta'] }, { android: 15, ios: 16, web: 16 }],
+    [{ platforms: ['web'] }, { web: 35 }],
+    [{ platforms: ['ios', 'android'] }, { android: 33, ios: 35 }],
+    [{ brands: ['beta'] }, { android: 16, ios: 17, web: 17 }],
     [
       { apps: ['mobile'], brands: ['alpha'] },
-      { android: 16, ios: 17 }
+      { android: 17, ios: 18 }
     ]
   ])('filters %j', (filters, platforms) => {
     const stats = analyze(filters)

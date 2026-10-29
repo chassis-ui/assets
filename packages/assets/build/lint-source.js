@@ -22,7 +22,13 @@
 import fs from 'fs'
 import path from 'path'
 import { assetTypes } from './asset-types.js'
-import { isLfsPointer, loadConfig, shouldIgnoreFile } from './build-assets.js'
+import {
+  SHARED_FOLDER,
+  isLfsPointer,
+  loadConfig,
+  shouldIgnoreFile,
+  sourceLayers
+} from './build-assets.js'
 import { findFontFaces } from './font-faces.js'
 import { READABLE_FORMATS, readFont } from './font-info.js'
 import { isEntry, resolveRoot } from './root.js'
@@ -32,6 +38,9 @@ import { isEntry, resolveRoot } from './root.js'
 
 /** A name or a folder: lowercase letters and digits, words joined by one hyphen. */
 const NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/** A brand or an app folder that is neither, such as `_default` and `_shared`: `_`, then a name. */
+const RESERVED = /^_[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 /** An extension: a dot, then lowercase letters and digits. */
 const EXTENSION = /^\.[a-z0-9]+$/
@@ -99,8 +108,8 @@ export function checkName(file) {
   const parts = file.split('/')
   const name = parts.pop()
 
-  for (const folder of parts) {
-    if (!NAME.test(folder)) {
+  for (const [depth, folder] of parts.entries()) {
+    if (!NAME.test(folder) && !(depth < 2 && RESERVED.test(folder))) {
       messages.push(`the folder "${folder}" is not of lowercase letters, digits and hyphens`)
     }
   }
@@ -276,10 +285,11 @@ function listSource(dir, ignore) {
 
 /**
  * Check the fonts of `source/` against the stylesheets beside them, app by app, as a brand
- * gets them: its own files over those of the default brand.
+ * gets them: the folders of `sourceLayers()`, its own files over those of the default brand
+ * and the files of an app over the shared files.
  * @param {string} sourceDir - `source/`
  * @param {string[]} files - Every file of it, of `listSource()`
- * @param {{ brandFolder: string, brands: string[] }} config
+ * @param {{ brandFolder: string, brands: string[], apps: Record<string, string[]> }} config
  * @returns {{ errors: LintProblem[], warnings: LintProblem[] }}
  */
 function lintFonts(sourceDir, files, config) {
@@ -325,12 +335,23 @@ function lintFonts(sourceDir, files, config) {
     return read.get(file) ?? null
   }
 
-  for (const [key, own] of folders) {
+  // The apps to check, of each brand folder with fonts of its own: the app of the folder, or
+  // every app for a shared folder
+  /** @type {Set<string>} */
+  const views = new Set()
+  for (const key of folders.keys()) {
+    const [brand, app] = key.split('/')
+    if (brand !== config.brandFolder && !config.brands.includes(brand)) continue
+    const apps = app === SHARED_FOLDER ? Object.keys(config.apps) : [app]
+    for (const each of apps) views.add(`${brand}/${each}`)
+  }
+
+  for (const key of views) {
     const [brand, app] = key.split('/')
     const ofBrand = brand !== config.brandFolder
-    if (ofBrand && !config.brands.includes(brand)) continue
-    const fallback = folders.get(`${config.brandFolder}/${app}`)
-    const view = ofBrand && fallback ? new Map([...fallback, ...own]) : own
+    const layers = sourceLayers(config.brandFolder, brand, app)
+    /** @type {Map<string, string>} */
+    const view = new Map(layers.flatMap((layer) => [...(folders.get(layer) ?? [])]))
 
     // The fonts the lint reads, by their path without the extension: the files of one name,
     // in the order of the formats
@@ -458,13 +479,14 @@ export function lintSource(options = {}) {
       if (
         shouldIgnoreFile(app.name, config.ignore) ||
         !app.isDirectory() ||
-        apps.includes(app.name)
+        apps.includes(app.name) ||
+        app.name === SHARED_FOLDER
       ) {
         continue
       }
       warnings.push({
         file: `${entry.name}/${app.name}/`,
-        message: `is not an app of chassis.build.apps (${apps.join(', ')}), so the build reads nothing from it`
+        message: `is not an app of chassis.build.apps (${apps.join(', ')}) or ${SHARED_FOLDER}, so the build reads nothing from it`
       })
     }
   }

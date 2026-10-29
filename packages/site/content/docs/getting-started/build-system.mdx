@@ -133,7 +133,7 @@ The `--watch` option builds once, then keeps running and builds again when a fil
 pnpm assets --watch --platform ios --app demo
 ```
 
-A change builds the jobs it belongs to, and no other. A file of a brand builds the jobs of that brand and its app. A file of the default brand builds the jobs of its app for every brand, since every brand gets it. Changes that come together, as an export of many files does, are one build.
+A change builds the jobs it belongs to, and no other. A file of a brand builds the jobs of that brand and its app. A file of the default brand builds the jobs of its app for every brand, since every brand gets it. A file of a `_shared` folder builds every app of its brand. Changes that come together, as an export of many files does, are one build.
 
 A job is built whole, into a folder that is removed first, so a file you delete from `source/` is gone from the output and the output of a job is always what a build of it writes. Every other option of the build applies to each of these builds. A build that fails prints its error, and the watch goes on. Hidden files and the other files the build ignores start no build. Stop the watch with <kbd>Ctrl</kbd> + <kbd>C</kbd>.
 
@@ -294,7 +294,7 @@ The `chassis` block of the root `package.json` names what is built, and holds th
 {
   "chassis": {
     "defaults": {
-      "brandFolder": "default"
+      "brandFolder": "_default"
     },
     "build": {
       "brands": ["chassis", "sinefil"],
@@ -309,7 +309,7 @@ The `chassis` block of the root `package.json` names what is built, and holds th
 
 ### chassis.defaults
 
-`brandFolder` is the name of the default brand in `source/`, the folder whose files every brand gets. It is `default` unless the block says otherwise.
+`brandFolder` is the name of the default brand in `source/`, the folder whose files every brand gets. It is `_default` unless the block says otherwise. Each brand folder, the default one included, may hold a `_shared` folder beside its apps, whose files every app of the brand gets, under the files of the app.
 
 ### chassis.build
 
@@ -518,7 +518,7 @@ It fails on a name or a folder that is not of lowercase letters, digits and hyph
 
 The message suggests a name that keeps the rules. A file that breaks a rule on purpose is listed in `lint.allow` of the checks file with the reason, and is printed as a warning.
 
-The lint also reads the fonts. For each `@font-face` rule of a stylesheet in `fonts/`, it opens the file the rule declares and compares the two, as a brand gets them, with its own files over those of the default brand. It fails when the file is of another family than the rule names, when its weight is not the weight of the rule or its weight axis does not hold the range of the rule, when one is italic and the other is not, and when the rule declares a file that is not in the folder. A rule that loads a font from a service is not read.
+The lint also reads the fonts. For each `@font-face` rule of a stylesheet in `fonts/`, it opens the file the rule declares and compares the two, as a brand gets them, with its own files over those of the default brand and the files of an app over those of its `_shared` folder. It fails when the file is of another family than the rule names, when its weight is not the weight of the rule or its weight axis does not hold the range of the rule, when one is italic and the other is not, and when the rule declares a file that is not in the folder. A rule that loads a font from a service is not read.
 
 A rule declares the file of the web, and the apps get the file of the same name in another format, which no rule declares. The lint checks a rule against those files too: a rule for `ui.woff2` is also the rule of `ui.ttf` in the same folder, and of an `.otf` or a `.woff` file of that name. It also fails when two files of one name are not one font in two formats, and names both files with what differs: the family, the weight, the style, the axes, the version or the number of glyphs.
 
@@ -754,8 +754,8 @@ These practices keep a build short while you work, and keep the paths of the out
 
 - **Build a part while you work:** `pnpm assets --brand chassis --platform web` writes one job and keeps the rest of `dist/`.
 - **Run a full build before the checks:** `pnpm assets:validate` and `pnpm assets:verify` expect the output of every job.
-- **Start with the default brand:** put the files that every brand shares in `source/default/<app>/`, and add to a brand folder only what is its own.
-- **Keep brand and app names in lowercase with hyphens:** they are folder names in `source/` and in `dist/`, and a consumer reads its files by that path.
+- **Start with the default brand:** put the files that every brand shares in `source/_default/<app>/`, and add to a brand folder only what is its own. A file that every app of a brand uses goes in its `_shared/` folder, once.
+- **Keep brand and app names in lowercase with hyphens:** they are folder names in `source/` and in `dist/`, and a consumer reads its files by that path. A name that starts with `_` is no brand and no app, and the build fails on it.
 
 Avoid the habits that undo this:
 

@@ -265,3 +265,19 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   no consumer reads, kept by D7 only because removing an asset is the maintainer's, and the
   maintainer removed it. `other/` of the `chassis` brand holds its web manifest, as that of
   `sinefil` does. The maintainer, 2026-10-23.
+- **D36. Is the default brand `source/default/`, and does a brand repeat a file in every
+  app?** The default brand is `source/_default/`, and a brand holds the files that every app
+  of it takes in `source/<brand>/_shared/<type>/`, once. A job of a brand and an app reads
+  `_default/_shared/`, `_default/<app>/`, `<brand>/_shared/` and `<brand>/<app>/`, and a file
+  of a later folder replaces the file of the same path in an earlier one: a brand file wins
+  over a default file, and within a brand an app file over a shared file (`sourceLayers()`).
+  `_default` has a `_shared` folder too, so one rule holds for every brand. A name that starts
+  with `_` is no brand and no app: the build fails on such a name in `chassis.build`, and the
+  source lint takes `_default` and `_shared` as folder names. `chassis.defaults.brandFolder`
+  stays, and is `_default` when it is not set. The identical copies of the `docs` and `demo`
+  apps of each brand moved to `_shared/`: the fonts by weight and their licenses of `chassis`
+  and `sinefil`, and the logos of `sinefil`. The `fonts.css` of each app and the logos of
+  `chassis` differ by app and stay; so do the home page images of `_default`, of which some
+  differ by app, so that the set is in one folder. The output is byte for byte the one
+  before. The source paths, `--include` and the paths `pnpm assets:lfs` prints change, so the
+  changeset is a minor one that starts with **Breaking.**. The maintainer, 2026-10-29.

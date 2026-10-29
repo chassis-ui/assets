@@ -26,6 +26,12 @@ import { convertFolder, loadConverter } from './vector-drawables.js'
 
 const LFS_POINTER_HEADER = 'version https://git-lfs.github.com/spec/v1'
 
+/** The fallback brand folder of `source/` when `chassis.defaults.brandFolder` names none */
+export const BRAND_FOLDER = '_default'
+
+/** The folder of a brand that holds the files of every app of the brand */
+export const SHARED_FOLDER = '_shared'
+
 export const HELP = `Usage: pnpm assets [options]
 
 Builds the assets of every brand, app and platform of \`chassis.build\` in package.json
@@ -81,7 +87,7 @@ Options:
 let config = {
   brands: [],
   apps: {},
-  brandFolder: 'default',
+  brandFolder: BRAND_FOLDER,
   ignore: [],
   formats: {},
   contracts: [],
@@ -147,6 +153,36 @@ function emptyStats() {
 export const CHECKS_FILE = 'chassis.checks.json'
 
 /**
+ * Whether a name is one the build keeps for a folder of `source/` that is no brand and no
+ * app, such as `_default` and `_shared`: a name that starts with `_`.
+ * @param {string} name
+ * @returns {boolean}
+ */
+export function isReservedName(name) {
+  return name.startsWith('_')
+}
+
+/**
+ * The folders of `source/` that a job of a brand and an app reads, in the order the build
+ * copies them: `<brandFolder>/_shared`, `<brandFolder>/<app>`, `<brand>/_shared`,
+ * `<brand>/<app>`. A file of a later folder replaces the file of the same path in an earlier
+ * one, so a brand file wins over a default file, and an app file over a shared file.
+ * @param {string} brandFolder - The fallback brand folder, `chassis.defaults.brandFolder`
+ * @param {string} brand
+ * @param {string} app
+ * @returns {string[]} Paths relative to `source/`, with forward slashes
+ * @example
+ * sourceLayers('_default', 'acme', 'docs')
+ * // ['_default/_shared', '_default/docs', 'acme/_shared', 'acme/docs']
+ */
+export function sourceLayers(brandFolder, brand, app) {
+  return [...new Set([brandFolder, brand])].flatMap((folder) => [
+    `${folder}/${SHARED_FOLDER}`,
+    `${folder}/${app}`
+  ])
+}
+
+/**
  * Read `chassis.checks.json` in `cwd`: the consumer contracts, by job, and the names the
  * source lint keeps. The build does not read them; `contract.js` and `lint-source.js` do.
  * @param {string} cwd - The repository root
@@ -197,7 +233,7 @@ export function loadConfig(cwd = findRoot()) {
   return {
     brands: chassis.build?.brands || [],
     apps: chassis.build?.apps || {},
-    brandFolder: chassis.defaults?.brandFolder || 'default',
+    brandFolder: chassis.defaults?.brandFolder || BRAND_FOLDER,
     optimize: chassis.optimize,
     subset: chassis.subset,
     ignore: resolveIgnore(chassis.ignore),
@@ -317,7 +353,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
 
 /**
  * Check the configuration and the source folder.
- * @throws {Error} When brands or apps are missing, or the default brand folder does not exist
+ * @throws {Error} When brands or apps are missing or have a reserved name, or the default
+ *   brand folder does not exist
  */
 function validateConfiguration() {
   const errors = []
@@ -328,6 +365,19 @@ function validateConfiguration() {
 
   if (!config.apps || Object.keys(config.apps).length === 0) {
     errors.push('No apps defined in chassis.build.apps')
+  }
+
+  for (const brand of config.brands || []) {
+    if (isReservedName(brand)) {
+      errors.push(
+        `The brand "${brand}" starts with _, which names a folder of source/ that is no brand`
+      )
+    }
+  }
+  for (const app of Object.keys(config.apps || {})) {
+    if (isReservedName(app)) {
+      errors.push(`The app "${app}" starts with _, which names a folder of source/ that is no app`)
+    }
   }
 
   const defaultPath = path.join(run.cwd, 'source', config.brandFolder)
@@ -673,9 +723,10 @@ function removeDirectory(dirPath) {
 }
 
 /**
- * The files of `source/` that a job reads: the files of the app in the default brand and
- * in the brand, that the platform keeps and the filter passes. The build copies these; a
- * brand file and the default file it replaces are both listed.
+ * The files of `source/` that a job reads: the files of the folders of `sourceLayers()`,
+ * that the platform keeps and the filter passes. The build copies these; a brand file and
+ * the default file it replaces are both listed, and so are an app file and the shared file
+ * it replaces.
  * @param {BuildConfig} config
  * @param {Job} job
  * @param {ReturnType<typeof createFileFilter>} filter
@@ -685,8 +736,8 @@ function removeDirectory(dirPath) {
 export function listSourceFiles(config, job, filter, cwd) {
   const processor = platformProcessors[job.platform]
   const files = []
-  for (const brand of new Set([config.brandFolder, job.brand])) {
-    const appDir = path.join(cwd, 'source', brand, job.app)
+  for (const layer of sourceLayers(config.brandFolder, job.brand, job.app)) {
+    const appDir = path.join(cwd, 'source', layer)
     if (!fs.existsSync(appDir)) continue
     for (const entry of fs.readdirSync(appDir, { recursive: true, withFileTypes: true })) {
       if (!entry.isFile()) continue
@@ -957,26 +1008,26 @@ function copyFile(processor, currentRoot, itemSrcPath, destPath, item) {
 /**
  * Process assets for a platform using the processor configuration
  * @param {Processor} processor - The platform processor
- * @param {string[]} srcPaths - Array of source paths to process
+ * @param {string[]} srcPaths - The source paths, in the order of `sourceLayers()`
  * @param {string} destPath - Destination path for processed assets
- * @param {string} defaultAppPath - The default source path (required)
+ * @param {string[]} defaultPaths - The default source paths, of which one must exist: the
+ *   shared folder and the app folder of the default brand
  */
-function processAssets(processor, srcPaths, destPath, defaultAppPath) {
+function processAssets(processor, srcPaths, destPath, defaultPaths) {
   logger.log(`${processor.icon} Processing ${processor.name} platform...`)
 
-  // Copy files from each source path
+  // The default brand has the app, or a shared folder for every app
+  if (!defaultPaths.some((defaultPath) => fs.existsSync(defaultPath))) {
+    const relative = path.relative(run.cwd, defaultPaths[defaultPaths.length - 1])
+    logger.warn(`⚠️  Default source path not found: ${relative}`)
+    stats.warnings.push(`Required default assets missing: ${relative}`)
+    stats.errors.push(`Default source path does not exist: ${relative}`)
+  }
+
+  // Copy files from each source path. A brand folder and a shared folder are optional
   srcPaths.forEach((srcPath) => {
     if (fs.existsSync(srcPath)) {
       copyFilesWithProcessor(processor, srcPath, destPath, path.basename(srcPath))
-    } else {
-      // Only warn if the default path is missing (brand overrides are optional)
-      if (srcPath === defaultAppPath) {
-        const relative = path.relative(run.cwd, srcPath)
-        logger.warn(`⚠️  Default source path not found: ${relative}`)
-        stats.warnings.push(`Required default assets missing: ${relative}`)
-        stats.errors.push(`Default source path does not exist: ${relative}`)
-      }
-      // Brand override paths are optional, silently skip if missing
     }
   })
 
@@ -1308,13 +1359,14 @@ export async function generateAssets(options = {}) {
       stats.directoriesCreated++
     }
 
-    // Prepare source paths (default + brand override)
-    const defaultAppPath = path.join(run.cwd, 'source', config.brandFolder, app)
-    const brandAppPath = path.join(run.cwd, 'source', brand, app)
+    // The source paths: the default brand, then the brand over it, each shared then app
+    const srcPaths = sourceLayers(config.brandFolder, brand, app).map((layer) =>
+      path.join(run.cwd, 'source', layer)
+    )
 
     const processor = platformProcessors[platform]
     const before = stats.filesProcessed
-    processAssets(processor, [defaultAppPath, brandAppPath], destPath, defaultAppPath)
+    processAssets(processor, srcPaths, destPath, srcPaths.slice(0, 2))
     if (imageTools) await optimizeImages(processor, destPath, imageTools)
     if (fontTools) await subsetFonts(processor, destPath, brand, fontTools)
     if (convert) await convertVectorDrawables(processor, destPath, convert)

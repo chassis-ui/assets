@@ -49,14 +49,14 @@ out. An entry is removed when it is done. A D-number is a decision of
   becomes 1.0, and when, is not decided.
 - **The icons of the next `@chassis-ui/icons`.** `chassis-icons` removed `road-outline-1.svg`
   and `road-solid-1.svg` from its source, export copies of the two icons without the number,
-  and its version is `0.4.0-next.0`. The copy in `source/default/demo/` is the output of 0.3.1
+  and its version is `0.4.0-next.0`. The copy in `source/_default/demo/` is the output of 0.3.1
   and has both. A refresh, by the steps of
   [docs/architecture.md](../docs/architecture.md#refreshing-the-icons), removes two names from
   `icons/svgs/` of every job of the `demo` app, which is a change of the output contract.
 - **Files an app cannot use.** The apps get the symbol sprite of the icons, since it is an
   SVG, and logos that exist under one name as PNG and as SVG, which meet in one `res/`
   folder or one asset catalog. The build copies what the source holds, and the platform
-  pages say what an app does about each. Removing the copies from `source/default/demo/` is
+  pages say what an app does about each. Removing the copies from `source/_default/demo/` is
   the maintainer's.
 
 ## Not written

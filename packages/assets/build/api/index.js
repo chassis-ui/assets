@@ -3,7 +3,14 @@
 
 import fs from 'fs'
 import path from 'path'
-import { generateAssets, resolveIgnore, shouldIgnoreFile } from '../build-assets.js'
+import {
+  BRAND_FOLDER,
+  generateAssets,
+  isReservedName,
+  resolveIgnore,
+  shouldIgnoreFile,
+  sourceLayers
+} from '../build-assets.js'
 import { resolveRoot } from '../root.js'
 
 /**
@@ -108,10 +115,9 @@ export class ChassisAssets {
     const basePath = type === 'source' ? this.sourceDir : this.distDir
 
     if (type === 'source') {
-      const defaultPath = path.join(basePath, this.config.defaults?.brandFolder || 'default', app)
-      const brandPath = path.join(basePath, brand, app)
-
-      return fs.existsSync(defaultPath) || fs.existsSync(brandPath)
+      return sourceLayers(this.config.defaults?.brandFolder || BRAND_FOLDER, brand, app).some(
+        (layer) => fs.existsSync(path.join(basePath, layer))
+      )
     } else {
       // Check dist for specific platform
       const platforms = this.getPlatforms(app)
@@ -149,16 +155,15 @@ export class ChassisAssets {
         searchPaths.push(distPath)
       }
     } else {
-      // Look in source
-      const defaultPath = path.join(
-        this.sourceDir,
-        this.config.defaults?.brandFolder || 'default',
+      // Look in source: the default brand and the brand, each with its shared folder
+      for (const layer of sourceLayers(
+        this.config.defaults?.brandFolder || BRAND_FOLDER,
+        brand,
         app
-      )
-      const brandPath = path.join(this.sourceDir, brand, app)
-
-      if (fs.existsSync(defaultPath)) searchPaths.push(defaultPath)
-      if (fs.existsSync(brandPath)) searchPaths.push(brandPath)
+      )) {
+        const layerPath = path.join(this.sourceDir, layer)
+        if (fs.existsSync(layerPath)) searchPaths.push(layerPath)
+      }
     }
 
     searchPaths.forEach((searchPath) => {
@@ -395,8 +400,13 @@ export class ChassisAssets {
       return { valid: false, errors, warnings }
     }
 
+    // A name that starts with _ is a folder of source/ that is no brand and no app
+    for (const name of [...this.getBrands(), ...this.getApps()]) {
+      if (isReservedName(name)) errors.push(`Reserved name, starts with _: ${name}`)
+    }
+
     // Check source directory structure
-    const defaultFolder = path.join('source', this.config.defaults?.brandFolder || 'default')
+    const defaultFolder = path.join('source', this.config.defaults?.brandFolder || BRAND_FOLDER)
     if (!fs.existsSync(path.join(this.cwd, defaultFolder))) {
       warnings.push(`Default brand directory not found: ${defaultFolder}`)
     }

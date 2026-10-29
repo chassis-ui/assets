@@ -5,7 +5,7 @@
   "description": "The fixture of the build tests: two brands, two apps, six jobs. See test/README.md.",
   "chassis": {
     "defaults": {
-      "brandFolder": "default"
+      "brandFolder": "_default"
     },
     "build": {
       "brands": [

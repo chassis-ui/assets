@@ -122,7 +122,7 @@ dist/web/<app>/<brand>/
 
 ### Output names
 
-An application reads a file by its path in the folder of the job, and the build derives that path from the source. A file of `source/<brand>/<app>/<type>/` or `source/default/<app>/<type>/` is at `<type>/` of the job, in the same subfolders, with its name in kebab-case:
+An application reads a file by its path in the folder of the job, and the build derives that path from the source. A file of `source/<brand>/<app>/<type>/` or `source/_default/<app>/<type>/`, or of the `_shared/<type>/` folder of either brand, is at `<type>/` of the job, in the same subfolders, with its name in kebab-case:
 
 <CxTable>
 | Source | Web output |
