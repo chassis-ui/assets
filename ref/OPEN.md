@@ -7,12 +7,6 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 
 ## For the maintainer
 
-- **The trusted publisher of `@chassis-ui/assets` is not yet proven.** 0.6.0 was published by
-  the maintainer from the checkout at `f5894d0`, the release commit before its amend, so the
-  release workflow of 2026-10-29 found it on npm and created the tag and the release only.
-  The first version the workflow publishes, with provenance, is the next one. 0.6.0 ships
-  the templates of `init` before the lockfile fix of `fe07627`: a repository made with it
-  needs its lockfile committed before its first CI run passes, which the quick start says.
 - **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
   commands, `chassis-ui/website-assets` holds the assets with their history, and this
