@@ -80,7 +80,7 @@ An image enters the repository as an export from the design tool, saved under `i
 1. Name the layer or the frame in the design tool as the file is to be named, without the extension.
 2. Add one export setting per variant: the base size, then `2x` and `3x` for a raster image that an app shows. Figma adds the `@2x` and `@3x` indicators to the names by itself. An SVG needs no variant.
 3. Export to `source/_default/<app>/images/` for an image of every brand, or to `source/<brand>/<app>/images/` for an image of one brand.
-4. Run `pnpm assets` and look for the file in `dist/`.
+4. Run `chassis-assets build` and look for the file in `dist/`.
 
 A subfolder groups images that belong together, such as `logo/` or `onboarding/`. The build keeps the subfolder on every platform.
 
@@ -149,7 +149,7 @@ The density folders are written inside each subfolder of `images/`, so `images/o
 
 ### Asset catalog
 
-A build with `pnpm assets --asset-catalog` writes the images of an iOS job as an asset catalog, `Assets.xcassets` in place of `images/`. The files of one base name are one image set, each variant in the slot of its indicator, and a subfolder is a folder of the catalog:
+A build with `chassis-assets build --asset-catalog` writes the images of an iOS job as an asset catalog, `Assets.xcassets` in place of `images/`. The files of one base name are one image set, each variant in the slot of its indicator, and a subfolder is a folder of the catalog:
 
 ```text
 dist/ios/<app>/<brand>/

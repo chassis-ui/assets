@@ -25,27 +25,28 @@ An app gets the files in one of three ways: from the archive of a release, from 
 
 ### Release archive
 
-An archive needs no Node.js and no Git LFS on the machine that builds the app. From version 0.2.0 on, each [GitHub release]([[config:repo]]/releases) has one archive per job attached, named `chassis-assets-<platform>-<app>-<brand>-<version>.zip`. The archive of an iOS job holds the content of `dist/ios/<app>/<brand>/` at its top level, so it unpacks to `fonts/`, `icons/` and `images/`.
+An archive needs no Node.js and no Git LFS on the machine that builds the app. Each GitHub release of a repository of assets has one archive per job attached, named `<name>-<platform>-<app>-<brand>-<version>.zip` after the name and the version of its `package.json`. The archive of an iOS job holds the content of `dist/ios/<app>/<brand>/` at its top level, so it unpacks to `fonts/`, `icons/` and `images/`.
 
 ### Submodule
 
-A submodule pins the assets to a commit of the app's repository, and the app builds them. Install [Git LFS](https://git-lfs.com) first, since the fonts and the raster images are Git LFS files, then add the repository and check out the tag of a release:
+A submodule pins the assets to a commit of the app's repository, and the app builds them. Install [Git LFS](https://git-lfs.com) first, since the fonts and the raster images are Git LFS files, then add the repository of assets, here the one of the Chassis sites, and pull its files:
 
 ```bash
 git lfs install
-git submodule add [[config:repo]].git assets
-git -C assets checkout v[[config:currentVersion]]
+git submodule add https://github.com/chassis-ui/website-assets.git assets
+git -C assets lfs pull
 ```
 
-If you build the assets from your own fork, use the URL of your repository in place of this one.
+Use the URL of your own repository of assets in place of this one.
 
 ### Build from a clone
 
-The build needs Node.js 22.12 or later and pnpm, and nothing installed: it runs without `pnpm install`. Run it from the root of the clone or of the submodule:
+The build needs Node.js 22.12 or later and the package `@chassis-ui/assets`, which the repository of assets lists and which brings nothing else. Install it once, then run the build from the root of the clone or of the submodule:
 
 ```bash
-pnpm assets --platform ios                              # Every iOS job
-pnpm assets --platform ios --app demo --brand chassis   # One job
+npm install
+npx chassis-assets build --platform ios                              # Every iOS job
+npx chassis-assets build --platform ios --app demo --brand chassis   # One job
 ```
 
 A filtered build keeps the rest of `dist/`; add `--clean` to remove the folder of the selected jobs first. The [build system page]([[docsref:/getting-started/build-system]]) has every option.
@@ -213,7 +214,7 @@ The iOS output has no WebP file. An image that exists only as WebP in `source/` 
 The default build does not write `Assets.xcassets` or a `Contents.json`. With the `--asset-catalog` option it does, and needs nothing installed for it:
 
 ```bash
-pnpm assets --platform ios --asset-catalog
+npx chassis-assets build --platform ios --asset-catalog
 ```
 
 The images move from `images/` into `Assets.xcassets`, the files of one name into one image set, each variant in the slot of its indicator:
@@ -372,13 +373,13 @@ set -euo pipefail
 BRAND="${1:-chassis}"
 APP="${2:-demo}"
 
-(cd assets && pnpm assets --platform ios --app "$APP" --brand "$BRAND" --clean)
+(cd assets && npx chassis-assets build --platform ios --app "$APP" --brand "$BRAND" --clean)
 rsync -a --delete "assets/dist/ios/$APP/$BRAND/" Resources/Chassis/
 ```
 
 The fonts and a folder reference follow the copy as they are. An image set does not: it holds the files of the brand it was filled from. Keep one asset catalog per brand, with the same image set names, and add each to the target of its brand.
 
-While you work on the assets and the app together, let the build follow the source: `pnpm assets --watch --platform ios --app demo` builds the iOS jobs of the app again on every change under `source/`, and the copy is then the `rsync` line of the script alone.
+While you work on the assets and the app together, let the build follow the source: `npx chassis-assets build --watch --platform ios --app demo` builds the iOS jobs of the app again on every change under `source/`, and the copy is then the `rsync` line of the script alone.
 
 ### Build phase
 
@@ -390,7 +391,7 @@ A **Run Script** build phase can run the copy on each build of a target. Put it 
 
 A target runs its scripts in a sandbox when **User Script Sandboxing** is **Yes** in its build settings, as it is in a new project, and the phase then fails with `Operation not permitted`: the script writes to `Resources/Chassis/` and to the submodule. Set it to **No** for the target.
 
-Xcode runs the phase with its own `PATH`. When it does not find `pnpm`, replace the build line of the script with the copy alone and build the assets before opening Xcode.
+Xcode runs the phase with its own `PATH`. When it does not find `npx`, replace the build line of the script with the copy alone and build the assets before opening Xcode.
 
 ### Brand at run time
 
@@ -408,7 +409,7 @@ let logo = brandImage("wordmark", brand: "sinefil")
 
 ## Continuous integration
 
-A CI job builds the assets of one job, copies them and builds the app. The build needs Node.js and the Git LFS files of the submodule, and no `pnpm install`.
+A CI job builds the assets of one job, copies them and builds the app. The build needs Node.js, the Git LFS files of the submodule and an install of the package in it.
 
 ### GitHub Actions
 
@@ -444,7 +445,7 @@ jobs:
 
       - name: Build and copy the assets
         run: |
-          corepack enable
+          (cd assets && npm ci)
           ./scripts/sync-assets.sh ${{ matrix.brand }} demo
 
       - name: Build the app
@@ -454,9 +455,9 @@ jobs:
             CODE_SIGNING_ALLOWED=NO build
 ```
 
-`CODE_SIGNING_ALLOWED=NO` builds the app without a certificate, which is enough to check that it builds. Without it, a runner that has no development team fails with `Signing for "App" requires a development team`. The script and the `xcodebuild` line of this job were run on a Mac; the workflow itself was not run on GitHub Actions.
+`CODE_SIGNING_ALLOWED=NO` builds the app without a certificate, which is enough to check that it builds. Without it, a runner that has no development team fails with `Signing for "App" requires a development team`. The `xcodebuild` line of this job was run on a Mac; the script with the build of the package and the workflow itself were not run.
 
-A job that takes the archive of a release instead needs neither Node.js nor the submodule: it downloads `chassis-assets-ios-<app>-<brand>-<version>.zip` and unpacks it into the project.
+A job that takes the archive of a release instead needs neither Node.js nor the submodule: it downloads `<name>-ios-<app>-<brand>-<version>.zip` and unpacks it into the project.
 
 ### Fastlane
 
@@ -484,7 +485,7 @@ These practices keep the Xcode project in step with `dist/ios/`, so a new export
 - **Fill every slot the output has:** put `@2x` and `@3x` files in their slots of an image set. The build does not resize, so a missing variant is fixed by an export into `source/`, not in Xcode.
 - **Take icons from `icons/svgs/`:** add them as single-scale SVG image sets with **Preserve Vector Data** and **Template Image**.
 - **Keep the license with the font:** copy `<role>_license.txt` of `fonts/` along with the font files.
-- **Build one job in CI:** `pnpm assets --platform ios --app <app> --brand <brand>` writes only `dist/ios/<app>/<brand>/`.
+- **Build one job in CI:** `npx chassis-assets build --platform ios --app <app> --brand <brand>` writes only `dist/ios/<app>/<brand>/`.
 
 Avoid the habits that undo this:
 

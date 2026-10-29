@@ -14,7 +14,7 @@ You work in `source/` only. The build writes the names, the formats and the fold
 
 You need Git and [Git LFS](https://git-lfs.com). Fonts and raster images are Git LFS files: run `git lfs install` once on your machine before you clone, so that you get the files and not their pointers. A Git client with a window, such as GitHub Desktop, works as well as the command line.
 
-To build the output and look at it before you commit, you also need Node.js and pnpm, see the [quick start]([[docsref:/getting-started/quick-start]]).
+To build the output and look at it before you commit, you also need Node.js and the package, see the [quick start]([[docsref:/getting-started/quick-start]]).
 
 ## Source layout
 
@@ -59,7 +59,7 @@ A name in `source/` is made of lowercase letters, digits and hyphens, with a low
 - **Do not put a dot or an indicator inside a name:** `hero.v2.png` and `hero@2x-final.png` fail the source lint.
 - **Do not put the brand in the name:** the folder says it, and a brand file has to have the name of the default file to replace it.
 
-The source lint checks these rules on every pull request. Run it yourself with `pnpm assets:lint:source`.
+The source lint checks these rules on every pull request. Run it yourself with `npm run lint`.
 
 ## Formats
 
@@ -113,20 +113,18 @@ Any other folder under an app, such as `videos/` or `data/`, is copied to every 
 
 ## Adding a file
 
-A change to the assets is a commit on a branch, reviewed in a pull request against `develop`.
+A change to the assets is a commit on a branch, reviewed in a pull request against the branch the repository releases from, `main` in the repository that `chassis-assets init` writes.
 
-1. Create a branch from `develop`.
+1. Create a branch from `main`.
 2. Export the file from the design tool into its folder under `source/`.
-3. Run `pnpm assets:lint:source` to check the name, and `pnpm assets` to see the file in `dist/`.
-4. Add a changeset with `pnpm changeset`. It names the files that the change adds to `dist/`, removes from it or renames.
-5. Commit the files of `source/` and the changeset, and open a pull request against `develop`.
+3. Run `npm run lint` to check the name, and `npm run build` to see the file in `dist/`.
+4. Commit the files of `source/`, and open a pull request against `main`. Say in the message which files the change adds to `dist/`, removes from it or renames: the release notes of the next tag are made from the commits.
 
 ```bash
-git checkout -b feature/onboarding-assets develop
-pnpm assets:lint:source
-pnpm assets
-pnpm changeset
-git add source/_default/docs/images/onboarding.svg .changeset
+git checkout -b feature/onboarding-assets main
+npm run lint
+npm run build
+git add source/_default/docs/images/onboarding.svg
 git commit -m "feat: add the onboarding illustration"
 git push origin feature/onboarding-assets
 ```
@@ -153,4 +151,4 @@ Continue with one of these pages:
 
 - [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]): the rules of each type.
 - [Build system]([[docsref:/getting-started/build-system]]): the commands and what each one checks.
-- [Contributing guide]([[config:repo]]/blob/main/.github/CONTRIBUTING.md): branches, commits, changesets and reviews.
+- The README of your repository of assets: its commands, its branches and its releases, as `chassis-assets init` wrote them.

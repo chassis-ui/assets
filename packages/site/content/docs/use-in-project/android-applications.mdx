@@ -46,33 +46,36 @@ An app gets the files in one of three ways: from a release archive, from a Git s
 
 ### Release archive
 
-A release archive holds the output of one platform, one app and one brand, and needs neither Node.js nor Git LFS. From version 0.2.0 on, each [GitHub release]([[config:repo]]/releases) has one archive per job attached, named `chassis-assets-<platform>-<app>-<brand>-<version>.zip`. The archive holds the content of `dist/<platform>/<app>/<brand>/` at its top level, so unpack it into a folder named after the brand:
+A release archive holds the output of one platform, one app and one brand, and needs neither Node.js nor Git LFS. Each GitHub release of a repository of assets has one archive per job attached, named `<name>-<platform>-<app>-<brand>-<version>.zip` after the name and the version of its `package.json`. The archive holds the content of `dist/<platform>/<app>/<brand>/` at its top level, so unpack it into a folder named after the brand:
 
 ```bash
 mkdir -p chassis-assets-dist/chassis
-unzip "chassis-assets-android-demo-chassis-<version>.zip" -d chassis-assets-dist/chassis
+unzip "chassis-website-assets-android-demo-chassis-<version>.zip" -d chassis-assets-dist/chassis
 ```
 
 ### Git submodule
 
-A submodule pins the app to one commit of the assets and lets the app build them itself. You need Node.js 22.12 or later, pnpm, and Git LFS, which holds the fonts and the raster images.
+A submodule pins the app to one commit of the assets and lets the app build them itself. You need Node.js 22.12 or later and Git LFS, which holds the fonts and the raster images. The repository of assets lists the package `@chassis-ui/assets`, which the install brings and nothing else; use the URL of your own repository in place of the one of the Chassis sites.
 
 ```bash
 git lfs install
-git submodule add [[config:repo]].git chassis-assets
+git submodule add https://github.com/chassis-ui/website-assets.git chassis-assets
 cd chassis-assets
-pnpm assets --platform android
+git lfs pull
+npm install
+npx chassis-assets build --platform android
 ```
 
 ### Build from a clone
 
-A clone beside the app works the same way, and suits a team that changes the assets and the app together. The build imports Node.js modules only, so it runs without `pnpm install`.
+A clone beside the app works the same way, and suits a team that changes the assets and the app together. The install brings the package and nothing else.
 
 ```bash
-git clone [[config:repo]].git chassis-assets
+git clone https://github.com/chassis-ui/website-assets.git chassis-assets
 cd chassis-assets
-pnpm assets --platform android                              # every brand and app of the platform
-pnpm assets --platform android --brand chassis --app demo   # one job
+npm install
+npx chassis-assets build --platform android                              # every brand and app of the platform
+npx chassis-assets build --platform android --brand chassis --app demo   # one job
 ```
 
 A build with a filter keeps the rest of `dist/`; add `--clean` to remove the folders of the selected jobs first. See the [build system page]([[docsref:/getting-started/build-system]]) for every option.
@@ -121,12 +124,12 @@ A file of `source/<brand>/<app>/<type>/` or `source/_default/<app>/<type>/`, or 
 
 ### Res folder
 
-The build writes a `res/` folder itself when you give it the `--res` option. Add `--vector-drawables`, which needs the packages of the repository, to get the icons into it:
+The build writes a `res/` folder itself when you give it the `--res` option. Add `--vector-drawables`, which needs the package `svg2vectordrawable`, to get the icons into it:
 
 ```bash
 cd chassis-assets
-pnpm install
-pnpm assets --platform android --res --vector-drawables
+npm install svg2vectordrawable
+npx chassis-assets build --platform android --res --vector-drawables
 ```
 
 The font files, the raster images and the vector drawables move into `res/`, without the subfolders they had:
@@ -360,12 +363,12 @@ For an app that holds a copy of Chassis Icons, the files of `icons/svgs/` are th
 
 ### Vector drawables
 
-An Android app draws an icon from a vector drawable. The build writes one for each icon when you give it the `--vector-drawables` option, which needs the packages of the repository:
+An Android app draws an icon from a vector drawable. The build writes one for each icon when you give it the `--vector-drawables` option, which needs the package `svg2vectordrawable`:
 
 ```bash
 cd chassis-assets
-pnpm install
-pnpm assets --platform android --vector-drawables
+npm install svg2vectordrawable
+npx chassis-assets build --platform android --vector-drawables
 ```
 
 Each SVG file under `icons/` is then an XML file of the same name, which `res/drawable/` takes as it is:
@@ -462,13 +465,13 @@ listOf("chassis", "sinefil").forEach { brand ->
 }
 ```
 
-The task copies; it does not build the assets. Run `pnpm assets --platform android` in `chassis-assets/` after a change to `source/` or after moving the submodule, or leave `pnpm assets --watch --platform android` running there, which builds the Android jobs again on every change under `source/`.
+The task copies; it does not build the assets. Run `npx chassis-assets build --platform android` in `chassis-assets/` after a change to `source/` or after moving the submodule, or leave `npx chassis-assets build --watch --platform android` running there, which builds the Android jobs again on every change under `source/`.
 
 An app that holds every brand in one APK and switches at run time cannot use the names as they are, since the brands share them: it needs a script that adds the brand to each name while copying.
 
 ## Continuous integration
 
-A workflow builds the Android jobs, runs the copy script for each brand, then builds the app. The script, the Gradle tasks and the build of the job were run on a Mac with Gradle 9.8 and Android Gradle Plugin 9.4; the workflow itself was not run on GitHub Actions. The build needs only Node.js, so the workflow runs it with `node`, which is what `pnpm assets` does, and installs nothing in `chassis-assets/`. This workflow is for GitHub Actions, with the assets as a submodule:
+A workflow builds the Android jobs, runs the copy script for each brand, then builds the app. The script and the Gradle tasks were run on a Mac with Gradle 9.8 and Android Gradle Plugin 9.4, with the build of the old repository; the build with the package and the workflow itself were not run. The build needs Node.js and the package, which `npm ci` installs in `chassis-assets/`. This workflow is for GitHub Actions, with the assets as a submodule:
 
 ```yaml
 name: Android
@@ -494,7 +497,9 @@ jobs:
 
       - name: Build the Android assets
         working-directory: chassis-assets
-        run: node packages/assets/build/cli.js build --platform android
+        run: |
+          npm ci
+          npx chassis-assets build --platform android
 
       - name: Copy the assets
         run: |
@@ -521,7 +526,7 @@ These practices keep the copy from `dist/android/` into `res/` repeatable, so ev
 - **Name flavors after brands:** a flavor named as the brand in `chassis.build.brands` maps `dist/android/<app>/<brand>/` to `app/src/<brand>/` without a table of names.
 - **Ask for the variants:** the build does not resize, so an image that has only a `drawable/` file needs `@2x` and `@3x` exports in `source/`.
 - **Pin the assets:** use a submodule commit or the archive of one version, so a build of the app is repeatable.
-- **Build with `--webp` for smaller images:** the option, which needs `pnpm install`, writes a lossless WebP in place of each PNG that it makes smaller, under the same resource name.
+- **Build with `--webp` for smaller images:** the option, which needs the package `sharp`, writes a lossless WebP in place of each PNG that it makes smaller, under the same resource name.
 
 Avoid the habits that undo this:
 
@@ -544,7 +549,7 @@ The build stops with `Unknown brand "<name>". Configured: <brands>`. The value o
 
 ### Copy script fails
 
-The copy script stops at a `cp` line with `No such file or directory`. The job folder is missing, because the Android build did not run or `ASSETS_ROOT` points elsewhere, or the brand has no file of that extension in `fonts/`. Run `pnpm assets --platform android`, check the path, and remove the pattern that matches nothing from the script.
+The copy script stops at a `cp` line with `No such file or directory`. The job folder is missing, because the Android build did not run or `ASSETS_ROOT` points elsewhere, or the brand has no file of that extension in `fonts/`. Run `npx chassis-assets build --platform android`, check the path, and remove the pattern that matches nothing from the script.
 
 ### SVG file in res
 

@@ -36,47 +36,42 @@ The commands of this page build the configured web app, `docs`, for the brand `c
 
 ## Installation
 
-Chassis Assets is not published to npm. A web application gets the output from a release archive, from a Git submodule that it builds, or from a build in a clone.
+A web application gets the output of its repository of assets from a release archive, from a Git submodule that it builds, or from a build in a clone. The commands below name the repository of the Chassis sites, `chassis-ui/website-assets`, with its web app `docs` and its brand `chassis`; use the repository, the app and the brand of your own.
 
 ### Release archive
 
-The release workflow attaches one archive per platform, app and brand to each GitHub release, from version 0.2.0 on. The archive of a job is named `chassis-assets-<platform>-<app>-<brand>-<version>.zip` and holds the content of `dist/<platform>/<app>/<brand>/` at its top level. Its images are optimized: the archives are built with `--optimize`, which keeps every name and every visible pixel.
+The release workflow of a repository of assets attaches one archive per platform, app and brand to each GitHub release. The archive of a job is named `<name>-<platform>-<app>-<brand>-<version>.zip`, after the name and the version of the `package.json` of the repository, and holds the content of `dist/<platform>/<app>/<brand>/` at its top level.
 
-Download the archive of your job from the [releases]([[config:repo]]/releases) of the repository and extract it into the folder your application serves static files from:
+Download the archive of your job from the releases of the repository and extract it into the folder your application serves static files from:
 
 ```bash
 mkdir -p public/assets
-unzip "chassis-assets-web-docs-chassis-<version>.zip" -d public/assets
+unzip "chassis-website-assets-web-docs-chassis-<version>.zip" -d public/assets
 ```
 
-An archive needs no Node.js, pnpm or Git LFS on the machine that uses it.
+An archive needs no Node.js, no package and no Git LFS on the machine that uses it.
 
 ### Git submodule
 
-A submodule pins the assets to a commit and builds them inside your project. The Chassis sites do this: each one has the repository as the submodule `vendor/assets`, on the `app/docs` branch, and builds the job it reads.
+A submodule pins the assets to a commit and builds them inside your project. The Chassis sites do this: each one has its repository of assets as the submodule `vendor/assets`, and builds the job it reads. The submodule needs nothing installed; the project installs `@chassis-ui/assets` and runs the build on the folder with `--cwd`.
 
 ```bash
-git submodule add -b app/docs [[config:repo]].git vendor/assets
-cd vendor/assets
-git lfs pull
-pnpm install --ignore-workspace
-pnpm assets:site
+git submodule add https://github.com/chassis-ui/website-assets.git vendor/assets
+git -C vendor/assets lfs pull
+npm install --save-dev @chassis-ui/assets
+npx chassis-assets build --cwd vendor/assets --clean --brand chassis --app docs --platform web
 ```
 
-`pnpm install --ignore-workspace` installs the root package only, and the build needs none of it. `pnpm assets:site` is `pnpm assets --clean --brand chassis --app docs`: it removes `dist/web/docs/chassis/` and writes it again. For another job, run `pnpm assets` with the filters of that job:
+The build writes `vendor/assets/dist/web/docs/chassis/`; `--out <dir>` writes elsewhere, relative to the submodule, so give it an absolute path to write into the project. For another job, give the filters of that job.
+
+While you change the assets, `npx chassis-assets build --cwd vendor/assets --watch --brand chassis --app docs` keeps running and builds the job again on every change under `source/`.
+
+A project that reads a few files of the output does not have to fetch and build all of it. The `--include` option builds the files that match a pattern, and `chassis-assets lfs` prints the Git LFS paths of the same patterns, so `git lfs pull` fetches those files only:
 
 ```bash
-pnpm assets --brand sinefil --app docs --platform web
-```
-
-While you change the assets, `pnpm assets --watch --brand chassis --app docs` keeps running and builds the job again on every change under `source/`.
-
-A project that reads a few files of the output does not have to fetch and build all of it. The `--include` option builds the files that match a pattern, and `pnpm assets:lfs` prints the Git LFS paths of the same patterns, so `git lfs pull` fetches those files only:
-
-```bash
-FILTERS=(--brand chassis --app docs --include "fonts/**" "images/logo/**")
-git lfs pull --include "$(node packages/assets/build/cli.js lfs "${FILTERS[@]}")"
-pnpm assets --clean "${FILTERS[@]}"
+FILTERS=(--cwd vendor/assets --brand chassis --app docs --include "fonts/**" "images/logo/**")
+git -C vendor/assets lfs pull --include "$(npx chassis-assets lfs "${FILTERS[@]}")"
+npx chassis-assets build --clean "${FILTERS[@]}"
 ```
 
 A pattern is a path of `source/` in the folder of the app. The [build system page]([[docsref:/getting-started/build-system#file-filters]]) has the patterns and the `--type` option.
@@ -87,15 +82,16 @@ The fonts and the raster images are Git LFS files. A checkout without Git LFS ho
 
 ### Build from a clone
 
-A clone is the way to go when you change the assets yourself, in a fork or in a repository of your own. It needs Node.js 22.12 or later, pnpm and Git LFS; the [Quick Start]([[docsref:/getting-started/quick-start]]) page has the setup.
+A clone is the way to go when you change the assets yourself, in your own repository of assets. It needs Node.js 22.12 or later and Git LFS; the [Quick Start]([[docsref:/getting-started/quick-start]]) page has the setup and the scripts the repository holds.
 
 ```bash
-git clone [[config:repo]].git chassis-assets
-cd chassis-assets
-pnpm assets --platform web
+git clone https://github.com/chassis-ui/website-assets.git
+cd website-assets
+npm install
+npx chassis-assets build --platform web
 ```
 
-`--brand`, `--app` and `--platform` each take one or more values and combine. `pnpm assets --dry-run` prints the jobs without writing, and `pnpm assets --help` prints every option. The [build system]([[docsref:/getting-started/build-system]]) page describes them.
+`--brand`, `--app` and `--platform` each take one or more values and combine. `npx chassis-assets build --dry-run` prints the jobs without writing, and `npx chassis-assets build --help` prints every option. The [build system]([[docsref:/getting-started/build-system]]) page describes them.
 
 ## Output layout
 
@@ -300,7 +296,7 @@ An image with `@2x` and `@3x` variants goes into `srcset`, one variant per pixel
 
 ### Formats
 
-An image that the output has as WebP and as PNG goes into a `<picture>` element, with the PNG as the fallback. In the default output these are the images the designer exported in both formats, so use the element only for an image that has both files. A build with `pnpm assets --webp` writes a WebP beside every PNG and JPEG, and `--avif` an AVIF; both need `pnpm install`, see the [build system page]([[docsref:/getting-started/build-system#image-formats]]).
+An image that the output has as WebP and as PNG goes into a `<picture>` element, with the PNG as the fallback. In the default output these are the images the designer exported in both formats, so use the element only for an image that has both files. A build with `chassis-assets build --webp` writes a WebP beside every PNG and JPEG, and `--avif` an AVIF; both need the package `sharp`, see the [build system page]([[docsref:/getting-started/build-system#image-formats]]).
 
 ```html
 <picture>
@@ -415,7 +411,7 @@ A brand with font files and no stylesheet of its own gets `fonts.css` of the def
 
 ## Continuous integration
 
-A workflow of your application builds the job before it builds the application, so the output is never committed. This GitHub Actions job checks out the submodule, pulls its Git LFS files, builds the job and copies it:
+A workflow of your application builds the job before it builds the application, so the output is never committed. This GitHub Actions job checks out the submodule, pulls its Git LFS files, installs the package of the project, builds the job and copies it:
 
 ```yaml
 jobs:
@@ -431,12 +427,10 @@ jobs:
           node-version-file: vendor/assets/.nvmrc
 
       - name: Build the assets
-        working-directory: vendor/assets
         run: |
-          git lfs pull
-          corepack enable
-          pnpm install --ignore-workspace
-          pnpm assets:site
+          git -C vendor/assets lfs pull
+          npm ci
+          npx chassis-assets build --cwd vendor/assets --clean --brand chassis --app docs --platform web
 
       - name: Copy the assets
         run: |
@@ -455,11 +449,11 @@ These practices keep your application reading the output as the build wrote it, 
 - **Read a file by its output name:** the web names are kebab-case and a dot inside a name is a hyphen, so a source file `brand.tokens.json` is `brand-tokens.json` in the output. Find a name with `find dist/web/<app>/<brand> -name '<pattern>'`.
 - **Keep the stylesheet beside its fonts:** `fonts.css` reads its font files by a relative URL. Copy `fonts/` whole.
 - **Ship the licenses:** copy `<role>-license.txt` with the fonts of `fonts/`.
-- **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is marked `**Breaking.**` in the changelog.
+- **Pin what you build:** a submodule is pinned to a commit and an archive to a version, so a renamed file reaches your application only when you move the pin. A change to a name of `dist/` is a breaking change of the repository of assets.
 
 Avoid the habits that undo this:
 
-- **Do not edit `dist/`:** a full `pnpm assets` removes it first, and `--clean` removes the folders of the selected jobs. Change the file in `source/` and build again.
+- **Do not edit `dist/`:** a full `chassis-assets build` removes it first, and `--clean` removes the folders of the selected jobs. Change the file in `source/` and build again.
 - **Do not expect a file the designer did not export:** the default build copies. An image without an `@2x` file in `source/` has none in the output, and one without a `.webp` file has one only in a build with `--webp`.
 
 ## Troubleshooting
@@ -488,7 +482,7 @@ The build stops with `Unknown brand "<name>". Configured: <brands>`. The value o
 
 ### No job selected
 
-The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each filter value is configured, but no app has that platform: `pnpm assets --app demo --platform web` fails in the committed configuration, where `demo` is built for iOS and Android. Read the jobs with `pnpm assets --dry-run`.
+The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each filter value is configured, but no app has that platform: `chassis-assets build --app demo --platform web` fails in the committed configuration, where `demo` is built for iOS and Android. Read the jobs with `chassis-assets build --dry-run`.
 
 ## Next steps
 

@@ -64,14 +64,14 @@ Do not edit a file under `icons/icons/` or `icons/svgs/` by hand. The next copy 
 
 ### Refreshing the copy
 
-The package `@chassis-ui/icons` ships the two folders as they are. Install the dependencies, replace the folders of each app that holds a copy with those of the package, and build. For a copy in `source/_default/<app>/icons/`:
+The package `@chassis-ui/icons` ships the two folders as they are. Install it beside the build, replace the folders of each app that holds a copy with those of the package, and build. For a copy in `source/_default/<app>/icons/`:
 
 ```bash
-pnpm install
+npm install --save-dev @chassis-ui/icons
 rm -rf source/_default/<app>/icons/icons source/_default/<app>/icons/svgs
-cp -r packages/site/node_modules/@chassis-ui/icons/icons source/_default/<app>/icons/icons
-cp -r packages/site/node_modules/@chassis-ui/icons/svgs source/_default/<app>/icons/svgs
-pnpm assets
+cp -r node_modules/@chassis-ui/icons/icons source/_default/<app>/icons/icons
+cp -r node_modules/@chassis-ui/icons/svgs source/_default/<app>/icons/svgs
+npx chassis-assets build
 ```
 
 The icon font files are Git LFS files, so make the commit on a machine with Git LFS. Compare `dist/` before and after: an icon that was under `icons/svgs/` and is gone breaks an app that reads it by name.
@@ -152,7 +152,7 @@ dist/android/<app>/<brand>/icons/
     └── ...
 ```
 
-A build with `pnpm assets --vector-drawables` writes each of these SVG files as a vector drawable of the same name. The SVG file of the icon font has no shape to draw, so it stays, and the build warns about it:
+A build with `chassis-assets build --vector-drawables` writes each of these SVG files as a vector drawable of the same name. The SVG file of the icon font has no shape to draw, so it stays, and the build warns about it:
 
 ```text
 dist/android/<app>/<brand>/icons/

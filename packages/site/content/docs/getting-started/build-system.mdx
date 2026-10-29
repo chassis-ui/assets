@@ -10,38 +10,35 @@ toc: true
 
 The build copies the files of `source/<brand>/<app>/<type>/` to `dist/<platform>/<app>/<brand>/`. On the way it leaves out the formats a platform does not use, renames each file for the platform, and sorts Android image variants into density folders. By default it does not resize, convert or re-encode a file: the options of [Optimization](#optimization) and [Image formats](#image-formats) do the last two.
 
-This page is the reference of the build: its commands and options, the `chassis` block that configures it, the rules of each platform, the checks that read its output, and the library behind the commands.
+This page is the reference of the build: its commands and options, the `chassis` block that configures it, the rules of each platform, the checks that read its output, the releases, and the library behind the commands.
 
 ## Prerequisites
 
-The build needs Node.js 22.12 or later and nothing installed: it imports Node.js modules only, and the package has no dependencies. Run `pnpm install` for the tests, the type check, the documentation site and the options that use a package, each an optional peer dependency of `@chassis-ui/assets`: `--vector-drawables`, `--optimize`, `--webp`, `--avif` and `--subset`.
+The build needs Node.js 22.12 or later and the package `@chassis-ui/assets`, which has no dependencies: a plain install brings nothing else. The options that convert files load a package each, an optional peer dependency that you install beside the build when you use the option: `sharp` and `svgo` for `--optimize`, `--webp` and `--avif`, `subset-font` for `--subset`, and `svg2vectordrawable` for `--vector-drawables`.
 
-Run every command from the repository root. A clone needs its Git LFS files, see [Build fails on pointers](#build-fails-on-pointers).
+Run every command from the root of the repository of assets, or name it with `--cwd`. A clone needs its Git LFS files, see [Build fails on pointers](#build-fails-on-pointers).
 
 ## Commands
 
-Each command is a script of the root `package.json`, and each `pnpm assets*` command prints its options with `--help`.
+Each command is `chassis-assets <command>`, run with `npx chassis-assets` where the package is installed, and each one prints its options with `--help`. The scripts that `chassis-assets init` writes into `package.json` call them: `npm run build`, `lint`, `verify`, `archive` and `analyze`.
 
 <CxTable>
 | Command | What it does |
 | --- | --- |
-| `pnpm assets` | Builds every job of the configuration into `dist/` |
-| `pnpm assets:site` | Builds the web output of the configured docs app for the `chassis` brand, which the Chassis sites read |
-| `pnpm assets:lfs` | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include` |
-| `pnpm assets:archive` | Writes one zip per platform, app and brand of an existing output, for a release |
-| `node packages/assets/build/cli.js init` | Writes the baseline of a repository of assets into a folder, see [New Repository]([[docsref:/getting-started/new-repository]]) |
-| `pnpm assets:validate` | Checks an existing output against the source and the configuration |
-| `pnpm assets:contract` | Checks that an existing output has the files its consumers read by name |
-| `pnpm assets:verify` | Runs the validator, then the contract check |
-| `pnpm assets:lint:source` | Checks the names and the layout of `source/`, and the fonts against their stylesheets |
-| `pnpm assets:analyze` | Reports sizes, types, the largest files and files with the same content |
-| `pnpm test` | Runs the tests of the build |
-| `pnpm clean` | Removes `dist/` and the built site |
+| `chassis-assets build` | Builds every job of the configuration into `dist/` |
+| `chassis-assets lfs` | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include` |
+| `chassis-assets archive` | Writes one zip per platform, app and brand of an existing output, for a release, see [Releases](#releases) |
+| `chassis-assets init [dir]` | Writes the baseline of a repository of assets into a folder, see the [quick start]([[docsref:/getting-started/quick-start]]) |
+| `chassis-assets validate` | Checks an existing output against the source and the configuration |
+| `chassis-assets contract` | Checks that an existing output has the files its consumers read by name |
+| `chassis-assets verify` | Runs the validator, then the contract check |
+| `chassis-assets lint-source` | Checks the names and the layout of `source/`, and the fonts against their stylesheets |
+| `chassis-assets analyze` | Reports sizes, types, the largest files and files with the same content |
 </CxTable>
 
 ### Build options
 
-The options of `pnpm assets` select the jobs, the folders and what happens to the output that is already there.
+The options of `chassis-assets build` select the jobs, the folders and what happens to the output that is already there.
 
 <CxTable>
 | Option | What it does |
@@ -58,13 +55,13 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 | `--watch` | Build, then build the jobs of a brand and an app again when a file of theirs under `source/` changes |
 | `--dry-run` | Print the jobs and their file counts, write nothing |
 | `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same |
-| `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `pnpm install` |
+| `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `svg2vectordrawable` |
 | `--asset-catalog` | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/` |
 | `--res` | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/` |
-| `--optimize` | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `pnpm install` |
-| `--webp` | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `pnpm install` |
-| `--avif` | Write the PNG and JPEG images of the web as AVIF too. Needs `pnpm install` |
-| `--subset [range...]` | Write the WOFF and WOFF2 fonts of the web again under their names with the characters of the ranges only, such as `latin` or `U+0370-03FF`. Default: `chassis.subset`, or `latin` and `latin-ext`. Needs `pnpm install` |
+| `--optimize` | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `sharp` and `svgo` |
+| `--webp` | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `sharp` |
+| `--avif` | Write the PNG and JPEG images of the web as AVIF too. Needs `sharp` |
+| `--subset [range...]` | Write the WOFF and WOFF2 fonts of the web again under their names with the characters of the ranges only, such as `latin` or `U+0370-03FF`. Default: `chassis.subset`, or `latin` and `latin-ext`. Needs `subset-font` |
 | `--split`, `--no-split` | With `--subset`, write each font that a stylesheet declares once per range too, with a rule per range in the stylesheet, or write a font in one file. Default: `split` of `chassis.subset`, or one file |
 | `--quiet` | Print errors only |
 | `--help`, `-h` | Print the options |
@@ -76,9 +73,9 @@ The options of `pnpm assets` select the jobs, the folders and what happens to th
 A filter takes one or more values, and the filters combine: the build runs the jobs that match all of them.
 
 ```bash
-pnpm assets --brand chassis
-pnpm assets --platform ios android
-pnpm assets --brand chassis --app docs --platform web
+chassis-assets build --brand chassis
+chassis-assets build --platform ios android
+chassis-assets build --brand chassis --app docs --platform web
 ```
 
 A value that the configuration does not have fails the build and names the configured values. Filters that match no job together, such as an app with a platform it is not built for, fail the build too.
@@ -88,8 +85,8 @@ A value that the configuration does not have fails the build and names the confi
 The `--type` and `--include` options build a part of a job: the build reads only the files of an app that match, and writes them where a full build does, with the same names. Use them when you read a part of the output, to fetch and copy that part only.
 
 ```bash
-pnpm assets --type images icons
-pnpm assets --brand chassis --app docs --include "fonts/**" "images/logo/**"
+chassis-assets build --type images icons
+chassis-assets build --brand chassis --app docs --include "fonts/**" "images/logo/**"
 ```
 
 `--type` names type folders. `--include` takes patterns of paths as they are in `source/`, relative to the folder of the app, so with the source names and not the names of a platform. A file has to pass both options when both are given.
@@ -104,27 +101,25 @@ pnpm assets --brand chassis --app docs --include "fonts/**" "images/logo/**"
 | `images/onboarding/welcome-{light,dark}{,@2x}.png` | Four files: `{a,b}` is one of its alternatives, an empty one too |
 </CxTable>
 
-Quote a pattern, or the shell expands it. A build with a file filter keeps the rest of `dist/`, as a build with any filter does. Filters that match no file fail the build. Filters that match no file of one job among several warn, and that job gets no folder. The validator checks a full build, so `pnpm assets:verify` fails on an output of a part.
+Quote a pattern, or the shell expands it. A build with a file filter keeps the rest of `dist/`, as a build with any filter does. Filters that match no file fail the build. Filters that match no file of one job among several warn, and that job gets no folder. The validator checks a full build, so `chassis-assets verify` fails on an output of a part.
 
-A file that the filters leave out is not read, so it may be a Git LFS pointer. `pnpm assets:lfs` takes the same filters and prints the paths of `source/` that the build reads, separated by commas, which is the value `git lfs pull --include` takes. A folder whose files are all read is one path. In a clone made without the Git LFS files, fetch the files of a build and run it:
+A file that the filters leave out is not read, so it may be a Git LFS pointer. `chassis-assets lfs` takes the same filters and prints the paths of `source/` that the build reads, separated by commas, which is the value `git lfs pull --include` takes. A folder whose files are all read is one path. In a clone made without the Git LFS files, fetch the files of a build and run it:
 
 ```bash
 FILTERS=(--brand chassis --app docs --include "fonts/**" "images/logo/**")
-git lfs pull --include "$(node packages/assets/build/cli.js lfs "${FILTERS[@]}")"
-pnpm assets "${FILTERS[@]}"
+git lfs pull --include "$(chassis-assets lfs "${FILTERS[@]}")"
+chassis-assets build "${FILTERS[@]}"
 ```
-
-The first command runs the script with `node`, since `pnpm` prints the name of a script before its output; `pnpm --silent assets:lfs` prints the paths alone too.
 
 ### Cleaning
 
 A build without filters removes `dist/` first, so the output holds nothing of an earlier build. A build with filters keeps `dist/` and writes over the files of its jobs, so you can build one job after another.
 
 ```bash
-pnpm assets                                    # removes dist/, builds every job
-pnpm assets --no-clean                         # keeps dist/, builds every job
-pnpm assets --brand chassis --platform web     # keeps dist/, builds the selected jobs
-pnpm assets --clean --brand chassis --app docs # removes the folders of the selected jobs first
+chassis-assets build                                    # removes dist/, builds every job
+chassis-assets build --no-clean                         # keeps dist/, builds every job
+chassis-assets build --brand chassis --platform web     # keeps dist/, builds the selected jobs
+chassis-assets build --clean --brand chassis --app docs # removes the folders of the selected jobs first
 ```
 
 With filters, `--clean` removes the folders of the selected jobs only. The output of the other jobs stays.
@@ -134,7 +129,7 @@ With filters, `--clean` removes the folders of the selected jobs only. The outpu
 The `--watch` option builds once, then keeps running and builds again when a file under `source/` changes. Use it while you export from a design tool, with the filters of the jobs you look at:
 
 ```bash
-pnpm assets --watch --platform ios --app demo
+chassis-assets build --watch --platform ios --app demo
 ```
 
 A change builds the jobs it belongs to, and no other. A file of a brand builds the jobs of that brand and its app. A file of the default brand builds the jobs of its app for every brand, since every brand gets it. A file of a `_shared` folder builds every app of its brand. Changes that come together, as an export of many files does, are one build.
@@ -148,20 +143,20 @@ The watch reads `package.json` when it starts: after a change to the `chassis` b
 The `--vector-drawables` option writes each SVG file under `icons/` of an Android job as a vector drawable, the format the `res/drawable/` folder of an app takes. It is off by default, and the output of every other platform and type stays as it is.
 
 ```bash
-pnpm install
-pnpm assets --vector-drawables
+npm install svg2vectordrawable
+chassis-assets build --vector-drawables
 ```
 
 The file keeps its folder and its name and gets the `.xml` extension: `icons/svgs/ic_arrow_right_solid.svg` becomes `icons/svgs/ic_arrow_right_solid.xml`. A path without a fill color is filled black, which a tint replaces in the app.
 
-The conversion is the one step of the build that uses a package, `svg2vectordrawable`, and the build loads it only with this option. Without the package the build stops before it removes anything and names `pnpm install` as the fix. An SVG without a shape, such as the SVG file of an icon font, stays an SVG and the build warns about it. A file that is not an SVG fails the build.
+The conversion is the one step of the build that uses a package, `svg2vectordrawable`, and the build loads it only with this option. Without the package the build stops before it removes anything and names the package as the fix. An SVG without a shape, such as the SVG file of an icon font, stays an SVG and the build warns about it. A file that is not an SVG fails the build.
 
 ### Asset catalog
 
 The `--asset-catalog` option moves the images of an iOS job from `images/` into `Assets.xcassets`, the folder Xcode reads image sets from. It is off by default, needs nothing installed, and leaves the output of every other platform and type as it is.
 
 ```bash
-pnpm assets --asset-catalog
+chassis-assets build --asset-catalog
 ```
 
 The files of one base name are one image set, with the `Contents.json` that Xcode writes: `images/badge.png`, `images/badge@2x.png` and `images/badge@3x.png` become `Assets.xcassets/badge.imageset/`, each file in the slot of its indicator. An SVG or a PDF without a raster of its name is an image set of one file that keeps its vector data. A subfolder of `images/` is a folder of the catalog that provides a namespace, so `images/logo/mark@2x.png` is in `Assets.xcassets/logo/mark.imageset/` and an app names it `logo/mark`.
@@ -173,8 +168,8 @@ A file without a place in an image set stays in `images/`, and the build warns o
 The `--optimize` option writes each image of `images/` again under its own name, when that makes the file smaller. It is off by default: the files of `source/` are what the designer exported, and the default build copies them as they are.
 
 ```bash
-pnpm install
-pnpm assets --optimize
+npm install sharp svgo
+chassis-assets build --optimize
 ```
 
 Without settings the option changes no pixel that anyone sees. What it does to a format:
@@ -190,7 +185,7 @@ Without settings the option changes no pixel that anyone sees. What it does to a
 
 A file keeps its name on every platform, so nothing that reads the output changes. A file that would not get smaller stays as it was copied. The ids of an SVG and the symbols of a sprite are kept, since a page refers to them from outside the file. A file with the extension of an image that is no image fails the build, which names the file.
 
-The option uses the packages `sharp` and `svgo`, which the build loads only with it. Without the packages the build stops before it removes anything and names `pnpm install` as the fix. The [chassis.optimize](#chassisoptimize) block has the settings.
+The option uses the packages `sharp` and `svgo`, which the build loads only with it. Without the packages the build stops before it removes anything and names the package as the fix. The [chassis.optimize](#chassisoptimize) block has the settings.
 
 The archives of a release are built with this option, and with no other: an archive has the files and the names of a default build, with smaller PNG and SVG images.
 
@@ -199,9 +194,9 @@ The archives of a release are built with this option, and with no other: an arch
 The `--webp` and `--avif` options write each PNG and JPEG image of `images/` in a second format. Both are off by default, and both use the package `sharp`.
 
 ```bash
-pnpm install
-pnpm assets --webp          # WebP for the web and Android
-pnpm assets --webp --avif   # and AVIF for the web
+npm install sharp
+chassis-assets build --webp          # WebP for the web and Android
+chassis-assets build --webp --avif   # and AVIF for the web
 ```
 
 Where the file is written depends on the platform:
@@ -223,10 +218,10 @@ A file of `source/` wins over the one the build would write: when the designer e
 The `--subset` option writes each WOFF and WOFF2 font of a web job again under its own name, with the characters of a list of Unicode ranges only. It is off by default: a font of `source/` holds every script its designer drew, and the default build copies it whole.
 
 ```bash
-pnpm install
-pnpm assets --subset                 # the ranges of chassis.subset, or latin and latin-ext
-pnpm assets --subset latin greek     # these ranges
-pnpm assets --subset U+0020-007E     # a range by its code points
+npm install subset-font
+chassis-assets build --subset                 # the ranges of chassis.subset, or latin and latin-ext
+chassis-assets build --subset latin greek     # these ranges
+chassis-assets build --subset U+0020-007E     # a range by its code points
 ```
 
 A range is a name or a range of code points written as `U+0370-03FF`. A name stands for the code points that Google Fonts serves under it. The values of the option win over the [chassis.subset](#chassissubset) block, and without either the build keeps `latin` and `latin-ext`.
@@ -251,7 +246,7 @@ A variable font keeps its axes. A browser uses an axis without being asked: it s
 A font is one file with the characters of every range. With the `--split` option, the build also writes each font that a stylesheet of `fonts/` declares once per range, beside it, and writes the `@font-face` rule of the stylesheet once per range, each with the `unicode-range` of its file. A browser then downloads the file of a range only when the page has a character of that range.
 
 ```bash
-pnpm assets --subset latin latin-ext --split
+chassis-assets build --subset latin latin-ext --split
 ```
 
 ```text
@@ -273,15 +268,15 @@ The split costs a page that has characters of two ranges: the two files share gl
 
 Only the fonts of `fonts/` of a web job are written again. The TTF and OTF fonts of iOS and Android stay whole, and so does the icon font of `icons/`. A file with the extension of a font that is no font fails the build, which names the file.
 
-The option uses the package `subset-font`, which the build loads only with it. Without the package the build stops before it removes anything and names `pnpm install` as the fix. Check the license of a font before you publish a subset of it: a license may ask for another name for a changed font.
+The option uses the package `subset-font`, which the build loads only with it. Without the package the build stops before it removes anything and names the package as the fix. Check the license of a font before you publish a subset of it: a license may ask for another name for a changed font.
 
 ### Res folder
 
 The `--res` option moves the files of an Android job that the `res/` folder of an app takes into one, `dist/android/<app>/<brand>/res/`. It is off by default, needs nothing installed, and leaves the output of every other platform as it is.
 
 ```bash
-pnpm assets --res
-pnpm assets --res --vector-drawables   # with the icons, needs pnpm install
+chassis-assets build --res
+chassis-assets build --res --vector-drawables   # with the icons, needs svg2vectordrawable
 ```
 
 A TTF or OTF file of `fonts/` moves to `res/font/`. A PNG, WebP, JPEG or GIF file of `images/` moves to the folder of `res/` that is named as its density folder, so `images/logo/drawable-xhdpi/mark.png` becomes `res/drawable-xhdpi/mark.png`. A vector drawable of `icons/` moves to `res/drawable/`, which makes `--vector-drawables` the option that brings the icons into `res/`.
@@ -292,7 +287,7 @@ A file without a place in `res/` stays where it is, and the build warns once per
 
 ## Configuration
 
-The `chassis` block of the root `package.json` names what is built, and holds the optional settings: [optimize](#chassisoptimize), [subset](#chassissubset), [ignore](#chassisignore) and [formats](#chassisformats). What the checks verify is in a file of its own, see [Checks file](#checks-file).
+The `chassis` block of the `package.json` of the repository of assets names what is built, and holds the optional settings: [optimize](#chassisoptimize), [subset](#chassissubset), [ignore](#chassisignore) and [formats](#chassisformats). What the checks verify is in a file of its own, see [Checks file](#checks-file). The block of the Chassis sites, two brands and two apps:
 
 ```json
 {
@@ -401,7 +396,7 @@ A value outside the axis of a font fails the build, which names the file and the
 
 A pattern is a name, not a path: it matches a file or a folder of that name at any depth, in every brand and every app. `*` stands for any run of characters, and the match is case-sensitive. A folder that matches is left out with everything in it. A pattern with a slash fails the build.
 
-The list adds to the names the build ignores and takes none away. The source lint, the validator, the analyzer, `pnpm assets:lfs` and `--watch` read the same list, so a file you ignore is no file for them either.
+The list adds to the names the build ignores and takes none away. The source lint, the validator, the analyzer, `chassis-assets lfs` and `--watch` read the same list, so a file you ignore is no file for them either.
 
 ### chassis.formats
 
@@ -494,29 +489,29 @@ The checks read `source/` or an existing output and change nothing. Each exits w
 
 ### Validator
 
-`pnpm assets:validate` checks an existing output against the source and the configuration. Run it after a full build.
+`chassis-assets validate` checks an existing output against the source and the configuration. Run it after a full build.
 
 ```bash
-pnpm assets
-pnpm assets:validate
+chassis-assets build
+chassis-assets validate
 ```
 
 It checks that the output and the source exist, that every job has its folder and the type folders of its source, that every source file is there under the name of the platform, that the output has no fewer files than the source and no empty folder, and that the names keep the rules of the platform. `--out <dir>` reads another folder than `dist/`.
 
 ### Contract check
 
-A contract is a list of files that a consumer reads by name from the output of one job. `pnpm assets:contract` checks the contracts of `chassis.checks.json`, and names each missing file and its reader.
+A contract is a list of files that a consumer reads by name from the output of one job. `chassis-assets contract` checks the contracts of `chassis.checks.json`, and names each missing file and its reader.
 
 ```bash
-pnpm assets:contract
-pnpm assets:verify
+chassis-assets contract
+chassis-assets verify
 ```
 
-`pnpm assets:verify` runs the validator and then the contract check. A repository without contracts has nothing to check, and the command is the validator alone.
+`chassis-assets verify` runs the validator and then the contract check. A repository without contracts has nothing to check, and the command is the validator alone.
 
 ### Source lint
 
-`pnpm assets:lint:source` checks `source/` against the naming rules of the [design guidelines]([[docsref:/getting-started/design-guidelines]]).
+`chassis-assets lint-source` checks `source/` against the naming rules of the [design guidelines]([[docsref:/getting-started/design-guidelines]]).
 
 It fails on a name or a folder that is not of lowercase letters, digits and hyphens, on an indicator that is not at the end of a name, on an extension with capitals, on a file outside a type folder, and on a Git LFS pointer in place of a file. It warns about a brand or an app folder that the configuration does not name, which the build does not read.
 
@@ -530,11 +525,11 @@ It warns about a font of the default brand that a brand gets beside a family of 
 
 ### Analyzer
 
-`pnpm assets:analyze` reports on `source/` and on an existing output: the file types, the files per platform, brand and app, the largest files, and the files with the same content. It takes the filters of the build.
+`chassis-assets analyze` reports on `source/` and on an existing output: the file types, the files per platform, brand and app, the largest files, and the files with the same content. It takes the filters of the build.
 
 ```bash
-pnpm assets:analyze
-pnpm assets:analyze --brand chassis --platform web
+chassis-assets analyze
+chassis-assets analyze --brand chassis --platform web
 ```
 
 Files with the same content are listed per group, for the source and for the output apart. An app that holds a copy of the files of another app shows up there.
@@ -604,59 +599,23 @@ In `chassis.checks.json`, the entry of a file that another project names:
 
 ## Custom platforms
 
-A platform is a processor: a module of `packages/assets/build/processors/` with the formats the platform keeps and a function that names a file. To add a platform, write the module, add it to the registry, and name the platform in an app.
+A platform is a processor: a module of `build/processors/` of the package with the formats the platform keeps and a function that names a file. The package loads no processor from outside itself, so a fourth platform is a change to the package: a pull request to its repository, or a fork of it that adds the module to the registry of `build/processors/index.js` and names the platform in an app of the `chassis` block.
 
-Add the processor as `packages/assets/build/processors/desktop.js`. A format list that is missing means every format.
-
-```js
-const desktopProcessor = {
-  name: 'desktop',
-  icon: '🖥️',
-
-  allowedFontFormats: ['.ttf', '.otf', '.txt'],
-  allowedIconFormats: ['.svg'],
-  excludedImageFormats: [],
-
-  renameFile(fileName) {
-    return fileName.toLowerCase()
-  }
-}
-
-export default desktopProcessor
-```
-
-Add it to the registry in `packages/assets/build/processors/index.js`:
-
-```js
-import desktopProcessor from './desktop.js'
-
-export const platformProcessors = {
-  web: webProcessor,
-  ios: iosProcessor,
-  android: androidProcessor,
-  desktop: desktopProcessor
-}
-```
-
-Name the platform in an app of the `chassis` block, and build it with `pnpm assets --platform desktop`.
-
-A processor may also place an image itself with `processImage()`, as the Android processor does for the density folders. It returns `true` when it wrote the file, and `false` to let the build copy it. Such a processor also has `imageFolder(fileName)`, which returns the folder the image goes to, so that the build can warn about two images that meet there.
-
-A processor with `vectorDrawables` takes part in the `--vector-drawables` option. The property names the type folder and the two extensions, as the Android processor does with `{ type: 'icons', from: '.svg', to: '.xml' }`. A processor with `assetCatalog` takes part in the `--asset-catalog` option. The property names the type folder and the folder of the catalog, as the iOS processor does with `{ type: 'images', name: 'Assets.xcassets' }`. A processor with `res` takes part in the `--res` option. The property names the folder, and for the fonts and the drawables the type folders, the folder of `res/` and the formats it takes. A processor with `imageFormats` takes part in `--webp` and `--avif`: the property says for each format whether the file is written `beside` the image or to `replace` it, as the web processor does with `{ webp: 'beside', avif: 'beside' }` and the Android processor with `{ webp: 'replace' }`. A processor with `subset` takes part in `--subset`: the property names the type folder and the extensions of the fonts that are written again, as the web processor does with `{ type: 'fonts', formats: ['.woff', '.woff2'] }`.
+A processor has `allowedFontFormats`, `allowedIconFormats` and `excludedImageFormats`, and `renameFile(fileName)`. It may place an image itself with `processImage()`, as the Android processor does for the density folders, with `imageFolder(fileName)` for the folder the image goes to. The options of the build each ask a processor for a property: `vectorDrawables`, `assetCatalog`, `res`, `imageFormats` and `subset`, as the modules of the three platforms show.
 
 ## Library
 
 The commands are thin entries over modules that a script can import. An imported function takes its options as an object, never reads the command line, and throws where the command would exit.
 
-Use the paths of your checkout. This script builds one job into a folder of its own and reads the result:
+Import them from the package, installed in the repository of assets or beside it. This script builds one job into a folder of its own and reads the result:
 
 ```js
-import ChassisAssets from '../chassis-assets/packages/assets/build/api/index.js'
-import AssetAnalyzer from '../chassis-assets/packages/assets/build/analyze-assets.js'
-import { generateAssets } from '../chassis-assets/packages/assets/build/build-assets.js'
+import ChassisAssets from '@chassis-ui/assets'
+import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
+import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
 
-// The repository root: where package.json and source/ are
-const cwd = new URL('../chassis-assets/', import.meta.url).pathname
+// The root of the repository of assets: where package.json and source/ are
+const cwd = new URL('./', import.meta.url).pathname
 
 // The build, with the options of the command line. Throws on an unknown brand
 const result = await generateAssets({
@@ -706,58 +665,74 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 
 `new AssetAnalyzer({ brands, apps, platforms, quiet, cwd, out })` of `analyze-assets.js` takes the filters and the folders. `analyze()` fills `stats`: `totalFiles`, `totalSize`, `fileTypes`, `platforms`, `brands`, `apps`, `largestFiles`, `duplicatesInSource` and `duplicatesInDist`. `formatBytes(bytes)` formats a size for reading.
 
-## Continuous integration
+## Releases
 
-A CI job builds the output it needs and checks it. The checkout has to fetch the Git LFS files, and the build needs no install step.
-
-```yaml
-name: Assets
-
-on: [push, pull_request]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          lfs: true
-
-      # pnpm at the version of packageManager, Node.js from .nvmrc
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-
-      - name: Lint the source
-        run: pnpm assets:lint:source
-
-      - name: Build
-        run: pnpm assets
-
-      - name: Verify
-        run: pnpm assets:verify
-```
-
-To build one platform per job, give each job a filter, such as `pnpm assets --platform ios`, and keep its folder, `dist/ios/`. A job that needs the names and not the binaries, such as the source lint alone, can skip the Git LFS files and pass `--allow-lfs-pointers`.
-
-## Tests
-
-The tests run with [Vitest](https://vitest.dev/) on a small fixture in `packages/assets/test/fixtures/`, with brands, apps and files of its own. They need no Git LFS files and write to temporary folders only, never to `dist/`.
+A release of a repository of assets is one archive per job, `<name>-<platform>-<app>-<brand>-<version>.zip`, with the content of `dist/<platform>/<app>/<brand>/` at its top level. `chassis-assets archive` writes them from an existing output, with the name and the version of `package.json`, into `archives/`.
 
 ```bash
-pnpm test           # run every test
-pnpm test:golden    # write the golden output again
+chassis-assets build --optimize
+chassis-assets archive
+chassis-assets archive --to /tmp/release --prefix acme --release 1.2.0
 ```
 
-One test builds the fixture and compares the result, file by file, with the committed output in `packages/assets/test/golden/`. After a change to the build that is meant to change the output, run `pnpm test:golden` and review the difference: every file that moves or changes its name there does so in `dist/` too.
+`--to <dir>` writes them elsewhere, and `--prefix <name>` and `--release <version>` name them instead of `package.json`; the archives of the prefix already in the folder are removed first. The archives are written with Node.js alone, and an archive holds up to 65,535 files.
+
+The release workflow that `chassis-assets init` writes runs on a tag `v<version>`: it checks that the tag is the version of `package.json`, builds and verifies every job, writes the archives and creates the GitHub release with them attached. A tag with a prerelease part, such as `v0.2.0-next.0`, is marked as a prerelease.
+
+## Continuous integration
+
+A CI job builds the output it needs and checks it. The checkout has to fetch the Git LFS files, and the install brings the package and nothing else. `chassis-assets init` writes this workflow, for npm or for pnpm, with the actions pinned to a commit:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  assets:
+    name: Assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          lfs: true
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint source
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify
+        run: npm run verify
+```
+
+To build one platform per job, give each job a filter, such as `chassis-assets build --platform ios`, and keep its folder, `dist/ios/`. A job that needs the names and not the binaries, such as the source lint alone, can skip the Git LFS files and pass `--allow-lfs-pointers`.
 
 ## Best practices
 
 These practices keep a build short while you work, and keep the paths of the output stable for the consumers.
 
-- **Build a part while you work:** `pnpm assets --brand chassis --platform web` writes one job and keeps the rest of `dist/`.
-- **Run a full build before the checks:** `pnpm assets:validate` and `pnpm assets:verify` expect the output of every job.
+- **Build a part while you work:** `chassis-assets build --brand chassis --platform web` writes one job and keeps the rest of `dist/`.
+- **Run a full build before the checks:** `chassis-assets validate` and `chassis-assets verify` expect the output of every job.
 - **Start with the default brand:** put the files that every brand shares in `source/_default/<app>/`, and add to a brand folder only what is its own. A file that every app of a brand uses goes in its `_shared/` folder, once.
 - **Keep brand and app names in lowercase with hyphens:** they are folder names in `source/` and in `dist/`, and a consumer reads its files by that path. A name that starts with `_` is no brand and no app, and the build fails on it.
 
@@ -780,11 +755,11 @@ The build stops with `Unknown brand "<name>". Configured: <names>`, or the same 
 
 ### No job selected
 
-The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each value is configured, and no app has that platform. Run `pnpm assets --dry-run` to see the jobs.
+The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each value is configured, and no app has that platform. Run `chassis-assets build --dry-run` to see the jobs.
 
 ### Validator misses files
 
-`pnpm assets:validate` fails after a filtered build and names the folders or the files of other jobs. The validator checks every job of the configuration. Run `pnpm assets` without filters, then validate.
+`chassis-assets validate` fails after a filtered build and names the folders or the files of other jobs. The validator checks every job of the configuration. Run `chassis-assets build` without filters, then validate.
 
 ## Next steps
 
@@ -792,4 +767,4 @@ Continue with one of these pages:
 
 - [Design guidelines]([[docsref:/getting-started/design-guidelines]]): the naming rules that the source lint checks.
 - [Fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]): the rules of each type.
-- [Architecture]([[config:repo]]/blob/main/docs/architecture.md): the modules of the build and the output contract.
+- [Architecture]([[config:repo]]/blob/main/docs/architecture.md): the modules of the build, its tests and the output contract.

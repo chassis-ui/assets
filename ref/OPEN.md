@@ -12,14 +12,16 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   Before the first release: `npm publish` in `packages/assets/` from the maintainer's
   machine, then on npmjs.com add the trusted publisher `chassis-ui/assets`, workflow
   `release.yml`. The name is free on npm as of 2026-10-29.
-- **The split of the repository, steps 5 and 6.** Steps 1 to 4 are done with D37 and D38:
+- **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
   commands, `chassis-ui/website-assets` holds the assets with their history, and this
   repository builds them from the `vendor/assets` submodule. Until the maintainer pushes
   website-assets (`git lfs push origin --all`, then `git push origin main`), the pin of the
-  submodule, ac9bf32, exists on this machine only, and CI cannot check it out. Left: (5) the
-  getting-started pages rewritten around `chassis-assets init` for an adopting team, and the
-  pages that still describe `source/` at the root of this repository; (6) the submodule of
+  submodule, ac9bf32, exists on this machine only, and CI cannot check it out. The pages
+  describe a repository of assets as `init` writes it since step 5, on 2026-10-29; the
+  build-system and the use-in-project pages keep their `work-in-progress` callout, since
+  their CI samples and the workflows of `init` were not run on GitHub Actions, and
+  `npx @chassis-ui/assets init` was not run before the first publish. Left: (6) the submodule of
   each Chassis site pointed at `main` of website-assets, with the report on
   `chassis-docs vendor` in `ref/OPEN.md` there, and the `app/docs` branch of this repository
   deleted on GitHub once no site pins it. Agreed on 2026-10-29.

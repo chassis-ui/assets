@@ -1,45 +1,53 @@
 ---
 title: Quick Start
-description: Clone Chassis Assets, build the output, add a file, copy the result into a project, and make the repository your own.
+description: Create a repository of assets with chassis-assets init, build the output, add a file, copy the result into a project, and release a version.
 toc: true
 ---
 
-<Callout name="work-in-progress" />
-
 ## Introduction
 
-This guide takes you from a clone to a built output, adds a first file, and shows where a project picks the result up. The last section is for a team that adopts the repository for its own brands.
+This guide takes you from an empty folder to a repository of assets, a built output and a first file of your own, and shows where a project picks the result up. The last sections name what your consumers read and release a version.
 
-The [README]([[config:repo]]#readme) of the repository has the same setup, and lists every command with its options.
+The repository is yours: `chassis-assets init` writes its baseline, and everything it writes is yours to change.
 
 ## Prerequisites
 
-The build needs Node.js and nothing else. The rest is for cloning and for the other commands.
+The build needs Node.js and nothing else. The rest is for the repository and its workflows.
 
-- **Node.js** 22.12 or later, see `engines` in `package.json`. The repository pins its version in `.nvmrc`.
-- **pnpm**, the version named by `packageManager` in `package.json`. Run `corepack enable` once and pnpm is used at that version.
-- **Git LFS**, from [git-lfs.com](https://git-lfs.com). Run `git lfs install` once on your machine before cloning. Fonts and raster images are Git LFS files.
+- **Node.js** 22.12 or later.
+- **Git** and **Git LFS**, from [git-lfs.com](https://git-lfs.com). Run `git lfs install` once on your machine. Fonts and raster images are Git LFS files.
+- **npm** or **pnpm**. The baseline names one of them in its README and its workflows.
 
-## Installation
+## Create the repository
 
-Clone the repository to work on the assets:
+Run `init` with the package, in the folder the repository will be:
 
 ```bash
-git clone [[config:repo]].git chassis-assets
-cd chassis-assets
+mkdir acme-assets && cd acme-assets
+npx @chassis-ui/assets init --brand acme --app docs:web --app mobile:ios,android
 ```
 
-To use the assets in a project of yours, add the repository to it as a Git submodule instead:
+Each `--app` is a name and its platforms, `web`, `ios` or `android`, separated by commas. Without options the repository has one brand, `main`, and one app, `site`, on the web. The command writes nine files and prints them:
 
-```bash
-git submodule add [[config:repo]].git assets
-cd assets
+```text
+package.json                              -> The brands, the apps and the scripts
+chassis.checks.json                       -> The files that consumers read by name, none yet
+.gitattributes                            -> The Git LFS rules of the fonts and the images
+.gitignore                                -> dist/, archives/, node_modules/
+.nvmrc                                    -> The Node.js version of the workflows
+README.md                                 -> The layout and the commands
+.github/workflows/ci.yml                  -> Lint, build and verify on every push
+.github/workflows/release.yml             -> Build, verify and archive on every tag
+source/_default/_shared/other/readme.txt  -> A stand-in for the first asset
 ```
 
-The build imports Node.js modules only, so it runs on a fresh clone with nothing installed. Install the dependencies to run the tests, the checks and the documentation site:
+It writes nothing when one of them exists; `--force` writes over the files that exist, and `--dry-run` prints them without writing. `--name` sets the package name, by default the name of the folder, and `--pm pnpm` makes the README and the workflows use pnpm.
+
+Then make it a repository, and install the package:
 
 ```bash
-pnpm install
+git init && git lfs install
+npm install
 ```
 
 ## Build the output
@@ -47,37 +55,40 @@ pnpm install
 Run the build from the repository root. It reads the brands and the apps of the `chassis` block of `package.json`, and writes one folder per job.
 
 ```bash
-pnpm assets
+npm run build
 ```
 
-Use the filters to build a part of it, and `--dry-run` to see the jobs without writing a file. Each filter takes one or more values.
+Use the options of the build to build a part of it, and `--dry-run` to see the jobs without writing a file. Each filter takes one or more values.
 
 ```bash
-pnpm assets --brand chassis          # one brand
-pnpm assets --app docs               # one app
-pnpm assets --platform ios android   # two platforms
-pnpm assets --dry-run                # print the jobs, write nothing
+npx chassis-assets build --brand acme             # one brand
+npx chassis-assets build --app docs               # one app
+npx chassis-assets build --platform ios android   # two platforms
+npx chassis-assets build --dry-run                # print the jobs, write nothing
 ```
 
-The build writes the output to `dist/<platform>/<app>/<brand>/`, and each of these folders holds one folder per type of the app. With the configuration of this repository:
+The build writes the output to `dist/<platform>/<app>/<brand>/`, and each of these folders holds one folder per type of the app. With the brand and the apps given above, and the stand-in file:
 
 ```text
 dist/
-├── web/
-│   └── docs/
-│       ├── chassis/      -> kebab-case names
-│       └── sinefil/
+├── android/
+│   └── mobile/
+│       └── acme/
+│           └── other/
+│               └── readme.txt
 ├── ios/
-│   └── demo/
-│       ├── chassis/      -> snake_case names
-│       └── sinefil/
-└── android/
-    └── demo/
-        ├── chassis/      -> snake_case names, density folders, ic_ prefix
-        └── sinefil/
+│   └── mobile/
+│       └── acme/
+│           └── other/
+│               └── readme.txt
+└── web/
+    └── docs/
+        └── acme/
+            └── other/
+                └── readme.txt
 ```
 
-`dist/` is not committed. The [build system]([[docsref:/getting-started/build-system]]) page describes every command and option.
+`dist/` is not committed. `npm run verify` checks the output against the source and passes. The [build system]([[docsref:/getting-started/build-system]]) page describes every command and option.
 
 ## Add a file
 
@@ -85,9 +96,9 @@ A file added to `source/` is in the output of the next build. No list or configu
 
 1. Export the file from the design tool, named in lowercase with hyphens.
 2. Put it in `source/_default/<app>/<type>/` when every brand gets it, or in `source/<brand>/<app>/<type>/` when it belongs to one brand. Use `_shared` in place of `<app>` when every app gets it.
-3. Run `pnpm assets:lint:source` to check the name, and `pnpm assets` to build.
+3. Run `npm run lint` to check the name, and `npm run build` to build.
 4. Find the file in `dist/`, under the name of each platform.
-5. Commit the file of `source/` with a changeset from `pnpm changeset`.
+5. Commit the file of `source/`.
 
 ```text
 source/
@@ -106,6 +117,8 @@ source/
 
 A brand file replaces the default file of the same path, and a brand gets every default file that it does not replace. To give a brand a file of its own, add it to the folder of the brand under the same subfolder and name. A file that only a brand holds is in the output of that brand only.
 
+Once a brand or an app has a file of its own, delete `source/_default/_shared/other/readme.txt`: it only stood in for the first build.
+
 The [design guidelines]([[docsref:/getting-started/design-guidelines]]) have the naming rules, and each type has a page: [fonts]([[docsref:/asset-types/fonts]]), [images]([[docsref:/asset-types/images]]), [icons]([[docsref:/asset-types/icons]]) and [other assets]([[docsref:/asset-types/other]]).
 
 ## Use the output
@@ -113,7 +126,13 @@ The [design guidelines]([[docsref:/getting-started/design-guidelines]]) have the
 A project reads the folder of one job. Copy it into the project, or point the project at it.
 
 ```bash
-cp -R dist/web/docs/chassis/. /path/to/project/public/assets/
+cp -R dist/web/docs/acme/. /path/to/project/public/assets/
+```
+
+A project can also add the repository as a Git submodule and build it there. The repository needs nothing installed for that; the project installs the package and names the folder. `--out` is relative to that folder, so give it a path from the project:
+
+```bash
+npx chassis-assets build --cwd vendor/assets --out "$PWD/static/assets"
 ```
 
 The page of each platform shows what the folder holds and how an app loads the files:
@@ -122,62 +141,45 @@ The page of each platform shows what the folder holds and how an app loads the f
 - [iOS applications]([[docsref:/use-in-project/ios-applications]])
 - [Android applications]([[docsref:/use-in-project/android-applications]])
 
-## Make it your own
+## Name what consumers read
 
-Chassis Assets is meant to be owned by the team that adopts it. You change `source/`, the root `package.json` and `chassis.checks.json`. The build in `packages/assets/build/` names no brand, app or file, so there is nothing to change in it.
-
-### Brands and apps
-
-Name your brands and apps in the `chassis` block of `package.json`. Each app lists the platforms it is built for.
+When an app or a site reads a file of the output by name, add it to `chassis.checks.json`, by job, with who reads it:
 
 ```json
 {
-  "chassis": {
-    "defaults": {
-      "brandFolder": "_default"
-    },
-    "build": {
-      "brands": ["chassis", "sinefil"],
-      "apps": {
-        "docs": ["web"],
-        "demo": ["ios", "android"]
+  "contracts": {
+    "web/docs/acme": [
+      {
+        "reader": "the layout of the documentation site",
+        "files": ["images/site-logo.svg", "fonts/fonts.css"]
       }
-    }
+    ]
   }
 }
 ```
 
-Then give `source/` the same names: a folder per app under `source/_default/`, and a folder per brand for the files that differ. See [configuration]([[docsref:/getting-started/build-system#configuration]]).
+`npm run verify` then fails when a build no longer has the file, before a consumer does. The [build system]([[docsref:/getting-started/build-system#checks-file]]) page describes the forms an entry takes.
 
-### Checks
+## Release a version
 
-What the checks verify is in `chassis.checks.json`, beside `package.json`: `contracts`, the files your consumers read by name, and `lint.allow`, the source files that break a naming rule on purpose. The lists of this repository are those of the Chassis sites. Replace them with yours, or delete the file. See [checks file]([[docsref:/getting-started/build-system#checks-file]]).
-
-### Package metadata
-
-Change the name and the repository URL of the root `package.json`. The release archives take their name from it: `acme-assets-workspace` gives `acme-assets-<platform>-<app>-<brand>-<version>.zip`.
-
-```json
-{
-  "name": "acme-assets-workspace",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-org/acme-assets.git"
-  }
-}
-```
-
-The package that carries the version is `packages/assets/package.json`. It is private and never published, so its name can stay. When you rename it, rename it in the changesets of `.changeset/` too.
-
-Point the clone at your own repository:
+A release is a tag with the version of `package.json`:
 
 ```bash
-git remote set-url origin https://github.com/your-org/acme-assets.git
+git tag v0.1.0
+git push origin main v0.1.0
 ```
+
+The release workflow builds and verifies every job, writes one `acme-assets-<platform>-<app>-<brand>-0.1.0.zip` per job with `chassis-assets archive`, and creates the GitHub release with them attached. A tag that is not the version of `package.json` fails the workflow. An app takes the archive of its platform, app and brand from the release.
+
+The workflows call the scripts of `package.json`, so a script can take options, such as `chassis-assets build --optimize` with `sharp` and `svgo` installed.
 
 ## Troubleshooting
 
 Each entry gives the message or the symptom, then the cause and the fix.
+
+### Files exist
+
+`init` stops with `Files to write exist in <dir>: <files>. --force writes over them`. The folder already holds a file of the same name, such as the README or the `.gitignore` that GitHub wrote. Run `init` again with `--force` to write over them, or delete them first.
 
 ### Build fails on pointers
 

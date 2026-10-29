@@ -1,10 +1,10 @@
 ---
 title: Welcome to Chassis Assets
-description: Chassis Assets keeps fonts, images, icons and other design files for several brands in one source tree and builds them for web, iOS and Android.
+description: Chassis Assets builds the fonts, images, icons and other design files of several brands from one source tree into the formats of the web, iOS and Android.
 toc: true
 sections:
   - title: Quick Start
-    description: Clone the repository, add a file, build it, and copy the output into your project.
+    description: Create a repository of assets, add a file, build it, and copy the output into your project.
   - title: Design Guidelines
     description: Where a designer puts a file, how to name it, and how a change reaches the repository.
 aliases:
@@ -13,15 +13,13 @@ aliases:
 
 ---
 
-<Callout name="work-in-progress" />
-
 ## Introduction
 
-Chassis Assets holds the design files of a design system: fonts, images, icons and anything else an app ships. A designer exports a file into `source/<brand>/<app>/<type>/`, and the build copies it to `dist/<platform>/<app>/<brand>/` with the name, the format and the folder that each platform expects.
+Chassis Assets is `@chassis-ui/assets`, a build for the design files of a design system: fonts, images, icons and anything else an app ships. A designer exports a file into `source/<brand>/<app>/<type>/` of a repository of assets, and the build copies it to `dist/<platform>/<app>/<brand>/` with the name, the format and the folder that each platform expects.
 
-The build is file-driven. A file added to `source/` is in the output of the next build, and no list of assets has to be kept beside the files. The build copies, renames and sorts into folders. By default it does not resize, convert or re-encode a file; optimized images and WebP or AVIF files are options of the build.
+The build is file-driven. A file added to `source/` is in the output of the next build, and no list of assets has to be kept beside the files. The build copies, renames and sorts into folders. By default it does not resize, convert or re-encode a file; optimized images, WebP or AVIF files and font subsets are options of the build.
 
-The repository is meant to be owned by the team that adopts it. The brands and apps it ships with, those of the Chassis sites, are a configuration that you replace with your own.
+A team keeps its assets in a repository of its own, which `chassis-assets init` writes: the configuration, the Git LFS rules, a README and the workflows that check every push and release every tag. The assets of the Chassis sites are one such repository, `chassis-ui/website-assets`, and the brands and apps named on these pages are its configuration, not yours.
 
 ## Brands, apps, platforms
 
@@ -80,13 +78,13 @@ You use the output in an app. Start with the page of your platform, which shows 
 
 ### Maintainers
 
-You run the build, review changes and adopt the repository for your own brands. Start with the [quick start]([[docsref:/getting-started/quick-start]]), then read the [build system]([[docsref:/getting-started/build-system]]) page.
+You set up the repository of assets of your team, run the build and release the output. Start with the [quick start]([[docsref:/getting-started/quick-start]]), then read the [build system]([[docsref:/getting-started/build-system]]) page.
 
 ## Next steps
 
 Continue with one of these pages:
 
-- [Quick start]([[docsref:/getting-started/quick-start]]): clone, build, and add a first file.
+- [Quick start]([[docsref:/getting-started/quick-start]]): create a repository, build, and add a first file.
 - [Chassis Tokens](https://chassis-ui.com/tokens/): the design tokens, which name the font roles used here.
 - [Chassis Icons](https://chassis-ui.com/icons/): the icons that `icons/` holds a copy of.
 - [Chassis CSS](https://chassis-ui.com/css/): the CSS framework of the design system.

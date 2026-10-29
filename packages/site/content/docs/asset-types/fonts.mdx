@@ -127,7 +127,7 @@ A brand that replaces the files of a role replaces the license of that role too,
 
 A brand file replaces a default file only when the name and the extension are the same. A brand with `ui-normal.otf` beside a default `ui-normal.ttf` gets both files in its output.
 
-A brand gets every default file that it does not replace: a brand whose family of a role has no variable font, or that sets a role in the family of another role, would get the default files of that role beside its own, and its `fonts.css` would load none of them. `pnpm assets:lint:source` warns about such a file: a font of the default brand whose family no stylesheet of the brand declares.
+A brand gets every default file that it does not replace: a brand whose family of a role has no variable font, or that sets a role in the family of another role, would get the default files of that role beside its own, and its `fonts.css` would load none of them. `chassis-assets lint-source` warns about such a file: a font of the default brand whose family no stylesheet of the brand declares.
 
 ### Stylesheets
 
@@ -147,7 +147,7 @@ The rule names the family of the brand and the range of weights the file holds, 
 
 The stylesheet is one per brand and not one per role, because a brand sets several roles in one family and a rule declares a family: a stylesheet per role would declare one family twice. The comment of each block names the role and the family.
 
-`pnpm assets:lint:source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: a cut named `<family> 18pt` is declared as `<family>`.
+`chassis-assets lint-source` reads the file of each rule and fails when the rule says something else than the file is: another family, another weight or a range the weight axis does not hold, or an italic declared as normal. A cut of a family is of the family: a cut named `<family> 18pt` is declared as `<family>`.
 
 A rule declares the file of the web, and an app gets the file of the same name in another format. The lint checks the rule against that file too: `ui.ttf` beside a declared `ui.woff2` has to be what the rule says. It also fails when two files of one name in a folder, such as `ui-normal.ttf` and `ui-normal.woff2`, are not one font in two formats: when they differ in the family, the weight, the style, the axes, the version or the number of glyphs. Write both files from the same font to keep them together.
 

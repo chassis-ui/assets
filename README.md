@@ -14,7 +14,7 @@ The build is published to npm as [`@chassis-ui/assets`](https://www.npmjs.com/pa
 
 ## Getting started
 
-To build the assets of your own brands and apps, install the package in an empty folder and let it write the repository; the [New Repository](https://chassis-ui.com/assets/docs/getting-started/new-repository/) page takes it from there:
+To build the assets of your own brands and apps, install the package in an empty folder and let it write the repository; the [Quick Start](https://chassis-ui.com/assets/docs/getting-started/quick-start/) page takes it from there:
 
 ```shell
 npx @chassis-ui/assets init --brand acme --app docs:web
