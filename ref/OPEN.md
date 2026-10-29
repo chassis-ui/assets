@@ -16,10 +16,14 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   describe a repository of assets as `init` writes it since step 5, on 2026-10-29; the
   build-system and the use-in-project pages keep their `work-in-progress` callout, since
   their CI samples and the workflows of `init` were not run on GitHub Actions, ; `npx @chassis-ui/assets init` was run from the registry on 2026-10-29, and the
-  repository it wrote passed lint, build, verify and archive. Left: (6) the submodule of
-  each Chassis site pointed at `main` of website-assets, with the report on
-  `chassis-docs vendor` in `ref/OPEN.md` there, and the `app/docs` branch of this repository
-  deleted on GitHub once no site pins it. Agreed on 2026-10-29.
+  repository it wrote passed lint, build, verify and archive. Left: (6) the
+  consumers on the releases of website-assets (D39): `@chassis-ui/docs` gets a vendor that
+  takes a pinned archive, chassis-ui/website#33, which blocks the move of chassis-ui/css#87,
+  chassis-ui/icons#19, chassis-ui/figma#14, chassis-ui/react#125 and chassis-ui/tokens#30,
+  and sinefil.org takes its archive from website-assets, ozgurgunes/sinefil-web#222; then
+  the `app/docs` branch of this repository deleted on GitHub once no site pins it. This
+  repository keeps its `vendor/assets` submodule: its CI checks the build on the real files.
+  Agreed on 2026-10-29.
 - **The choices of D29.** `chassis.ignore` adds names and takes none away, a pattern is a
   name and not a path, a list of `chassis.formats` replaces the rule of a processor, and both
   are read from the configuration without an option. In 0.3.1, and they wait for a
@@ -39,7 +43,8 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   spaces of the range and nothing else, and `ui-symbols2.woff2`,
   `ui-italic-symbols2.woff2`, `display-symbols2.woff2` and `display-italic-symbols2.woff2`
   are written with an empty `glyf` table, which Chrome rejects: "OTS parsing error: glyf:
-  zero-length table". No page asks for them while `latin` is named first, so nothing shows.
+  zero-length table". No page asks for them while `latin` is named first, so nothing shows. Since D39 the release
+  archives of website-assets carry these files to every Chassis site and to sinefil.org.
   A box drawing character in text of the text font would ask for one, fail, and fall back
   as it would without the file. Found on 2026-10-12 with D30. Montserrat, the `display`
   family of `chassis` since 2026-10-19, gets the two files of `display` too.

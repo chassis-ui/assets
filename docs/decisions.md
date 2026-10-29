@@ -310,3 +310,16 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   change. The attributes keep the fixture lines only, since no Git LFS file is left.
   Supersedes D3 for the place of `source/` and `dist/`; the layout rule of AGENTS.md now
   describes a repository of files. The maintainer, 2026-10-29.
+- **D39. How do the Chassis sites and sinefil.org get the assets?** From the release archive
+  of their job, `web/docs/<brand>`, of a pinned version of `chassis-ui/website-assets`, checked
+  by its SHA-256, as sinefil.org did with the archives of this repository. A release is
+  built with `--optimize --subset --split`, and the ranges of `chassis.subset` are the union
+  of what the sites set, `latin`, `latin-ext`, `symbols2` and `U+2190-2193`, with `cyrillic`
+  and `greek` for the film titles of sinefil.org since 0.2.1: with the split a page downloads
+  a range only when its text has a character of it, so one archive serves every site, and the sites get the optimized images they did not build. Measured on
+  2026-10-29: the `web/docs/chassis` job is 44.0 MB in place of 59.3 MB as the sites built it,
+  and a latin page loads 299 KB of fonts in place of 1,246 KB of whole files. A site build
+  then needs no submodule, no Git LFS, no install and no build of the assets. The vendor
+  command of `@chassis-ui/docs` takes the archive, chassis-ui/website#33. This repository
+  keeps its submodule, since its CI checks the build of the checkout on the real files. The
+  maintainer, 2026-10-29.
