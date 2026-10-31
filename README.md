@@ -252,12 +252,15 @@ Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, 
 | Project                                                  | What it is                                                                  | Docs                                       |
 | -------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
 | [chassis-website](https://github.com/chassis-ui/website) | chassis-ui.com and `@chassis-ui/docs`, which every site is built on         | [chassis-ui.com](https://chassis-ui.com)   |
-| [chassis-tokens](https://github.com/chassis-ui/tokens)   | Design tokens, published as `@chassis-ui/tokens`                            | [/tokens/](https://chassis-ui.com/tokens/) |
+| [chassis-tokens](https://github.com/chassis-ui/tokens)   | The token builder, published as `@chassis-ui/tokens`                        | [/tokens/](https://chassis-ui.com/tokens/) |
 | [chassis-css](https://github.com/chassis-ui/css)         | The CSS framework, published as `@chassis-ui/css`                           | [/css/](https://chassis-ui.com/css/)       |
 | [chassis-icons](https://github.com/chassis-ui/icons)     | The icon library, published as `@chassis-ui/icons`                          | [/icons/](https://chassis-ui.com/icons/)   |
 | **chassis-assets**                                       | This repository: the build of the assets, published as `@chassis-ui/assets` | [/assets/](https://chassis-ui.com/assets/) |
 | [chassis-figma](https://github.com/chassis-ui/figma)     | Documentation of the Figma libraries                                        | [/figma/](https://chassis-ui.com/figma/)   |
 | [chassis-react](https://github.com/chassis-ui/react)     | React components, published as `@chassis-ui/react`                          | Not yet routed on chassis-ui.com           |
+
+The tokens of the Chassis sites are `@chassis-ui/website-tokens`, from
+[chassis-ui/website-tokens](https://github.com/chassis-ui/website-tokens).
 
 ## Contributing
 
