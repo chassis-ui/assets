@@ -162,14 +162,15 @@ When an app or a site reads a file of the output by name, add it to `chassis.che
 
 ## Release a version
 
-A release is a tag with the version of `package.json`:
+A release is a push to `main` with a new version in `package.json`. The first push to `main` releases `0.1.0`, the version `chassis-assets init` writes. For a later release, raise the version without a tag, as the workflow makes the tag, and push:
 
 ```bash
-git tag v0.1.0
-git push origin main v0.1.0
+npm version 0.2.0 --no-git-tag-version
+git commit -am "chore: release 0.2.0"
+git push origin main
 ```
 
-The release workflow builds and verifies every job, writes one `acme-assets-<platform>-<app>-<brand>-0.1.0.zip` per job with `chassis-assets archive`, and creates the GitHub release with them attached. A tag that is not the version of `package.json` fails the workflow. An app takes the archive of its platform, app and brand from the release.
+The release workflow builds and verifies every job, writes one `acme-assets-<platform>-<app>-<brand>-0.2.0.zip` per job with `chassis-assets archive`, and creates the tag `v0.2.0` and the GitHub release with them attached. A push whose version already has a tag releases nothing, and a release that fails makes no tag, so the next push to `main` tries again. An app takes the archive of its platform, app and brand from the release.
 
 The workflows call the scripts of `package.json`, so a script can take options, such as `chassis-assets build --optimize` with `sharp` and `svgo` installed.
 

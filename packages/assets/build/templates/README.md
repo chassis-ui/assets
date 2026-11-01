@@ -41,9 +41,11 @@ __INSTALL__
 
 ## Releases
 
-A release is a tag: `git tag v0.1.0 && git push origin v0.1.0`, with the version of
-`package.json`. The release workflow builds with `build:release`, verifies every job, and attaches one
-`<name>-<platform>-<app>-<brand>-<version>.zip` per job to the GitHub release.
+A release is a push to `main` with a new version in `package.json`, without a tag of its own:
+the first push releases the version of `package.json`. The release workflow builds with
+`build:release`, verifies every job, creates the tag `v<version>`, and attaches one
+`<name>-<platform>-<app>-<brand>-<version>.zip` per job to the GitHub release. A push whose
+version has a tag releases nothing.
 
 ## Documentation
 

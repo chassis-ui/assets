@@ -1,15 +1,16 @@
 name: Release
 
-# On a tag v<version>, builds every brand, app and platform, verifies the output and creates
-# the GitHub release of the tag, with one archive per platform, app and brand attached:
-# <name>-<platform>-<app>-<brand>-<version>.zip. The tag has to be the version of
-# package.json. Written by `chassis-assets init`.
+# On a push to main, releases the version in package.json when it has no tag v<version> yet:
+# builds every brand, app and platform, verifies the output and creates the tag and its GitHub
+# release, with one archive per platform, app and brand attached:
+# <name>-<platform>-<app>-<brand>-<version>.zip. A push that does not change the version
+# releases nothing. Written by `chassis-assets init`.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
 
 permissions:
-  contents: write # to create the GitHub release
+  contents: read
 
 # Never cancel a run that may be releasing
 concurrency:
@@ -17,10 +18,43 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  detect:
+    name: Detect Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      # No Git LFS files: only package.json is read
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check whether the version has a tag
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$VERSION" --silent 2>/dev/null; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "The tag v$VERSION exists: nothing to release"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "Releasing v$VERSION"
+          fi
+
   release:
     name: Release
+    needs: detect
+    if: needs.detect.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write # to create the tag and the GitHub release
     steps:
       # Fonts and images are Git LFS files
       - name: Checkout
@@ -28,14 +62,6 @@ jobs:
         with:
           lfs: true
           persist-credentials: false
-
-      - name: Check the tag against the version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
-            echo "::error::The tag $GITHUB_REF_NAME is not the version of package.json, v$VERSION"
-            exit 1
-          fi
 
       # __PNPM_SETUP__
       - name: Setup Node.js
@@ -59,19 +85,21 @@ jobs:
       - name: Archive each platform, app and brand
         run: npx chassis-assets archive --to "$RUNNER_TEMP/archives"
 
-      # A tag with a prerelease part, such as v0.2.0-next.0, is marked as a prerelease and
+      # A version with a prerelease part, such as 0.2.0-next.0, is marked as a prerelease and
       # does not become the latest release. The notes are generated from the commits
-      - name: Create the GitHub release
+      - name: Create the tag and the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.detect.outputs.version }}
         run: |
-          case "$GITHUB_REF_NAME" in
+          case "$VERSION" in
             *-*) FLAGS=(--prerelease --latest=false) ;;
             *) FLAGS=(--latest) ;;
           esac
 
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "v$VERSION" \
             "$RUNNER_TEMP"/archives/*.zip \
-            --title "$GITHUB_REF_NAME" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
             --generate-notes \
             "${FLAGS[@]}"

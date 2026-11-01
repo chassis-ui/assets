@@ -236,7 +236,7 @@ text. A version without a changelog entry is not released. A prerelease goes to 
   first version; the first version was published by the workflow.
 
 The archives of the Chassis assets, one per platform, app and brand, are made by the release
-workflow of website-assets on a tag there. To see what one holds, run
+workflow of website-assets on a push of a new version to its `main`. To see what one holds, run
 `pnpm assets --optimize && pnpm assets:archive` here: it writes them to
 `vendor/assets/archives/`, which is not committed.
 

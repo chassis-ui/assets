@@ -368,3 +368,12 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   a bundle stays an ordinary folder, which keeps the optimizer, the catalogs and `res/` out of
   it. The icon of an Android app is left for the Android work of `ref/OPEN.md`. The maintainer,
   2026-11-01.
+- **D43. What starts the release of a repository of assets?** A push to `main` with a new
+  version, in place of a tag. The `release.yml` that `init` writes reads the version of
+  `package.json`, and when it has no tag `v<version>` it builds, verifies and creates the tag
+  and the GitHub release with the archives, as the release of this repository does; a push whose
+  version has a tag ends after one small job, with no Git LFS pull. A release that fails makes no
+  tag, so the next push tries again. Raising the version is the deliberate step, as pushing the
+  tag was: source changes still reach `main` without a release. The first push of a new
+  repository releases `0.1.0`, the version `init` writes. Raise a version with
+  `--no-git-tag-version`, as a tag pushed by hand ends the release. The maintainer, 2026-11-01.

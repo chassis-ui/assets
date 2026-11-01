@@ -685,7 +685,7 @@ chassis-assets archive --to /tmp/release --prefix acme --release 1.2.0
 
 `--to <dir>` writes them elsewhere, and `--prefix <name>` and `--release <version>` name them instead of `package.json`; the archives of the prefix already in the folder are removed first. The archives are written with Node.js alone, and an archive holds up to 65,535 files.
 
-The release workflow that `chassis-assets init` writes runs on a tag `v<version>`: it checks that the tag is the version of `package.json`, builds every job with the `build:release` script, which adds `--asset-catalog` and `--icon-catalog`, verifies them, writes the archives and creates the GitHub release with them attached. A tag with a prerelease part, such as `v0.2.0-next.0`, is marked as a prerelease.
+The release workflow that `chassis-assets init` writes runs on a push to `main`, and does nothing when the version of `package.json` already has a tag `v<version>`. For a new version, it builds every job with the `build:release` script, which adds `--asset-catalog` and `--icon-catalog`, verifies them, writes the archives and creates the tag and the GitHub release with them attached. A version with a prerelease part, such as `0.2.0-next.0`, is marked as a prerelease.
 
 ## Continuous integration
 
