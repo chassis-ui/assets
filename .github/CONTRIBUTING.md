@@ -12,8 +12,8 @@ You need Node.js 22.12 or later (the repository pins 24 in `.nvmrc`), pnpm (the 
 raster images of the `vendor/assets` submodule are Git LFS files.
 
 ```sh
-git clone https://github.com/chassis-ui/assets.git chassis-assets
-cd chassis-assets
+git clone https://github.com/chassis-ui/assets.git
+cd assets
 pnpm vendor
 pnpm install
 ```

@@ -18,7 +18,7 @@ packages/site/        `chassis-assets-site`: the documentation site
 build/                The release notes and the version script
 ```
 
-A pnpm workspace, as `chassis-tokens` (D3). The assets live in a repository of their own,
+A pnpm workspace, as `chassis-ui/tokens` (D3). The assets live in a repository of their own,
 chassis-ui/website-assets (D38), which `chassis-assets init` lays out: `source/`, `dist/`
 and the configuration at its root, where the designer and the consumers find them, and
 `@chassis-ui/assets` installed from npm. Here the root scripts run the build of the checkout
@@ -295,7 +295,7 @@ default, and the default output is the same file for file with and without the c
   on Android, nothing on the web and iOS. The SVG images under `images/` are not converted:
   several exist as PNG under the same name, and two files of one name are one resource.
 - The converter is `svg2vectordrawable` with `fillBlack` and three decimals, the options
-  `chassis-tokens` uses for its icons. It is an optional `peerDependencies` entry of
+  `chassis-ui/tokens` uses for its icons. It is an optional `peerDependencies` entry of
   `packages/assets/package.json`, so `pnpm install` brings it and
   `pnpm install --ignore-workspace` does not. `loadConverter()` imports it when the option
   is given, before the output is removed; without the package the build fails there and
@@ -641,7 +641,7 @@ file with and without the code. It needs no package: a catalog is folders and JS
   release archives are built without the option.
 - Compiled: `packages/assets/test/native/ios/check.sh`, `pnpm test:ios`, runs `actool` on
   the catalogs of an output and checks that every image set is in the compiled catalog. The
-  Native iOS job of CI runs it on a macOS runner, as `chassis-tokens` does for its catalog.
+  Native iOS job of CI runs it on a macOS runner, as `chassis-ui/tokens` does for its catalog.
 
 ## Checks
 
@@ -673,7 +673,7 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 
 ## Releases
 
-The version is made on `develop` and released from `main`, as in `chassis-website`. The
+The version is made on `develop` and released from `main`, as in `chassis-ui/website`. The
 steps are in `.github/CONTRIBUTING.md`, "Releases".
 
 - A change to `packages/assets/build/` carries a changeset in `.changeset/`, which

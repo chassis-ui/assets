@@ -1,6 +1,6 @@
 # Documentation Style Guide
 
-How to write the asset type, guide and platform docs of chassis-assets. This guide sets the conventions for the docs site (`packages/site/content/docs/**/*.mdx`) so contributors and reviewers have one place to reference. It follows the language and voice of the [chassis-tokens guide](https://github.com/chassis-ui/tokens/blob/main/WRITING.md), adapted to design assets.
+How to write the asset type, guide and platform docs of this repository. This guide sets the conventions for the docs site (`packages/site/content/docs/**/*.mdx`) so contributors and reviewers have one place to reference. It follows the language and voice of the [chassis-ui/tokens guide](https://github.com/chassis-ui/tokens/blob/main/WRITING.md), adapted to design assets.
 
 **The guide is the reference, not the existing pages.** Most pages predate it and break several of its rules. Don't copy a convention from a page because the page does it; check it here. Migrate a page when editing it, and don't gate unrelated PRs on the migration.
 
@@ -531,4 +531,4 @@ Replaced at build time in prose, link targets, code blocks, and frontmatter.
 
 ### Other components
 
-`@chassis-ui/docs` also provides `<Example>`, `<ResizableExample>`, `<ScssDocs>`, `<JsDocs>`, `<AddedIn>`, `<DeprecatedIn>`, and `<InFigma>`, which the Chassis CSS docs use. The assets docs don't use them yet; their props are in Appendix A of the chassis-css guide. Propose a convention here ([What's not in this guide](#whats-not-in-this-guide-yet)) before the first use.
+`@chassis-ui/docs` also provides `<Example>`, `<ResizableExample>`, `<ScssDocs>`, `<JsDocs>`, `<AddedIn>`, `<DeprecatedIn>`, and `<InFigma>`, which the Chassis CSS docs use. The assets docs don't use them yet; their props are in Appendix A of the chassis-ui/css guide. Propose a convention here ([What's not in this guide](#whats-not-in-this-guide-yet)) before the first use.

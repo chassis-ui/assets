@@ -94,7 +94,7 @@ broke them and was reverted.
   schema of `chassis.checks.json` are the public API. A change to one of them is a minor bump
   whose changeset starts with `**Breaking.**`.
 - **Match the siblings in tooling, not in product.** Tests, CI, Changesets and the docs site
-  follow `chassis-tokens` and `chassis-website`. The product follows its own pages.
+  follow `chassis-ui/tokens` and `chassis-ui/website`. The product follows its own pages.
 - **The package has no dependencies.** `packages/assets/build/` imports Node.js modules
   only, and neither the root `package.json` nor `packages/assets/package.json` has
   `dependencies`: a plain install of `@chassis-ui/assets` brings nothing else. Do not add an
@@ -146,6 +146,8 @@ And these:
 - Every path, file name, command and option in a page must exist as written. Check a
   statement about the build by running it, and copy a tree of `dist/` from a build. A page
   describes a repository of assets as `chassis-assets init` writes it, not this repository.
+- Name a sibling by its GitHub repository, as `chassis-ui/css`, never by a local folder name or
+  a relative path: both differ per contributor.
 - Do not remove a `work-in-progress` or `created-by-ai` callout from a page you have not
   checked line by line.
 - Run `pnpm site:lint` and `pnpm site:build` after editing `packages/site/`.

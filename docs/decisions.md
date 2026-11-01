@@ -20,7 +20,7 @@ All are decided. "With the maintainer" means the session proposed and the mainta
 it; an entry with a date only was taken by a session under the maintainer's delegation.
 
 - **D1. Which layout of `dist/` is right, the pages' or the code's?** The code's,
-  `dist/<platform>/<app>/<brand>/`, the pattern of `chassis-tokens` and what the sites read.
+  `dist/<platform>/<app>/<brand>/`, the pattern of `chassis-ui/tokens` and what the sites read.
   The maintainer, 2026-09-30.
 - **D2. How are the assets distributed?** Not on npm: one package that holds every platform,
   app and brand is not what any consumer reads. The sites keep the `vendor/assets` submodule
@@ -30,7 +30,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `/static/` of the site's deployment. The maintainer, 2026-09-30.
 - **D3. One package, or a workspace with the site in its own package?** A pnpm workspace:
   `source/` and `dist/` at the root, the build in `packages/assets/`, the site in
-  `packages/site/`, as in `chassis-tokens`. The root scripts run the build with `node`, not
+  `packages/site/`, as in `chassis-ui/tokens`. The root scripts run the build with `node`, not
   `pnpm --filter`, so that `pnpm install --ignore-workspace && pnpm assets:site` keeps
   working with nothing installed. The maintainer, 2026-09-30.
 - **D4. Does the web output get TTF and OTF fonts?** No. No site loads one, and the fonts
@@ -49,7 +49,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   2026-09-30.
 - **D9. Vector drawables for Android icons?** `--vector-drawables`, off by default. The icons
   only, since several SVG images exist as PNG under the same name. In the layout the SVG
-  had, `icons/svgs/ic_<name>.xml`. `fillBlack` and three decimals, as `chassis-tokens`. An
+  had, `icons/svgs/ic_<name>.xml`. `fillBlack` and three decimals, as `chassis-ui/tokens`. An
   SVG without a shape stays an SVG with a warning; a file that does not convert fails the
   build. The release archives are built without it. 2026-10-01.
 - **D10. An iOS asset catalog?** `--asset-catalog`, off by default. The images only: the
@@ -147,7 +147,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   a manifest. The files of `source/` stay as they were downloaded, so a default build keeps
   the axis, and a site that builds without `--subset` sets `font-optical-sizing: none` for
   the same look. `sinefil` has no entry. With the maintainer, 2026-10-11, from issue 6.
-- **D26. Does a check of this repository read chassis-tokens, or the other way round?** No.
+- **D26. Does a check of this repository read chassis-ui/tokens, or the other way round?** No.
   Each repository is used alone, and a team may take the tokens only or the assets only. The
   two meet in a convention: the names of the roles and the weights, and the family that the
   stylesheet of the brand declares for a role (D31). A check stays inside the repository whose files it reads.
@@ -219,7 +219,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   2026-10-19. D32 sets the `display` role of `sinefil` in its `prose` family.
 - **D32. Which fonts does `sinefil` have, and how are the files of a family with a reserved
   font name made?** Geist for `ui`, Lora for `prose` and Cousine for `code`, the families of
-  `source/brand-sinefil/brand-base.json` in chassis-tokens since its commit `1168271`, which
+  `source/brand-sinefil/brand-base.json` in chassis-ui/tokens since its commit `1168271`, which
   sets the `display` role in the `prose` family. So `sinefil` has `prose` files, which the
   default brand has not, and no `display` files: the display files of the default brand stay
   in its output, as `code.woff2` does. D33 ends both. The license of Lora
@@ -292,7 +292,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   archives of a release are written by `chassis-assets archive` with `node:zlib`, not by a
   script with the `zip` command, so that a repository of files releases them wherever Node.js
   runs; `--release <version>` names the version where the root `package.json` has none, as
-  here. The release workflow publishes with npm trusted publishing, as `chassis-tokens`. The
+  here. The release workflow publishes with npm trusted publishing, as `chassis-ui/tokens`. The
   maintainer, 2026-10-29.
 - **D38. Where do the assets of the Chassis sites live?** In `chassis-ui/website-assets`, a
   repository of files made with `chassis-assets init` and holding `source/`,
