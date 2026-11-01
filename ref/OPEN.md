@@ -76,8 +76,7 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   where they were OTF, and the second brand is `sinefil` where the Android sample had a
   flavor `example`. Both pages were last run on 2026-10-01.
 - A themed app icon on a launcher that shows one: the `<monochrome>` layer of D44 compiles and
-  links, and the launcher of the API 35 emulator shows the full icon. The Native Android job has
-  not run yet: `check.sh` was run on a Mac, and the job relies on the Android SDK of the runner.
+  links, and the launcher of the API 35 emulator shows the full icon.
 - A WebP or an AVIF file of `--webp` and `--avif` in a browser.
 - `--watch` on Windows. CI runs its tests on Linux.
 
