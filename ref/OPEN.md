@@ -10,9 +10,7 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 - **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
   commands, `chassis-ui/website-assets` holds the assets with their history, and this
-  repository builds them from the `vendor/assets` submodule. Until the maintainer pushes
-  website-assets (`git lfs push origin --all`, then `git push origin main`), the pin of the
-  submodule, ac9bf32, exists on this machine only, and CI cannot check it out. The pages
+  repository builds them from the `vendor/assets` submodule. The pages
   describe a repository of assets as `init` writes it since step 5, on 2026-10-29; the
   build-system and the use-in-project pages keep their `work-in-progress` callout, since
   their CI samples and the workflows of `init` were not run on GitHub Actions, ; `npx @chassis-ui/assets init` was run from the registry on 2026-10-29, and the
@@ -35,11 +33,6 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   the consumer contract is tested, the build has unit and build tests, releases are
   automated, and the docs site uses `@chassis-ui/docs` 0.6 or later. Whether a release
   becomes 1.0, and when, is not decided.
-- **The release of D41.** `build:release` of website-assets passes `--icon-catalog`, which
-  0.7.0 does not have: release `@chassis-ui/assets` first, then raise its dependency there and
-  release website-assets. Its bundles are at `source/<brand>/demo/app-icon/app-icon.icon`, as
-  D42 has it, which its source lint passes only with that release. The Native iOS job compiles
-  a bundle only once the pin of `vendor/assets` moves to a commit that has one.
 - **Android and D41.** The fonts page gives an Android app a file for every role, but `--res`
   has no night qualifiers (D11): `logo_light.png` and `logo_dark.png` are two drawables, where
   iOS has one image. `--vector-drawables` with `--res` already gives the icons. Proposed:
