@@ -149,7 +149,7 @@ What to run before a commit, by what the commit changes. CI runs all of it.
   `pnpm assets:lint:source`, `pnpm assets:typecheck`, `pnpm test`, a pack of the package
   installed into an empty folder and run on the fixture, `pnpm assets` and
   `pnpm assets:verify`. Site: `pnpm site:build`. Native iOS, on a macOS runner: a build of the
-  iOS jobs with `--asset-catalog`, then `pnpm test:ios`, which compiles the catalogs with
+  iOS jobs with `--asset-catalog --icon-catalog`, then `pnpm test:ios`, which compiles the catalogs with
   `actool` and needs Xcode. The commands above run the same checks locally, and
   `pnpm test:ci` runs the Lint, Assets, Site and Audit checks in one command. It leaves out
   Native iOS, Changeset and the report of `pnpm audit`, and the build as a site runs without

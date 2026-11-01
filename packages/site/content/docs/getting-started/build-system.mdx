@@ -58,6 +58,7 @@ The options of `chassis-assets build` select the jobs, the folders and what happ
 | `--allow-lfs-pointers` | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same |
 | `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `svg2vectordrawable` |
 | `--asset-catalog` | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/` |
+| `--icon-catalog` | Write the icons of iOS as an asset catalog, `Icons.xcassets` in place of `icons/` |
 | `--res` | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/` |
 | `--optimize` | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `sharp` and `svgo` |
 | `--webp` | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `sharp` |
@@ -162,7 +163,13 @@ chassis-assets build --asset-catalog
 
 The files of one base name are one image set, with the `Contents.json` that Xcode writes: `images/badge.png`, `images/badge@2x.png` and `images/badge@3x.png` become `Assets.xcassets/badge.imageset/`, each file in the slot of its indicator. An SVG or a PDF without a raster of its name is an image set of one file that keeps its vector data. A subfolder of `images/` is a folder of the catalog that provides a namespace, so `images/logo/mark@2x.png` is in `Assets.xcassets/logo/mark.imageset/` and an app names it `logo/mark`.
 
-A file without a place in an image set stays in `images/`, and the build warns once per job with the number of such files. These are an SVG or a PDF beside a raster of its name, a variant with another indicator than `@1x`, `@2x` or `@3x`, a second file for one slot, and any format but PNG, JPEG, SVG and PDF. The build does not pair a light and a dark image, and the icons of `icons/` stay files.
+A file without a place in an image set stays in `images/`, and the build warns once per job with the number of such files. These are an SVG or a PDF beside a raster of its name, a variant with another indicator than `@1x`, `@2x` or `@3x`, a second file for one slot, and any format but PNG, JPEG, SVG and PDF. The files of `<name>_light` and `<name>_dark` are one image set, `<name>`, with the dark files in the row of the dark appearance. They stay two sets when one is a vector and the other a raster, or when a set of `<name>` exists.
+
+The `--icon-catalog` option does the same for the icons of an iOS job, from `icons/` into `Icons.xcassets`. An icon SVG that paints only in `currentcolor` renders as a template, in the tint of its view; one with another color or a gradient keeps its colors. A sprite of `<symbol>` elements is no image, and stays in `icons/`.
+
+```bash
+chassis-assets build --asset-catalog --icon-catalog
+```
 
 ### Optimization
 
@@ -678,7 +685,7 @@ chassis-assets archive --to /tmp/release --prefix acme --release 1.2.0
 
 `--to <dir>` writes them elsewhere, and `--prefix <name>` and `--release <version>` name them instead of `package.json`; the archives of the prefix already in the folder are removed first. The archives are written with Node.js alone, and an archive holds up to 65,535 files.
 
-The release workflow that `chassis-assets init` writes runs on a tag `v<version>`: it checks that the tag is the version of `package.json`, builds and verifies every job, writes the archives and creates the GitHub release with them attached. A tag with a prerelease part, such as `v0.2.0-next.0`, is marked as a prerelease.
+The release workflow that `chassis-assets init` writes runs on a tag `v<version>`: it checks that the tag is the version of `package.json`, builds every job with the `build:release` script, which adds `--asset-catalog` and `--icon-catalog`, verifies them, writes the archives and creates the GitHub release with them attached. A tag with a prerelease part, such as `v0.2.0-next.0`, is marked as a prerelease.
 
 ## Continuous integration
 

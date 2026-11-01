@@ -17,6 +17,7 @@ import { writeCatalog } from './asset-catalog.js'
 import { createFileFilter } from './filters.js'
 import { IMAGE_FORMATS, loadEncoders, optimizeJob, resolveSettings } from './optimize.js'
 import { platformProcessors } from './processors/index.js'
+import { bundleIndex, keepsBundle } from './processors/shared.js'
 import { writeRes } from './res-layout.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
 import { loadSubsetter, resolveSubset, subsetJob } from './subset-fonts.js'
@@ -59,6 +60,8 @@ Options:
                          place of .svg. Needs \`pnpm install\`
   --asset-catalog        Write the images of iOS as an asset catalog, Assets.xcassets
                          in place of images/
+  --icon-catalog         Write the icons of iOS as an asset catalog, Icons.xcassets
+                         in place of icons/
   --optimize             Write the images again under their names where that makes them
                          smaller, with the settings of \`chassis.optimize\`. Needs
                          \`pnpm install\`
@@ -102,6 +105,7 @@ let run = {
   allowLfsPointers: false,
   vectorDrawables: false,
   assetCatalog: false,
+  iconCatalog: false,
   res: false,
   optimize: false,
   formats: /** @type {string[]} */ ([]),
@@ -268,6 +272,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     allowLfsPointers: false,
     vectorDrawables: false,
     assetCatalog: false,
+    iconCatalog: false,
     res: false,
     optimize: false,
     webp: false,
@@ -320,6 +325,8 @@ export function parseArgs(argv = process.argv.slice(2)) {
       options.vectorDrawables = true
     } else if (arg === '--asset-catalog') {
       options.assetCatalog = true
+    } else if (arg === '--icon-catalog') {
+      options.iconCatalog = true
     } else if (arg === '--res') {
       options.res = true
     } else if (arg === '--optimize') {
@@ -744,6 +751,8 @@ export function listSourceFiles(config, job, filter, cwd) {
       const file = path.join(entry.parentPath, entry.name)
       const parts = path.relative(appDir, file).split(path.sep)
       if (parts.some((part) => shouldIgnoreFile(part, config.ignore))) continue
+      const bundle = bundleIndex(parts)
+      if (bundle !== -1 && !keepsBundle(job.platform, parts[bundle])) continue
       const type =
         parts.length > 1 && ['fonts', 'images', 'icons'].includes(parts[0]) ? parts[0] : null
       if (keepsFile(processor, type, entry.name, config.formats) && filter.file(parts.join('/'))) {
@@ -792,6 +801,12 @@ export function createCollisionTracker() {
 const collisionTracker = createCollisionTracker()
 
 /**
+ * The number of files of each bundle the run has written, by its output path
+ * @type {Map<string, number>}
+ */
+const bundleCounts = new Map()
+
+/**
  * Where a source file ends up in the output: the folder, with the density folder of a
  * platform that sorts its images, and the name the platform gives it.
  * @param {Processor} processor - The platform processor
@@ -838,7 +853,14 @@ function renameFilesRecursively(processor, folderPath, parentDir = '') {
 
     if (stat.isDirectory()) {
       // The asset catalog or the res/ folder of an earlier build has its names already
-      if (item === processor.assetCatalog?.name || item === processor.res?.name) return
+      if (
+        item === processor.assetCatalog?.name ||
+        item === processor.iconCatalog?.name ||
+        item === processor.res?.name ||
+        keepsBundle(processor.name, item)
+      ) {
+        return
+      }
       renameFilesRecursively(processor, itemPath, currentDirName)
     } else {
       const newName = processor.renameFile
@@ -916,6 +938,10 @@ function copyFilesWithProcessor(
     if (stat.isDirectory()) {
       // A type folder that `--type` leaves out is not read
       if (relative === '' && !run.filter.type(item)) return
+      if (bundleIndex(itemRelative.split('/')) !== -1) {
+        copyBundle(processor, itemSrcPath, destPath, item, itemRelative)
+        return
+      }
       // With a filter a folder is made when a file of it is copied: most have none
       if (!run.dryRun && !run.filter.active && !fs.existsSync(itemDestPath)) {
         fs.mkdirSync(itemDestPath, { recursive: true })
@@ -951,6 +977,60 @@ function copyFilesWithProcessor(
     copyFile(processor, currentRoot, itemSrcPath, destPath, item)
     if (taken) stats.filesProcessed = counted
   })
+}
+
+/**
+ * Copy a bundle to the output as one file, on a platform that keeps it: the bundle gets the
+ * name of the platform, and the files in it keep theirs, as they name each other. A brand
+ * bundle replaces the default bundle whole.
+ * @param {Processor} processor - The platform processor
+ * @param {string} srcPath - The source bundle
+ * @param {string} destPath - The output folder that mirrors the folder of the bundle
+ * @param {string} item - The name of the source bundle
+ * @param {string} relative - The path of the bundle in the folder of the app
+ */
+function copyBundle(processor, srcPath, destPath, item, relative) {
+  if (!keepsBundle(processor.name, item)) return
+
+  const files = fs
+    .readdirSync(srcPath, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.join(entry.parentPath, entry.name))
+    .filter((file) =>
+      path
+        .relative(srcPath, file)
+        .split(path.sep)
+        .every((part) => !shouldIgnoreFile(part, config.ignore))
+    )
+  const inside = (/** @type {string} */ file) =>
+    `${relative}/${path.relative(srcPath, file).split(path.sep).join('/')}`
+  if (!files.some((file) => run.filter.file(inside(file)))) return
+
+  // A Git LFS pointer is not the file. Fail, unless told to copy it.
+  const pointers = run.allowLfsPointers ? [] : files.filter((file) => isLfsPointer(file))
+  if (pointers.length > 0) {
+    stats.lfsPointers.push(...pointers.map((file) => path.relative(run.cwd, file)))
+    return
+  }
+
+  const { folder, name } = outputLocation(processor, null, destPath, item)
+  const warning = collisionTracker.track(folder, item, name)
+  if (warning) stats.warnings.push(warning)
+
+  // Count the files of the output: those of a bundle this one replaces are gone
+  const dest = path.join(folder, name)
+  stats.filesProcessed += files.length - (bundleCounts.get(dest) ?? 0)
+  bundleCounts.set(dest, files.length)
+  if (run.dryRun) return
+
+  fs.rmSync(dest, { recursive: true, force: true })
+  fs.mkdirSync(dest, { recursive: true })
+  for (const file of files) {
+    const target = path.join(dest, path.relative(srcPath, file))
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    fs.copyFileSync(file, target)
+  }
+  logger.log(`📄 Copied: ${path.relative(run.cwd, srcPath)}`)
 }
 
 /**
@@ -1164,18 +1244,21 @@ async function subsetFonts(processor, destPath, brand, tools) {
 }
 
 /**
- * Move the images a processor names in `assetCatalog` into an asset catalog, in the output
- * of one job. A file without a place in an image set stays in its folder, with a warning
- * for the job.
- * @param {Processor} processor - The platform processor
+ * Move the files of a type folder into an asset catalog, in the output of one job. A file
+ * without a place in an image set stays in its folder, with a warning for the job.
+ * @param {import('./types.js').Catalog | undefined} catalog - The catalog of the processor
  * @param {string} destPath - The output folder of the job
  */
-function writeAssetCatalog(processor, destPath) {
-  const catalog = processor.assetCatalog
+function writeAssetCatalog(catalog, destPath) {
   if (!catalog) return
 
   const typeDir = path.join(destPath, catalog.type)
-  const { sets, left } = writeCatalog(typeDir, path.join(destPath, catalog.name))
+  const { sets, left } = writeCatalog(
+    typeDir,
+    path.join(destPath, catalog.name),
+    false,
+    catalog.icons
+  )
   stats.imageSets += sets
   if (sets > 0) {
     logger.log(`🗂️  Wrote ${sets} image sets to ${catalog.name}`)
@@ -1228,6 +1311,7 @@ export async function generateAssets(options = {}) {
   // Reset the state of the run
   stats = emptyStats()
   collisionTracker.clear()
+  bundleCounts.clear()
   const cwd = resolveRoot(options.cwd)
   run = {
     cwd,
@@ -1236,6 +1320,7 @@ export async function generateAssets(options = {}) {
     allowLfsPointers: options.allowLfsPointers || process.env.CHASSIS_ALLOW_LFS_POINTERS === '1',
     vectorDrawables: options.vectorDrawables || false,
     assetCatalog: options.assetCatalog || false,
+    iconCatalog: options.iconCatalog || false,
     res: options.res || false,
     optimize: options.optimize || false,
     formats: Object.keys(IMAGE_FORMATS).filter((format) => options[format]),
@@ -1326,6 +1411,12 @@ export async function generateAssets(options = {}) {
     )
   }
 
+  if (run.iconCatalog && !jobs.some((job) => platformProcessors[job.platform].iconCatalog)) {
+    stats.warnings.push(
+      '--icon-catalog changes nothing: no selected job has a platform with an icon catalog'
+    )
+  }
+
   if (run.res && !jobs.some((job) => platformProcessors[job.platform].res)) {
     stats.warnings.push('--res changes nothing: no selected job has a platform with a res/ folder')
   }
@@ -1370,7 +1461,8 @@ export async function generateAssets(options = {}) {
     if (imageTools) await optimizeImages(processor, destPath, imageTools)
     if (fontTools) await subsetFonts(processor, destPath, brand, fontTools)
     if (convert) await convertVectorDrawables(processor, destPath, convert)
-    if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor, destPath)
+    if (run.assetCatalog && !run.dryRun) writeAssetCatalog(processor.assetCatalog, destPath)
+    if (run.iconCatalog && !run.dryRun) writeAssetCatalog(processor.iconCatalog, destPath)
     if (run.res && !run.dryRun) writeResLayout(processor, destPath)
     stats.jobs.push({ ...job, files: stats.filesProcessed - before })
   }
@@ -1418,7 +1510,7 @@ export async function generateAssets(options = {}) {
     if (run.vectorDrawables) {
       logger.log(`🎨 ${stats.filesConverted} files converted to vector drawables`)
     }
-    if (run.assetCatalog) {
+    if (run.assetCatalog || run.iconCatalog) {
       logger.log(`🗂️  ${stats.imageSets} image sets written to asset catalogs`)
     }
     if (run.res) {

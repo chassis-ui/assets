@@ -35,8 +35,23 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   the consumer contract is tested, the build has unit and build tests, releases are
   automated, and the docs site uses `@chassis-ui/docs` 0.6 or later. Whether a release
   becomes 1.0, and when, is not decided.
+- **The release of D41.** `build:release` of website-assets passes `--icon-catalog`, which
+  0.7.0 does not have: release `@chassis-ui/assets` first, then raise its dependency there and
+  release website-assets. Its bundles are at `source/<brand>/demo/app-icon/app-icon.icon`, as
+  D42 has it, which its source lint passes only with that release. The Native iOS job compiles
+  a bundle only once the pin of `vendor/assets` moves to a commit that has one.
+- **Android and D41.** The fonts page gives an Android app a file for every role, but `--res`
+  has no night qualifiers (D11): `logo_light.png` and `logo_dark.png` are two drawables, where
+  iOS has one image. `--vector-drawables` with `--res` already gives the icons. Proposed:
+  `_dark` goes to a `-night` folder under the name without the suffix, tried on an emulator.
+  Font family files stay out, as Compose names the role files in code. The app icon is an
+  adaptive icon, of foreground, background and monochrome layers, which D42 does not cover.
+  Proposed for after the iOS example ships. Not decided.
 
 ## Not written
+
+- Files of the fixture for a `_light` and `_dark` pair, an SVG in `currentcolor` and a sprite.
+  The tests of D41 write them to a temporary folder, and the golden output does not hold them.
 
 - A build with `--split` that leaves out the file of a range of which a font has only
   glyphs without an outline. With `symbols2`, Inter and Archivo Narrow had the eight
@@ -57,6 +72,11 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 
 ## Not checked
 
+- An app icon of D42 on a device, and the Xcode steps of the iOS page: `actool` compiles the
+  bundle, and no app has shown it.
+- A dark image set and a template icon of D41 on a screen: `actool` compiles the catalogs, and
+  no app has shown them. The fonts of every role were run on the iOS 18.4 simulator for 11 files
+  per brand, and on Android not at all.
 - A variable font with PostScript outlines, `CFF2`, in `chassis-assets static-font` (D40).
   The fonts of the brands and of the tests have TrueType outlines.
 - The samples of the iOS and the Android page with the fonts of D24: the app fonts are TTF

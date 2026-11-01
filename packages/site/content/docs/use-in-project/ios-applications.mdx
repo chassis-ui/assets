@@ -17,7 +17,7 @@ dist/ios/<app>/<brand>/
 └── images/
 ```
 
-The build copies, renames and sorts the files. It writes an asset catalog only with the `--asset-catalog` option, does not turn an SVG into a PDF and does not resize an image: an image has the variants the designer exported. This page says what you do with the files in Xcode.
+The build copies, renames and sorts the files. It writes asset catalogs only with the `--asset-catalog` and `--icon-catalog` options, does not turn an SVG into a PDF and does not resize an image: an image has the variants the designer exported. This page says what you do with the files in Xcode.
 
 ## Installation
 
@@ -25,7 +25,7 @@ An app gets the files in one of three ways: from the archive of a release, from 
 
 ### Release archive
 
-An archive needs no Node.js and no Git LFS on the machine that builds the app. Each GitHub release of a repository of assets has one archive per job attached, named `<name>-<platform>-<app>-<brand>-<version>.zip` after the name and the version of its `package.json`. The archive of an iOS job holds the content of `dist/ios/<app>/<brand>/` at its top level, so it unpacks to `fonts/`, `icons/` and `images/`.
+An archive needs no Node.js and no Git LFS on the machine that builds the app. Each GitHub release of a repository of assets has one archive per job attached, named `<name>-<platform>-<app>-<brand>-<version>.zip` after the name and the version of its `package.json`. The archive of an iOS job holds the content of `dist/ios/<app>/<brand>/` at its top level, so it unpacks to `fonts/`, `Assets.xcassets` and `Icons.xcassets`. The release workflow that `chassis-assets init` writes builds with the `build:release` script, which passes `--asset-catalog` and `--icon-catalog`. A file without a place in a catalog stays in `images/` or `icons/`, and a repository that takes the options out of the script has these folders in place of the catalogs.
 
 ### Submodule
 
@@ -108,7 +108,7 @@ find dist/ios/demo/chassis -name 'hero_banner*'
 
 ## Fonts
 
-The font files are named by role and weight, not by family: `ui_normal.ttf`, `ui_strong_italic.ttf`, `code_normal.ttf`. Which family a role holds is the choice of the brand, so the app refers to the file of a role and reads the name of the font from it. The roles are those of [Chassis Tokens](https://chassis-ui.com/tokens/), and the [fonts page]([[docsref:/asset-types/fonts#platform-output]]) lists what each platform gets.
+The font files are named by role and weight, not by family: `ui_normal.ttf`, `ui_strong_italic.ttf`, `code_normal.ttf`. Which family a role holds is the choice of the brand, so the app refers to the file of a role and reads the name of the font from it. A brand that holds a file for every role, as the fonts page describes, gives a role in the family of another role copies with one PostScript name. Listing or registering both files is harmless: the second one reports a duplicate name and the font loads. The roles are those of [Chassis Tokens](https://chassis-ui.com/tokens/), and the [fonts page]([[docsref:/asset-types/fonts#platform-output]]) lists what each platform gets.
 
 ### Add the fonts
 
@@ -233,8 +233,7 @@ dist/ios/<app>/<brand>/
 │   │   └── wordmark.imageset/
 │   └── onboarding/
 │       ├── Contents.json
-│       ├── welcome_dark.imageset/
-│       └── welcome_light.imageset/
+│       └── welcome.imageset/
 ├── data/
 ├── fonts/
 ├── icons/
@@ -245,7 +244,7 @@ dist/ios/<app>/<brand>/
 
 Add `Assets.xcassets` to the project with **File → Add Files to…**, with the app target checked. An SVG without a PNG of its name is an image set of one file with **Preserve Vector Data** set. A subfolder is a folder of the catalog with **Provides Namespace** set, so an image of `logo/` is named `logo/wordmark`.
 
-A file without a place in an image set stays in `images/`, and the build warns about the number of them: here `logo/wordmark.svg`, which has a PNG of the same name. The build does not fill the **Dark** row of an image set and does not put the icons into the catalog. The release archives are built without the option.
+A file without a place in an image set stays in `images/`, and the build warns about the number of them: here `logo/wordmark.svg`, which has a PNG of the same name.
 
 Without the option, you make the image sets in Xcode. Drag the variants of an image into the asset catalog together, and Xcode makes one image set named after the file and puts each variant in the slot of its indicator: `hero_banner.png` in **1x**, `hero_banner@2x.png` in **2x**. A slot stays empty when the designer exported no variant for it, and iOS scales the nearest one.
 
@@ -280,7 +279,7 @@ struct HeroBanner: View {
 
 ### Dark mode
 
-The build has no rule for appearances: a designer who exports an image for light and for dark names the two files, as `onboarding/welcome_light.png` and `onboarding/welcome_dark.png` of the tree above. To let iOS choose, make one image set, set **Appearances** to **Any, Dark** in the attributes inspector, and put the `*_light` variants in the **Any Appearance** row and the `*_dark` variants in the **Dark** row. `UIImage(named:)` and `Image` then follow the appearance of the screen with one name.
+A designer who exports an image for light and for dark names the two files, as `onboarding/welcome_light.png` and `onboarding/welcome_dark.png` of the tree above. With `--asset-catalog` they are one image set, `onboarding/welcome`, with a row per appearance. Without it, make one image set, set **Appearances** to **Any, Dark** in the attributes inspector, and put the `*_light` variants in the **Any Appearance** row and the `*_dark` variants in the **Dark** row. `UIImage(named:)` and `Image` then follow the appearance of the screen with one name.
 
 ## Icons
 
@@ -292,7 +291,7 @@ The build gives iOS the SVG, PDF and PNG files of `icons/`. For an app that hold
 
 ### Add the icons
 
-The build does not turn an SVG into a PDF, and Xcode 12 or later needs none: an asset catalog takes an SVG as it is. Drag the icons the app uses from `icons/svgs/` into a folder of the catalog, which makes one image set per file, then select them and set these attributes:
+The build does not turn an SVG into a PDF, and Xcode 12 or later needs none: an asset catalog takes an SVG as it is. With the `--icon-catalog` option the build writes the catalog, `Icons.xcassets`, with a folder per subfolder of `icons/`, so an icon of `icons/svgs/` is named `svgs/arrow_right_solid`. Without it, drag the icons the app uses from `icons/svgs/` into a folder of the catalog, which makes one image set per file, then select them and set these attributes:
 
 <CxTable>
 | Attribute | Value | Why |
@@ -335,6 +334,12 @@ struct NextButton: View {
 }
 ```
 
+## App icon
+
+The build keeps the app icon as the bundle that Icon Composer saves, so you make no image sets and no sizes for it. A file `source/<brand>/<app>/app-icon/app-icon.icon` is written to `dist/ios/<app>/<brand>/app-icon/app_icon.icon`, with the same name in every brand.
+
+Add the bundle to the project with **File → Add Files to…**, with the app target checked, beside the asset catalog and not inside it. Then set **App Icon** under **General → App Icons and Launch Screen** of the target to `app_icon`, the name of the bundle without its extension. Xcode writes the older icon images from it when it compiles. The [other assets page]([[docsref:/asset-types/other#bundles]]) has the rules of a bundle.
+
 ## Other assets
 
 The build copies any other folder of the app whole, in every format, with the file names in snake_case. A file `source/<brand>/<app>/data/country-list.json` is written to `dist/ios/<app>/<brand>/data/country_list.json`. A folder that only some brands hold is in the output of those brands only. The [other assets page]([[docsref:/asset-types/other]]) describes the type.
@@ -355,7 +360,7 @@ let url = Bundle.main.url(
 
 The brands of an app have the same folders, and a file that two brands both have has the same name in each, so the code of the app does not change with the brand: what changes is the folder the files come from. The build fills the output of a brand with the files of its folder in `source/` and with the files of the default brand that it does not replace, so the brands share every default file and each has its own files under the same names.
 
-The brands do not have to hold the same files. A file that only the folder of one brand holds is in the output of that brand only, and a font role that a brand sets in the family of another role has no files in its output. An app that loads such a file builds with the brands that have it; compare the output of two brands to see which files they share:
+The brands do not have to hold the same files. A file that only the folder of one brand holds is in the output of that brand only, and a font role that a brand holds no files for has no files in its output. An app that loads such a file builds with the brands that have it; compare the output of two brands to see which files they share:
 
 ```bash
 diff <(cd dist/ios/demo/chassis && find . -type f | sort) \

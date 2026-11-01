@@ -58,7 +58,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   SVG or PDF with its vector data kept where the name has no raster. A subfolder is a folder
   with a namespace. A file without a place in a set stays in `images/` with a warning. No
   appearances: the build has no rule that pairs a light and a dark file. The release
-  archives are built without it. 2026-10-01.
+  archives are built without it. 2026-10-01. D41 added the appearances and the icons.
 - **D11. An Android `res/` layout?** `--res`, off by default. `res/` beside the type folders,
   in place of the files it takes: the TTF and OTF fonts in `res/font/`, the raster images in
   the folder of their density, the vector drawables in `res/drawable/`, all without
@@ -280,7 +280,8 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `chassis` differ by app and stay; so do the home page images of `_default`, of which some
   differ by app, so that the set is in one folder. The output is byte for byte the one
   before. The source paths, `--include` and the paths `pnpm assets:lfs` prints change, so the
-  changeset is a minor one that starts with **Breaking.**. The maintainer, 2026-10-29.
+  changeset is a minor one that starts with **Breaking.**. The maintainer, 2026-10-29. The logos
+  of `chassis` moved to `_shared/` of website-assets on 2026-11-01: they differed by rounding.
 - **D37. Is the build published to npm?** Yes, as `@chassis-ui/assets` with the
   `chassis-assets` command, so that a team installs it in a repository of its own assets and
   runs the build there; the assets of this repository are not published (D2 holds for them).
@@ -339,3 +340,31 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   A run writes the font to every output it is given, TrueType and WOFF2, so the conversion of
   the fonts page is no step of its own.
   Variable fonts with TrueType outlines only were tried. The maintainer, 2026-10-30.
+- **D41. Should the catalog take appearances and icons, and an app font every role?** Yes to
+  all three, with the maintainer, 2026-11-01: the plan of an example app showed that an app
+  could not name a file by role across brands, nor get a catalog of what it needs from a
+  release. A release has the catalogs: the `release.yml` that `init` writes runs a script
+  `build:release` with both options, as website-assets does, and a team takes them out of the
+  script if it wants the folders.
+  `<name>_light` and `<name>_dark` of a folder are one image set `<name>`, which replaces
+  the rule of D10; a name of a catalog so changes where a repository has such a pair.
+  `--icon-catalog` writes `Icons.xcassets`, a catalog of its own as an image is free to have
+  the name of an icon, and off by default as the flags of the build keep working. The build
+  reads the text of an icon, not of an image, to tell a template from a colored file and a
+  sprite from an image, with no list: a template paints only in `currentcolor`, as a tint
+  would lose any other color. The folder of an iOS or Android app holds a file for every role and weight,
+  also where D31 leaves a role without files on the web: the web declares a family, and an
+  app names a file. Copies have one PostScript name, and iOS reports the second registration
+  as a duplicate and loads the font, run on the iOS 18.4 simulator. A vector beside a raster of
+  its name stays out of the set, as D10 has it. The maintainer, 2026-11-01.
+- **D42. How does a repository of assets hold an app icon?** As the `.icon` bundle that Icon
+  Composer saves, in a folder of its own such as `app-icon/`. The build and the source lint take
+  a bundle as one file: only iOS keeps it, it gets the snake_case name of the platform, the files
+  in it keep their names, and a brand bundle replaces the default bundle whole. The rename of the
+  build changed the files of `Assets/` and not the names in `icon.json`, so `actool` failed on
+  the output and compiled the source. No option and no list: the extension is the rule, and
+  only a designer's file is needed. `actool` writes the older icon images from the bundle, so the
+  build makes no `AppIcon.appiconset` and resizes nothing. Under `fonts/`, `images/` or `icons/`
+  a bundle stays an ordinary folder, which keeps the optimizer, the catalogs and `res/` out of
+  it. The icon of an Android app is left for the Android work of `ref/OPEN.md`. The maintainer,
+  2026-11-01.

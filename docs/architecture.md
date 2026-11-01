@@ -95,7 +95,8 @@ For each job, in order:
    "Vector drawables".
 9. **Catalog**, only with `--asset-catalog` and only for a processor that has
    `assetCatalog`: the images of `images/` of the job move into `Assets.xcassets`, one image
-   set per base name (`writeAssetCatalog()`, `writeCatalog()`). See "Asset catalog".
+   set per base name (`writeAssetCatalog()`, `writeCatalog()`). `--icon-catalog` and
+   `iconCatalog` do the same for `icons/`, into `Icons.xcassets`. See "Asset catalog".
 10. **Res**, only with `--res` and only for a processor that has `res`: the fonts, the
     images and the icons of the job that `res/` takes move into `res/font/` and
     `res/drawable*/` (`writeResLayout()`, `writeRes()`). See "Res folder".
@@ -225,6 +226,7 @@ on the fixture, which has its own configuration.
 | `--dry-run`                              | Print the jobs and their file counts, write nothing.                                                                                                                                                                                                                                                             |
 | `--allow-lfs-pointers`                   | Copy Git LFS pointer files instead of failing. `CHASSIS_ALLOW_LFS_POINTERS=1` does the same.                                                                                                                                                                                                                     |
 | `--vector-drawables`                     | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Off by default. Needs `pnpm install`.                                                                                                                                                                                             |
+| `--icon-catalog`                         | Write the icons of iOS as an asset catalog, `Icons.xcassets` in place of `icons/`. Off by default.                                                                                                                                                                                                               |
 | `--asset-catalog`                        | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/`. Off by default.                                                                                                                                                                                                            |
 | `--res`                                  | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/`. Off by default.                                                                                                                                                                                               |
 | `--optimize`                             | Write the images again under their names where that makes them smaller. Off by default. Needs `pnpm install`.                                                                                                                                                                                                    |
@@ -269,8 +271,8 @@ kept. Changing a path or a name in it is a breaking change while the version is 
 - Names: snake_case, lowercase; `@2x` and `@3x` kept.
 - `fonts/`: `.ttf`, `.otf` and the `.txt` license files.
 - `images/`: every format except `.webp`. With `--asset-catalog`, in the image sets of `Assets.xcassets` (D10).
-- `icons/`: `.svg`, `.pdf` and `.png`. The icon font and its stylesheets are left out.
-- Other folders: every file.
+- `icons/`: `.svg`, `.pdf` and `.png`. The icon font and its stylesheets are left out. With `--icon-catalog`, in the image sets of `Icons.xcassets` (D41).
+- Other folders: every file. A `.icon` bundle is one file, only on iOS, with its name in snake_case and the names in it kept (`bundleIndex()`, `keepsBundle()`, `copyBundle()`, D42).
 
 ### Android
 
@@ -632,16 +634,22 @@ file with and without the code. It needs no package: a catalog is folders and JS
   an indicator other than `@1x`, `@2x`, `@3x`, a second file for a slot (PNG before JPEG, no
   indicator before `@1x`, SVG before PDF), and any other format. `images/` is removed when
   nothing stays.
-- Not part of it: appearances (the build has no rule that pairs `*_light` and `*_dark`),
-  and the icons, which stay files under `icons/`.
+- The sets of `<name>_light` and `<name>_dark` of one folder are one set `<name>`, the dark
+  files in the rows of the dark appearance, when both are raster or both vector and no set
+  `<name>` exists (D41).
+- `--icon-catalog` does the same for `icons/`: `iconCatalog: { type: 'icons', name:
+'Icons.xcassets', icons: true }` on iOS. With `icons`, the build reads the text of an SVG: one
+  that paints only in `currentcolor` gets `template-rendering-intent`, one with another color
+  or a gradient does not, and a sprite of `<symbol>` elements stays in its folder (D41). The
+  SVG files of `--asset-catalog` are not read.
 - An image set is removed before it is written, and the rename pass leaves the catalog of an
   earlier build alone, so a build into an existing output writes the same catalog.
 - The validator takes the path in the catalog for the source file, and the catalog for the
   type folder when nothing stays in it, so `pnpm assets:verify` passes on either output. The
-  release archives are built without the option.
+  `build:release` script that `init` writes passes both options (D41).
 - Compiled: `packages/assets/test/native/ios/check.sh`, `pnpm test:ios`, runs `actool` on
-  the catalogs of an output and checks that every image set is in the compiled catalog. The
-  Native iOS job of CI runs it on a macOS runner, as `chassis-ui/tokens` does for its catalog.
+  the catalogs of an output and checks that every image set is in the compiled catalog, and on
+  its `.icon` bundles, checking the icon name each compiles to. The Native iOS job of CI runs it on a macOS runner, as `chassis-ui/tokens` does for its catalog.
 
 ## Checks
 

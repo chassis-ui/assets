@@ -32,19 +32,62 @@ const RASTER_FORMATS = ['.png', '.jpg', '.jpeg']
 /** The vector formats an image set takes as its one file. */
 const VECTOR_FORMATS = ['.svg', '.pdf']
 
+/** The name of a file for the light appearance, with the name it shares with its dark file. */
+const LIGHT_NAME = /^(.+)_light$/
+
+/** What `Contents.json` says of a file of the dark appearance. */
+const DARK_APPEARANCE = [{ appearance: 'luminosity', value: 'dark' }]
+
+/** A paint of an SVG, as an attribute or a CSS property, with its value. */
+const SVG_PAINT =
+  /(?<![\w-])(?:fill|stroke|color|stop-color|flood-color|lighting-color)\s*[=:]\s*["']?([^"';\s>}!]+)/gi
+
+/** The values of a paint that give a file no color of its own. */
+const NO_COLOR = ['currentcolor', 'none', 'transparent', 'inherit']
+
 /**
  * An image set: its name and its files.
  * @typedef {Object} ImageSet
  * @property {string} name - The base name of its files
- * @property {boolean} vector - Whether it holds one vector file in place of raster variants
- * @property {Array<{ file: string, scale?: string }>} images - The files, a raster with its slot
+ * @property {boolean} vector - Whether it holds one vector file per appearance in place of
+ *   raster variants
+ * @property {Array<{ file: string, scale?: string, dark?: boolean }>} images - The files, a
+ *   raster with its slot, and a file of the dark appearance marked
+ * @property {boolean} [template] - Whether it renders as a template, in the tint of its view
  */
+
+/**
+ * Join the sets of `<name>_light` and `<name>_dark` into one set `<name>`, the dark files in
+ * the row of the dark appearance. A pair stays apart when one is vector and the other raster,
+ * or when a set of `<name>` exists already.
+ * @param {ImageSet[]} sets
+ * @returns {ImageSet[]} The sets, with the pairs joined
+ */
+function joinAppearances(sets) {
+  const byName = new Map(sets.map((set) => [set.name, set]))
+  for (const light of sets) {
+    const name = LIGHT_NAME.exec(light.name)?.[1]
+    if (!name || byName.has(name)) continue
+    const dark = byName.get(`${name}_dark`)
+    if (!dark || dark.vector !== light.vector) continue
+
+    byName.delete(light.name)
+    byName.delete(dark.name)
+    byName.set(name, {
+      name,
+      vector: light.vector,
+      images: [...light.images, ...dark.images.map((image) => ({ ...image, dark: true }))]
+    })
+  }
+  return [...byName.values()]
+}
 
 /**
  * Sort the files of one folder into image sets. Files of one base name are one set: the
  * raster variants in the slots of their indicators, or, where there is no raster, one vector
  * file. A file that has no place in a set is left: a format or an indicator an image set
- * does not take, a vector beside rasters of its name, a second file for a slot.
+ * does not take, a vector beside rasters of its name, a second file for a slot. The sets of
+ * `<name>_light` and `<name>_dark` are one set of two appearances.
  * @param {string[]} fileNames - The names of the files of the folder
  * @returns {{ sets: ImageSet[], left: string[] }} The sets by name, and the files left
  * @example
@@ -109,28 +152,51 @@ export function planImageSets(fileNames) {
     }
   }
 
-  return { sets: sets.sort((a, b) => a.name.localeCompare(b.name)), left: left.sort() }
+  return {
+    sets: joinAppearances(sets).sort((a, b) => a.name.localeCompare(b.name)),
+    left: left.sort()
+  }
 }
 
 /**
  * The `Contents.json` of an image set, as Xcode writes it: the three slots of a raster
  * image, the empty ones without a file, or the one file of a vector image, which keeps its
- * vector data so that it stays sharp at any size.
+ * vector data so that it stays sharp at any size. A set with a dark file has the rows of the
+ * dark appearance too.
  * @param {ImageSet} set
  * @returns {string} The text of the file
  */
 export function imageSetContents(set) {
+  /** @param {boolean} dark */
+  const slots = (dark) =>
+    ['1x', '2x', '3x'].map((scale) => {
+      const image = set.images.find(
+        (candidate) => candidate.scale === scale && Boolean(candidate.dark) === dark
+      )
+      return {
+        ...(dark ? { appearances: DARK_APPEARANCE } : {}),
+        ...(image ? { filename: image.file } : {}),
+        idiom: 'universal',
+        scale
+      }
+    })
+
+  const hasDark = set.images.some((image) => image.dark)
   const contents = set.vector
     ? {
-        images: [{ filename: set.images[0].file, idiom: 'universal' }],
+        images: set.images.map((image) => ({
+          ...(image.dark ? { appearances: DARK_APPEARANCE } : {}),
+          filename: image.file,
+          idiom: 'universal'
+        })),
         ...CATALOG_INFO,
-        properties: { 'preserves-vector-representation': true }
+        properties: {
+          'preserves-vector-representation': true,
+          ...(set.template ? { 'template-rendering-intent': 'template' } : {})
+        }
       }
     : {
-        images: ['1x', '2x', '3x'].map((scale) => {
-          const image = set.images.find((candidate) => candidate.scale === scale)
-          return { ...(image ? { filename: image.file } : {}), idiom: 'universal', scale }
-        }),
+        images: [...slots(false), ...(hasDark ? slots(true) : [])],
         ...CATALOG_INFO
       }
   return `${JSON.stringify(contents, null, 2)}\n`
@@ -150,7 +216,24 @@ export function folderContents(namespace) {
 }
 
 /**
- * The path a file of a type folder has inside the catalog, when it is in an image set.
+ * The paths a file of a type folder can have inside the catalog, when it is in an image set:
+ * the set of its base name, and the set it shares with the file of the other appearance.
+ * @param {Catalog} catalog - The catalog, of the processor
+ * @param {string} subFolder - The folder of the file under the type folder, or ''
+ * @param {string} fileName - The name of the file in the output
+ * @returns {string[]} The paths, relative to the output of the job
+ */
+export function catalogPaths(catalog, subFolder, fileName) {
+  const { base } = extractResolutionIndicator(fileName)
+  const name = /^(.+)_(?:light|dark)$/.exec(base)?.[1]
+  return [
+    catalogPath(catalog, subFolder, fileName),
+    ...(name ? [path.join(catalog.name, subFolder, name + IMAGE_SET, fileName)] : [])
+  ]
+}
+
+/**
+ * The path a file of a type folder has inside the catalog, when it is in the set of its name.
  * @param {Catalog} catalog - The catalog, of the processor
  * @param {string} subFolder - The folder of the file under the type folder, or ''
  * @param {string} fileName - The name of the file in the output
@@ -165,6 +248,19 @@ export function catalogPath(catalog, subFolder, fileName) {
 }
 
 /**
+ * Whether the text of an SVG paints only in `currentcolor`, so that it has no color of its
+ * own and can take the tint of its view. Another color or a gradient would be lost in a tint.
+ * @param {string} text - The text of the SVG
+ * @returns {boolean}
+ * @example
+ * isTemplateSvg('<svg fill="currentcolor"><path fill="#e11"/></svg>') // Returns: false
+ */
+export function isTemplateSvg(text) {
+  const paints = [...text.matchAll(SVG_PAINT)].map((match) => match[1].toLowerCase())
+  return paints.includes('currentcolor') && paints.every((paint) => NO_COLOR.includes(paint))
+}
+
+/**
  * Move the images of a folder of the output into a catalog, recursively: each image set gets
  * a folder with its files and a `Contents.json`, and each subfolder becomes a folder of the
  * catalog with a namespace. A file without a place in a set stays where it is. A folder
@@ -172,16 +268,35 @@ export function catalogPath(catalog, subFolder, fileName) {
  * @param {string} dir - The folder of the images in the output
  * @param {string} catalogDir - The catalog, or the folder of it that `dir` becomes
  * @param {boolean} [namespace] - Whether `catalogDir` is a folder inside the catalog
+ * @param {boolean} [icons] - Whether the files are icons, whose SVG text is read
  * @returns {{ sets: number, left: string[] }} The number of image sets, and the files that
  *   stay, by their paths
  */
-export function writeCatalog(dir, catalogDir, namespace = false) {
+export function writeCatalog(dir, catalogDir, namespace = false, icons = false) {
   const result = { sets: 0, left: /** @type {string[]} */ ([]) }
   if (!fs.existsSync(dir)) return result
 
   const entries = fs.readdirSync(dir, { withFileTypes: true })
   const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name)
-  const { sets, left } = planImageSets(files)
+  const { sets: planned, left } = planImageSets(files)
+
+  // What the text of an icon says: a sprite of <symbol> elements is no image, and an icon that
+  // paints only in `currentcolor` takes the tint of its view
+  const sets = []
+  for (const set of planned) {
+    const text =
+      icons && set.vector
+        ? set.images
+            .filter(({ file }) => path.extname(file).toLowerCase() === '.svg')
+            .map(({ file }) => fs.readFileSync(path.join(dir, file), 'utf8'))
+            .join('')
+        : ''
+    if (text.includes('<symbol')) {
+      left.push(...set.images.map(({ file }) => file))
+      continue
+    }
+    sets.push(isTemplateSvg(text) ? { ...set, template: true } : set)
+  }
 
   for (const set of sets) {
     // An image set of an earlier build may hold a file that the set no longer has
@@ -198,7 +313,12 @@ export function writeCatalog(dir, catalogDir, namespace = false) {
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
-    const inner = writeCatalog(path.join(dir, entry.name), path.join(catalogDir, entry.name), true)
+    const inner = writeCatalog(
+      path.join(dir, entry.name),
+      path.join(catalogDir, entry.name),
+      true,
+      icons
+    )
     result.sets += inner.sets
     result.left.push(...inner.left)
   }

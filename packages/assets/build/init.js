@@ -172,6 +172,7 @@ export function planFiles(options = {}) {
     },
     scripts: {
       build: 'chassis-assets build',
+      'build:release': 'chassis-assets build --asset-catalog --icon-catalog',
       lint: 'chassis-assets lint-source',
       verify: 'chassis-assets verify',
       archive: 'chassis-assets archive',

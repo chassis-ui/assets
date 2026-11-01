@@ -17,6 +17,7 @@ import {
   catalogPath,
   folderContents,
   imageSetContents,
+  isTemplateSvg,
   planImageSets,
   writeCatalog
 } from '../build/asset-catalog.js'
@@ -143,7 +144,64 @@ describe('planImageSets()', () => {
   })
 })
 
+describe('planImageSets() with appearances', () => {
+  test('the files of <name>_light and <name>_dark are one set', () => {
+    expect(planImageSets(['logo_dark.svg', 'logo_light.svg'])).toEqual({
+      sets: [
+        {
+          name: 'logo',
+          vector: true,
+          images: [{ file: 'logo_light.svg' }, { file: 'logo_dark.svg', dark: true }]
+        }
+      ],
+      left: []
+    })
+    expect(planImageSets(['hero_light.png', 'hero_dark.png', 'hero_dark@2x.png']).sets).toEqual([
+      {
+        name: 'hero',
+        vector: false,
+        images: [
+          { file: 'hero_light.png', scale: '1x' },
+          { file: 'hero_dark.png', scale: '1x', dark: true },
+          { file: 'hero_dark@2x.png', scale: '2x', dark: true }
+        ]
+      }
+    ])
+  })
+
+  test.each([
+    ['one of the two', ['logo_light.svg'], ['logo_light']],
+    ['a vector and a raster', ['logo_dark.png', 'logo_light.svg'], ['logo_dark', 'logo_light']],
+    [
+      'a set of the name that exists',
+      ['logo.svg', 'logo_dark.svg', 'logo_light.svg'],
+      ['logo', 'logo_dark', 'logo_light']
+    ]
+  ])('%s stays apart', (_, files, names) => {
+    expect(planImageSets(files).sets.map((set) => set.name)).toEqual(names)
+  })
+})
+
 describe('imageSetContents() and folderContents()', () => {
+  test('a set of two appearances has the rows of the dark appearance', () => {
+    const appearances = [{ appearance: 'luminosity', value: 'dark' }]
+    const [raster] = planImageSets(['hero_dark.png', 'hero_light.png']).sets
+    expect(JSON.parse(imageSetContents(raster)).images).toEqual([
+      { filename: 'hero_light.png', idiom: 'universal', scale: '1x' },
+      { idiom: 'universal', scale: '2x' },
+      { idiom: 'universal', scale: '3x' },
+      { appearances, filename: 'hero_dark.png', idiom: 'universal', scale: '1x' },
+      { appearances, idiom: 'universal', scale: '2x' },
+      { appearances, idiom: 'universal', scale: '3x' }
+    ])
+
+    const [vector] = planImageSets(['logo_dark.svg', 'logo_light.svg']).sets
+    expect(JSON.parse(imageSetContents(vector)).images).toEqual([
+      { filename: 'logo_light.svg', idiom: 'universal' },
+      { appearances, filename: 'logo_dark.svg', idiom: 'universal' }
+    ])
+  })
+
   test('a raster set lists the three slots, an empty one without a file', () => {
     const [set] = planImageSets(['mark.png', 'mark@3x.png']).sets
     expect(JSON.parse(imageSetContents(set))).toEqual({
@@ -249,6 +307,115 @@ describe('writeCatalog()', () => {
     expect(writeCatalog(folderWith(['notes.txt']), catalog).sets).toBe(0)
     expect(writeCatalog(path.join(tempDir(), 'none'), catalog)).toEqual({ sets: 0, left: [] })
     expect(fs.existsSync(catalog)).toBe(false)
+  })
+})
+
+describe('writeCatalog() and the text of an SVG', () => {
+  /**
+   * @param {Record<string, string>} files - The text of each file, by its name
+   */
+  function write(files) {
+    const dir = tempDir()
+    for (const [file, text] of Object.entries(files)) {
+      fs.writeFileSync(path.join(dir, file), text)
+    }
+    const catalog = path.join(tempDir(), 'Icons.xcassets')
+    return { dir, catalog, result: writeCatalog(dir, catalog, false, true) }
+  }
+
+  test('an SVG that paints only in currentcolor renders as a template', () => {
+    const { catalog } = write({
+      'bell.svg': '<svg fill="none"><path stroke="currentColor"/></svg>',
+      'flag.svg': '<svg fill="#000"><path/></svg>'
+    })
+    expect(JSON.parse(read(catalog, 'bell.imageset/Contents.json')).properties).toEqual({
+      'preserves-vector-representation': true,
+      'template-rendering-intent': 'template'
+    })
+    expect(JSON.parse(read(catalog, 'flag.imageset/Contents.json')).properties).toEqual({
+      'preserves-vector-representation': true
+    })
+  })
+
+  test.each([
+    ['an attribute', '<svg fill="currentcolor"><path fill="#e11"/></svg>'],
+    ['a style', '<svg fill="currentcolor"><path style="stroke: red"/></svg>'],
+    ['a gradient', '<svg fill="currentcolor"><path fill="url(#a)"/></svg>'],
+    ['a stop', '<svg fill="currentcolor"><stop stop-color="#fff"/></svg>']
+  ])('an SVG with another color in %s keeps its colors', (_, text) => {
+    expect(isTemplateSvg(text)).toBe(false)
+  })
+
+  test('the rule of a fill and the opacity of a stroke are no colors', () => {
+    expect(
+      isTemplateSvg('<svg fill="currentcolor" fill-rule="evenodd" stroke-opacity="0.5"/>')
+    ).toBe(true)
+  })
+
+  test('the SVG files of the images are not read', () => {
+    const dir = tempDir()
+    fs.writeFileSync(path.join(dir, 'logo.svg'), '<svg fill="currentcolor"/>')
+    fs.writeFileSync(path.join(dir, 'badge.svg'), '<svg><symbol id="a"/><use href="#a"/></svg>')
+    const catalog = path.join(tempDir(), 'Assets.xcassets')
+    expect(writeCatalog(dir, catalog)).toEqual({ sets: 2, left: [] })
+    expect(JSON.parse(read(catalog, 'logo.imageset/Contents.json')).properties).toEqual({
+      'preserves-vector-representation': true
+    })
+  })
+
+  test('a sprite of <symbol> elements is left where it is', () => {
+    const { dir, catalog, result } = write({
+      'sprite.svg': '<svg><symbol id="a" fill="currentcolor"/></svg>',
+      'bell.svg': '<svg fill="currentcolor"/>'
+    })
+    expect(result).toEqual({ sets: 1, left: [path.join(dir, 'sprite.svg')] })
+    expect(listFiles(dir)).toEqual(['sprite.svg'])
+    expect(listFiles(catalog)).toEqual([
+      'Contents.json',
+      'bell.imageset/Contents.json',
+      'bell.imageset/bell.svg'
+    ])
+  })
+})
+
+describe('generateAssets() with iconCatalog', () => {
+  test('moves the icons of the iOS jobs into Icons.xcassets and changes nothing else', async () => {
+    const plain = await build(FIXTURE)
+    const { out, stats } = await build(FIXTURE, { iconCatalog: true })
+
+    const difference = compareDirs(plain.out, out)
+    expect(difference.changed).toEqual([])
+    const outside = /^ios\/mobile\/[^/]+\/icons\//
+    expect(difference.missing.filter((file) => !outside.test(file))).toEqual([])
+    expect(difference.extra.every((file) => file.includes('/Icons.xcassets/'))).toBe(true)
+    expect(listFiles(path.join(out, 'ios/mobile/beta/Icons.xcassets'))).toContain(
+      'ic_close.imageset/ic_close.svg'
+    )
+    expect(listFiles(path.join(out, 'ios/mobile/beta/images'))).toContain('hero_banner.png')
+    expect(stats.imageSets).toBeGreaterThan(0)
+  })
+
+  test('warns when no selected job has an icon catalog', async () => {
+    const { stats } = await build(FIXTURE, { iconCatalog: true, platforms: ['web'] })
+    expect(stats.imageSets).toBe(0)
+    expect(stats.warnings).toContain(
+      '--icon-catalog changes nothing: no selected job has a platform with an icon catalog'
+    )
+  })
+
+  test('the validator finds the icons and the two appearances in their catalogs', async () => {
+    const root = copyFixture()
+    const images = path.join(root, 'source/_default/mobile/images')
+    fs.copyFileSync(path.join(images, 'HeroBanner.png'), path.join(images, 'welcome-light.png'))
+    fs.copyFileSync(path.join(images, 'HeroBanner.png'), path.join(images, 'welcome-dark.png'))
+
+    await generateAssets({ cwd: root, quiet: true, assetCatalog: true, iconCatalog: true })
+    const set = path.join(root, 'dist/ios/mobile/beta/Assets.xcassets/welcome.imageset')
+    expect(listFiles(set)).toEqual(['Contents.json', 'welcome_dark.png', 'welcome_light.png'])
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const ok = await new DistValidator({ cwd: root }).runValidation()
+    vi.restoreAllMocks()
+    expect(ok).toBe(true)
   })
 })
 

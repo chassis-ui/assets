@@ -57,8 +57,16 @@ describe('chassis-assets init', () => {
       defaults: { brandFolder: '_default' },
       build: { brands: DEFAULTS.brands, apps: DEFAULTS.apps }
     })
-    expect(Object.keys(pkg.scripts)).toEqual(['build', 'lint', 'verify', 'archive', 'analyze'])
+    expect(Object.keys(pkg.scripts)).toEqual([
+      'build',
+      'build:release',
+      'lint',
+      'verify',
+      'archive',
+      'analyze'
+    ])
     expect(pkg.scripts.build).toBe('chassis-assets build')
+    expect(pkg.scripts['build:release']).toBe('chassis-assets build --asset-catalog --icon-catalog')
     expect(pkg.devDependencies).toEqual({ '@chassis-ui/assets': `^${VERSION}` })
 
     expect(JSON.parse(read(dir, 'chassis.checks.json'))).toEqual({
@@ -84,6 +92,7 @@ describe('chassis-assets init', () => {
     expect(ci).not.toContain('__')
     const release = read(npm, '.github/workflows/release.yml')
     expect(release).toContain("tags: ['v*']")
+    expect(release).toContain('npm run build:release')
     expect(release).toContain('npx chassis-assets archive --to')
     expect(release).toContain('gh release create "$GITHUB_REF_NAME"')
     expect(release).not.toContain('__')

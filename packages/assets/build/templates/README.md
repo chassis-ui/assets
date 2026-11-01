@@ -30,6 +30,7 @@ __INSTALL__
 | Command           | What it does                                                                |
 | ----------------- | --------------------------------------------------------------------------- |
 | `__RUN__ build`   | Builds every brand, app and platform into `dist/`                           |
+| `__RUN__ build:release` | The build of a release: the same, with the asset catalogs of iOS |
 | `__RUN__ lint`    | Checks the names and the layout of `source/`                                |
 | `__RUN__ verify`  | Checks an existing `dist/` against `source/` and `chassis.checks.json`      |
 | `__RUN__ archive` | Writes one zip per platform, app and brand of `dist/` to `archives/`        |
@@ -41,7 +42,7 @@ __INSTALL__
 ## Releases
 
 A release is a tag: `git tag v0.1.0 && git push origin v0.1.0`, with the version of
-`package.json`. The release workflow builds and verifies every job, and attaches one
+`package.json`. The release workflow builds with `build:release`, verifies every job, and attaches one
 `<name>-<platform>-<app>-<brand>-<version>.zip` per job to the GitHub release.
 
 ## Documentation

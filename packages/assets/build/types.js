@@ -48,6 +48,8 @@
  * @property {boolean} [allowLfsPointers] - Copy Git LFS pointer files instead of failing
  * @property {boolean} [vectorDrawables] - Write the files a processor names in
  *   `vectorDrawables` as vector drawables. Needs the package `svg2vectordrawable`
+ * @property {boolean} [iconCatalog] - Move the icons a processor names in `iconCatalog` into
+ *   an asset catalog of their own
  * @property {boolean} [assetCatalog] - Move the images a processor names in `assetCatalog`
  *   into an asset catalog
  * @property {boolean} [res] - Move the files a processor names in `res` into a `res/` folder
@@ -179,6 +181,8 @@
  * @property {string} type - The type folder whose images move into the catalog, such as `images`
  * @property {string} name - The folder of the catalog in the output of a job, such as
  *   `Assets.xcassets`
+ * @property {boolean} [icons] - Whether it holds icons, of which the text of an SVG tells a
+ *   template from a colored file and a sprite from an image
  */
 
 /**
@@ -214,6 +218,8 @@
  *   platform. Without it the option leaves the platform as it is
  * @property {Catalog} [assetCatalog] - What `--asset-catalog` writes for the platform.
  *   Without it the option leaves the platform as it is
+ * @property {Catalog} [iconCatalog] - What `--icon-catalog` writes for the platform. Without
+ *   it the option leaves the platform as it is
  * @property {Record<string, 'beside' | 'replace'>} [imageFormats] - The formats of `--webp`
  *   and `--avif` the platform takes: `beside` writes the file next to the image, `replace`
  *   writes it in place of the image when it is smaller. Without a format its option leaves

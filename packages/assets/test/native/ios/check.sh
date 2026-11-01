@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 #
 # Compiles the asset catalogs of an output with actool, the asset compiler of Xcode, and
-# checks that each compiled catalog holds every image set. The command line tools alone
-# have no asset compiler, so this needs Xcode; CI runs it on a macOS runner.
+# checks that each compiled catalog holds every image set. It does the same for the `.icon`
+# bundles of the output, which are app icons, and checks the name each one compiles to. The
+# command line tools alone have no asset compiler, so this needs Xcode; CI runs it on a macOS
+# runner.
 #
 #   test/native/ios/check.sh [folder]
 #
-#   folder   The output to look for catalogs in. Default: dist/ of the repository, which
-#            has catalogs after `pnpm assets --asset-catalog`.
+#   folder   The output to look for catalogs and bundles in. Default: dist/ of the repository,
+#            which has catalogs after `pnpm assets --asset-catalog`.
 #
 # It writes to a temporary folder only.
 
@@ -67,3 +69,32 @@ while IFS= read -r catalog; do
 done <<<"$catalogs"
 
 echo "The asset catalogs compile: $index."
+
+bundles="$(find "$output" -type d -name '*.icon' | sort)"
+[ -n "$bundles" ] || exit 0
+
+count=0
+while IFS= read -r bundle; do
+  count=$((count + 1))
+  compiled="$work/icon-$count"
+  mkdir -p "$compiled"
+  name="$(basename "$bundle" .icon)"
+  echo "icon: ${bundle#"$output"/}"
+
+  xcrun actool "$bundle" --compile "$compiled" --platform "$sdk_name" \
+    --minimum-deployment-target "$deployment_target" --app-icon "$name" \
+    --output-partial-info-plist "$compiled/partial.plist" \
+    --output-format human-readable-text --errors --warnings >"$compiled/actool.log" 2>&1 ||
+    { cat "$compiled/actool.log" >&2; fail "$bundle: actool failed"; }
+  if grep -Eq 'warning:|error:' "$compiled/actool.log"; then
+    cat "$compiled/actool.log" >&2
+    fail "$bundle: actool has warnings"
+  fi
+
+  compiled_name="$(plutil -extract CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName raw "$compiled/partial.plist" 2>/dev/null)" ||
+    fail "$bundle: no CFBundleIconName in the compiled Info.plist"
+  [ "$compiled_name" = "$name" ] ||
+    fail "$bundle: compiles to the icon name $compiled_name, not $name"
+done <<<"$bundles"
+
+echo "The app icons compile: $count."

@@ -6,7 +6,7 @@ toc: true
 
 ## Introduction
 
-Any folder under an app is a type. `fonts/`, `images/` and `icons/` have rules of their own, and any other folder is copied to every platform as it is: every file, in its subfolders, with the name of the platform and no format filter.
+Any folder under an app is a type. `fonts/`, `images/` and `icons/` have rules of their own, and any other folder is copied to every platform as it is: every file, in its subfolders, with the name of the platform and no format filter. A [bundle](#bundles) is the one exception.
 
 The folder names on this page, `videos/` and `data/`, are examples. An app may have a folder of any name for the files it needs: videos, audio, documents, data files.
 
@@ -52,6 +52,16 @@ Name a file in lowercase with hyphens, after what it holds: `onboarding-intro.mp
 <Callout type="warning">
 Keep resolution variants under `images/`. In any other folder the Android output loses the indicator and gets no density folder, so `poster.png` and `poster@2x.png` end up with the same name. The build warns about the collision, and the file copied last wins.
 </Callout>
+
+## Bundles
+
+A folder that ends in `.icon` is a bundle of Icon Composer, the app icon of an iOS app. To the build it is one file, because the files in it name each other in its `icon.json`: the build copies it to iOS only, in snake_case, and leaves the names of the files in it alone. The source lint checks the name of the bundle only.
+
+```text
+source/<brand>/<app>/app-icon/app-icon.icon/   -> dist/ios/<app>/<brand>/app-icon/app_icon.icon/
+```
+
+A brand replaces a bundle whole, with a bundle of the same path. Keep a bundle in a folder of its own, such as `app-icon/`: under `fonts/`, `images/` or `icons/` it is an ordinary folder, which the source lint rejects. The [iOS page]([[docsref:/use-in-project/ios-applications#app-icon]]) says how an app uses it.
 
 ## Adding files
 

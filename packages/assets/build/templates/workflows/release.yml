@@ -50,7 +50,7 @@ jobs:
         run: __RUN__ lint
 
       - name: Build
-        run: __RUN__ build
+        run: __RUN__ build:release
 
       - name: Verify
         run: __RUN__ verify

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import ChassisAssets from './api/index.js'
-import { catalogPath } from './asset-catalog.js'
+import { catalogPaths } from './asset-catalog.js'
 import {
   BRAND_FOLDER,
   resolveFormats,
@@ -11,6 +11,7 @@ import {
 } from './build-assets.js'
 import { formatName } from './optimize.js'
 import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
+import { bundleIndex, keepsBundle } from './processors/shared.js'
 import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
 import { resourcePath } from './res-layout.js'
 import { isEntry, resolveRoot } from './root.js'
@@ -208,10 +209,13 @@ class DistValidator {
 
           const distAssetTypes = this.getAssetTypesInDist(distPath)
 
-          // An output built with `--asset-catalog` has the catalog in place of the folder
-          const catalog = platformProcessors[platform]?.assetCatalog
-          if (catalog && distAssetTypes.includes(catalog.name)) {
-            distAssetTypes.push(catalog.type)
+          // An output built with `--asset-catalog` or `--icon-catalog` has the catalog in
+          // place of the folder
+          const { assetCatalog, iconCatalog } = platformProcessors[platform] ?? {}
+          for (const catalog of [assetCatalog, iconCatalog]) {
+            if (catalog && distAssetTypes.includes(catalog.name)) {
+              distAssetTypes.push(catalog.type)
+            }
           }
 
           // An output built with `--res` has `res/` in place of the folders it emptied
@@ -222,7 +226,10 @@ class DistValidator {
 
           // Check if all source asset types exist in dist
           for (const assetType of sourceAssetTypes) {
-            if (!distAssetTypes.includes(assetType)) {
+            if (
+              !distAssetTypes.includes(assetType) &&
+              this.typeHasFileFor(brand, app, assetType, platform)
+            ) {
               missingAssetTypes++
               const detail = `${platform}/${app}/${brand} missing ${assetType}/`
               missingDetails.push(detail)
@@ -278,6 +285,31 @@ class DistValidator {
     }
 
     return [...assetTypes]
+  }
+
+  /**
+   * Whether a type folder has anything for a platform: a folder with only the bundles of
+   * another platform, at any depth, has no output there.
+   * @param {string} brand - Brand name
+   * @param {string} app - App name
+   * @param {string} assetType - The type folder
+   * @param {string} platform - Platform name
+   * @returns {boolean}
+   */
+  typeHasFileFor(brand, app, assetType, platform) {
+    const defaultBrandFolder = this.api.config.defaults?.brandFolder || BRAND_FOLDER
+    /** @param {string} folder */
+    const holdsFile = (folder) =>
+      fs.readdirSync(folder, { withFileTypes: true }).some((entry) => {
+        if (shouldIgnoreFile(entry.name, this.ignore)) return false
+        if (!entry.isDirectory()) return true
+        if (bundleIndex([assetType, entry.name]) === 1) return keepsBundle(platform, entry.name)
+        return holdsFile(path.join(folder, entry.name))
+      })
+    return sourceLayers(defaultBrandFolder, brand, app).some((layer) => {
+      const folder = path.join(this.sourceDir, layer, assetType)
+      return fs.existsSync(folder) && holdsFile(folder)
+    })
   }
 
   /**
@@ -341,7 +373,13 @@ class DistValidator {
           for (const sourceFile of sourceFiles) {
             // Skip files that are filtered out by this platform
             if (
-              !this.isFileAllowedForPlatform(sourceFile.filename, platform, sourceFile.assetType)
+              sourceFile.bundle
+                ? !keepsBundle(platform, sourceFile.filename)
+                : !this.isFileAllowedForPlatform(
+                    sourceFile.filename,
+                    platform,
+                    sourceFile.assetType
+                  )
             ) {
               continue
             }
@@ -411,12 +449,16 @@ class DistValidator {
                 ? path.join(distPath, sourceFile.assetType, sourceFile.subFolder, transformedName)
                 : expectedDistPath
 
-              // An image of an output built with `--asset-catalog` is in its image set
-              const catalog = platformProcessors[platform]?.assetCatalog
+              // A file of an output built with `--asset-catalog` or `--icon-catalog` is in
+              // its image set
+              const { assetCatalog, iconCatalog } = platformProcessors[platform] ?? {}
+              const catalog = [assetCatalog, iconCatalog].find(
+                (candidate) => candidate?.type === sourceFile.assetType
+              )
               const inCatalog =
-                catalog?.type === sourceFile.assetType &&
-                fs.existsSync(
-                  path.join(distPath, catalogPath(catalog, sourceFile.subFolder, transformedName))
+                catalog !== undefined &&
+                catalogPaths(catalog, sourceFile.subFolder, transformedName).some((file) =>
+                  fs.existsSync(path.join(distPath, file))
                 )
 
               const converted = this.convertedPath(transformedName, platform, sourceFile.assetType)
@@ -474,7 +516,7 @@ class DistValidator {
    * @param {string} brand - Brand name
    * @param {string} app - App name
    * @param {string} defaultBrandFolder - Default brand folder name
-   * @returns {Array<{filename: string, assetType: string, subFolder: string, hasResolution: boolean}>}
+   * @returns {Array<{filename: string, assetType: string, subFolder: string, hasResolution: boolean, bundle?: boolean}>}
    */
   collectSourceFiles(brand, app, defaultBrandFolder) {
     const files = []
@@ -523,7 +565,16 @@ class DistValidator {
       const itemPath = path.join(dirPath, item)
       const stat = fs.statSync(itemPath)
 
-      if (stat.isDirectory()) {
+      if (stat.isDirectory() && assetType && bundleIndex([assetType, item]) === 1) {
+        // A bundle is one file
+        files.push({
+          filename: item,
+          assetType,
+          subFolder: relativePath,
+          hasResolution: false,
+          bundle: true
+        })
+      } else if (stat.isDirectory()) {
         // If we haven't determined asset type yet, this is it
         const newAssetType = assetType || item
         const newRelativePath = assetType ? path.join(relativePath, item) : ''
@@ -850,7 +901,8 @@ class DistValidator {
       const stat = fs.statSync(itemPath)
 
       if (stat.isDirectory()) {
-        this.checkPlatformNaming(itemPath, platform, violations)
+        // The files in a bundle keep the names the tool gave them
+        if (!keepsBundle(platform, item)) this.checkPlatformNaming(itemPath, platform, violations)
       } else {
         // Check naming convention
         if (platform === 'web') {

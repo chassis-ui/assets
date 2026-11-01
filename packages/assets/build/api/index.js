@@ -261,6 +261,7 @@ export class ChassisAssets {
    * @param {boolean} [options.quiet] - Print errors only
    * @param {boolean} [options.vectorDrawables] - Write the SVG icons of Android as vector drawables
    * @param {boolean} [options.assetCatalog] - Write the images of iOS as an asset catalog
+   * @param {boolean} [options.iconCatalog] - Write the icons of iOS as an asset catalog
    * @param {boolean} [options.res] - Write the fonts, images and icons of Android as a res/ folder
    * @param {boolean} [options.optimize] - Write the images again where that makes them smaller
    * @param {boolean} [options.webp] - Write the PNG and JPEG images as WebP too
@@ -282,6 +283,7 @@ export class ChassisAssets {
       quiet = false,
       vectorDrawables = false,
       assetCatalog = false,
+      iconCatalog = false,
       res = false,
       optimize = false,
       webp = false,
@@ -299,6 +301,7 @@ export class ChassisAssets {
       quiet,
       vectorDrawables,
       assetCatalog,
+      iconCatalog,
       res,
       optimize,
       webp,

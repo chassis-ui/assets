@@ -38,7 +38,9 @@ Between them the fixture has a font in four formats with its stylesheet and its 
 name with capitals (`HeroBanner.png`), a WebP image, `@1.5x`, `@2x` and `@3x` sets, a nested
 image folder (`images/logo/`), icons in SVG, PDF and PNG with an icon font and its
 stylesheet, a nested icon folder (`icons/svgs/`), an icon that already has `ic_`, and a folder
-that is not one of the three types (`data/`) with a dot inside a name.
+that is not one of the three types (`data/`) with a dot inside a name. `app-icon/` holds a
+bundle, whose file `logo-Mark.svg` keeps a name that the rules of a file would change, and
+`alpha` replaces it with a bundle of one file.
 
 The shared folders hold the order of the folders a job reads: `_default/_shared/data/notice.txt`
 is in every job, `alpha/_shared/data/notice.txt` replaces it in every job of `alpha`, and
@@ -86,15 +88,16 @@ The files of the fixture are lines of text, which the asset compiler of Xcode do
 so the catalogs of a real build are compiled instead:
 
 ```sh
-pnpm assets --platform ios --asset-catalog
+pnpm assets --platform ios --asset-catalog --icon-catalog
 pnpm test:ios
 ```
 
 `test:ios` is `packages/assets/test/native/ios/check.sh`. It runs `actool` on every
 `*.xcassets` folder under `dist/`, or under the folder it is given, fails on a warning, and
-checks that the compiled catalog has every image set by its name. It needs Xcode, not the
-command line tools alone; `DEVELOPER_DIR` selects an Xcode that `xcode-select` does not. The
-Native iOS job of CI runs it on a macOS runner.
+checks that the compiled catalog has every image set by its name. It also compiles every
+`*.icon` bundle as an app icon, and checks that `CFBundleIconName` is the name of the bundle.
+It needs Xcode, not the command line tools alone; `DEVELOPER_DIR` selects an Xcode that
+`xcode-select` does not. The Native iOS job of CI runs it on a macOS runner.
 
 ## Writing the baseline again
 

@@ -177,6 +177,6 @@ dist/ios/<app>/<brand>/
         └── wordmark.svg
 ```
 
-An image set holds the raster variants of a name, or one SVG or PDF where the name has no raster. A file without a place in an image set stays in `images/`: here the SVG of the logo, which has a PNG of the same name. The [build system page]([[docsref:/getting-started/build-system#asset-catalog]]) has the rules of the option.
+An image set holds the raster variants of a name, or one SVG or PDF where the name has no raster. The files of `<name>_light` and `<name>_dark` are one image set, `<name>`, with a row per appearance. A file without a place in an image set stays in `images/`: here the SVG of the logo, which has a PNG of the same name. The [build system page]([[docsref:/getting-started/build-system#asset-catalog]]) has the rules of the option.
 
 See the [web]([[docsref:/use-in-project/web-applications#images]]), [iOS]([[docsref:/use-in-project/ios-applications#images]]), and [Android]([[docsref:/use-in-project/android-applications#images]]) docs for how an app uses these files.

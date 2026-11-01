@@ -8,7 +8,7 @@ toc: true
 
 Fonts are the files under `fonts/` of an app. The build copies the WOFF and WOFF2 files to the web output and the TTF and OTF files to iOS and Android, together with the license of each font. Stylesheets in the folder go to the web output only.
 
-The files are named by the role a font plays, not by its family, so that every brand ships its fonts under the same names. A role that a brand sets in the family of another role has no files of its own.
+The files are named by the role a font plays, not by its family, so that every brand ships its fonts under the same names. On the web, a role that a brand sets in the family of another role has no files of its own. An app reads a file by role, so it gets a file for every role.
 
 ## Source layout
 
@@ -61,7 +61,9 @@ A font file is named `<role>-<weight>.<ext>`, with `-italic` after the weight fo
 | Weight | `elegant`, `normal`, `strong`, `mass` | From the lightest to the heaviest weight of the role |
 </CxTable>
 
-A role that a brand sets in the family of another role has no files: the files of a family are under the role that owns it. A brand that sets its `prose` role in its `ui` family has no `prose` file, and the `ui` files serve both roles. Which roles have files so differs by brand.
+On the web, a role that a brand sets in the family of another role has no files: the files of a family are under the role that owns it, and the stylesheet declares the family once. A brand that sets its `prose` role in its `ui` family has no `prose` file for the web.
+
+An iOS or Android app takes a font by its file name, so its folder, `source/<brand>/<app>/fonts/`, holds a file for every role and weight of the tokens. A role in the family of another role has copies of that family's files under its own names, each at the weight its token gives, so the code of an app names the same files in every brand.
 
 A brand with fonts for the `ui` and the `code` roles names them this way:
 

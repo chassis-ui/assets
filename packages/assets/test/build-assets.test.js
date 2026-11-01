@@ -31,6 +31,7 @@ import {
 } from '../build/build-assets.js'
 import { lfsInclude } from '../build/lfs-include.js'
 import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
+import { bundleIndex, keepsBundle } from '../build/processors/shared.js'
 import DistValidator from '../build/validate-assets.js'
 import {
   FIXTURE,
@@ -423,6 +424,7 @@ describe('parseArgs()', () => {
     allowLfsPointers: false,
     vectorDrawables: false,
     assetCatalog: false,
+    iconCatalog: false,
     res: false,
     optimize: false,
     webp: false,
@@ -807,6 +809,82 @@ describe('cleaning the output (D6)', () => {
   })
 })
 
+describe('a bundle', () => {
+  const BUNDLE = 'mobile/%/app-icon/app_icon.icon'
+
+  test('is one file on iOS: its name changes, and the files in it keep theirs', async () => {
+    const { out } = await build()
+    const beta = path.join(out, 'ios', BUNDLE.replace('%', 'beta'))
+    expect(listFiles(beta)).toEqual(['Assets/logo-Mark.svg', 'icon.json'])
+  })
+
+  test('of a brand replaces the bundle of the default brand whole', async () => {
+    const { out } = await build()
+    const alpha = path.join(out, 'ios', BUNDLE.replace('%', 'alpha'))
+    expect(listFiles(alpha)).toEqual(['icon.json'])
+    expect(read(alpha, 'icon.json')).toContain('alpha/mobile/app-icon')
+  })
+
+  test('is left out where the platform does not take it, with its Git LFS paths', async () => {
+    const { out } = await build()
+    expect(listFiles(path.join(out, 'android')).filter((f) => f.includes('app-icon'))).toEqual([])
+    const android = lfsInclude({ cwd: FIXTURE, platforms: ['android'] }).join(',')
+    expect(android).not.toContain('app-icon')
+    const ios = lfsInclude({ cwd: FIXTURE, platforms: ['ios'] }).join(',')
+    expect(ios).toContain('app-icon')
+  })
+
+  test('is copied whole when a filter selects a file in it', async () => {
+    const { out } = await build({ include: ['app-icon/**/icon.json'], platforms: ['ios'] })
+    expect(listFiles(path.join(out, 'ios', BUNDLE.replace('%', 'beta')))).toEqual([
+      'Assets/logo-Mark.svg',
+      'icon.json'
+    ])
+  })
+
+  test('with a Git LFS pointer in it fails the build, unless told to copy it', async () => {
+    const root = copyFixture()
+    const file = path.join(
+      root,
+      'source/_default/mobile/app-icon/app-icon.icon/Assets/logo-Mark.svg'
+    )
+    fs.writeFileSync(file, LFS_POINTER)
+    await expect(generateAssets({ cwd: root, quiet: true, platforms: ['ios'] })).rejects.toThrow(
+      /logo-Mark\.svg|pointer/i
+    )
+    const allowed = await generateAssets({
+      cwd: root,
+      quiet: true,
+      platforms: ['ios'],
+      allowLfsPointers: true
+    })
+    expect(allowed.lfsPointers).toEqual([])
+  })
+
+  test('in a subfolder leaves the type empty on a platform that does not take it', async () => {
+    const root = copyFixture()
+    const bundle = path.join(root, 'source/_default/mobile/others/sub/nested.icon')
+    fs.mkdirSync(bundle, { recursive: true })
+    fs.writeFileSync(path.join(bundle, 'icon.json'), 'fixture\n')
+    await generateAssets({ cwd: root, quiet: true })
+    expect(listFiles(path.join(root, 'dist/ios/mobile/beta/others'))).toEqual([
+      'sub/nested.icon/icon.json'
+    ])
+    expect(fs.existsSync(path.join(root, 'dist/android/mobile/beta/others'))).toBe(false)
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const ok = await new DistValidator({ cwd: root }).runValidation()
+    vi.restoreAllMocks()
+    expect(ok).toBe(true)
+  })
+
+  test('in a type with rules of its own is a folder', () => {
+    expect(bundleIndex(['app-icon', 'app-icon.icon', 'icon.json'])).toBe(1)
+    expect(bundleIndex(['images', 'app-icon.icon', 'icon.json'])).toBe(-1)
+    expect(keepsBundle('ios', 'app-icon.icon')).toBe(true)
+    expect(keepsBundle('android', 'app-icon.icon')).toBe(false)
+  })
+})
+
 describe('dry run', () => {
   test('writes nothing and counts the files of each job', async () => {
     const out = path.join(tempDir(), 'out')
@@ -816,10 +894,11 @@ describe('dry run', () => {
       // The files of the output: the default brand has one shared file, the brand has one
       // file of its own per job, and a file that replaces another is counted once
       { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 1 + 1 },
-      { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 + 1 },
+      // and on iOS a bundle: the two files of the default brand, or the one of `alpha`
+      { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 + 1 + 1 },
       { brand: 'alpha', app: 'mobile', platform: 'android', files: 15 + 1 + 1 },
       { brand: 'beta', app: 'site', platform: 'web', files: 16 + 1 },
-      { brand: 'beta', app: 'mobile', platform: 'ios', files: 16 + 1 },
+      { brand: 'beta', app: 'mobile', platform: 'ios', files: 16 + 1 + 2 },
       { brand: 'beta', app: 'mobile', platform: 'android', files: 15 + 1 }
     ])
   })

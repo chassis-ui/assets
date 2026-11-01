@@ -426,7 +426,7 @@ Copy such a file to `res/raw/` to read it as `R.raw.brand_tokens`, or copy the f
 
 Every brand of `chassis.build.brands` has a job folder with the same folders, and a file that two brands both have has the same name in each, so an app changes brand by changing the folder it copies from. A brand file replaces the default file of the same path in the build; the names stay, and the code of the app does not change.
 
-The brands do not have to hold the same files. A file that only the folder of one brand holds is in the output of that brand only, and a font role that a brand sets in the family of another role has no files in its output. A resource that only some brands have, such as the font family resource of such a role, goes in the source set of each brand that has it. Compare the output of two brands to see which files they share:
+The brands do not have to hold the same files. A file that only the folder of one brand holds is in the output of that brand only, and a font role that a brand holds no files for has no files in its output. A resource that only some brands have, such as the font family resource of such a role, goes in the source set of each brand that has it. Compare the output of two brands to see which files they share:
 
 ```bash
 diff <(cd website-assets/dist/android/demo/chassis && find . -type f | sort) \

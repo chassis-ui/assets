@@ -22,6 +22,7 @@
 import fs from 'fs'
 import path from 'path'
 import { assetTypes } from './asset-types.js'
+import { bundleIndex } from './processors/shared.js'
 import {
   SHARED_FOLDER,
   isLfsPointer,
@@ -492,12 +493,20 @@ export function lintSource(options = {}) {
   }
 
   const files = listSource(sourceDir, config.ignore)
-  for (const file of files) {
+  // A bundle has one name: the files in it are named by the tool that writes it
+  const named = files.map((file) => {
+    const parts = file.split('/')
+    const bundle = bundleIndex(parts.slice(2))
+    return bundle === -1 ? file : parts.slice(0, bundle + 3).join('/')
+  })
+  for (const file of new Set(named)) {
     const oddity = config.lintAllow.find((known) => matchesPattern(file, known.pattern))
     for (const message of checkName(file)) {
       if (oddity) warnings.push({ file, message: `${message}. Kept: ${oddity.reason}` })
       else errors.push({ file, message })
     }
+  }
+  for (const file of files) {
     if (!allowLfsPointers && isLfsPointer(path.join(sourceDir, file))) {
       errors.push({ file, message: 'is a Git LFS pointer, not the file. Run `git lfs pull`' })
     }

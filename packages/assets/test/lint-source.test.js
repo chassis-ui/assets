@@ -101,9 +101,23 @@ describe('matchesPattern()', () => {
 })
 
 describe('lintSource()', () => {
+  test('a bundle has one name: the files in it are not checked', () => {
+    const root = copyFixture()
+    const folder = path.join(root, 'source/_default/mobile/app-icon')
+    fs.renameSync(path.join(folder, 'app-icon.icon'), path.join(folder, 'IconComposer.icon'))
+    const { errors } = lintSource({ cwd: root })
+    expect(errors.filter((e) => e.file.includes('IconComposer'))).toEqual([
+      {
+        file: '_default/mobile/app-icon/IconComposer.icon',
+        message:
+          'has the name "IconComposer", which is not of lowercase letters, digits and hyphens, such as "icon-composer.icon"'
+      }
+    ])
+  })
+
   test('finds the names of the fixture that break the rules', () => {
     const { errors, warnings, files } = lintSource({ cwd: FIXTURE })
-    expect(files).toBe(45)
+    expect(files).toBe(48)
     expect(warnings).toEqual([])
     expect(errors.map((e) => e.file)).toEqual([
       '_default/mobile/data/brand.tokens.json',

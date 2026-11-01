@@ -130,7 +130,7 @@ jobs:
       - name: Verify distribution
         run: pnpm assets:verify
 
-  # The asset catalogs of a build with --asset-catalog, compiled with actool, the asset
+  # The asset catalogs of a build with --asset-catalog --icon-catalog, compiled with actool, the asset
   # compiler of Xcode, as chassis-tokens compiles its own. Needs no install: the build and a
   # shell script, on the assets of the submodule.
   native-ios:
@@ -163,7 +163,7 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Build the iOS jobs with asset catalogs
-        run: node packages/assets/build/cli.js build --cwd vendor/assets --platform ios --asset-catalog --quiet
+        run: node packages/assets/build/cli.js build --cwd vendor/assets --platform ios --asset-catalog --icon-catalog --quiet
 
       # The script itself: the job sets up no pnpm
       - name: Compile the asset catalogs

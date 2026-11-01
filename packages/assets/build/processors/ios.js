@@ -30,6 +30,12 @@ const iosProcessor = {
   assetCatalog: { type: 'images', name: 'Assets.xcassets' },
 
   /**
+   * What `--icon-catalog` writes: the files of `icons/` move into an asset catalog of their
+   * own, as an image is free to have the name of an icon
+   */
+  iconCatalog: { type: 'icons', name: 'Icons.xcassets', icons: true },
+
+  /**
    * Transform filename to snake_case (lowercase with underscores)
    * @param {string} fileName - Original filename
    * @returns {string} Transformed filename in snake_case
