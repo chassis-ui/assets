@@ -169,6 +169,51 @@ jobs:
       - name: Compile the asset catalogs
         run: packages/assets/test/native/ios/check.sh vendor/assets/dist
 
+  # The res/ folders of a build with --res --vector-drawables, compiled and linked with aapt2,
+  # the resource compiler of Android, from the Android SDK of the runner. The conversion needs
+  # the install, for svg2vectordrawable.
+  native-android:
+    name: Native Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - name: List Git LFS objects
+        run: git -C vendor/assets lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
+
+      - name: Cache Git LFS objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .git/modules/vendor/assets/lfs
+          key: lfs-${{ hashFiles('.lfs-ids') }}
+          restore-keys: lfs-
+
+      - name: Pull Git LFS objects
+        run: git -C vendor/assets lfs pull
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the Android jobs with a res/ folder
+        run: pnpm assets --platform android --res --vector-drawables --quiet
+
+      - name: Compile the res/ folders
+        run: pnpm test:android
+
   # The documentation site, with the fonts and the images of the chassis brand built from
   # the submodule by pnpm site:assets.
   site:

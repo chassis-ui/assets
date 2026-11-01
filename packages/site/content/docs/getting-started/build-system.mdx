@@ -59,7 +59,7 @@ The options of `chassis-assets build` select the jobs, the folders and what happ
 | `--vector-drawables` | Write the SVG icons of Android as vector drawables, `.xml` in place of `.svg`. Needs `svg2vectordrawable` |
 | `--asset-catalog` | Write the images of iOS as an asset catalog, `Assets.xcassets` in place of `images/` |
 | `--icon-catalog` | Write the icons of iOS as an asset catalog, `Icons.xcassets` in place of `icons/` |
-| `--res` | Write the fonts, images and icons of Android as a `res/` folder, `res/font/` and `res/drawable*/` |
+| `--res` | Write the fonts, images and icons of Android as a `res/` folder, with night folders for a pair `x_light` and `x_dark`, `drawable-nodpi` for an image of one size, and with `--vector-drawables` the app icon |
 | `--optimize` | Write the images again under their names where that makes them smaller, with the settings of `chassis.optimize`. Needs `sharp` and `svgo` |
 | `--webp` | Write the PNG and JPEG images as WebP too: beside the file on the web, in place of it on Android. Needs `sharp` |
 | `--avif` | Write the PNG and JPEG images of the web as AVIF too. Needs `sharp` |
@@ -287,7 +287,9 @@ chassis-assets build --res
 chassis-assets build --res --vector-drawables   # with the icons, needs svg2vectordrawable
 ```
 
-A TTF or OTF file of `fonts/` moves to `res/font/`. A PNG, WebP, JPEG or GIF file of `images/` moves to the folder of `res/` that is named as its density folder, so `images/logo/drawable-xhdpi/mark.png` becomes `res/drawable-xhdpi/mark.png`. A vector drawable of `icons/` moves to `res/drawable/`, which makes `--vector-drawables` the option that brings the icons into `res/`.
+A TTF or OTF file of `fonts/` moves to `res/font/`. A PNG, WebP, JPEG or GIF file of `images/` moves to the folder of `res/` that is named as its density folder, so `images/logo/drawable-xhdpi/mark.png` becomes `res/drawable-xhdpi/mark.png`. An image with no density folder at all goes to `res/drawable-nodpi/`, which Android does not scale. A vector drawable of `icons/` moves to `res/drawable/`, which makes `--vector-drawables` the option that brings the icons into `res/`.
+
+A pair `<name>_light` and `<name>_dark` of one folder is the resource `<name>`, with the dark files in the folders of the `night` qualifier: `res/drawable-xhdpi/<name>.png` and `res/drawable-night-xhdpi/<name>.png`. A vector and a raster stay apart, and a drawable with the name of a pair fails the build. With `--vector-drawables`, a bundle `<name>.adaptive` becomes the app icon `res/mipmap-anydpi-v26/<name>.xml`, see [Other assets]([[docsref:/asset-types/other#bundles]]).
 
 The `res/` folder does not nest, so the subfolders of `images/` and `icons/` are dropped. When two folders hold an image of one name, the folder nearest to `images/` gets the resource with every density it has, and the files of the other folder stay.
 

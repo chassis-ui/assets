@@ -126,7 +126,7 @@ jobs with their file counts.
 | `packages/assets/build/processors/index.js`   | The registry `platformProcessors`, `getProcessor()`, `getPlatformNames()`. A platform of `chassis.build.apps` must be a key here.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/assets/build/vector-drawables.js`   | The conversion of `--vector-drawables`: `loadConverter()`, which imports `svg2vectordrawable` when it is called and says how to install it when it is missing, `drawsSomething()` and `convertFolder()`. The one module that uses a package.                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/asset-catalog.js`      | The layout of `--asset-catalog`: `planImageSets()` (pure), which sorts the files of a folder into image sets, `imageSetContents()` and `folderContents()` for the `Contents.json` files, `catalogPath()`, which the validator reads, and `writeCatalog()`. Node.js modules only.                                                                                                                                                                                                                                                                                                                                                                          |
-| `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `packages/assets/build/res-layout.js`         | The layout of `--res`: `isResourceName()` and `planResources()` (pure), which say where the files of a job go in `res/` and which stay, `resourcePath()`, `resourcePaths()` and `appIconPath()`, which the validator reads, and `writeRes()`. Node.js modules only.                                                                                                                                                                                                                                                                                                                                                                                       |
 | `packages/assets/build/optimize.js`           | `--optimize`, `--webp` and `--avif`: `resolveSettings()`, which checks `chassis.optimize` over `OPTIMIZE_DEFAULTS`, `loadEncoders()`, which imports `sharp` and `svgo` when it is called and says how to install them when they are missing, `svgOptions()`, `formatName()`, which the validator reads, and `optimizeJob()`.                                                                                                                                                                                                                                                                                                                              |
 | `packages/assets/build/subset-fonts.js`       | `--subset`: `resolveSubset()`, which checks the ranges of the option or of `chassis.subset` over `SUBSET_DEFAULTS` and `NAMED_RANGES`, the ranges that have a name, of `subset-ranges.json` beside it, `loadSubsetter()`, which imports `subset-font` when it is called and says how to install it when it is missing, `glyphCount()`, `fontAxes()`, `rangeFileName()` and `subsetJob()`.                                                                                                                                                                                                                                                                 |
 | `packages/assets/build/font-faces.js`         | The `@font-face` rules of a stylesheet, for `split` of `chassis.subset`: `findFontFaces()`, which finds the rules with the files of their `src` and the `format()` of each, and `splitFontFaces()`, which writes a rule once per range. Pure, and Node.js modules only.                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -285,8 +285,8 @@ kept. Changing a path or a name in it is a breaking change while the version is 
   `drawable/`. Both are created under the folder the file came from, so `images/logo/x@2x.png`
   becomes `images/logo/drawable-xhdpi/x.png` (D5).
 - `icons/`: `.svg` only, as SVG. With `--vector-drawables`, as vector drawables: the same folder and name, `.xml` (D9). A PNG icon is not kept, since the build places only `images/` in density folders (D15).
-- With `--res`: the fonts in `res/font/`, the raster images and the vector drawables in `res/drawable/` and the density folders, without subfolders (D11).
-- Other folders: every file.
+- With `--res`: the fonts in `res/font/`, the raster images and the vector drawables in `res/drawable/` and the density folders, without subfolders (D11), a pair in the night folders and an image of one size in `drawable-nodpi` (D44).
+- Other folders: every file. A `.adaptive` bundle is one file, only on Android, with its name in snake_case; with `--vector-drawables --res` it is an app icon (D44).
 
 ### Vector drawables
 
@@ -309,8 +309,7 @@ default, and the default output is the same file for file with and without the c
   drawables to `res/drawable/`, see "Res folder".
 - The validator takes the converted name for the source file, so `pnpm assets:verify`
   passes on either output. The release archives are built without the option.
-- Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
-  has read the drawables.
+- Compiled with `aapt2` by `pnpm test:android`, see "Res folder". Svg2Vector of Android Studio and this converter draw the same pixels on the 503 icons of `icons/svgs/`, compared at 192 pixels on 2026-11-01, and `fillBlack` is what a tint replaces: the example app showed them tinted on an API 35 emulator (D44).
 
 ### Watch
 
@@ -588,7 +587,9 @@ with and without the code. It needs no package: the files are moved.
 - The processor says what is written, in `res`: the name of the folder, for the fonts the
   type folder, the folder `font` and the formats `.ttf` and `.otf`, and for the drawables
   the type folders `images` and `icons`, the folder `drawable` and the formats `.png`,
-  `.webp`, `.jpg`, `.jpeg`, `.gif` and `.xml`. Nothing on the web and iOS.
+  `.webp`, `.jpg`, `.jpeg`, `.gif` and `.xml`, and the folders of a vector, a raster of one size
+  and a night file, and for the app icon the extension of the bundle, the folder and the layers.
+  Nothing on the web and iOS.
 - It runs last, after the conversion of `--vector-drawables`, so the vector drawables of the
   icons are drawables like any other. Without that option the icons are SVG and stay.
 - A font moves to `res/font/`. An image moves to the folder of `res/` named as the density
@@ -606,10 +607,20 @@ with and without the code. It needs no package: the files are moved.
   a build into an existing output writes the same folder.
 - The validator takes the path in `res/` for the source file, so `pnpm assets:verify`
   passes on either output. The release archives are built without the option.
-- Not part of it: night qualifiers (the build has no rule that pairs `*_light` and
-  `*_dark`), font family XML files, and the licenses, which `res/font/` does not take.
-- Not compiled here: no machine of this repository has the Android SDK, so no `aapt2` run
-  has read the folder.
+- Not part of it: font family XML files, and the licenses, which `res/font/` does not take.
+- A pair `<name>_light` and `<name>_dark` of one folder is the resource `<name>`, the dark
+  files in `drawable-night*`, unless one is vector and the other raster. A drawable named
+  `<name>` in any folder is an error of the build (`joinPairs()`, D44).
+- A raster of a resource with no density folder goes to `drawable-nodpi`, or
+  `drawable-night-nodpi`, since Android takes `drawable/` for mdpi. A vector stays in
+  `drawable/`.
+- With `--vector-drawables`, an `.adaptive` bundle becomes `res/drawable/<name>_<layer>.xml` and
+  `res/mipmap-anydpi-v26/<name>.xml`, and its folder is gone (`moveAppIcons()`). Without the
+  option it stays, with the warning. A layer with the name of a drawable is an error.
+- Compiled: `packages/assets/test/native/android/check.sh`, `pnpm test:android`, checks that a
+  folder holds only what `res/` takes and no vector without a shape, which `aapt2` passes, then
+  runs `aapt2 compile` and `aapt2 link` against `android.jar`, and fails on a night file without
+  a file for the other mode. The Native Android job of CI runs it.
 
 ### Asset catalog
 
@@ -653,17 +664,17 @@ file with and without the code. It needs no package: a catalog is folders and JS
 
 ## Checks
 
-| Command                                                 | Checks                                                                                                                                                                                                                                                                                                                           |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm assets:lint`                                      | ESLint over `packages/assets/build/` and `packages/assets/test/`.                                                                                                                                                                                                                                                                |
-| `pnpm assets:lint:source`                               | The names and the layout of `source/`, Git LFS pointers, and the fonts against their stylesheets.                                                                                                                                                                                                                                |
-| `pnpm assets:typecheck`                                 | TypeScript over `packages/assets/build/`, from JSDoc.                                                                                                                                                                                                                                                                            |
-| `pnpm lint:prettier`                                    | Prettier over the repository.                                                                                                                                                                                                                                                                                                    |
-| `pnpm test`                                             | The unit tests, the golden test of the fixture against `packages/assets/test/golden/`, the analyzer, the validator, the API and the command line. `packages/assets/test/README.md` lists the files.                                                                                                                              |
-| `pnpm assets:validate`                                  | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules.                                                                                                                                  |
-| `pnpm assets:verify`                                    | `assets:validate` and the consumer contract.                                                                                                                                                                                                                                                                                     |
-| `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build` | The site.                                                                                                                                                                                                                                                                                                                        |
-| CI                                                      | Lint (Prettier, the site), Assets (the consumer build with nothing installed, lint, source lint, type check, test, full build, verify), Site, Audit (`pnpm check:pnpm` blocks, `pnpm audit` of every dependency reports), Native iOS and Changeset, on `develop` and on pull requests. Dependency Review, on pull requests only. |
+| Command                                                 | Checks                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm assets:lint`                                      | ESLint over `packages/assets/build/` and `packages/assets/test/`.                                                                                                                                                                                                                                                                                |
+| `pnpm assets:lint:source`                               | The names and the layout of `source/`, Git LFS pointers, and the fonts against their stylesheets.                                                                                                                                                                                                                                                |
+| `pnpm assets:typecheck`                                 | TypeScript over `packages/assets/build/`, from JSDoc.                                                                                                                                                                                                                                                                                            |
+| `pnpm lint:prettier`                                    | Prettier over the repository.                                                                                                                                                                                                                                                                                                                    |
+| `pnpm test`                                             | The unit tests, the golden test of the fixture against `packages/assets/test/golden/`, the analyzer, the validator, the API and the command line. `packages/assets/test/README.md` lists the files.                                                                                                                                              |
+| `pnpm assets:validate`                                  | `dist/` exists; `source/` exists; every job has a folder; every type folder is present; every source file is in `dist/` under its platform name; the counts; no empty folder; the naming rules.                                                                                                                                                  |
+| `pnpm assets:verify`                                    | `assets:validate` and the consumer contract.                                                                                                                                                                                                                                                                                                     |
+| `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build` | The site.                                                                                                                                                                                                                                                                                                                                        |
+| CI                                                      | Lint (Prettier, the site), Assets (the consumer build with nothing installed, lint, source lint, type check, test, full build, verify), Site, Audit (`pnpm check:pnpm` blocks, `pnpm audit` of every dependency reports), Native iOS, Native Android and Changeset, on `develop` and on pull requests. Dependency Review, on pull requests only. |
 
 ### Checks per changed area
 

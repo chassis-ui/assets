@@ -18,7 +18,8 @@
  *
  * `files` have to be there. A `set` is a pattern with `*` and `{a,b}`: when the output has
  * a file that matches it, it has to have the same file with every other alternative too,
- * and it has to have at least one such file.
+ * and it has to have at least one such file. A file under `res/` of a platform with a `res/`
+ * layout is checked on an output that has the folder, so a plain build passes too.
  *
  * `checkContracts(options)` returns the files each job lacks; the command-line entry at the
  * bottom prints them and exits 1 when one is missing.
@@ -28,7 +29,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { CHECKS_FILE, loadConfig } from './build-assets.js'
+import { CHECKS_FILE, loadConfig, platformProcessors } from './build-assets.js'
 import { isEntry, resolveRoot } from './root.js'
 
 /** @import { ContractEntry, ContractProblem, ContractSet } from './types.js' */
@@ -157,9 +158,10 @@ function listFiles(dir) {
 /**
  * Check the output of a build against the contracts of `chassis.checks.json`.
  * @param {{ cwd?: string, out?: string }} [options] - The repository root and the output folder
- * @returns {Array<{ job: string, dir: string, files: number, missing: ContractProblem[] }>}
+ * @returns {Array<{ job: string, dir: string, files: number, missing: ContractProblem[], skipped?: number }>}
  *   One result per job that has a contract. `dir` is the folder checked, relative to
- *   `cwd`; `files` is 0 when it does not exist
+ *   `cwd`; `files` is 0 when it does not exist; `skipped` counts the files of `res/` that an
+ *   output built without `--res` is not asked for
  * @throws {Error} When a contract is not of the shape above, or names a job that the
  *   configuration does not build
  */
@@ -192,7 +194,14 @@ export function checkContracts(options = {}) {
       return { job, dir: relative, files: 0, missing: [{ path: '', reader: readers }] }
     }
     const paths = listFiles(dir)
-    return { job, dir: relative, files: paths.length, missing: missingFromContract(paths, entries) }
+    const problems = missingFromContract(paths, entries)
+    const res = platformProcessors[job.split('/')[0]]?.res?.name
+    const noRes = res && !paths.some((file) => file.startsWith(`${res}/`))
+    const missing = noRes
+      ? problems.filter((problem) => !problem.path.startsWith(`${res}/`))
+      : problems
+    const skipped = problems.length - missing.length
+    return { job, dir: relative, files: paths.length, missing, ...(skipped ? { skipped } : {}) }
   })
 }
 
@@ -207,9 +216,10 @@ export function printContracts(results) {
     return true
   }
   let ok = true
-  for (const { job, dir, files, missing } of results) {
+  for (const { job, dir, files, missing, skipped } of results) {
     if (missing.length === 0) {
-      console.log(`✅ Consumer contract: ${dir}/ has every file its consumers read`)
+      const note = skipped ? `, and no res/ for the ${skipped} file(s) of a build with --res` : ''
+      console.log(`✅ Consumer contract: ${dir}/ has every file its consumers read${note}`)
     } else if (files === 0) {
       ok = false
       const [platform, app, brand] = job.split('/')

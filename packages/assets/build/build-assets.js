@@ -17,7 +17,7 @@ import { writeCatalog } from './asset-catalog.js'
 import { createFileFilter } from './filters.js'
 import { IMAGE_FORMATS, loadEncoders, optimizeJob, resolveSettings } from './optimize.js'
 import { platformProcessors } from './processors/index.js'
-import { bundleIndex, keepsBundle } from './processors/shared.js'
+import { bundleIndex, findBundles, keepsBundle } from './processors/shared.js'
 import { writeRes } from './res-layout.js'
 import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
 import { loadSubsetter, resolveSubset, subsetJob } from './subset-fonts.js'
@@ -56,8 +56,8 @@ Options:
   --dry-run              Print the jobs and their file counts, write nothing
   --allow-lfs-pointers   Copy Git LFS pointer files instead of failing
                          (also CHASSIS_ALLOW_LFS_POINTERS=1 in the environment)
-  --vector-drawables     Write the SVG icons of Android as vector drawables, .xml in
-                         place of .svg. Needs \`pnpm install\`
+  --vector-drawables     Write the SVG icons and the adaptive icon layers of Android as
+                         vector drawables, .xml in place of .svg. Needs \`pnpm install\`
   --asset-catalog        Write the images of iOS as an asset catalog, Assets.xcassets
                          in place of images/
   --icon-catalog         Write the icons of iOS as an asset catalog, Icons.xcassets
@@ -70,7 +70,8 @@ Options:
   --avif                 Write the PNG and JPEG images of the web as AVIF too. Needs
                          \`pnpm install\`
   --res                  Write the fonts, images and icons of Android as a res/ folder,
-                         res/font/ and res/drawable*/
+                         res/font/ and res/drawable*/, with night folders for a pair
+                         x_light and x_dark, and with --vector-drawables the app icon
   --subset [range...]    Write the WOFF and WOFF2 fonts of the web again under their
                          names with the characters of the ranges only, such as latin
                          or U+0370-03FF. Default: \`chassis.subset\`, or latin and
@@ -1131,11 +1132,19 @@ async function convertVectorDrawables(processor, destPath, convert) {
   const conversion = processor.vectorDrawables
   if (!conversion) return
 
-  const { converted, kept, failed } = await convertFolder(
+  const folders = [
     path.join(destPath, conversion.type),
-    conversion,
-    convert
-  )
+    ...(conversion.bundle ? findBundles(destPath, conversion.bundle) : [])
+  ]
+  const converted = []
+  const kept = []
+  const failed = []
+  for (const folder of folders) {
+    const result = await convertFolder(folder, conversion, convert)
+    converted.push(...result.converted)
+    kept.push(...result.kept)
+    failed.push(...result.failed)
+  }
   stats.filesConverted += converted.length
   if (converted.length > 0) {
     logger.log(`🎨 Converted ${converted.length} files to vector drawables`)
@@ -1274,7 +1283,8 @@ function writeAssetCatalog(catalog, destPath) {
 
 /**
  * Move the files a processor names in `res` into a `res/` folder, in the output of one job.
- * A file without a place in it stays in its folder, with a warning for the job.
+ * A file without a place in it stays in its folder, with a warning for the job. A resource
+ * that two files ask for is an error.
  * @param {Processor} processor - The platform processor
  * @param {string} destPath - The output folder of the job
  */
@@ -1282,8 +1292,13 @@ function writeResLayout(processor, destPath) {
   const res = processor.res
   if (!res) return
 
-  const { moved, left } = writeRes(destPath, res)
+  const { moved, left, collisions } = writeRes(destPath, res)
   stats.resourceFiles += moved
+  collisions.forEach(({ resource, files }) =>
+    stats.errors.push(
+      `Two files ask for the resource ${resource} in ${path.relative(run.cwd, destPath)}: ${files.join(', ')}`
+    )
+  )
   if (moved > 0) {
     logger.log(`🗂️  Moved ${moved} files to ${res.name}/`)
   }

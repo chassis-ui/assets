@@ -13,7 +13,7 @@ import { formatName } from './optimize.js'
 import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
 import { bundleIndex, keepsBundle } from './processors/shared.js'
 import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
-import { resourcePath } from './res-layout.js'
+import { appIconPath, resourcePaths } from './res-layout.js'
 import { isEntry, resolveRoot } from './root.js'
 
 /**
@@ -228,7 +228,7 @@ class DistValidator {
           for (const assetType of sourceAssetTypes) {
             if (
               !distAssetTypes.includes(assetType) &&
-              this.typeHasFileFor(brand, app, assetType, platform)
+              this.typeHasFileFor(brand, app, assetType, platform, distPath)
             ) {
               missingAssetTypes++
               const detail = `${platform}/${app}/${brand} missing ${assetType}/`
@@ -294,16 +294,20 @@ class DistValidator {
    * @param {string} app - App name
    * @param {string} assetType - The type folder
    * @param {string} platform - Platform name
+   * @param {string} distPath - The output of the job, where a bundle may be in `res/`
    * @returns {boolean}
    */
-  typeHasFileFor(brand, app, assetType, platform) {
+  typeHasFileFor(brand, app, assetType, platform, distPath) {
     const defaultBrandFolder = this.api.config.defaults?.brandFolder || BRAND_FOLDER
     /** @param {string} folder */
     const holdsFile = (folder) =>
       fs.readdirSync(folder, { withFileTypes: true }).some((entry) => {
         if (shouldIgnoreFile(entry.name, this.ignore)) return false
         if (!entry.isDirectory()) return true
-        if (bundleIndex([assetType, entry.name]) === 1) return keepsBundle(platform, entry.name)
+        if (bundleIndex([assetType, entry.name]) === 1) {
+          const output = platformProcessors[platform]?.renameFile?.(entry.name) ?? entry.name
+          return keepsBundle(platform, entry.name) && !this.appIconInRes(distPath, platform, output)
+        }
         return holdsFile(path.join(folder, entry.name))
       })
     return sourceLayers(defaultBrandFolder, brand, app).some((layer) => {
@@ -472,6 +476,7 @@ class DistValidator {
                 !replaced &&
                 !this.inRes(distPath, platform, sourceFile.assetType, transformedName) &&
                 !this.inRes(distPath, platform, sourceFile.assetType, converted) &&
+                !(sourceFile.bundle && this.appIconInRes(distPath, platform, transformedName)) &&
                 !fs.existsSync(fullDistPath) &&
                 !fs.existsSync(this.convertedPath(fullDistPath, platform, sourceFile.assetType))
               ) {
@@ -717,8 +722,22 @@ class DistValidator {
   inRes(distPath, platform, assetType, fileName, folder) {
     const res = platformProcessors[platform]?.res
     if (!res) return false
-    const resPath = resourcePath(res, assetType, fileName, folder)
-    return resPath !== null && fs.existsSync(path.join(distPath, resPath))
+    return resourcePaths(res, assetType, fileName, folder).some((file) =>
+      fs.existsSync(path.join(distPath, file))
+    )
+  }
+
+  /**
+   * Whether a bundle is an app icon of the `res/` folder of an output built with `--res`.
+   * @param {string} distPath - The output of the job
+   * @param {string} platform - Platform name
+   * @param {string} bundle - The name of the bundle in the output
+   * @returns {boolean}
+   */
+  appIconInRes(distPath, platform, bundle) {
+    const res = platformProcessors[platform]?.res
+    const file = res ? appIconPath(res, bundle) : null
+    return file !== null && fs.existsSync(path.join(distPath, file))
   }
 
   /**

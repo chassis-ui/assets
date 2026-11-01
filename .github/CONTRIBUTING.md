@@ -150,9 +150,11 @@ What to run before a commit, by what the commit changes. CI runs all of it.
   installed into an empty folder and run on the fixture, `pnpm assets` and
   `pnpm assets:verify`. Site: `pnpm site:build`. Native iOS, on a macOS runner: a build of the
   iOS jobs with `--asset-catalog --icon-catalog`, then `pnpm test:ios`, which compiles the catalogs with
-  `actool` and needs Xcode. The commands above run the same checks locally, and
+  `actool` and needs Xcode. Native Android: a build of the Android jobs with `--res
+--vector-drawables`, then `pnpm test:android`, which compiles and links the `res/` folders
+  with `aapt2` and needs the Android SDK. The commands above run the same checks locally, and
   `pnpm test:ci` runs the Lint, Assets, Site and Audit checks in one command. It leaves out
-  Native iOS, Changeset and the report of `pnpm audit`, and the build as a site runs without
+  Native iOS, Native Android, Changeset and the report of `pnpm audit`, and the build as a site runs without
   its install and its check of a clean checkout, which would change a local `node_modules`.
 - **A clean audit**: the Audit job runs `pnpm check:pnpm`, which is
   `pnpm audit --prod --audit-level moderate` and fails on an advisory in a package that an

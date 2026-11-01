@@ -22,6 +22,7 @@
 import fs from 'fs'
 import path from 'path'
 import { assetTypes } from './asset-types.js'
+import androidProcessor from './processors/android.js'
 import { bundleIndex } from './processors/shared.js'
 import {
   SHARED_FOLDER,
@@ -285,6 +286,65 @@ function listSource(dir, ignore) {
 }
 
 /**
+ * The adaptive icon bundles of the source: the layers are SVG files named after the layer, a
+ * background and a foreground are what Android needs, and a layer is square. Without a
+ * monochrome layer the launcher of a themed icon shows the icon as it is, which is a warning.
+ * @param {string} sourceDir
+ * @param {string[]} files - The files of `source/`
+ * @returns {{ errors: Array<{ file: string, message: string }>, warnings: Array<{ file: string, message: string }> }}
+ */
+function lintAppIcons(sourceDir, files) {
+  const { bundle: extension, layers, required } = androidProcessor.res.appIcon
+  const allowed = layers.map((layer) => `${layer}.svg`)
+  const errors = []
+  const warnings = []
+  /** @type {Map<string, string[]>} */
+  const bundles = new Map()
+  for (const file of files) {
+    const parts = file.split('/')
+    const index = bundleIndex(parts.slice(2)) + 2
+    if (index < 2 || path.extname(parts[index]).toLowerCase() !== extension) continue
+    const bundle = parts.slice(0, index + 1).join('/')
+    bundles.set(bundle, [...(bundles.get(bundle) ?? []), parts.slice(index + 1).join('/')])
+  }
+
+  for (const [bundle, names] of bundles) {
+    for (const name of names) {
+      if (!allowed.includes(name)) {
+        errors.push({
+          file: `${bundle}/${name}`,
+          message: `is no layer of an adaptive icon: ${allowed.join(', ')}`
+        })
+        continue
+      }
+      const full = path.join(sourceDir, bundle, name)
+      if (isLfsPointer(full)) continue
+      const box = /viewBox\s*=\s*["']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([-\d.]+)[\s,]+([-\d.]+)/.exec(
+        fs.readFileSync(full, 'utf-8')
+      )
+      if (!box || Number(box[1]) !== Number(box[2])) {
+        errors.push({
+          file: `${bundle}/${name}`,
+          message: 'needs a square viewBox: a layer is 108 by 108 dp'
+        })
+      }
+    }
+    for (const layer of layers) {
+      if (names.includes(`${layer}.svg`)) continue
+      if (required.includes(layer)) {
+        errors.push({ file: bundle, message: `has no ${layer}.svg, which an adaptive icon needs` })
+      } else {
+        warnings.push({
+          file: bundle,
+          message: `has no ${layer}.svg, so a themed icon shows the icon as it is`
+        })
+      }
+    }
+  }
+  return { errors, warnings }
+}
+
+/**
  * Check the fonts of `source/` against the stylesheets beside them, app by app, as a brand
  * gets them: the folders of `sourceLayers()`, its own files over those of the default brand
  * and the files of an app over the shared files.
@@ -511,6 +571,10 @@ export function lintSource(options = {}) {
       errors.push({ file, message: 'is a Git LFS pointer, not the file. Run `git lfs pull`' })
     }
   }
+
+  const icons = lintAppIcons(sourceDir, files)
+  errors.push(...icons.errors)
+  warnings.push(...icons.warnings)
 
   const fonts = lintFonts(sourceDir, files, config)
   errors.push(...fonts.errors)

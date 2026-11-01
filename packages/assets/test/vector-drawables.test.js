@@ -46,6 +46,8 @@ const ARROW_DRAWABLE = `<vector xmlns:android="http://schemas.android.com/apk/re
 </vector>
 `
 
+const LAYERS = ['background', 'foreground', 'monochrome']
+
 const SHAPELESS = '<svg xmlns="http://www.w3.org/2000/svg"><defs><font id="f"/></defs></svg>\n'
 
 afterAll(removeTempDirs)
@@ -76,7 +78,12 @@ async function build(cwd, options = {}) {
 
 describe('the processors', () => {
   test('Android converts the SVG files of icons/ to .xml, the web and iOS convert nothing', () => {
-    expect(androidProcessor.vectorDrawables).toEqual({ type: 'icons', from: '.svg', to: '.xml' })
+    expect(androidProcessor.vectorDrawables).toEqual({
+      type: 'icons',
+      bundle: '.adaptive',
+      from: '.svg',
+      to: '.xml'
+    })
     expect(webProcessor.vectorDrawables).toBeUndefined()
     expect(iosProcessor.vectorDrawables).toBeUndefined()
   })
@@ -162,14 +169,18 @@ describe('generateAssets() with vectorDrawables', () => {
     const difference = compareDirs(plain.out, converted.out)
     expect(difference.changed).toEqual([])
     expect(difference.missing).toEqual([
+      ...LAYERS.map((layer) => `android/mobile/alpha/app-icon/app_icon.adaptive/${layer}.svg`),
       'android/mobile/alpha/icons/ic_arrow_right.svg',
       'android/mobile/alpha/icons/svgs/ic_check_mark.svg',
+      ...LAYERS.map((layer) => `android/mobile/beta/app-icon/app_icon.adaptive/${layer}.svg`),
       'android/mobile/beta/icons/ic_arrow_right.svg',
       'android/mobile/beta/icons/svgs/ic_check_mark.svg'
     ])
     expect(difference.extra).toEqual([
+      ...LAYERS.map((layer) => `android/mobile/alpha/app-icon/app_icon.adaptive/${layer}.xml`),
       'android/mobile/alpha/icons/ic_arrow_right.xml',
       'android/mobile/alpha/icons/svgs/ic_check_mark.xml',
+      ...LAYERS.map((layer) => `android/mobile/beta/app-icon/app_icon.adaptive/${layer}.xml`),
       'android/mobile/beta/icons/ic_arrow_right.xml',
       'android/mobile/beta/icons/svgs/ic_check_mark.xml'
     ])
@@ -180,7 +191,7 @@ describe('generateAssets() with vectorDrawables', () => {
     const plain = await build(fixtureWithIcons())
     const { stats } = await build(fixtureWithIcons(), { vectorDrawables: true })
     expect(plain.stats.filesConverted).toBe(0)
-    expect(stats.filesConverted).toBe(4)
+    expect(stats.filesConverted).toBe(10)
     expect(stats.filesProcessed).toBe(plain.stats.filesProcessed)
     expect(stats.warnings).toHaveLength(2)
     expect(stats.warnings[0]).toContain('Not converted')
@@ -238,7 +249,7 @@ describe('pnpm assets --vector-drawables', () => {
       { encoding: 'utf-8' }
     )
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('4 files converted to vector drawables')
+    expect(result.stdout).toContain('10 files converted to vector drawables')
     expect(listFiles(path.join(out, 'android/mobile/beta/icons'))).toEqual([
       'ic_arrow_right.xml',
       'ic_close.svg',

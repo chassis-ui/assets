@@ -151,13 +151,16 @@ dist/android/<app>/<brand>/
     │   ├── hero_banner.png
     │   ├── ic_arrow_right_outline.xml
     │   ├── ic_arrow_right_solid.xml
-    │   ├── welcome_dark.png
-    │   ├── welcome_light.png
+    │   └── welcome.png
+    ├── drawable-night/
+    │   └── welcome.png
+    ├── drawable-night-xhdpi/
+    │   └── welcome.png
+    ├── drawable-nodpi/
     │   └── wordmark.png
     ├── drawable-xhdpi/
     │   ├── hero_banner.png
-    │   ├── welcome_dark.png
-    │   └── welcome_light.png
+    │   └── welcome.png
     ├── drawable-xxhdpi/
     │   └── hero_banner.png
     └── font/
@@ -177,6 +180,8 @@ mkdir -p "app/src/$BRAND/assets/licenses"
 cp -R "$ASSETS/res" "app/src/$BRAND/"
 cp "$ASSETS"/fonts/*_license.txt "app/src/$BRAND/assets/licenses/"
 ```
+
+A pair `welcome_light` and `welcome_dark` of one folder is the resource `welcome`, see [Night images](#night-images). An image of one size goes to `drawable-nodpi/`, which Android draws without scaling, see [Density folders](#density-folders). A name that both a pair and another image ask for fails the build, as the app would show the wrong image in one mode.
 
 What `res/` does not take stays in its folder, and the build warns about the number of such files: the licenses, the SVG images, and without `--vector-drawables` every icon. When two subfolders of `images/` hold an image of one name, the folder nearest to `images/` gets the resource and the other file stays. The release archives are built without the option, and the rest of this page describes the default output.
 
@@ -301,7 +306,7 @@ dist/android/<app>/<brand>/images/
     └── hero_banner.png
 ```
 
-The build does not resize: an image has the variants that the designer exported, and no others. Android reads a file of `drawable/` as an mdpi image and scales it up on a denser screen.
+The build does not resize: an image has the variants that the designer exported, and no others. Android reads a file of `drawable/` as an mdpi image and scales it up on a denser screen. With `--res`, an image without any variant goes to `drawable-nodpi/` instead, so `R.drawable.wordmark` keeps its pixels: give it a size in the layout.
 
 ### Using an image
 
@@ -332,7 +337,19 @@ An image that the designer exported as PNG and as SVG has both files with one na
 
 ### Night images
 
-The build has no rule for dark mode: an image for a dark background is a file of its own with its own name, such as `welcome_dark.png` beside `welcome_light.png` in `images/onboarding/`. To let Android choose between the two, copy them to one resource name, the dark one into a folder with the `night` qualifier:
+A build with `--res` joins a pair of one folder: `welcome_light.png` and `welcome_dark.png` of `images/onboarding/` are the resource `welcome`, with the dark files in the folders with the `night` qualifier. The density is kept:
+
+```text
+res/
+├── drawable/welcome.png              # welcome_light.png
+├── drawable-night/welcome.png        # welcome_dark.png
+├── drawable-xhdpi/welcome.png        # welcome_light@2x.png
+└── drawable-night-xhdpi/welcome.png  # welcome_dark@2x.png
+```
+
+The app reads `R.drawable.welcome` in both modes, and Android picks the file. An image of one size goes to `drawable-nodpi/` and `drawable-night-nodpi/`. Only a real pair is joined: `logo_light.png` alone keeps its name, and so do `logo_black.png` and `logo_white.png`.
+
+The default output has no such rule: an image for a dark background is a file of its own with its own name. To let Android choose between the two, copy them to one resource name, the dark one into a folder with the `night` qualifier:
 
 ```bash
 IMAGES="website-assets/dist/android/demo/chassis/images/onboarding"
@@ -342,8 +359,6 @@ mkdir -p "$RES/drawable-xhdpi" "$RES/drawable-night-xhdpi"
 cp "$IMAGES/drawable-xhdpi/welcome_light.png" "$RES/drawable-xhdpi/welcome.png"
 cp "$IMAGES/drawable-xhdpi/welcome_dark.png" "$RES/drawable-night-xhdpi/welcome.png"
 ```
-
-The app then reads `R.drawable.welcome` in both modes.
 
 ## Icons
 
@@ -415,6 +430,39 @@ Icon(
     tint = MaterialTheme.colorScheme.onSurface
 )
 ```
+
+## App icon
+
+The app icon is an adaptive icon, of a background, a foreground and a monochrome layer. Keep the layers as SVG files in a bundle, a folder that ends in `.adaptive`, in a folder of its own:
+
+```text
+source/<brand>/<app>/app-icon/app-icon.adaptive/
+├── background.svg
+├── foreground.svg
+└── monochrome.svg
+```
+
+Draw each layer on a square of 108 by 108, with the mark inside the circle of 66 in its center, which is what every launcher shows of it. The launcher tints the monochrome layer for a themed icon and reads only its alpha. Android requires the background and the foreground, and a brand replaces the bundle whole.
+
+A build with `--vector-drawables --res` writes the app icon:
+
+```text
+res/
+├── drawable/
+│   ├── app_icon_background.xml
+│   ├── app_icon_foreground.xml
+│   └── app_icon_monochrome.xml
+└── mipmap-anydpi-v26/
+    └── app_icon.xml
+```
+
+Name it in the manifest of the app:
+
+```xml
+<application android:icon="@mipmap/app_icon">
+```
+
+Android reads an adaptive icon from API 26 on, and the build does not resize, so an app that supports a lower API adds its own icon for those. Without the options the bundle stays in `app-icon/app_icon.adaptive/`.
 
 ## Other assets
 
@@ -565,7 +613,11 @@ An image of `source/` is not where you look for it in the job folder. An image w
 
 ### Image looks blurry
 
-An image is soft on a dense screen. It has only a file in `drawable/`, which Android scales up. Add the `@2x` and `@3x` variants to `source/`, build, and run the copy script.
+An image is soft on a dense screen. It has only a file in `drawable/`, which Android scales up. Add the `@2x` and `@3x` variants to `source/`, build, and run the copy script, or build with `--res`, which writes an image of one size to `drawable-nodpi/`.
+
+### Two files ask for a resource
+
+The build stops with `Two files ask for the resource drawable/<name>`, followed by the files. A pair `<name>_light` and `<name>_dark` and another image `<name>` would be one resource in a build with `--res`. Rename one of them in `source/`.
 
 ### Icon is not found
 

@@ -658,11 +658,11 @@ describe('generateAssets() with webp and avif', () => {
     const cwd = root()
     const { out } = await build(cwd, { webp: true, res: true })
     expect(listFiles(path.join(out, 'android/mobile/alpha/res'))).toEqual([
+      'drawable-nodpi/kept.png',
+      'drawable-nodpi/mark.webp',
+      'drawable-nodpi/photo.webp',
       'drawable-xhdpi/hero.webp',
-      'drawable/hero.webp',
-      'drawable/kept.png',
-      'drawable/mark.webp',
-      'drawable/photo.webp'
+      'drawable/hero.webp'
     ])
     expect(await validates(cwd, out)).toEqual({ ok: true, errors: [] })
   })

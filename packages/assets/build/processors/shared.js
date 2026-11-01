@@ -3,13 +3,14 @@
  * @module processors/shared
  */
 
+import fs from 'fs'
 import path from 'path'
 
 /**
  * The formats of a bundle, a folder that is one file to the tool that reads it, with the
  * platforms that keep it. The files in a bundle name each other, so they keep their names.
  */
-const BUNDLES = { '.icon': ['ios'] }
+const BUNDLES = { '.icon': ['ios'], '.adaptive': ['android'] }
 
 /** The type folders with rules of their own, whose folders are never a bundle. */
 const KNOWN_TYPES = ['fonts', 'images', 'icons']
@@ -35,6 +36,24 @@ export function bundleIndex(parts) {
  */
 export function keepsBundle(platform, name) {
   return BUNDLES[path.extname(name).toLowerCase()]?.includes(platform) ?? false
+}
+
+/**
+ * The bundles of one format in the output of a job.
+ * @param {string} dir - The output folder of the job
+ * @param {string} extension - The extension of the format
+ * @returns {string[]} The paths of the bundles
+ */
+export function findBundles(dir, extension) {
+  if (!fs.existsSync(dir)) return []
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !KNOWN_TYPES.includes(entry.name))
+    .flatMap((entry) =>
+      fs.readdirSync(path.join(dir, entry.name), { recursive: true, withFileTypes: true })
+    )
+    .filter((entry) => entry.isDirectory() && path.extname(entry.name).toLowerCase() === extension)
+    .map((entry) => path.join(entry.parentPath, entry.name))
 }
 
 /**

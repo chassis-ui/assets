@@ -33,13 +33,13 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   the consumer contract is tested, the build has unit and build tests, releases are
   automated, and the docs site uses `@chassis-ui/docs` 0.6 or later. Whether a release
   becomes 1.0, and when, is not decided.
-- **Android and D41.** The fonts page gives an Android app a file for every role, but `--res`
-  has no night qualifiers (D11): `logo_light.png` and `logo_dark.png` are two drawables, where
-  iOS has one image. `--vector-drawables` with `--res` already gives the icons. Proposed:
-  `_dark` goes to a `-night` folder under the name without the suffix, tried on an emulator.
-  Font family files stay out, as Compose names the role files in code. The app icon is an
-  adaptive icon, of foreground, background and monochrome layers, which D42 does not cover.
-  Proposed for after the iOS example ships. Not decided.
+- **`--webp` in the release of website-assets.** Left off. On the Android job of `chassis` it
+  takes the images from 10.5 MB to 5.9 MB, lossless, and all 24 become WebP, but the option is
+  not per platform: the web jobs would get a WebP beside each PNG and JPEG that no site reads. It
+  comes back with an option per platform, or a site that reads them. Measured on 2026-11-01.
+- **The layers of the app icon of D44.** The session drew the `.adaptive` bundles of website-assets
+  from the logomark and the fill of each `.icon` bundle, with a mark of 60 dp for `chassis` and
+  46 dp for `sinefil` in the safe zone of 66 dp. They are the designer's to replace.
 
 ## Not written
 
@@ -69,14 +69,15 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   bundle, and no app has shown it.
 - A dark image set and a template icon of D41 on a screen: `actool` compiles the catalogs, and
   no app has shown them. The fonts of every role were run on the iOS 18.4 simulator for 11 files
-  per brand, and on Android not at all.
+  per brand, and in the Android example on an API 35 emulator.
 - A variable font with PostScript outlines, `CFF2`, in `chassis-assets static-font` (D40).
   The fonts of the brands and of the tests have TrueType outlines.
 - The samples of the iOS and the Android page with the fonts of D24: the app fonts are TTF
   where they were OTF, and the second brand is `sinefil` where the Android sample had a
   flavor `example`. Both pages were last run on 2026-10-01.
-- The output of `--vector-drawables` and `--res` in CI. It was built and run once, with
-  Gradle on an emulator, on 2026-10-01. No job compiles it.
+- A themed app icon on a launcher that shows one: the `<monochrome>` layer of D44 compiles and
+  links, and the launcher of the API 35 emulator shows the full icon. The Native Android job has
+  not run yet: `check.sh` was run on a Mac, and the job relies on the Android SDK of the runner.
 - A WebP or an AVIF file of `--webp` and `--avif` in a browser.
 - `--watch` on Windows. CI runs its tests on Linux.
 

@@ -827,11 +827,22 @@ describe('a bundle', () => {
 
   test('is left out where the platform does not take it, with its Git LFS paths', async () => {
     const { out } = await build()
-    expect(listFiles(path.join(out, 'android')).filter((f) => f.includes('app-icon'))).toEqual([])
+    const inOutput = (platform, extension) =>
+      listFiles(path.join(out, platform)).filter((f) => f.includes(extension))
+    expect(inOutput('android', '.icon/')).toEqual([])
+    expect(inOutput('ios', '.adaptive/')).toEqual([])
     const android = lfsInclude({ cwd: FIXTURE, platforms: ['android'] }).join(',')
-    expect(android).not.toContain('app-icon')
+    expect(android).not.toContain('.icon')
+    expect(android).toContain('.adaptive')
     const ios = lfsInclude({ cwd: FIXTURE, platforms: ['ios'] }).join(',')
-    expect(ios).toContain('app-icon')
+    expect(ios).toContain('.icon')
+    expect(ios).not.toContain('.adaptive')
+  })
+
+  test('is one file on Android too: an adaptive icon, of SVG files named after the layers', async () => {
+    const { out } = await build()
+    const beta = path.join(out, 'android/mobile/beta/app-icon/app_icon.adaptive')
+    expect(listFiles(beta)).toEqual(['background.svg', 'foreground.svg', 'monochrome.svg'])
   })
 
   test('is copied whole when a filter selects a file in it', async () => {
@@ -896,10 +907,11 @@ describe('dry run', () => {
       { brand: 'alpha', app: 'site', platform: 'web', files: 16 + 1 + 1 },
       // and on iOS a bundle: the two files of the default brand, or the one of `alpha`
       { brand: 'alpha', app: 'mobile', platform: 'ios', files: 16 + 1 + 1 + 1 },
-      { brand: 'alpha', app: 'mobile', platform: 'android', files: 15 + 1 + 1 },
+      // and on Android the three layers of a bundle
+      { brand: 'alpha', app: 'mobile', platform: 'android', files: 15 + 1 + 1 + 3 },
       { brand: 'beta', app: 'site', platform: 'web', files: 16 + 1 },
       { brand: 'beta', app: 'mobile', platform: 'ios', files: 16 + 1 + 2 },
-      { brand: 'beta', app: 'mobile', platform: 'android', files: 15 + 1 }
+      { brand: 'beta', app: 'mobile', platform: 'android', files: 15 + 1 + 3 }
     ])
   })
 

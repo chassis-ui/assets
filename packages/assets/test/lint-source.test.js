@@ -115,9 +115,57 @@ describe('lintSource()', () => {
     ])
   })
 
+  describe('an adaptive icon', () => {
+    const bundle = '_default/mobile/app-icon/app-icon.adaptive'
+    const fixtureBundle = () => {
+      const root = copyFixture()
+      return { root, folder: path.join(root, 'source', bundle) }
+    }
+
+    test('of the three layers passes', () => {
+      const { errors, warnings } = lintSource({ cwd: fixtureBundle().root })
+      expect(errors.filter((e) => e.file.includes('.adaptive'))).toEqual([])
+      expect(warnings.filter((e) => e.file.includes('.adaptive'))).toEqual([])
+    })
+
+    test('without a foreground is an error, without a monochrome a warning', () => {
+      const { root, folder } = fixtureBundle()
+      fs.rmSync(path.join(folder, 'foreground.svg'))
+      fs.rmSync(path.join(folder, 'monochrome.svg'))
+      const { errors, warnings } = lintSource({ cwd: root })
+      expect(errors.filter((e) => e.file === bundle)).toEqual([
+        { file: bundle, message: 'has no foreground.svg, which an adaptive icon needs' }
+      ])
+      expect(warnings.filter((e) => e.file === bundle)).toEqual([
+        { file: bundle, message: 'has no monochrome.svg, so a themed icon shows the icon as it is' }
+      ])
+    })
+
+    test('a file that is no layer, and a layer that is not square, are errors', () => {
+      const { root, folder } = fixtureBundle()
+      fs.writeFileSync(path.join(folder, 'notes.txt'), 'notes')
+      fs.writeFileSync(
+        path.join(folder, 'foreground.svg'),
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 54"><path d="M0 0H9V9Z"/></svg>'
+      )
+      const messages = lintSource({ cwd: root })
+        .errors.filter((e) => e.file.startsWith(bundle))
+        .map((e) => [e.file.slice(bundle.length + 1), e.message])
+      expect(messages).toEqual(
+        expect.arrayContaining([
+          ['foreground.svg', 'needs a square viewBox: a layer is 108 by 108 dp'],
+          [
+            'notes.txt',
+            'is no layer of an adaptive icon: background.svg, foreground.svg, monochrome.svg'
+          ]
+        ])
+      )
+    })
+  })
+
   test('finds the names of the fixture that break the rules', () => {
     const { errors, warnings, files } = lintSource({ cwd: FIXTURE })
-    expect(files).toBe(48)
+    expect(files).toBe(51)
     expect(warnings).toEqual([])
     expect(errors.map((e) => e.file)).toEqual([
       '_default/mobile/data/brand.tokens.json',

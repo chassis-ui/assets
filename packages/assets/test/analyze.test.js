@@ -27,16 +27,16 @@ function analyze(options = {}) {
 
 describe('AssetAnalyzer', () => {
   test('the fixture is what the counts below assume', () => {
-    expect(SOURCE_FILES).toBe(48)
-    expect(GOLDEN_FILES).toBe(106)
+    expect(SOURCE_FILES).toBe(51)
+    expect(GOLDEN_FILES).toBe(112)
   })
 
   test('counts source/ and the output together', () => {
     const stats = analyze()
     expect(stats.totalFiles).toBe(SOURCE_FILES + GOLDEN_FILES)
-    expect(stats.platforms).toEqual({ android: 33, ios: 38, web: 35 })
-    expect(stats.apps).toEqual({ mobile: 71, site: 35 })
-    expect(stats.brands).toEqual({ alpha: 54, beta: 52 })
+    expect(stats.platforms).toEqual({ android: 39, ios: 38, web: 35 })
+    expect(stats.apps).toEqual({ mobile: 77, site: 35 })
+    expect(stats.brands).toEqual({ alpha: 57, beta: 55 })
     expect(stats.fileTypes['.webp']).toBe(2 + 4)
     expect(stats.fileTypes['.woff']).toBe(1 + 2)
     expect(stats.filtered).toBe(false)
@@ -82,11 +82,11 @@ describe('AssetAnalyzer', () => {
 
   test.each([
     [{ platforms: ['web'] }, { web: 35 }],
-    [{ platforms: ['ios', 'android'] }, { android: 33, ios: 38 }],
-    [{ brands: ['beta'] }, { android: 16, ios: 19, web: 17 }],
+    [{ platforms: ['ios', 'android'] }, { android: 39, ios: 38 }],
+    [{ brands: ['beta'] }, { android: 19, ios: 19, web: 17 }],
     [
       { apps: ['mobile'], brands: ['alpha'] },
-      { android: 17, ios: 19 }
+      { android: 20, ios: 19 }
     ]
   ])('filters %j', (filters, platforms) => {
     const stats = analyze(filters)

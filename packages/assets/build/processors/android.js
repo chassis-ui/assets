@@ -25,10 +25,10 @@ const androidProcessor = {
   excludedImageFormats: [],
 
   /**
-   * What `--vector-drawables` converts: the SVG files of `icons/` become vector drawables,
-   * the format `res/drawable/` takes, under the same name
+   * What `--vector-drawables` converts: the SVG files of `icons/` and of the adaptive icon
+   * bundles become vector drawables, the format `res/drawable/` takes, under the same name
    */
-  vectorDrawables: { type: 'icons', from: '.svg', to: '.xml' },
+  vectorDrawables: { type: 'icons', bundle: '.adaptive', from: '.svg', to: '.xml' },
 
   /**
    * What `--webp` writes: the file in place of the image when it is smaller, since a
@@ -37,8 +37,10 @@ const androidProcessor = {
   imageFormats: { webp: 'replace' },
 
   /**
-   * What `--res` writes: the font files move to `res/font/`, and the images and the icons
-   * in a format `res/` takes move to `res/drawable/` and the density folders
+   * What `--res` writes: the font files move to `res/font/`, the images and the icons in a
+   * format `res/` takes move to `res/drawable/` and the density folders, a raster of one size
+   * to `drawable-nodpi`, the dark file of a pair to the night folders, and an adaptive icon
+   * bundle becomes an app icon
    */
   res: {
     name: 'res',
@@ -46,7 +48,16 @@ const androidProcessor = {
     drawable: {
       types: ['images', 'icons'],
       folder: 'drawable',
-      formats: ['.png', '.webp', '.jpg', '.jpeg', '.gif', '.xml']
+      formats: ['.png', '.webp', '.jpg', '.jpeg', '.gif', '.xml'],
+      vector: '.xml',
+      noDensity: 'drawable-nodpi',
+      night: 'drawable-night'
+    },
+    appIcon: {
+      bundle: '.adaptive',
+      folder: 'mipmap-anydpi-v26',
+      layers: ['background', 'foreground', 'monochrome'],
+      required: ['background', 'foreground']
     }
   },
 

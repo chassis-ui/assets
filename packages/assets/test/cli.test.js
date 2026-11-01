@@ -241,7 +241,7 @@ describe('pnpm assets:lint:source', () => {
     const { code, stdout, stderr } = run(LINT_SOURCE_CLI, [])
     expect(code).toBe(1)
     expect(stderr).toContain('source/_default/site/images/HeroBanner.png has the name "HeroBanner"')
-    expect(stdout).toContain('48 files checked: 7 error(s), 0 warning(s)')
+    expect(stdout).toContain('51 files checked: 7 error(s), 0 warning(s)')
   })
 
   test('exits 0 on a source that keeps the rules', () => {

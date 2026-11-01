@@ -68,7 +68,7 @@ keeps Prettier out of them.
 | `api.test.js`              | `ChassisAssets`: the configuration, the combinations, the inventory, the statistics, `validate()` and `build()`.                                                                                                                                                                                                                                                                                                                         |
 | `vector-drawables.test.js` | The `vectorDrawables` option: `convertFolder()` with the real converter, and a build of a copy of the fixture with real SVG icons, where only the icons of the Android jobs change, a file without a shape stays with a warning, a file that is no SVG fails the build, and the validator passes on the output.                                                                                                                          |
 | `asset-catalog.test.js`    | The `assetCatalog` option: `planImageSets()`, the `Contents.json` files and `writeCatalog()`, and a build of the fixture, where only the images of the iOS jobs move, a file without a place in an image set stays with a warning, a second build writes the same catalog, and the validator passes on the output.                                                                                                                       |
-| `res-layout.test.js`       | The `res` option: `isResourceName()`, `planResources()` and `writeRes()`, and a build of the fixture, where only the fonts and the images of the Android jobs move, a file without a place in `res/` stays with a warning, the icons move with `vectorDrawables`, a second build writes the same files, and the validator passes on the output.                                                                                          |
+| `res-layout.test.js`       | The `res` option: `isResourceName()`, `planResources()` with the pairs, `drawable-nodpi` and the collisions, the app icon of `writeRes()`, and a build of the fixture, where only the fonts and the images of the Android jobs move, a file without a place in `res/` stays with a warning, the icons move with `vectorDrawables`, a second build writes the same files, and the validator passes on the output.                         |
 | `optimize.test.js`         | The `optimize`, `webp` and `avif` options, on a root with real images that the tests write with `sharp`: the settings and their errors, the encoders (a PNG keeps its pixels, an SVG its shapes and its ids), `optimizeJob()` with encoders of its own, and builds where only the images change, Android gets the WebP in place of the image, the file of the designer is kept, and a build without the packages fails before it writes. |
 | `subset-fonts.test.js`     | The `subset` option, on a root with a real font, that of the dev dependency `inter-ui`: the ranges and their errors, the subsetter (a font keeps the characters of the ranges, its layout features and its format), the axes, the split, `subsetJob()`, and builds where only the fonts of the web change, a font without a character of the ranges stays with a warning, and a build without the package fails before it writes.        |
 | `font-faces.test.js`       | The `@font-face` rules of a stylesheet as text: `findFontFaces()` and `splitFontFaces()`, with comments, strings, rules inside rules and SCSS.                                                                                                                                                                                                                                                                                           |
@@ -98,6 +98,19 @@ checks that the compiled catalog has every image set by its name. It also compil
 `*.icon` bundle as an app icon, and checks that `CFBundleIconName` is the name of the bundle.
 It needs Xcode, not the command line tools alone; `DEVELOPER_DIR` selects an Xcode that
 `xcode-select` does not. The Native iOS job of CI runs it on a macOS runner.
+
+```sh
+pnpm assets --platform android --res --vector-drawables
+pnpm test:android
+```
+
+`test:android` is `packages/assets/test/native/android/check.sh`. It looks at every `res/` folder
+under `android/` of `dist/`, or of the folder it is given. `aapt2` passes an SVG, a text file and a
+vector without a shape, so the script fails on those first. It then runs `aapt2 compile` and
+`aapt2 link` against `android.jar`, which fails on an app icon that names a layer it does not
+have, and it fails on a night file without a file for the other mode. It reads the newest build
+tools and platform of `ANDROID_HOME`, and `AAPT2` and `ANDROID_JAR` name others. The Native
+Android job of CI runs it.
 
 ## Writing the baseline again
 

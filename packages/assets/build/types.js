@@ -170,6 +170,7 @@
  * A conversion of the files of one type folder, which an option of the build turns on.
  * @typedef {Object} Conversion
  * @property {string} type - The type folder whose files are converted, such as `icons`
+ * @property {string} [bundle] - The extension of the bundles whose files are converted too
  * @property {string} from - The extension of the files that are converted, such as `.svg`
  * @property {string} to - The extension they are written with, such as `.xml`
  */
@@ -192,10 +193,21 @@
  * @property {string} name - The folder in the output of a job, `res`
  * @property {{ type: string, folder: string, formats: string[] }} font - The type folder of
  *   the fonts, the folder of `res/` they move to, and the extensions it takes
- * @property {{ types: string[], folder: string, formats: string[] }} drawable - The type
- *   folders of the images and the icons, the folder of `res/` a file without a density
- *   folder moves to, and the extensions it takes, the first one first when two files have
- *   one name
+ * @property {{ types: string[], folder: string, formats: string[], vector: string, noDensity: string, night: string }} drawable
+ *   The type folders of the images and the icons, the folder of `res/` a file without a
+ *   density folder moves to, the extensions it takes, the first one first when two files have
+ *   one name, the extension of a vector, the folder of a raster of one size, and the folder
+ *   the night folders are named after
+ * @property {{ bundle: string, folder: string, layers: string[], required: string[] }} appIcon
+ *   The extension of an adaptive icon bundle, the folder of `res/` of the app icon it becomes,
+ *   the layers it can hold, each a file named after the layer, and those it has to hold
+ */
+
+/**
+ * A resource of `res/` that two files ask for, on which the build fails.
+ * @typedef {Object} ResCollision
+ * @property {string} resource - The folder and the name, `drawable/logo`
+ * @property {string[]} files - The files, relative to the output of the job
  */
 
 /**

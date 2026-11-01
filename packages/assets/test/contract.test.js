@@ -161,6 +161,35 @@ describe('checkContracts()', () => {
     ])
   })
 
+  describe('a file of res/', () => {
+    const contracts = {
+      'android/mobile/beta': [
+        { reader: 'an app', files: ['res/drawable-nodpi/logo.png', 'data/brand_tokens.json'] }
+      ]
+    }
+
+    test('is not asked of an output built without --res, and the result says so', () => {
+      const [result] = checkContracts({ cwd: repository(contracts) })
+      expect(result.missing).toEqual([])
+      expect(result.skipped).toBe(1)
+    })
+
+    test('is asked of an output with res/', () => {
+      const cwd = repository(contracts)
+      const folder = path.join(cwd, 'dist/android/mobile/beta/res/drawable')
+      fs.mkdirSync(folder, { recursive: true })
+      fs.writeFileSync(path.join(folder, 'other.png'), 'other')
+      const [result] = checkContracts({ cwd })
+      expect(result.missing).toEqual([{ path: 'res/drawable-nodpi/logo.png', reader: 'an app' }])
+      expect(result.skipped).toBeUndefined()
+    })
+
+    test('of a platform without the layout is a path like any other', () => {
+      const cwd = repository({ 'web/site/beta': [{ reader: 'a site', files: ['res/a.png'] }] })
+      expect(checkContracts({ cwd })[0].missing).toEqual([{ path: 'res/a.png', reader: 'a site' }])
+    })
+  })
+
   test('a repository without chassis.checks.json has nothing to check', () => {
     expect(checkContracts({ cwd: repository(undefined) })).toEqual([])
   })

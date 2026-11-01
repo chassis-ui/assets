@@ -65,7 +65,8 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   subfolders. What `res/` does not take stays where it is with a warning: the licenses,
   every SVG, a second format of a name, a name that cannot be a resource. One resource comes
   from one folder, the nearest to the type folder. No night qualifiers and no font family
-  files. The release archives are built without it. 2026-10-01.
+  files. The release archives are built without it. 2026-10-01. D44 added the night folders,
+  `drawable-nodpi` and the app icon.
 - **D12. Image optimization?** Three options, off by default: `--optimize` for the same
   names, `--webp` and `--avif` for a second format. Without settings no visible pixel
   changes: a PNG is compressed again, a JPEG is left alone, an SVG keeps its shapes, a WebP
@@ -366,8 +367,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   only a designer's file is needed. `actool` writes the older icon images from the bundle, so the
   build makes no `AppIcon.appiconset` and resizes nothing. Under `fonts/`, `images/` or `icons/`
   a bundle stays an ordinary folder, which keeps the optimizer, the catalogs and `res/` out of
-  it. The icon of an Android app is left for the Android work of `ref/OPEN.md`. The maintainer,
-  2026-11-01.
+  it. The icon of an Android app is D44. The maintainer, 2026-11-01.
 - **D43. What starts the release of a repository of assets?** A push to `main` with a new
   version, in place of a tag. The `release.yml` that `init` writes reads the version of
   `package.json`, and when it has no tag `v<version>` it builds, verifies and creates the tag
@@ -377,3 +377,30 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   tag was: source changes still reach `main` without a release. The first push of a new
   repository releases `0.1.0`, the version `init` writes. Raise a version with
   `--no-git-tag-version`, as a tag pushed by hand ends the release. The maintainer, 2026-11-01.
+- **D44. What does `--res` write for dark mode, for an image of one size and for an app icon?**
+  `<name>_light` and `<name>_dark` of one folder are the resource `<name>`, the dark files in
+  `drawable-night*`, as they are one image set on iOS (D41), with the same rule: a vector and a
+  raster stay apart. A drawable with the name of a pair in any folder fails the build, where
+  two files of one name otherwise leave a warning (D11): a resource that silently is something
+  else shows the wrong image in one mode. A raster of a resource with no density folder goes to
+  `drawable-nodpi`, and `drawable-night-nodpi` for a dark file, since Android takes `drawable/`
+  for mdpi and scaled the logo of 1024 by 220 up 2.6 times at 420 dpi. A resource with a density
+  folder keeps `drawable/` for its 1x file, and a vector stays there, as it is of no density. The
+  app icon is a bundle as on iOS (D42): a folder `<name>.adaptive` in a folder of its own, with
+  `background.svg`, `foreground.svg` and `monochrome.svg`, only Android keeps it, and a brand
+  replaces it whole. With `--vector-drawables --res` the layers become
+  `res/drawable/<name>_<layer>.xml` and `res/mipmap-anydpi-v26/<name>.xml` names them. Reading the
+  layers from the `.icon` bundle was left out: `icon.json` holds glass, blend modes and scales of
+  Icon Composer that have no Android form, and a layer of 108 dp has a safe zone of its own. A
+  logomark placed by the build would need a size per mark. So a designer's file, no option and
+  no list. `mipmap-anydpi-v26` leaves an app below API 26 to its own icon, as the build resizes
+  nothing. A `res/` path of a contract is checked on an output that has `res/`, so a contract
+  can name what an archive holds while CI verifies a plain build; a release script that loses
+  `--res` is then found by the app, not by the check. aapt2 passes an SVG, a text file and a
+  vector without a shape in `res/`, so `test/native/android/check.sh` checks them itself before
+  it compiles and links, in the Native Android job of CI. `--res --vector-drawables` is not in the
+  `build:release` that `init` writes: the option needs `svg2vectordrawable`, and it is a choice of
+  a team with an app. Font family files stay out, as Compose names the role files in code. Tried
+  with the example app on an API 35 emulator, both brands, light and dark: the logos, the tint of
+  the icons of `svg2vectordrawable` and the app icon. The session, at the request of the
+  maintainer, 2026-11-01.
