@@ -125,10 +125,11 @@ export function gitDefaults(dir) {
 }
 
 /**
- * What a folder that already holds a repository says of itself: its name and version in
- * `package.json`, and the package manager of its lockfile.
+ * What a folder that already holds a repository says of itself: its name, version, brands and
+ * apps in `package.json`, and the package manager of its lockfile.
  * @param {string} dir
- * @returns {{ name?: string, version?: string, pm?: 'npm' | 'pnpm' }}
+ * @returns {{ name?: string, version?: string, brands?: string[],
+ *   apps?: Record<string, string[]>, pm?: 'npm' | 'pnpm' }}
  */
 export function repositoryDefaults(dir) {
   let pkg = {}
@@ -143,6 +144,8 @@ export function repositoryDefaults(dir) {
   return {
     ...(typeof pkg.name === 'string' && { name: pkg.name }),
     ...(typeof pkg.version === 'string' && { version: pkg.version }),
+    ...(Array.isArray(pkg.chassis?.build?.brands) && { brands: pkg.chassis.build.brands }),
+    ...(pkg.chassis?.build?.apps && { apps: pkg.chassis.build.apps }),
     ...(lockfile && { pm: /** @type {'npm' | 'pnpm'} */ (lockfile) })
   }
 }
@@ -311,7 +314,11 @@ export function planFiles(options = {}) {
  * @throws {Error} As `planFiles`, or when `only` names a file init does not write
  */
 function planFor(options, dir) {
-  const plan = planFiles({ ...gitDefaults(dir), ...repositoryDefaults(dir), ...options, dir })
+  // The command line gives empty lists of what it was not told, which say nothing of a repository
+  const given = { ...options }
+  if (!given.brands?.length) delete given.brands
+  if (!Object.keys(given.apps ?? {}).length) delete given.apps
+  const plan = planFiles({ ...gitDefaults(dir), ...repositoryDefaults(dir), ...given, dir })
   if (!options.only?.length) return plan
   for (const file of options.only) {
     if (!plan.has(file)) {

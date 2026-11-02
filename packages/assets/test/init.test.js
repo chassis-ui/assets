@@ -264,6 +264,28 @@ describe('chassis-assets init', () => {
     await expect(init({ dir, only: ['nope.md'] })).rejects.toThrow('init does not write nope.md')
   })
 
+  test('a repository made earlier is read for its platforms, by --only and --check', async () => {
+    const dir = tempDir()
+    const pkg = {
+      name: 'mine',
+      version: '3.1.0',
+      chassis: { build: { brands: ['mine'], apps: { app: ['ios', 'android'], docs: ['web'] } } },
+      scripts: {}
+    }
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(pkg))
+    expect(checkBaseline({ dir }).missing).toContain('.github/workflows/native.yml')
+
+    // As the command line calls it, with its empty lists
+    const options = parseInitArgs([dir, '--only', '.github/workflows/native.yml'])
+    const { files } = await init(options)
+    expect(files).toEqual(['.github/workflows/native.yml'])
+    expect(read(dir, '.github/workflows/native.yml')).toContain('--platform android')
+    expect(checkBaseline(parseInitArgs([dir])).missing).not.toContain(
+      '.github/workflows/native.yml'
+    )
+    expect(JSON.parse(read(dir, 'package.json')).version).toBe('3.1.0')
+  })
+
   test('--check reports what is missing or differs, and a repository of its own files is fine', async () => {
     const dir = path.join(tempDir(), 'acme-assets')
     await init({ dir })
