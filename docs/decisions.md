@@ -421,7 +421,9 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `<repository>-<platform>-<app>-<brand>-<version>.zip`, the name of `package.json` without its
   scope being that of the repository, in chassis-ui/tokens as here: website-assets is
   `@chassis-ui/website-assets`, private as it was, and its archives `website-assets-…`, as they
-  were `chassis-website-assets-…` while `website-tokens-…` had no such start. The release of a
+  were `chassis-website-assets-…` while `website-tokens-…` had no such start. A consumer names
+  the archive in a setting of its own, as `chassis-ui/android-example`, `chassis-ui/ios-example`
+  and `chassis-ui/vanilla-example` do, so its name moves with the version there. The release of a
   repository of files takes the entry of its version in `CHANGELOG.md` as its text, with
   `chassis-assets release-notes`, in CI and first in the release, so that a version without an
   entry fails and is not released. `--generate-notes` wrote only a link: these repositories push
