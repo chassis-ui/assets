@@ -26,6 +26,8 @@
     "assets:lint": "eslint build packages/assets/build packages/assets/test --cache --cache-location .cache/.eslintcache",
     "assets:lfs": "node packages/assets/build/cli.js lfs --cwd vendor/assets",
     "assets:archive": "node packages/assets/build/cli.js archive --cwd vendor/assets",
+    "assets:manifest": "node packages/assets/build/cli.js manifest --cwd vendor/assets",
+    "assets:diff": "node packages/assets/build/cli.js diff --cwd vendor/assets",
     "assets:lint:source": "node packages/assets/build/cli.js lint-source --cwd vendor/assets",
     "assets:typecheck": "pnpm -C packages/assets typecheck",
     "assets:contract": "node packages/assets/build/cli.js contract --cwd vendor/assets",
@@ -54,7 +56,7 @@
     "changeset": "changeset",
     "changeset:version": "changeset version && node build/sync-version-refs.js",
     "release:archives": "pnpm assets:archive",
-    "release:notes": "node build/release-notes.js",
+    "release:notes": "node packages/assets/build/cli.js release-notes --cwd packages/assets",
     "lint:prettier": "prettier -c --cache .",
     "vendor": "git submodule update --init vendor/assets && git -C vendor/assets lfs pull"
   },

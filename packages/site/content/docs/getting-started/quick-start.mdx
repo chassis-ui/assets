@@ -27,7 +27,7 @@ mkdir acme-assets && cd acme-assets
 npx @chassis-ui/assets init --brand acme --app docs:web --app mobile:ios,android
 ```
 
-Each `--app` is a name and its platforms, `web`, `ios` or `android`, separated by commas. Without options the repository has one brand, `main`, and one app, `site`, on the web. The command writes nine files and prints them:
+Each `--app` is a name and its platforms, `web`, `ios` or `android`, separated by commas. Without options the repository has one brand, `main`, and one app, `site`, on the web. The command writes twelve files and prints them:
 
 ```text
 package.json                              -> The brands, the apps and the scripts
@@ -36,12 +36,17 @@ chassis.checks.json                       -> The files that consumers read by na
 .gitignore                                -> dist/, archives/, node_modules/
 .nvmrc                                    -> The Node.js version of the workflows
 README.md                                 -> The layout and the commands
-.github/workflows/ci.yml                  -> Lint, build and verify on every push
-.github/workflows/release.yml             -> Build, verify and archive on every tag
+CHANGELOG.md                              -> The notable changes of each release
+AGENTS.md                                 -> The rules for AI coding agents in the repository
+CLAUDE.md                                 -> Points Claude Code at AGENTS.md
+.github/workflows/ci.yml                  -> Changelog, lint, build and verify on every push
+.github/workflows/release.yml             -> Build, verify and archive a new version on main
 source/_default/_shared/other/readme.txt  -> A stand-in for the first asset
 ```
 
-It writes nothing when one of them exists; `--force` writes over the files that exist, and `--dry-run` prints them without writing. `--name` sets the package name, by default the name of the folder, and `--pm pnpm` makes the README and the workflows use pnpm.
+It writes nothing when one of them exists; `--force` writes over the files that exist, but never `package.json`, `chassis.checks.json` or `CHANGELOG.md`, which hold your data, and `--dry-run` prints them without writing. `--name` sets the package name, by default the name of the folder, and `--pm pnpm` makes the README and the workflows use pnpm. `--repository`, `--license` and `--author` set those fields of `package.json`, by default from the `origin` remote, MIT and the name of your git configuration.
+
+A later version of the package writes other files. In a repository you already have, `init --check` reports where it differs from what the current version writes, and exits 1 when it does. `init --only <file...>` writes those files; add `--force` for one that exists.
 
 Then make it a repository, and install the package. Commit the lockfile the install writes with the rest: the workflows install from it.
 
@@ -162,7 +167,7 @@ When an app or a site reads a file of the output by name, add it to `chassis.che
 
 ## Release a version
 
-A release is a push to `main` with a new version in `package.json`. The first push to `main` releases `0.1.0`, the version `chassis-assets init` writes. For a later release, raise the version without a tag, as the workflow makes the tag, and push:
+A release is a push to `main` with a new version in `package.json`. The first push to `main` releases `0.1.0`, the version `chassis-assets init` writes. For a later release, raise the version without a tag, as the workflow makes the tag, add its entry to `CHANGELOG.md`, and push:
 
 ```bash
 npm version 0.2.0 --no-git-tag-version
@@ -170,7 +175,7 @@ git commit -am "chore: release 0.2.0"
 git push origin main
 ```
 
-The release workflow builds and verifies every job, writes one `acme-assets-<platform>-<app>-<brand>-0.2.0.zip` per job with `chassis-assets archive`, and creates the tag `v0.2.0` and the GitHub release with them attached. A push whose version already has a tag releases nothing, and a release that fails makes no tag, so the next push to `main` tries again. An app takes the archive of its platform, app and brand from the release.
+The release workflow stops when `CHANGELOG.md` has no entry for the version, and CI fails on it first. It builds and verifies every job, writes one `acme-assets-<platform>-<app>-<brand>-0.2.0.zip` per job with `chassis-assets archive` and the list of their files with `chassis-assets manifest`, and creates the tag `v0.2.0` and the GitHub release with them attached and the entry as its body. A push whose version already has a tag releases nothing, and a release that fails makes no tag, so the next push to `main` tries again. An app takes the archive of its platform, app and brand from the release.
 
 The workflows call the scripts of `package.json`, so a script can take options, such as `chassis-assets build --optimize` with `sharp` and `svgo` installed.
 

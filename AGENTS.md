@@ -108,10 +108,11 @@ broke them and was reverted.
 
 And these:
 
-- **Do not break the consumer contract.** Every Chassis site builds website-assets with
-  `pnpm install --ignore-workspace && pnpm assets:site` and reads the files listed in its
-  `chassis.checks.json` from `dist/web/docs/chassis/`; `pnpm assets:verify` here checks them on
-  the pinned submodule. The commands, the flags and the output layout of the build are what
+- **Do not break the consumer contract.** A Chassis site builds its `vendor/assets` with
+  `pnpm install --ignore-workspace && pnpm assets:site`, and reads the files listed in the
+  `chassis.checks.json` of website-assets from `dist/web/docs/chassis/`; `pnpm assets:verify`
+  here checks them on the pinned submodule. Some sites still vendor `app/docs` of this repository:
+  see `ref/OPEN.md`. The commands, the flags and the output layout of the build are what
   every repository of assets relies on.
 - **Do not edit `vendor/assets/`.** It is a checkout of chassis-ui/website-assets; a change to
   an asset is made there, and this repository moves its pin. Never edit `dist/` or

@@ -41,6 +41,12 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   from the logomark and the fill of each `.icon` bundle, with a mark of 60 dp for `chassis` and
   46 dp for `sinefil` in the safe zone of 66 dp. They are the designer's to replace.
 
+- **The sites that still read `app/docs`.** chassis-ui/tokens has `vendor/assets` on `app/docs`
+  of this repository at `1e37c96`, so the statement of D38 that the sites pin website-assets
+  holds only once chassis-ui/website#33 and chassis-ui/tokens#30 are done. `app/docs` stays
+  until then. sinefil-web reads `chassis-assets-web-docs-<brand>-<version>.zip` of 0.5.0: its
+  move to a release of website-assets (ozgurgunes/sinefil-web#222) takes the name of D46.
+
 ## Not written
 
 - Files of the fixture for a `_light` and `_dark` pair, an SVG in `currentcolor` and a sprite.

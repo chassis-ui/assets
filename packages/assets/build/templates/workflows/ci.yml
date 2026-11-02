@@ -1,7 +1,7 @@
 name: CI
 
-# On a push and on a pull request: the source lint, the build and the verification of its
-# output, with the commands of @chassis-ui/assets. Written by `chassis-assets init`.
+# On a push and on a pull request: the changelog, the source lint, the build and the
+# verification of its output, with the commands of @chassis-ui/assets. Written by `chassis-assets init`.
 on:
   push:
     branches: [main]
@@ -28,9 +28,14 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+          cache: __PM__
 
       - name: Install
         run: __INSTALL_CI__
+
+      # Fails when the version of package.json has no entry in CHANGELOG.md
+      - name: Check the changelog
+        run: __RUN__ release-notes
 
       - name: Lint source
         run: __RUN__ lint

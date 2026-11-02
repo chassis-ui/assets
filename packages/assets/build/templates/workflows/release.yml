@@ -2,7 +2,8 @@ name: Release
 
 # On a push to main, releases the version in package.json when it has no tag v<version> yet:
 # builds every brand, app and platform, verifies the output and creates the tag and its GitHub
-# release, with one archive per platform, app and brand attached:
+# release, whose body is the entry of the version in CHANGELOG.md, with the manifest and one
+# archive per platform, app and brand attached:
 # <name>-<platform>-<app>-<brand>-<version>.zip. A push that does not change the version
 # releases nothing. Written by `chassis-assets init`.
 on:
@@ -68,9 +69,14 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+          cache: __PM__
 
       - name: Install
         run: __INSTALL_CI__
+
+      # Before anything else, so a version without a changelog entry is not released
+      - name: Release notes
+        run: npx chassis-assets release-notes > "$RUNNER_TEMP/release-notes.md"
 
       - name: Lint source
         run: __RUN__ lint
@@ -82,11 +88,14 @@ jobs:
         run: __RUN__ verify
 
       # <name>-<platform>-<app>-<brand>-<version>.zip, the name and the version of package.json
+      # and <name>-manifest-<version>.json, which `chassis-assets diff` reads for the next version
       - name: Archive each platform, app and brand
-        run: npx chassis-assets archive --to "$RUNNER_TEMP/archives"
+        run: |
+          npx chassis-assets archive --to "$RUNNER_TEMP/archives"
+          npx chassis-assets manifest --to "$RUNNER_TEMP/archives"
 
       # A version with a prerelease part, such as 0.2.0-next.0, is marked as a prerelease and
-      # does not become the latest release. The notes are generated from the commits
+      # does not become the latest release
       - name: Create the tag and the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -98,8 +107,8 @@ jobs:
           esac
 
           gh release create "v$VERSION" \
-            "$RUNNER_TEMP"/archives/*.zip \
+            "$RUNNER_TEMP"/archives/* \
             --target "$GITHUB_SHA" \
             --title "v$VERSION" \
-            --generate-notes \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
             "${FLAGS[@]}"

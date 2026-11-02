@@ -328,6 +328,9 @@ describe('cli.js', () => {
     ['verify', ['--out', '../golden']],
     ['lint-source', ['--help']],
     ['archive', ['--help']],
+    ['manifest', ['--help']],
+    ['diff', ['--help']],
+    ['release-notes', ['--help']],
     ['init', ['--help']],
     ['static-font', ['--help']]
   ])('%s runs its module', (command, args) => {
@@ -351,6 +354,9 @@ describe('cli.js', () => {
       'lfs',
       'lint-source',
       'archive',
+      'manifest',
+      'diff',
+      'release-notes',
       'init',
       'static-font'
     ]) {

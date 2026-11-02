@@ -48,6 +48,24 @@ export function buildVersion() {
 }
 
 /**
+ * The web address of a repository, from the forms a `repository` field or a git remote takes:
+ * `owner/name`, a `git+https` or `ssh` address, or `git@host:owner/name.git`.
+ * @param {string | { url?: string } | undefined} repository
+ * @returns {string | undefined} `https://host/owner/name`, or undefined for another form
+ */
+export function repositoryWebUrl(repository) {
+  const value = (typeof repository === 'string' ? repository : repository?.url)?.trim()
+  if (!value) return undefined
+  const shorthand = value.replace(/^github:/, '').match(/^[\w.-]+\/[\w.-]+$/)
+  if (shorthand) return `https://github.com/${shorthand[0].replace(/\.git$/, '')}`
+  const match =
+    value.match(
+      /^(?:git\+)?(?:https?|ssh|git):\/\/(?:[^@/]+@)?([^/:]+)(?::\d+)?\/(.+?)(?:\.git)?\/?$/
+    ) ?? value.match(/^[^@/]+@([^/:]+):(.+?)(?:\.git)?\/?$/)
+  return match ? `https://${match[1]}/${match[2]}` : undefined
+}
+
+/**
  * Whether a module is the file Node.js was started with, and not imported.
  * @param {string} moduleUrl - `import.meta.url` of the module
  * @returns {boolean}

@@ -27,7 +27,8 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   on `app/docs`. An app takes one archive per platform, app and brand from the GitHub release
   of a version, `chassis-assets-<platform>-<app>-<brand>-<version>.zip`, built and verified
   by CI, or vendors the repository and runs the build. The web files are also served under
-  `/static/` of the site's deployment. The maintainer, 2026-09-30.
+  `/static/` of the site's deployment. The maintainer, 2026-09-30. The name is that of a
+  repository of files since D46.
 - **D3. One package, or a workspace with the site in its own package?** A pnpm workspace:
   `source/` and `dist/` at the root, the build in `packages/assets/`, the site in
   `packages/site/`, as in `chassis-ui/tokens`. The root scripts run the build with `node`, not
@@ -416,3 +417,31 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   of a bundle that stays why it is no app icon. No `AppIcon.appiconset`, no `mipmap-*dpi`
   files and no fallback below API 26: the build resizes nothing, as D42 and D44 say. The
   session, 2026-11-02.
+- **D46. How is a release named, and what is its text?** An archive is
+  `<repository>-<platform>-<app>-<brand>-<version>.zip`, the name of `package.json` without its
+  scope being that of the repository, in chassis-ui/tokens as here: website-assets is
+  `@chassis-ui/website-assets`, private as it was, and its archives `website-assets-…`, as they
+  were `chassis-website-assets-…` while `website-tokens-…` had no such start. The release of a
+  repository of files takes the entry of its version in `CHANGELOG.md` as its text, with
+  `chassis-assets release-notes`, in CI and first in the release, so that a version without an
+  entry fails and is not released. `--generate-notes` wrote only a link: these repositories push
+  to `main`, and it lists pull requests. The changelog is written by hand, not with Changesets:
+  a designer who adds a font has no reason to install a tool for it. CI does not run
+  `build:release` on a new version: with no pull requests it runs beside the release, for the
+  same result at twice the Git LFS bandwidth. The README and `AGENTS.md` ask for it before the
+  commit. The maintainer, 2026-11-02.
+- **D47. How does a repository made earlier take what `init` writes now?** With `init --check`,
+  which reports what differs, and `init --only <file…>`, which writes those files. `--force` was
+  all or nothing, and wrote over the `chassis` block and the contracts, so `package.json`,
+  `chassis.checks.json` and `CHANGELOG.md` are never written over now. `init` also writes
+  `AGENTS.md` and `CLAUDE.md`, the rules an agent breaks in a repository of files without being
+  told, since a release follows from a push; they guide, and D46 enforces. No check compares
+  the package with chassis-ui/tokens (D26): the two have the same commands by this decision,
+  and each checks only its own repositories. The maintainer, 2026-11-02.
+- **D48. How does a version know what changed in `dist/`?** From the manifest of the release
+  before it. `chassis-tokens diff` reads a git ref, as its `dist/` is committed; here `dist/` is
+  not (D2), so `chassis-assets manifest` writes the size and the SHA-256 of every file by job,
+  with the version of the build, and the release attaches it. `chassis-assets diff --base`
+  reports against it. A file of the release, not of `dist/`, so the output contract stays as it
+  is. No download in the command: `gh release download` does that, with the sign-in a private
+  repository needs. The maintainer, 2026-11-02.

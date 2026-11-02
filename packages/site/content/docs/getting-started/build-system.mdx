@@ -28,6 +28,9 @@ Each command is `chassis-assets <command>`, run with `npx chassis-assets` where 
 | `chassis-assets build` | Builds every job of the configuration into `dist/` |
 | `chassis-assets lfs` | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include` |
 | `chassis-assets archive` | Writes one zip per platform, app and brand of an existing output, for a release, see [Releases](#releases) |
+| `chassis-assets manifest` | Writes the list of the files of an existing output with their sizes and hashes, see [Releases](#releases) |
+| `chassis-assets diff --base <manifest>` | Reports the files added, removed, renamed and changed since a manifest, see [Releases](#releases) |
+| `chassis-assets release-notes [version]` | Prints the entry of a version in `CHANGELOG.md`, and exits 1 without one, see [Releases](#releases) |
 | `chassis-assets init [dir]` | Writes the baseline of a repository of assets into a folder, see the [quick start]([[docsref:/getting-started/quick-start]]) |
 | `chassis-assets static-font <font> <output...> <axis>=<value>` | Writes the static font of a variable font at a weight to each output, see [Files by weight]([[docsref:/asset-types/fonts#files-by-weight]]) |
 | `chassis-assets validate` | Checks an existing output against the source and the configuration |
@@ -687,7 +690,15 @@ chassis-assets archive --to /tmp/release --prefix acme --release 1.2.0
 
 `--to <dir>` writes them elsewhere, and `--prefix <name>` and `--release <version>` name them instead of `package.json`; the archives of the prefix already in the folder are removed first. The archives are written with Node.js alone, and an archive holds up to 65,535 files.
 
-The release workflow that `chassis-assets init` writes runs on a push to `main`, and does nothing when the version of `package.json` already has a tag `v<version>`. For a new version, it builds every job with the `build:release` script, which adds `--asset-catalog` and `--icon-catalog`, verifies them, writes the archives and creates the tag and the GitHub release with them attached. A version with a prerelease part, such as `0.2.0-next.0`, is marked as a prerelease.
+The release workflow that `chassis-assets init` writes runs on a push to `main`, and does nothing when the version of `package.json` already has a tag `v<version>`. For a new version, it reads the entry of the version with `chassis-assets release-notes`, and stops when `CHANGELOG.md` has none. It builds every job with the `build:release` script, which adds `--asset-catalog` and `--icon-catalog`, verifies them, writes the archives and the manifest, and creates the tag and the GitHub release with them attached and the entry as its body. A version with a prerelease part, such as `0.2.0-next.0`, is marked as a prerelease.
+
+`chassis-assets manifest` writes `<name>-manifest-<version>.json`, the size and the SHA-256 of every file by job. `dist/` is not committed, so the manifest of a release is what the next version compares against, and it names the version of the package that built it. After a build of the same kind, `chassis-assets diff` reports what the changelog entry has to name, in Markdown:
+
+```bash
+gh release download v1.1.0 --pattern '*-manifest-*' --dir /tmp/base
+npm run build:release
+npx chassis-assets diff --base /tmp/base/acme-assets-manifest-1.1.0.json
+```
 
 ## Continuous integration
 
@@ -720,9 +731,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: npm
 
       - name: Install
-        run: npm install
+        run: npm ci
+
+      - name: Check the changelog
+        run: npm run release-notes
 
       - name: Lint source
         run: npm run lint

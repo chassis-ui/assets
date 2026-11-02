@@ -44,6 +44,21 @@ export const COMMANDS = {
     script: 'pnpm assets:archive',
     about: 'One zip per platform, app and brand of an existing output, for a release'
   },
+  manifest: {
+    module: './manifest.js',
+    script: 'chassis-assets manifest',
+    about: 'The files of an existing output with their sizes and hashes, for a release'
+  },
+  diff: {
+    module: './diff.js',
+    script: 'chassis-assets diff',
+    about: 'The files added, removed, renamed and changed since a manifest'
+  },
+  'release-notes': {
+    module: './release-notes.js',
+    script: 'chassis-assets release-notes',
+    about: 'Print the changelog entry of a version, and fail without one'
+  },
   init: {
     module: './init.js',
     script: 'chassis-assets init',
@@ -65,7 +80,7 @@ export const HELP = `Usage: chassis-assets <command> [options]
 
 Commands:
 ${Object.entries(COMMANDS)
-  .map(([name, { about, script }]) => `  ${name.padEnd(13)}${about} (${script})`)
+  .map(([name, { about, script }]) => `  ${name.padEnd(15)}${about} (${script})`)
   .join('\n')}
 
 Options:

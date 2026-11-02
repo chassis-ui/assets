@@ -78,7 +78,7 @@ export function dosDateTime(date) {
  * @param {string} dir
  * @returns {string[]}
  */
-function listFiles(dir) {
+export function listFiles(dir) {
   return fs
     .readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile() && !EXCLUDED_NAMES.has(entry.name))
@@ -186,7 +186,7 @@ export function zipFolder(dir) {
  * @param {string} dir
  * @returns {string[]}
  */
-function folders(dir) {
+export function folders(dir) {
   let entries
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true })

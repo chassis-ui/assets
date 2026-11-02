@@ -3,24 +3,30 @@
  *
  * Writes the baseline of a repository of assets into a folder: a `package.json` with the
  * `chassis` block, the scripts and a development dependency on this package, the Git LFS
- * attributes, a `chassis.checks.json` without a contract, a README, a CI workflow and a
- * tag-driven release workflow with the archives, and one file under `source/` so that the
- * first build has something to copy. The templates are in `templates/` beside this module,
- * and the few values that differ by repository are filled in: the name, the package manager
- * and its commands.
+ * attributes, a `chassis.checks.json` without a contract, a README, a changelog, the
+ * instructions for agents, a CI workflow and a release workflow with the archives, and one file
+ * under `source/` so that the first build has something to copy. The templates are in
+ * `templates/` beside this module, and the few values that differ by repository are filled in:
+ * the name, the package manager and its commands.
  *
  * The command writes outside `dist/`, the one that does, so it writes nothing when a file it
- * would write exists, unless `--force` is given, and `--dry-run` only prints the files.
+ * would write exists, unless `--force` is given, and `--dry-run` only prints the files. The
+ * files that hold the data of a repository are never written over, with or without `--force`.
+ *
+ * A repository made earlier takes what changed with `--check`, which reports where it differs
+ * from what this version writes, and `--only <file…>`, which writes those files.
  *
  * @module init
  */
 
+import { execFileSync } from 'child_process'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { BRAND_FOLDER } from './build-assets.js'
 import { getPlatformNames } from './processors/index.js'
-import { buildVersion, isEntry } from './root.js'
+import { buildVersion, isEntry, repositoryWebUrl } from './root.js'
 
 /** The folder of the templates. */
 const TEMPLATES = fileURLToPath(new URL('./templates/', import.meta.url))
@@ -33,14 +39,19 @@ export const FIRST_VERSION = '0.1.0'
 
 /** The package managers of `--pm`, with the commands the templates name. */
 export const PACKAGE_MANAGERS = {
-  // The install of the workflows is the plain one: a new repository has no lockfile until
-  // its first install is committed, and `npm ci`, `--frozen-lockfile` and the cache of
-  // setup-node fail without one. With a lockfile, pnpm freezes it in CI by itself
-  npm: { install: 'npm install', ci: 'npm install', run: 'npm run', setup: '' },
+  // The install of the workflows is frozen, so the first install has to commit its lockfile
+  npm: {
+    install: 'npm install',
+    ci: 'npm ci',
+    run: 'npm run',
+    lockfile: 'package-lock.json',
+    setup: ''
+  },
   pnpm: {
     install: 'pnpm install',
-    ci: 'pnpm install',
+    ci: 'pnpm install --frozen-lockfile',
     run: 'pnpm',
+    lockfile: 'pnpm-lock.yaml',
     setup: [
       '      - name: Setup pnpm',
       '        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0',
@@ -53,7 +64,13 @@ export const PACKAGE_MANAGERS = {
 }
 
 /** The brand and the app a repository starts with, when none is given. */
-export const DEFAULTS = { brands: ['main'], apps: { site: ['web'] }, pm: 'npm' }
+export const DEFAULTS = { brands: ['main'], apps: { site: ['web'] }, pm: 'npm', license: 'MIT' }
+
+/** The files that hold the data of a repository: written when missing, never over one. */
+export const DATA_FILES = ['package.json', 'chassis.checks.json', 'CHANGELOG.md']
+
+/** The files a repository makes its own: `--check` asks only that they exist. */
+const OWN_FILES = [...DATA_FILES, 'README.md']
 
 /** A brand or app name: lowercase letters, digits and single hyphens, as the source lint wants. */
 const NAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -65,11 +82,66 @@ const NAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
  * @property {string[]} [brands] - The brands of `chassis.build`. Default `['main']`
  * @property {Record<string, string[]>} [apps] - The apps of `chassis.build`, each with its
  *   platforms. Default `{ site: ['web'] }`
+ * @property {string} [version] - The version of the first entry of the changelog. Default `0.1.0`
  * @property {'npm' | 'pnpm'} [pm] - The package manager the README and the workflows name.
  *   Default `npm`
- * @property {boolean} [force] - Write over a file that exists
+ * @property {string} [repository] - The repository: `owner/name`, or an address. Default: the
+ *   `origin` remote of the folder, when it is the root of a git repository
+ * @property {string} [license] - The license. Default `MIT`
+ * @property {string} [author] - The author. Default: `user.name` of the git configuration
+ * @property {string[]} [only] - Write these files of the plan only
+ * @property {boolean} [force] - Write over a file that exists, but never one of `DATA_FILES`
  * @property {boolean} [dryRun] - Print the files, write nothing
  */
+
+/**
+ * What git knows of a folder: the author, by name only, and the `origin` remote, when the folder
+ * is the root of a repository and not a folder inside one.
+ * @param {string} dir
+ * @returns {{ repository?: string, author?: string }} Without what git does not know
+ */
+export function gitDefaults(dir) {
+  const inDir = fs.existsSync(dir)
+  const git = (cwd, ...args) => {
+    try {
+      const output = execFileSync('git', args, { cwd, stdio: ['ignore', 'pipe', 'ignore'] })
+      return output.toString().trim() || undefined
+    } catch {
+      return undefined
+    }
+  }
+  const author = git(inDir ? dir : os.homedir(), 'config', 'user.name')
+  const top = inDir ? git(dir, 'rev-parse', '--show-toplevel') : undefined
+  const isRoot = top !== undefined && top === fs.realpathSync(dir)
+  const repository = isRoot ? git(dir, 'remote', 'get-url', 'origin') : undefined
+  return {
+    ...(author && { author }),
+    ...(repositoryWebUrl(repository) && { repository })
+  }
+}
+
+/**
+ * What a folder that already holds a repository says of itself: its name and version in
+ * `package.json`, and the package manager of its lockfile.
+ * @param {string} dir
+ * @returns {{ name?: string, version?: string, pm?: 'npm' | 'pnpm' }}
+ */
+export function repositoryDefaults(dir) {
+  let pkg = {}
+  try {
+    pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
+  } catch {
+    // No package.json here, or one that cannot be read: nothing to say
+  }
+  const lockfile = Object.keys(PACKAGE_MANAGERS).find((pm) =>
+    fs.existsSync(path.join(dir, PACKAGE_MANAGERS[pm].lockfile))
+  )
+  return {
+    ...(typeof pkg.name === 'string' && { name: pkg.name }),
+    ...(typeof pkg.version === 'string' && { version: pkg.version }),
+    ...(lockfile && { pm: /** @type {'npm' | 'pnpm'} */ (lockfile) })
+  }
+}
 
 /**
  * Check a brand or app name.
@@ -151,12 +223,18 @@ export function planFiles(options = {}) {
       `Unknown package manager ${pm}. One of ${Object.keys(PACKAGE_MANAGERS).join(', ')}`
     )
   }
+  const repository = options.repository && repositoryWebUrl(options.repository)
+  if (options.repository && !repository) {
+    throw new Error(`A repository is owner/name or an address: ${options.repository}`)
+  }
   const commands = PACKAGE_MANAGERS[pm]
   const values = {
     NAME: name,
+    VERSION: options.version || FIRST_VERSION,
     INSTALL: commands.install,
     INSTALL_CI: commands.ci,
     RUN: commands.run,
+    PM: pm,
     PNPM_SETUP: commands.setup
   }
   const template = (file) => render(fs.readFileSync(path.join(TEMPLATES, file), 'utf-8'), values)
@@ -166,6 +244,9 @@ export function planFiles(options = {}) {
     version: FIRST_VERSION,
     private: true,
     description: `The assets of ${name}, built with @chassis-ui/assets`,
+    ...(repository && { repository: { type: 'git', url: `git+${repository}.git` } }),
+    license: options.license || DEFAULTS.license,
+    ...(options.author && { author: options.author }),
     chassis: {
       defaults: { brandFolder: BRAND_FOLDER },
       build: { brands, apps }
@@ -176,7 +257,8 @@ export function planFiles(options = {}) {
       lint: 'chassis-assets lint-source',
       verify: 'chassis-assets verify',
       archive: 'chassis-assets archive',
-      analyze: 'chassis-assets analyze'
+      analyze: 'chassis-assets analyze',
+      'release-notes': 'chassis-assets release-notes'
     },
     engines: { node: '>=22.12.0' },
     devDependencies: { '@chassis-ui/assets': `^${buildVersion()}` }
@@ -190,6 +272,9 @@ export function planFiles(options = {}) {
     ['.gitignore', template('gitignore')],
     ['.nvmrc', `${NODE_VERSION}\n`],
     ['README.md', template('README.md')],
+    ['CHANGELOG.md', template('CHANGELOG.md')],
+    ['AGENTS.md', template('AGENTS.md')],
+    ['CLAUDE.md', template('CLAUDE.md')],
     ['.github/workflows/ci.yml', template('workflows/ci.yml')],
     ['.github/workflows/release.yml', template('workflows/release.yml')],
     [`source/${BRAND_FOLDER}/_shared/other/readme.txt`, template('readme.txt')]
@@ -197,21 +282,45 @@ export function planFiles(options = {}) {
 }
 
 /**
- * Write the baseline of a repository of assets.
+ * The plan of a folder: the options over what the folder and git say of it, and the files of
+ * `only`.
+ * @param {InitOptions} options
+ * @param {string} dir
+ * @returns {Map<string, string>}
+ * @throws {Error} As `planFiles`, or when `only` names a file init does not write
+ */
+function planFor(options, dir) {
+  const plan = planFiles({ ...gitDefaults(dir), ...repositoryDefaults(dir), ...options, dir })
+  if (!options.only?.length) return plan
+  for (const file of options.only) {
+    if (!plan.has(file)) {
+      throw new Error(`init does not write ${file}. It writes ${[...plan.keys()].join(', ')}`)
+    }
+  }
+  return new Map([...plan].filter(([file]) => options.only?.includes(file)))
+}
+
+/**
+ * Write the baseline of a repository of assets. A file of `DATA_FILES` that exists stays, with
+ * or without `force`.
  * @param {InitOptions} [options]
- * @returns {Promise<{ dir: string, files: string[], existing: string[], written: boolean }>}
- *   The folder, the files relative to it, the ones of them that existed before, and whether
- *   they were written (not on a dry run)
+ * @returns {Promise<{ dir: string, files: string[], existing: string[], kept: string[], written: boolean }>}
+ *   The folder, the files to write relative to it, the ones of them that existed before, the
+ *   data files `force` left alone, and whether the files were written (not on a dry run)
  * @throws {Error} When a file exists and neither `force` nor `dryRun` is given, or on an
  *   option that is not accepted. Nothing is written then
  */
 export async function init(options = {}) {
   const dir = path.resolve(options.dir || '.')
-  const plan = planFiles({ ...options, dir })
+  const plan = planFor(options, dir)
+  const exists = (file) => fs.existsSync(path.join(dir, file))
+
+  const kept = options.force ? DATA_FILES.filter((file) => plan.has(file) && exists(file)) : []
+  for (const file of kept) plan.delete(file)
   const files = [...plan.keys()]
 
-  const existing = files.filter((file) => fs.existsSync(path.join(dir, file)))
-  if (options.dryRun) return { dir, files, existing, written: false }
+  const existing = files.filter((file) => exists(file))
+  if (options.dryRun) return { dir, files, existing, kept, written: false }
   if (existing.length > 0 && !options.force) {
     throw new Error(
       `${existing.length === 1 ? 'A file' : 'Files'} to write exist${existing.length === 1 ? 's' : ''} in ${dir}: ${existing.join(', ')}. --force writes over ${existing.length === 1 ? 'it' : 'them'}`
@@ -223,15 +332,45 @@ export async function init(options = {}) {
     fs.mkdirSync(path.dirname(target), { recursive: true })
     fs.writeFileSync(target, content)
   }
-  return { dir, files, existing, written: true }
+  return { dir, files, existing, kept, written: true }
+}
+
+/**
+ * Where a repository differs from what this version of init writes. A file of a repository's own
+ * only has to exist, the sample under `source/` is not looked at, and of `package.json` the
+ * scripts of the plan have to be there.
+ * @param {InitOptions} [options]
+ * @returns {{ missing: string[], differs: string[], scripts: string[] }}
+ */
+export function checkBaseline(options = {}) {
+  const dir = path.resolve(options.dir || '.')
+  const plan = planFor(options, dir)
+  /** @type {{ missing: string[], differs: string[], scripts: string[] }} */
+  const report = { missing: [], differs: [], scripts: [] }
+  for (const [file, content] of plan) {
+    if (file.startsWith('source/')) continue
+    const target = path.join(dir, file)
+    if (!fs.existsSync(target)) report.missing.push(file)
+    else if (!OWN_FILES.includes(file) && fs.readFileSync(target, 'utf-8') !== content) {
+      report.differs.push(file)
+    }
+  }
+  if (plan.has('package.json') && fs.existsSync(path.join(dir, 'package.json'))) {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
+    report.scripts = Object.keys(JSON.parse(plan.get('package.json') ?? '{}').scripts).filter(
+      (script) => !pkg.scripts?.[script]
+    )
+  }
+  return report
 }
 
 const HELP = `Usage: chassis-assets init [dir] [options]
 
 Writes the baseline of a repository of assets into dir, the working directory by default:
 package.json with the chassis block and the scripts, chassis.checks.json, .gitattributes
-with the Git LFS rules, .gitignore, .nvmrc, README.md, a CI and a release workflow, and
-one file under source/ for the first build. Writes nothing when a file exists.
+with the Git LFS rules, .gitignore, .nvmrc, README.md, CHANGELOG.md, AGENTS.md, CLAUDE.md, a
+CI and a release workflow, and one file under source/ for the first build. Writes nothing when
+a file exists. package.json, chassis.checks.json and CHANGELOG.md are never written over.
 
 Options:
   --name <name>          The package name, default the name of the folder
@@ -239,7 +378,14 @@ Options:
   --app <name:platforms> An app and its platforms, such as docs:web or mobile:ios,android,
                          one or more times; default site:web. Platforms: ${getPlatformNames().join(', ')}
   --pm <npm|pnpm>        The package manager the README and the workflows name, default npm
-  --force                Write over the files that exist
+  --repository <repo>    The repository, owner/name or an address; default the origin remote
+                         of the folder, or left out
+  --license <license>    The license, default MIT
+  --author <author>      The author; default user.name of git, or left out
+  --only <file…>         Write these files only, for a repository made earlier
+  --check                Report where the repository differs from what this version writes,
+                         and exit 1 when it does. Writes nothing
+  --force                Write over the files that exist, but never the three above
   --dry-run              Print the files, write nothing
   --help, -h             Print this help
 `
@@ -247,11 +393,11 @@ Options:
 /**
  * Parse the arguments of the command.
  * @param {string[]} argv
- * @returns {InitOptions & { help: boolean }}
+ * @returns {InitOptions & { help: boolean, check?: boolean }}
  * @throws {Error} On an unknown option, or an option without its value
  */
 export function parseInitArgs(argv) {
-  /** @type {InitOptions & { help: boolean }} */
+  /** @type {InitOptions & { help: boolean, check?: boolean }} */
   const options = { brands: [], apps: {}, help: false }
   const values = (i) => {
     const list = []
@@ -267,6 +413,16 @@ export function parseInitArgs(argv) {
       options.force = true
     } else if (arg === '--dry-run') {
       options.dryRun = true
+    } else if (arg === '--check') {
+      options.check = true
+    } else if (arg === '--only') {
+      const { list, i: next } = values(i)
+      options.only = [...(options.only ?? []), ...list]
+      i = next
+    } else if (['--repository', '--license', '--author'].includes(arg)) {
+      const { list, i: next } = values(i)
+      options[arg.slice(2)] = list.join(' ')
+      i = next
     } else if (arg === '--name' || arg === '--pm') {
       const { list, i: next } = values(i)
       if (list.length > 1) throw new Error(`${arg} takes one value`)
@@ -316,22 +472,46 @@ export function cli(argv = process.argv.slice(2)) {
     console.log(HELP)
     process.exit(0)
   }
+  if (options.check) {
+    try {
+      const { missing, differs, scripts } = checkBaseline(options)
+      for (const file of missing) console.log(`➕ ${file}: missing`)
+      for (const file of differs) console.log(`✏️  ${file}: differs`)
+      for (const script of scripts) console.log(`➕ package.json: no script ${script}`)
+      if (missing.length + differs.length + scripts.length === 0) {
+        console.log(`✅ The repository has what this version of init writes`)
+        return
+      }
+      console.log(`\nchassis-assets init --only <file…> writes a missing file, and with --force`)
+      console.log(`one that differs. A repository may differ on purpose.`)
+      process.exit(1)
+    } catch (error) {
+      console.error(`❌ ${error.message}`)
+      process.exit(1)
+    }
+  }
   init(options)
-    .then(({ files, existing, written }) => {
+    .then(({ files, existing, kept, written }) => {
       const shown = options.dir || '.'
       for (const file of files) {
         console.log(`📄 ${file}${!written && existing.includes(file) ? ' (exists)' : ''}`)
       }
+      for (const file of kept) console.log(`🔒 Kept ${file}: it holds the data of the repository`)
       if (!written) {
         console.log(
           `\n🔍 Dry run: ${files.length} files to write in ${shown}${existing.length > 0 ? `, ${existing.length} of them exist` : ''}`
         )
         return
       }
+      if (options.only?.length) {
+        console.log(`\n✅ ${files.length} files in ${shown}`)
+        return
+      }
       const run = PACKAGE_MANAGERS[options.pm || DEFAULTS.pm]
       console.log(`\n✅ ${files.length} files in ${shown}\n\nNext:`)
       if (shown !== '.') console.log(`  cd ${shown}`)
       console.log(`  git init && git lfs install\n  ${run.install}\n  ${run.run} build`)
+      console.log(`  git add . (with ${run.lockfile}, which the workflows install from)`)
     })
     .catch((error) => {
       console.error(`❌ ${error.message}`)
