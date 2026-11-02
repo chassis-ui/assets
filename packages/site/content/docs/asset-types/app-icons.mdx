@@ -1,0 +1,151 @@
+---
+title: App Icons
+description: Where the app icons of an iOS app and of an Android app go in the source, as bundles, what each bundle holds, and what the build writes for each platform.
+toc: true
+---
+
+## Introduction
+
+An app icon is a bundle: a folder that ends in `.icon` for iOS, the file that Icon Composer saves, or in `.adaptive` for Android, with the SVG layers of an adaptive icon. To the build a bundle is one file. It copies the bundle to the platform that takes it, renames the bundle for the platform and leaves the names of the files in it alone, since they name each other. The build writes no sizes: Xcode writes the older icon images from the `.icon` bundle, and Android draws the adaptive icon from its layers at any size.
+
+Each platform has a bundle of its own, and nothing is derived from the other. The `.icon` bundle holds glass, blend modes and scales that have no Android form, and a layer of an adaptive icon has a safe zone of its own, so the designer draws both.
+
+## Source layout
+
+A bundle lives in a folder of its own under an app, beside `fonts/`, `images/` and `icons/`. The folder has any name, such as `app-icon/`. The default brand holds the icons of every brand, and a brand holds a bundle of its own where its icon differs.
+
+```text
+source/
+├── _default/
+│   └── <app>/
+│       └── app-icon/
+│           ├── app-icon.icon/        -> the bundle of Icon Composer, for iOS
+│           │   ├── Assets/
+│           │   │   └── logomark.svg
+│           │   └── icon.json
+│           └── app-icon.adaptive/    -> the layers of the adaptive icon, for Android
+│               ├── background.svg
+│               ├── foreground.svg
+│               └── monochrome.svg
+└── <brand>/
+    └── <app>/
+        └── app-icon/
+            ├── app-icon.icon/        -> replaces the default bundle whole
+            └── app-icon.adaptive/
+```
+
+A brand replaces a bundle whole, with a bundle of the same path, so a brand bundle holds every file of the icon and not only the ones that differ. An app icon that every app of a brand shares lives in `source/<brand>/_shared/app-icon/`, and a bundle of the same path in the folder of an app replaces it for that app.
+
+Keep a bundle out of `fonts/`, `images/` and `icons/`. Under those folders it is an ordinary folder, whose files the build renames and sorts by the rules of the type, and the source lint rejects its name.
+
+## Formats
+
+The `.icon` bundle holds what Icon Composer saves: `icon.json`, and the SVG or PNG files it names in `Assets/`. The `.adaptive` bundle holds SVG files only, one per layer.
+
+<CxTable>
+| Bundle | Holds | Web | iOS | Android |
+| --- | --- | --- | --- | --- |
+| `.icon` | `icon.json` and the files of `Assets/` | Dropped | Copied | Dropped |
+| `.adaptive` | `background.svg`, `foreground.svg`, `monochrome.svg` | Dropped | Dropped | Copied |
+</CxTable>
+
+The source lint reads each bundle. An `.icon` bundle needs its `icon.json`, which is JSON, and a file in `Assets/` for every layer the manifest names. An `.adaptive` bundle needs `background.svg` and `foreground.svg`, every layer has a square `viewBox`, and a file of another name in it is an error. A bundle without `monochrome.svg` is a warning, since a themed icon then shows the icon as it is.
+
+The web gets no bundle. The favicons and the icons of a web manifest are images of `images/`, exported at their sizes.
+
+## Naming
+
+Name a bundle in lowercase with hyphens, as any file: `app-icon.icon`, `app-icon.adaptive`. The build renames the bundle to snake_case for iOS and Android, and the files in it keep their names.
+
+The name of the bundle is the name the app reads. On iOS, the bundle `app-icon.icon` is `app_icon.icon`, and the app icon setting of the target is `app_icon`. On Android, the bundle `app-icon.adaptive` is the resource `@mipmap/app_icon`, and its layers are the drawables `app_icon_background`, `app_icon_foreground` and `app_icon_monochrome`. A bundle named `ic-launcher.adaptive` so becomes `@mipmap/ic_launcher`, the name of the icon in a new project of Android Studio. Give a bundle the same name in every brand, so that the app names one icon.
+
+The name of an `.adaptive` bundle has to be a resource name after the rename: lowercase letters, digits and underscores, a letter first, and no word of Java. A bundle named otherwise stays a folder in a build with `--res`.
+
+## Adding files
+
+The designer makes the two bundles, each with the tool of its platform, and puts them in the folder of the app.
+
+### iOS
+
+Draw the icon in [Icon Composer](https://developer.apple.com/documentation/xcode/creating-your-app-icon-using-icon-composer) and save the bundle as `app-icon.icon` into `source/<brand>/<app>/app-icon/`. Icon Composer writes `icon.json` and the layer files in `Assets/`. Keep them as saved: `icon.json` names the files, so a renamed file is a layer the app cannot find.
+
+### Android
+
+Draw three layers on a square of 108 by 108 dp, and export each as an SVG file named after its layer. The background fills the square. The foreground holds the mark, inside the circle of 66 dp in the center, which is what every shape of a launcher shows of it. The monochrome layer holds the mark again in one color; the launcher reads only its alpha and tints it for a themed icon.
+
+Draw the layers with paths, the basic shapes and gradients, which a vector drawable takes. Text, an embedded image and a filter are not drawn in a build with `--vector-drawables`, and a layer that draws nothing then leaves the bundle out of `res/`. The build does not resize the layers: an app that supports Android below API 26 adds its own icon for those devices.
+
+## Best practices
+
+The build copies a bundle as the designer saved it. These practices keep the icon one file per platform and its name stable across brands.
+
+- **Keep the bundle whole:** a brand holds every file of its bundle, and `icon.json` names the files of `Assets/` as Icon Composer wrote them.
+- **Name the bundle the same in every brand:** the app reads one icon name, such as `app_icon`, whichever brand it is built for.
+- **Draw the Android layers for the safe zone:** a launcher masks the 108 dp square to a circle, a squircle or a rounded square, and the center 66 dp are shown in every shape.
+
+Avoid the habits that undo this:
+
+- **Do not put a bundle under `images/` or `icons/`:** there it is an ordinary folder, and the build renames and sorts its files by the rules of the type. Keep it in a folder of its own.
+- **Do not export the app icon as sized PNG files:** the build writes no `AppIcon.appiconset` and no `mipmap-*dpi` files. Xcode writes the sizes from the `.icon` bundle, and Android draws the adaptive icon from its layers.
+
+## Platform output
+
+The build copies a bundle to the folder of the same name in the job of the platform that takes it, renames the bundle to snake_case and keeps the files in it as they are.
+
+<CxTable>
+| Platform | Folder | Name | Formats |
+| --- | --- | --- | --- |
+| Web | None | None | No bundle |
+| iOS | `dist/ios/<app>/<brand>/app-icon/` | snake_case bundle, files kept | `.icon` |
+| Android | `dist/android/<app>/<brand>/app-icon/` | snake_case bundle, files kept | `.adaptive` |
+</CxTable>
+
+For the source layout above, the iOS job gets the bundle of Icon Composer:
+
+```text
+dist/ios/<app>/<brand>/
+└── app-icon/
+    └── app_icon.icon/
+        ├── Assets/
+        │   └── logomark.svg
+        └── icon.json
+```
+
+The Android job gets the layers:
+
+```text
+dist/android/<app>/<brand>/
+└── app-icon/
+    └── app_icon.adaptive/
+        ├── background.svg
+        ├── foreground.svg
+        └── monochrome.svg
+```
+
+A build with `chassis-assets build --vector-drawables` writes each layer as a vector drawable of the same name, in the bundle:
+
+```text
+dist/android/<app>/<brand>/
+└── app-icon/
+    └── app_icon.adaptive/
+        ├── background.xml
+        ├── foreground.xml
+        └── monochrome.xml
+```
+
+A build with `chassis-assets build --vector-drawables --res` moves the layers to `res/drawable/`, under the name of the bundle, and writes `res/mipmap-anydpi-v26/app_icon.xml`, which names them: the app icon that the manifest of the app reads as `@mipmap/app_icon`. The bundle is gone.
+
+```text
+dist/android/<app>/<brand>/
+└── res/
+    ├── drawable/
+    │   ├── app_icon_background.xml
+    │   ├── app_icon_foreground.xml
+    │   └── app_icon_monochrome.xml
+    └── mipmap-anydpi-v26/
+        └── app_icon.xml
+```
+
+A build with `--res` alone leaves the bundle where it is and warns that it is no app icon without `--vector-drawables`. The [build system page]([[docsref:/getting-started/build-system#res-folder]]) has the rules of the option.
+
+See the [iOS]([[docsref:/use-in-project/ios-applications#app-icon]]) and [Android]([[docsref:/use-in-project/android-applications#app-icon]]) docs for how an app uses these files.

@@ -55,19 +55,14 @@ Keep resolution variants under `images/`. In any other folder the Android output
 
 ## Bundles
 
-A folder that ends in `.icon` is a bundle of Icon Composer, the app icon of an iOS app. To the build it is one file, because the files in it name each other in its `icon.json`: the build copies it to iOS only, in snake_case, and leaves the names of the files in it alone. The source lint checks the name of the bundle only.
+A folder that ends in `.icon` or `.adaptive` is a bundle, the app icon of an iOS or of an Android app. To the build it is one file, because the files in it name each other: the build copies it to the platform that takes it, renames the bundle to snake_case and leaves the names of the files in it alone. The source lint reads what each bundle holds.
 
 ```text
-source/<brand>/<app>/app-icon/app-icon.icon/   -> dist/ios/<app>/<brand>/app-icon/app_icon.icon/
-```
-
-A folder that ends in `.adaptive` is the app icon of an Android app, of the SVG layers `background.svg`, `foreground.svg` and `monochrome.svg`. The build copies it to Android only. The source lint checks its name and its layers: a background and a foreground are required, and each layer has a square `viewBox`.
-
-```text
+source/<brand>/<app>/app-icon/app-icon.icon/       -> dist/ios/<app>/<brand>/app-icon/app_icon.icon/
 source/<brand>/<app>/app-icon/app-icon.adaptive/   -> dist/android/<app>/<brand>/app-icon/app_icon.adaptive/
 ```
 
-A brand replaces a bundle whole, with a bundle of the same path. Keep a bundle in a folder of its own, such as `app-icon/`: under `fonts/`, `images/` or `icons/` it is an ordinary folder, which the source lint rejects. The [iOS page]([[docsref:/use-in-project/ios-applications#app-icon]]) and the [Android page]([[docsref:/use-in-project/android-applications#app-icon]]) say how an app uses each.
+A brand replaces a bundle whole, with a bundle of the same path. Keep a bundle in a folder of its own, such as `app-icon/`: under `fonts/`, `images/` or `icons/` it is an ordinary folder, which the source lint rejects. The [app icons page]([[docsref:/asset-types/app-icons]]) has the files of each bundle, the rules of the lint and what the build writes with `--vector-drawables` and `--res`.
 
 ## Adding files
 

@@ -433,7 +433,7 @@ Icon(
 
 ## App icon
 
-The app icon is an adaptive icon, of a background, a foreground and a monochrome layer. Keep the layers as SVG files in a bundle, a folder that ends in `.adaptive`, in a folder of its own:
+The app icon is an adaptive icon, of a background, a foreground and a monochrome layer. The designer keeps the layers as SVG files in a bundle, a folder that ends in `.adaptive`, in a folder of its own:
 
 ```text
 source/<brand>/<app>/app-icon/app-icon.adaptive/
@@ -442,7 +442,7 @@ source/<brand>/<app>/app-icon/app-icon.adaptive/
 └── monochrome.svg
 ```
 
-Draw each layer on a square of 108 by 108, with the mark inside the circle of 66 in its center, which is what every launcher shows of it. The launcher tints the monochrome layer for a themed icon and reads only its alpha. Android requires the background and the foreground, and a brand replaces the bundle whole.
+Each layer is drawn on a square of 108 by 108 dp, with the mark inside the circle of 66 dp in its center, which is what every launcher shows of it. Android requires the background and the foreground, the launcher reads the alpha of the monochrome layer for a themed icon, and a brand replaces the bundle whole. The [app icons page]([[docsref:/asset-types/app-icons]]) has the rules of the layers and of the name.
 
 A build with `--vector-drawables --res` writes the app icon:
 
@@ -462,7 +462,9 @@ Name it in the manifest of the app:
 <application android:icon="@mipmap/app_icon">
 ```
 
-Android reads an adaptive icon from API 26 on, and the build does not resize, so an app that supports a lower API adds its own icon for those. Without the options the bundle stays in `app-icon/app_icon.adaptive/`.
+The name of the bundle is the name of the resource: a bundle `ic-launcher.adaptive` is `@mipmap/ic_launcher`, the name of a new project of Android Studio, with the drawables `ic_launcher_background`, `ic_launcher_foreground` and `ic_launcher_monochrome`. Android reads an adaptive icon from API 26 on, and the build does not resize, so an app that supports a lower API adds its own icon for those.
+
+Without the options the bundle stays in `app-icon/app_icon.adaptive/`, with the SVG layers. With `--vector-drawables` alone the layers are vector drawables in the bundle, `background.xml`, `foreground.xml` and `monochrome.xml`, which you copy to `res/drawable/` under the names of the app icon XML above. With `--res` alone the bundle stays, and the build warns that it is no app icon without `--vector-drawables`.
 
 ## Other assets
 

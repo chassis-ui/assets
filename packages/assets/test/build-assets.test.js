@@ -368,7 +368,8 @@ describe('loadConfig()', () => {
       brandFolder: '_default',
       contracts: [
         expect.objectContaining({ job: 'web/site/alpha', files: expect.any(Array) }),
-        expect.objectContaining({ job: 'web/site/alpha', sets: expect.any(Array) })
+        expect.objectContaining({ job: 'web/site/alpha', sets: expect.any(Array) }),
+        expect.objectContaining({ job: 'ios/mobile/alpha', files: expect.any(Array) })
       ],
       lintAllow: [],
       ignore: [],
@@ -822,7 +823,8 @@ describe('a bundle', () => {
     const { out } = await build()
     const alpha = path.join(out, 'ios', BUNDLE.replace('%', 'alpha'))
     expect(listFiles(alpha)).toEqual(['icon.json'])
-    expect(read(alpha, 'icon.json')).toContain('alpha/mobile/app-icon')
+    // The manifest of `alpha` names no layer; the one of the default brand names `logo-Mark.svg`
+    expect(JSON.parse(read(alpha, 'icon.json')).groups).toEqual([])
   })
 
   test('is left out where the platform does not take it, with its Git LFS paths', async () => {

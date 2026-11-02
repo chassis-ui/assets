@@ -1303,9 +1303,22 @@ function writeResLayout(processor, destPath) {
     logger.log(`🗂️  Moved ${moved} files to ${res.name}/`)
   }
   cleanupEmptyDirectories(destPath)
-  if (left.length > 0) {
+
+  // A bundle that is no app icon says why: the layers are no vector drawables without the
+  // option, or a required layer or a usable name is missing
+  const job = path.relative(run.cwd, destPath)
+  const bundles = left.filter((file) => path.extname(file).toLowerCase() === res.appIcon.bundle)
+  const files = left.filter((file) => !bundles.includes(file))
+  bundles.forEach((bundle) =>
     stats.warnings.push(
-      `${left.length} file(s) have no place in ${res.name}/ and stay in ${path.relative(run.cwd, destPath)}: ${left.slice(0, 3).join(', ')}${left.length > 3 ? ', …' : ''}`
+      run.vectorDrawables
+        ? `${bundle} in ${job} is no app icon of ${res.name}/: it needs ${res.appIcon.required.join(' and ')} as vector drawables, under a name that can be a resource`
+        : `${bundle} in ${job} is no app icon of ${res.name}/ without --vector-drawables`
+    )
+  )
+  if (files.length > 0) {
+    stats.warnings.push(
+      `${files.length} file(s) have no place in ${res.name}/ and stay in ${job}: ${files.slice(0, 3).join(', ')}${files.length > 3 ? ', …' : ''}`
     )
   }
 }

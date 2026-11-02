@@ -141,7 +141,8 @@ describe('checkContracts()', () => {
 
   test('the golden output keeps the contracts of the fixture, one result per job', () => {
     expect(checkContracts({ cwd: FIXTURE, out: '../golden' })).toEqual([
-      { job: 'web/site/alpha', dir: '../golden/web/site/alpha', files: 18, missing: [] }
+      { job: 'web/site/alpha', dir: '../golden/web/site/alpha', files: 18, missing: [] },
+      { job: 'ios/mobile/alpha', dir: '../golden/ios/mobile/alpha', files: 19, missing: [] }
     ])
   })
 
@@ -157,7 +158,8 @@ describe('checkContracts()', () => {
         missing: [
           { path: 'images/logo/mark@3x.png', reader: 'the logo component of the fixture site' }
         ]
-      }
+      },
+      { job: 'ios/mobile/alpha', dir: 'build/ios/mobile/alpha', files: 19, missing: [] }
     ])
   })
 

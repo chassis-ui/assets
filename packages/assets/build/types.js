@@ -240,6 +240,17 @@
  *   leaves the platform as it is
  * @property {FontSubset} [subset] - The fonts `--subset` writes again for the platform.
  *   Without it the option leaves the platform as it is
+ * @property {IconBundle} [appIcon] - What the app icon bundle of the platform holds, which
+ *   the source lint reads. The build copies the bundle as one file
+ */
+
+/**
+ * The app icon bundle of a platform that takes one as a folder of files that name each
+ * other, such as the `.icon` bundle of Icon Composer.
+ * @typedef {Object} IconBundle
+ * @property {string} bundle - The extension of the bundle
+ * @property {string} manifest - The file of the bundle that names its layers, JSON
+ * @property {string} assets - The folder of the bundle that holds the files of the layers
  */
 
 /**

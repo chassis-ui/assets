@@ -46,6 +46,48 @@ const ARROW_DRAWABLE = `<vector xmlns:android="http://schemas.android.com/apk/re
 </vector>
 `
 
+const GRADIENT = `<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  <rect width="108" height="108" fill="#001E25"/>
+  <rect width="108" height="108" fill="url(#shade)"/>
+  <defs>
+    <linearGradient id="shade" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-opacity="0"/>
+      <stop offset="1" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+</svg>
+`
+
+const GRADIENT_DRAWABLE = `<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FF001E25"
+        android:pathData="M0 0h108v108H0z"/>
+    <path
+        android:pathData="M0 0h108v108H0z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108">
+                <item
+                    android:color="#00000000"
+                    android:offset="0"/>
+                <item
+                    android:color="#99000000"
+                    android:offset="1"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
+`
+
 const LAYERS = ['background', 'foreground', 'monochrome']
 
 const SHAPELESS = '<svg xmlns="http://www.w3.org/2000/svg"><defs><font id="f"/></defs></svg>\n'
@@ -128,6 +170,13 @@ describe('convertFolder()', () => {
     fs.writeFileSync(path.join(dir, 'ic_check.svg'), CHECK)
     await convertFolder(dir, conversion, await loadConverter())
     expect(read(dir, 'ic_check.xml')).toContain('android:fillColor="#FFFF0000"')
+  })
+
+  test('a path that a gradient fills has no fill color, and the others keep theirs', async () => {
+    const dir = tempDir()
+    fs.writeFileSync(path.join(dir, 'background.svg'), GRADIENT)
+    await convertFolder(dir, conversion, await loadConverter())
+    expect(read(dir, 'background.xml')).toBe(GRADIENT_DRAWABLE)
   })
 
   test('keeps a file that has no shape', async () => {

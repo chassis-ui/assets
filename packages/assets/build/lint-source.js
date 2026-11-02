@@ -6,6 +6,11 @@
  * in a type folder of an app, and no Git LFS pointer in place of a file. A name that
  * `lint.allow` of `chassis.checks.json` keeps, with its reason, is a warning, not an error.
  *
+ * It also checks the app icons against the app icons page: an `.icon` bundle holds the
+ * `icon.json` of Icon Composer and the layer files it names, and an `.adaptive` bundle holds
+ * square SVG layers named after the layers of an adaptive icon, a background and a
+ * foreground among them.
+ *
  * It also checks the fonts against the fonts page: a `@font-face` rule of a stylesheet in
  * `fonts/` names the family, the weight and the style of the file it declares, read from
  * the file, and of the files of the same name in another format, which an app gets. Two
@@ -23,6 +28,7 @@ import fs from 'fs'
 import path from 'path'
 import { assetTypes } from './asset-types.js'
 import androidProcessor from './processors/android.js'
+import iosProcessor from './processors/ios.js'
 import { bundleIndex } from './processors/shared.js'
 import {
   SHARED_FOLDER,
@@ -286,6 +292,76 @@ function listSource(dir, ignore) {
 }
 
 /**
+ * The bundles of one format in the source, with the files in each.
+ * @param {string[]} files - The files of `source/`
+ * @param {string} extension - The extension of the bundle
+ * @returns {Map<string, string[]>} The files of each bundle, relative to it, by the path of
+ *   the bundle relative to `source/`
+ */
+function sourceBundles(files, extension) {
+  /** @type {Map<string, string[]>} */
+  const bundles = new Map()
+  for (const file of files) {
+    const parts = file.split('/')
+    const index = bundleIndex(parts.slice(2)) + 2
+    if (index < 2 || path.extname(parts[index]).toLowerCase() !== extension) continue
+    const bundle = parts.slice(0, index + 1).join('/')
+    bundles.set(bundle, [...(bundles.get(bundle) ?? []), parts.slice(index + 1).join('/')])
+  }
+  return bundles
+}
+
+/**
+ * The names of the files that the manifest of an icon bundle names as its layers, where it
+ * has the form Icon Composer writes: `groups[].layers[].image-name`.
+ * @param {unknown} manifest - The parsed manifest
+ * @returns {string[]}
+ */
+export function iconLayerFiles(manifest) {
+  if (typeof manifest !== 'object' || manifest === null) return []
+  const groups = /** @type {{ groups?: unknown }} */ (manifest).groups
+  if (!Array.isArray(groups)) return []
+  return groups
+    .flatMap((group) => (Array.isArray(group?.layers) ? group.layers : []))
+    .map((layer) => layer?.['image-name'])
+    .filter((name) => typeof name === 'string' && name !== '')
+}
+
+/**
+ * The icon bundles of the source, the app icons of iOS: each holds the manifest Icon Composer
+ * writes, which is JSON, and a file in the assets folder for every layer it names. A bundle
+ * that lacks one fails in the asset compiler of the app, far from the designer.
+ * @param {string} sourceDir
+ * @param {string[]} files - The files of `source/`
+ * @returns {Array<{ file: string, message: string }>} The errors
+ */
+function lintIconBundles(sourceDir, files) {
+  const { bundle: extension, manifest, assets } = iosProcessor.appIcon
+  const errors = []
+  for (const [bundle, names] of sourceBundles(files, extension)) {
+    if (!names.includes(manifest)) {
+      errors.push({ file: bundle, message: `has no ${manifest}, which Icon Composer writes` })
+      continue
+    }
+    let parsed
+    try {
+      parsed = JSON.parse(fs.readFileSync(path.join(sourceDir, bundle, manifest), 'utf-8'))
+    } catch {
+      errors.push({ file: `${bundle}/${manifest}`, message: 'is not valid JSON' })
+      continue
+    }
+    for (const name of iconLayerFiles(parsed)) {
+      if (names.includes(`${assets}/${name}`)) continue
+      errors.push({
+        file: `${bundle}/${manifest}`,
+        message: `names the layer file ${name}, which is not in ${assets}/`
+      })
+    }
+  }
+  return errors
+}
+
+/**
  * The adaptive icon bundles of the source: the layers are SVG files named after the layer, a
  * background and a foreground are what Android needs, and a layer is square. Without a
  * monochrome layer the launcher of a themed icon shows the icon as it is, which is a warning.
@@ -298,17 +374,8 @@ function lintAppIcons(sourceDir, files) {
   const allowed = layers.map((layer) => `${layer}.svg`)
   const errors = []
   const warnings = []
-  /** @type {Map<string, string[]>} */
-  const bundles = new Map()
-  for (const file of files) {
-    const parts = file.split('/')
-    const index = bundleIndex(parts.slice(2)) + 2
-    if (index < 2 || path.extname(parts[index]).toLowerCase() !== extension) continue
-    const bundle = parts.slice(0, index + 1).join('/')
-    bundles.set(bundle, [...(bundles.get(bundle) ?? []), parts.slice(index + 1).join('/')])
-  }
 
-  for (const [bundle, names] of bundles) {
+  for (const [bundle, names] of sourceBundles(files, extension)) {
     for (const name of names) {
       if (!allowed.includes(name)) {
         errors.push({
@@ -572,6 +639,7 @@ export function lintSource(options = {}) {
     }
   }
 
+  errors.push(...lintIconBundles(sourceDir, files))
   const icons = lintAppIcons(sourceDir, files)
   errors.push(...icons.errors)
   warnings.push(...icons.warnings)

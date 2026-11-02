@@ -39,8 +39,10 @@ name with capitals (`HeroBanner.png`), a WebP image, `@1.5x`, `@2x` and `@3x` se
 image folder (`images/logo/`), icons in SVG, PDF and PNG with an icon font and its
 stylesheet, a nested icon folder (`icons/svgs/`), an icon that already has `ic_`, and a folder
 that is not one of the three types (`data/`) with a dot inside a name. `app-icon/` holds a
-bundle, whose file `logo-Mark.svg` keeps a name that the rules of a file would change, and
-`alpha` replaces it with a bundle of one file.
+bundle, whose `icon.json` is the manifest of Icon Composer and names its one layer file,
+`logo-Mark.svg`, which keeps a name that the rules of a file would change; `alpha` replaces
+it with a bundle of one file, a manifest that names no layer. Beside it, an `.adaptive`
+bundle holds the three layers of an Android app icon.
 
 The shared folders hold the order of the folders a job reads: `_default/_shared/data/notice.txt`
 is in every job, `alpha/_shared/data/notice.txt` replaces it in every job of `alpha`, and

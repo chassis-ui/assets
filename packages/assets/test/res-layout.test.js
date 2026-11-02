@@ -589,10 +589,27 @@ describe('generateAssets() with res', () => {
     expect(stats.resourceFiles).toBe(17)
     expect(stats.filesProcessed).toBe(plain.stats.filesProcessed)
     expect(stats.jobs).toEqual(plain.stats.jobs)
-    expect(stats.warnings).toHaveLength(2)
-    expect(stats.warnings[0]).toContain('7 file(s) have no place in res/')
-    expect(stats.warnings[0]).toContain(path.join('android/mobile/alpha'))
-    expect(stats.warnings[0]).toContain(path.join('fonts/text.otf'))
+    // Per job: the bundle that is no app icon without the option, then the files that stay
+    expect(stats.warnings).toHaveLength(4)
+    expect(stats.warnings[0]).toMatch(
+      /^app-icon[\\/]app_icon\.adaptive in .*android[\\/]mobile[\\/]alpha is no app icon of res\/ without --vector-drawables$/
+    )
+    expect(stats.warnings[1]).toContain('6 file(s) have no place in res/')
+    expect(stats.warnings[1]).toContain(path.join('android/mobile/alpha'))
+    expect(stats.warnings[1]).toContain(path.join('fonts/text.otf'))
+  })
+
+  test('with vectorDrawables, a bundle without a required layer is no app icon, with the reason', async () => {
+    const root = copyFixture()
+    const icons = path.join(root, 'source/_default/mobile/icons')
+    for (const file of ['arrow-right.svg', 'ic_close.svg', 'svgs/check_mark.svg']) {
+      fs.writeFileSync(path.join(icons, file), ARROW)
+    }
+    fs.rmSync(path.join(root, 'source/_default/mobile/app-icon/app-icon.adaptive/foreground.svg'))
+    const { stats } = await build(root, { res: true, vectorDrawables: true })
+    expect(stats.warnings[0]).toMatch(
+      /^app-icon[\\/]app_icon\.adaptive in .*android[\\/]mobile[\\/]alpha is no app icon of res\/: it needs background and foreground as vector drawables, under a name that can be a resource$/
+    )
   })
 
   test('with vectorDrawables, the icons are in res/drawable/', async () => {

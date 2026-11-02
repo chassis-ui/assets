@@ -336,9 +336,9 @@ struct NextButton: View {
 
 ## App icon
 
-The build keeps the app icon as the bundle that Icon Composer saves, so you make no image sets and no sizes for it. A file `source/<brand>/<app>/app-icon/app-icon.icon` is written to `dist/ios/<app>/<brand>/app-icon/app_icon.icon`, with the same name in every brand.
+The build keeps the app icon as the bundle that Icon Composer saves, so you make no image sets and no sizes for it. A bundle `source/<brand>/<app>/app-icon/app-icon.icon` is written to `dist/ios/<app>/<brand>/app-icon/app_icon.icon`, with the same name in every brand, and the files in it keep their names. The `--icon-catalog` option leaves it alone: the bundle is no icon of `icons/`. The [app icons page]([[docsref:/asset-types/app-icons]]) says what the bundle holds and how the designer saves it.
 
-Add the bundle to the project with **File → Add Files to…**, with the app target checked, beside the asset catalog and not inside it. Then set **App Icon** under **General → App Icons and Launch Screen** of the target to `app_icon`, the name of the bundle without its extension. Xcode writes the older icon images from it when it compiles. The [other assets page]([[docsref:/asset-types/other#bundles]]) has the rules of a bundle.
+Xcode 26 or later reads a `.icon` bundle. Add it to the project with **File → Add Files to…**, with the app target checked, beside the asset catalog and not inside it. Then set **App Icon** under **General → App Icons and Launch Screen** of the target to `app_icon`, the name of the bundle without its extension. Xcode writes the older icon images from it when it compiles. A bundle of another name gives the setting another value: the build renames `my-app.icon` to `my_app.icon`, so the setting is `my_app`.
 
 ## Other assets
 

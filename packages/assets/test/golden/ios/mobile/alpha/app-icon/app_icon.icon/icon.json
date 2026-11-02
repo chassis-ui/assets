@@ -1,1 +1,14 @@
-fixture: alpha/mobile/app-icon/app-icon.icon/icon.json
+{
+  "fill" : {
+    "automatic-gradient" : "srgb:0.60000,0.10000,0.10000,1.00000"
+  },
+  "groups" : [
+
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

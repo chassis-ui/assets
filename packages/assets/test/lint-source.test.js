@@ -18,6 +18,7 @@ import {
   checkName,
   compareFonts,
   declaredWeights,
+  iconLayerFiles,
   isOfFamily,
   isOfFormat,
   lintSource,
@@ -100,6 +101,22 @@ describe('matchesPattern()', () => {
   })
 })
 
+describe('iconLayerFiles()', () => {
+  test('the image-name of each layer of each group, and nothing of another shape', () => {
+    const manifest = {
+      groups: [
+        { layers: [{ 'image-name': 'a.svg' }, { name: 'no file' }] },
+        { layers: [{ 'image-name': 'b.png' }] },
+        { shadow: {} }
+      ]
+    }
+    expect(iconLayerFiles(manifest)).toEqual(['a.svg', 'b.png'])
+    expect(iconLayerFiles({ groups: 'none' })).toEqual([])
+    expect(iconLayerFiles([])).toEqual([])
+    expect(iconLayerFiles(null)).toEqual([])
+  })
+})
+
 describe('lintSource()', () => {
   test('a bundle has one name: the files in it are not checked', () => {
     const root = copyFixture()
@@ -113,6 +130,52 @@ describe('lintSource()', () => {
           'has the name "IconComposer", which is not of lowercase letters, digits and hyphens, such as "icon-composer.icon"'
       }
     ])
+  })
+
+  describe('an icon bundle', () => {
+    const bundle = '_default/mobile/app-icon/app-icon.icon'
+    const fixtureBundle = () => {
+      const root = copyFixture()
+      return { root, folder: path.join(root, 'source', bundle) }
+    }
+    const errorsOf = (/** @type {string} */ root) =>
+      lintSource({ cwd: root }).errors.filter((e) => e.file.startsWith(bundle))
+
+    test('of icon.json and the layer file it names passes', () => {
+      expect(errorsOf(fixtureBundle().root)).toEqual([])
+    })
+
+    test('without icon.json is an error', () => {
+      const { root, folder } = fixtureBundle()
+      fs.rmSync(path.join(folder, 'icon.json'))
+      expect(errorsOf(root)).toEqual([
+        { file: bundle, message: 'has no icon.json, which Icon Composer writes' }
+      ])
+    })
+
+    test('with an icon.json that is not JSON is an error', () => {
+      const { root, folder } = fixtureBundle()
+      fs.writeFileSync(path.join(folder, 'icon.json'), '{ "groups": [ ')
+      expect(errorsOf(root)).toEqual([
+        { file: `${bundle}/icon.json`, message: 'is not valid JSON' }
+      ])
+    })
+
+    test('whose icon.json names a layer file that is not in Assets/ is an error', () => {
+      const { root, folder } = fixtureBundle()
+      fs.renameSync(path.join(folder, 'Assets/logo-Mark.svg'), path.join(folder, 'Assets/mark.svg'))
+      expect(errorsOf(root)).toEqual([
+        {
+          file: `${bundle}/icon.json`,
+          message: 'names the layer file logo-Mark.svg, which is not in Assets/'
+        }
+      ])
+    })
+
+    test('whose icon.json names no layer passes, as the bundle of alpha', () => {
+      const { errors } = lintSource({ cwd: fixtureBundle().root })
+      expect(errors.filter((e) => e.file.startsWith('alpha/mobile/app-icon'))).toEqual([])
+    })
   })
 
   describe('an adaptive icon', () => {

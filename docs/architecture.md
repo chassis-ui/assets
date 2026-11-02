@@ -143,7 +143,7 @@ jobs with their file counts.
 | `packages/assets/build/init.js`               | `init({ dir, name, brands, apps, pm, force, dryRun })`: the baseline of a repository of assets, `planFiles()` (the files and their content, from `templates/` beside the module and the values of the options), `parseApp()` (`<name>:<platforms>`), `checkName()` (no leading `_`, lowercase kebab-case), `parseInitArgs()`. Writes nothing when a file exists, unless `force`. `chassis-assets init`.                                                                                                                                                                                                                                                   |
 | `packages/assets/build/static-font.js`        | `staticFont(font, settings, { name })`: the static font of a variable font, every axis fixed. HarfBuzz pins the axes, loaded with `loadHarfBuzz()` from the folder of the package `subset-font`, keeping every glyph, character, feature and script, the outline of `.notdef`, and the names up to 255 with those of `STAT` and of the features (`layoutNameIds()`). `axisValuesAt()` and the naming port `_updateNameRecords` and `setRibbiBits` of fontTools, then the optical size moved into the family and the PostScript and unique names of a download by weight, as `build/instance-font.py` of website-assets did. `chassis-assets static-font`. |
 | `packages/assets/build/font-tables.js`        | The tables `static-font.js` reads and writes: `readNames()` and `writeNames()`, every entry of `name` with Mac Roman for Macintosh, `readStat()`, `readAxes()` of `fvar` with the defaults, `layoutNameIds()` of `GSUB` and `GPOS`, and `replaceTables()`, a font file written again with its directory and checksums. Node.js modules only.                                                                                                                                                                                                                                                                                                              |
-| `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read. A name of `lint.allow` of `chassis.checks.json` is a warning. `checkFontFace()` (pure): a font against its `@font-face` rule. `compareFonts()` (pure): two files of one name. `pnpm assets:lint:source`.                                                                                                                                                                                                                                                       |
+| `packages/assets/build/lint-source.js`        | `checkName()` (pure), `lintSource({ cwd, allowLfsPointers })`: the naming rules of the design-guidelines page, the type folder, Git LFS pointers, brands and apps the build does not read, and the app icon bundles. A name of `lint.allow` of `chassis.checks.json` is a warning. `checkFontFace()` (pure): a font against its `@font-face` rule. `compareFonts()` (pure): two files of one name. `pnpm assets:lint:source`.                                                                                                                                                                                                                             |
 | `packages/assets/build/root.js`               | `findRoot()`, `resolveRoot(cwd)`, `buildVersion()`, `isEntry()`: the repository root of a run, the version of the build, and whether a module was started or imported.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `packages/assets/build/cli.js`                | The entry of the root scripts and of `bin`: `build`, `analyze`, `validate`, `contract`, `verify`, `lfs`, `lint-source`, `archive`, each the `cli(argv)` of its module. Every module still runs on its own, `node packages/assets/build/build-assets.js`.                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `packages/assets/build/types.js`              | The shared JSDoc types: `BuildConfig`, `BuildOptions`, `Job`, `BuildStats`, `Processor` and the problems of the checks. Exports nothing at run time. `tsconfig.json` checks `packages/assets/build/` against them with `checkJs`.                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -302,6 +302,10 @@ default, and the default output is the same file for file with and without the c
   `pnpm install --ignore-workspace` does not. `loadConverter()` imports it when the option
   is given, before the output is removed; without the package the build fails there and
   the output stays.
+- `fillBlack` also gives a color to a path that a gradient fills. `aapt2` keeps that color and
+  drops the gradient, so the path is drawn black, and the build removes the color. `aapt2`
+  reports no error on such a file, so `pnpm test:android` does not catch it; the test of the
+  module does.
 - A file that converts to a drawable without a `<path>` stays as SVG, with a warning:
   the SVG file of the icon font, `icons/icons/ic_chassis_icons.svg`. A file that the
   converter throws on is an error of the build.
@@ -579,6 +583,22 @@ page: a rule of a stylesheet names the family of its file and the weights it hol
 - The lint reads no token and no file of another repository: a stylesheet and the font
   beside it are compared with each other (D26).
 
+### App icons in the source lint
+
+The lint reads what each bundle holds, so that a bundle that the asset compiler of an app
+would reject is found before it reaches one (D45). The build still copies a bundle as one file.
+
+- An `.icon` bundle (`lintIconBundles()`): `icon.json`, the manifest Icon Composer writes, is
+  an error when it is missing or is not JSON, and so is every `image-name` of
+  `groups[].layers[]` (`iconLayerFiles()`) that has no file in `Assets/`. The processor of iOS
+  names the extension, the manifest and the folder in `appIcon`. Nothing else of the manifest
+  is read: glass, fills and positions are Icon Composer's.
+- An `.adaptive` bundle (`lintAppIcons()`): the layers of `res.appIcon` of the Android
+  processor, `background.svg` and `foreground.svg` required, `monochrome.svg` a warning when
+  missing, a file of another name an error, and a layer without a square `viewBox` an error.
+- A bundle under `fonts/`, `images/` or `icons/` is an ordinary folder, whose name with a dot
+  fails the naming rule.
+
 ### Res folder
 
 `pnpm assets --res` is off by default, and the default output is the same file for file
@@ -616,7 +636,9 @@ with and without the code. It needs no package: the files are moved.
   `drawable/`.
 - With `--vector-drawables`, an `.adaptive` bundle becomes `res/drawable/<name>_<layer>.xml` and
   `res/mipmap-anydpi-v26/<name>.xml`, and its folder is gone (`moveAppIcons()`). Without the
-  option it stays, with the warning. A layer with the name of a drawable is an error.
+  option it stays, with a warning of its own that names the option; with the option, a bundle
+  that lacks a required layer as a vector drawable, or whose name cannot be a resource, stays
+  with a warning that says so. A layer with the name of a drawable is an error.
 - Compiled: `packages/assets/test/native/android/check.sh`, `pnpm test:android`, checks that a
   folder holds only what `res/` takes and no vector without a shape, which `aapt2` passes, then
   runs `aapt2 compile` and `aapt2 link` against `android.jar`, and fails on a night file without

@@ -36,6 +36,13 @@ const iosProcessor = {
   iconCatalog: { type: 'icons', name: 'Icons.xcassets', icons: true },
 
   /**
+   * What the app icon bundle holds, as Icon Composer saves it: `icon.json`, which names the
+   * files of its layers, and those files in `Assets/`. The source lint reads it; the build
+   * copies the bundle as one file
+   */
+  appIcon: { bundle: '.icon', manifest: 'icon.json', assets: 'Assets' },
+
+  /**
    * Transform filename to snake_case (lowercase with underscores)
    * @param {string} fileName - Original filename
    * @returns {string} Transformed filename in snake_case

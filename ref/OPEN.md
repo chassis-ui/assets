@@ -58,6 +58,10 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   family of `chassis` since 2026-10-19, gets the two files of `display` too.
 - A rule of the source lint for a file that no platform keeps, and a check of
   `chassis.checks.json` against `chassis.formats` (D29).
+- An app icon for Xcode before 26 or for Android below API 26: an `AppIcon.appiconset`, or
+  `mipmap-*dpi` files, from a master image. The build resizes nothing (D42, D44, D45), and
+  the pages say that an app adds its own icon for those. Comes back with a team that needs
+  one, as a bundle of the designer's files or as an option.
 - The ranges `latin-ext`, `math` and `symbols` of `packages/assets/build/subset-ranges.json`
   differ from the stylesheets of Google Fonts: `U+20AD-20C4` for `U+20AD-20C0`, `U+2074-209F`
   for `U+2074-208E, U+2090-209C`, and eight entries of `symbols`. Found with issue 7 and not
@@ -77,6 +81,9 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   flavor `example`. Both pages were last run on 2026-10-01.
 - A themed app icon on a launcher that shows one: the `<monochrome>` layer of D44 compiles and
   links, and the launcher of the API 35 emulator shows the full icon.
+- The `icon.json` of a later Icon Composer: the lint of D45 reads `groups[].layers[].image-name`,
+  the form of the bundles of 2026, and a manifest of another form passes with nothing read.
+  Checked with `actool` of Xcode 27.2 on the two bundles of website-assets on 2026-11-02.
 - A WebP or an AVIF file of `--webp` and `--avif` in a browser.
 - `--watch` on Windows. CI runs its tests on Linux.
 

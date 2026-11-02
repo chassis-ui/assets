@@ -367,7 +367,8 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   only a designer's file is needed. `actool` writes the older icon images from the bundle, so the
   build makes no `AppIcon.appiconset` and resizes nothing. Under `fonts/`, `images/` or `icons/`
   a bundle stays an ordinary folder, which keeps the optimizer, the catalogs and `res/` out of
-  it. The icon of an Android app is D44. The maintainer, 2026-11-01.
+  it. The icon of an Android app is D44. The maintainer, 2026-11-01. D45 has the source lint
+  read `icon.json`.
 - **D43. What starts the release of a repository of assets?** A push to `main` with a new
   version, in place of a tag. The `release.yml` that `init` writes reads the version of
   `package.json`, and when it has no tag `v<version>` it builds, verifies and creates the tag
@@ -404,3 +405,14 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   with the example app on an API 35 emulator, both brands, light and dark: the logos, the tint of
   the icons of `svg2vectordrawable` and the app icon. The session, at the request of the
   maintainer, 2026-11-01.
+- **D45. Does the source lint look into an `.icon` bundle?** Yes: `icon.json` has to be there
+  and be JSON, and every layer file it names has to be in `Assets/`, as the lint of D44 reads
+  the layers of an `.adaptive` bundle. A bundle that lacks a file passed the lint, the build
+  and `verify`, and failed in `actool` of the app, where no designer looks. The lint reads
+  `groups[].layers[].image-name` and nothing else of the manifest: the glass, the fills and the
+  positions are Icon Composer's, and the build still copies the bundle as one file (D42). With
+  it, the app icons got a page of their own under `asset-types/`, since a designer prepares them
+  and the iOS and Android pages said only how an app uses them, and a build with `--res` says
+  of a bundle that stays why it is no app icon. No `AppIcon.appiconset`, no `mipmap-*dpi`
+  files and no fallback below API 26: the build resizes nothing, as D42 and D44 say. The
+  session, 2026-11-02.

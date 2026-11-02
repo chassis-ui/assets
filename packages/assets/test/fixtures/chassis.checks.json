@@ -9,6 +9,12 @@
         "reader": "the logo component of the fixture site",
         "sets": ["images/logo/mark{,@2x,@3x}.png"]
       }
+    ],
+    "ios/mobile/alpha": [
+      {
+        "reader": "the app of the fixture, which names the app icon",
+        "files": ["app-icon/app_icon.icon/icon.json"]
+      }
     ]
   }
 }

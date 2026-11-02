@@ -38,7 +38,21 @@ export async function loadConverter() {
       { cause: error }
     )
   }
-  return (svg) => convert(svg, CONVERTER_OPTIONS)
+  return async (svg) => removeFillBesideGradient(await convert(svg, CONVERTER_OPTIONS))
+}
+
+/**
+ * Remove the fill color of a path that a gradient fills. `fillBlack` gives such a path a color
+ * as well, and `aapt2` keeps that color and drops the gradient, so the path is drawn black.
+ * @param {string} xml - A vector drawable
+ * @returns {string}
+ */
+function removeFillBesideGradient(xml) {
+  return xml.replace(/<path\b[^>]*[^/]>[\s\S]*?<\/path>/g, (element) =>
+    element.includes('<aapt:attr name="android:fillColor">')
+      ? element.replace(/\s+android:fillColor="[^"]*"/, '')
+      : element
+  )
 }
 
 /**

@@ -1,1 +1,21 @@
-fixture: _default/mobile/app-icon/app-icon.icon/icon.json
+{
+  "fill" : {
+    "automatic-gradient" : "srgb:0.07059,0.20392,0.33725,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "logo-Mark.svg",
+          "name" : "logo-Mark"
+        }
+      ]
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
