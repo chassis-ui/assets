@@ -42,16 +42,6 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   `chassis-assets-web-docs-<brand>-<version>.zip` of 0.5.0: its move to a release of website-assets
   (ozgurgunes/sinefil-web#222) takes the name of D46.
 
-- **The commands that the build prints.** The `--help` of the commands and some messages of
-  `packages/assets/build/` still say `pnpm assets` and `pnpm assets:verify`, the root scripts that
-  D50 removed. A repository of assets has `chassis-assets build` and its own scripts, so they are
-  wrong there too. A change to the published package, with a changeset, so it was left out of D50.
-
-- **`check-native --platform android` fails without a message on a machine with no Android SDK.**
-  Under `set -euo pipefail`, `newest()` of `build/native/android.sh` exits when `find` finds no
-  `build-tools`, before the `no aapt2` error of the next line. Seen on 2026-11-02. A change to the
-  published package, with a changeset.
-
 ## Not written
 
 - Files of the fixture for a `_light` and `_dark` pair, an SVG in `currentcolor` and a sprite.

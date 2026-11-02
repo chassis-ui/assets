@@ -284,7 +284,7 @@ describe('watchAssets()', () => {
   })
 })
 
-describe('pnpm assets --watch', () => {
+describe('chassis-assets build --watch', () => {
   test('builds, says that it watches, and builds again on a change', async () => {
     const root = fs.realpathSync(copyFixture())
     const out = tempDir()

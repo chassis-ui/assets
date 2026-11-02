@@ -50,7 +50,7 @@ function run(entry, args, cwd = FIXTURE) {
 
 const assets = (...args) => run(BUILD_CLI, args)
 
-describe('pnpm assets', () => {
+describe('chassis-assets build', () => {
   test('--help prints every option and exits 0', () => {
     const { code, stdout } = assets('--help')
     expect(code).toBe(0)
@@ -178,7 +178,7 @@ describe('pnpm assets', () => {
   })
 })
 
-describe('pnpm assets:analyze', () => {
+describe('chassis-assets analyze', () => {
   test('reports the duplicate of the fixture and exits 0', () => {
     const { code, stdout } = run(ANALYZE_CLI, ['--out', '../golden'])
     expect(code).toBe(0)
@@ -201,7 +201,7 @@ describe('pnpm assets:analyze', () => {
   })
 })
 
-describe('pnpm assets:validate', () => {
+describe('chassis-assets validate', () => {
   test('exits 0 on the golden output', () => {
     const { code, stdout } = run(VALIDATE_CLI, ['--out', '../golden'])
     expect(code).toBe(0)
@@ -236,7 +236,7 @@ describe('pnpm assets:validate', () => {
   })
 })
 
-describe('pnpm assets:lint:source', () => {
+describe('chassis-assets lint-source', () => {
   test('exits 1 on the fixture, whose names break the rules on purpose, and names them', () => {
     const { code, stdout, stderr } = run(LINT_SOURCE_CLI, [])
     expect(code).toBe(1)
@@ -260,7 +260,7 @@ describe('pnpm assets:lint:source', () => {
   })
 })
 
-describe('pnpm assets:contract and assets:verify', () => {
+describe('chassis-assets contract and verify', () => {
   /** The golden output without a file of the fixture's contract, in a temporary folder. */
   function brokenOutput() {
     const out = tempDir()

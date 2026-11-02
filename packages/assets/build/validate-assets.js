@@ -1060,7 +1060,7 @@ class DistValidator {
     }
 
     if (passed !== total || this.errors.length > 0) {
-      console.log('\n💡 Fix the issues and run `pnpm assets` to write dist/ again')
+      console.log('\n💡 Fix the issues and run `chassis-assets build` to write dist/ again')
       return false
     } else if (this.warnings.length > 0) {
       console.log('\n✅ Validation passed with warnings')
@@ -1071,7 +1071,7 @@ class DistValidator {
   }
 }
 
-const HELP = `Usage: pnpm assets:validate [options]
+const HELP = `Usage: chassis-assets validate [options]
 
 Checks an existing output against source/ and the configuration: the folders of every job,
 the type folders, every source file under its platform name, the counts, empty folders and
@@ -1085,7 +1085,7 @@ Options:
 `
 
 /**
- * The command line of the validator: `pnpm assets:validate`. Exits the process.
+ * The command line of the validator: `chassis-assets validate`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {

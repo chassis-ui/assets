@@ -174,7 +174,7 @@ export async function watchAssets(options = {}, events = {}) {
 const names = (jobs) => jobs.map((job) => `${job.platform}/${job.app}/${job.brand}`).join(', ')
 
 /**
- * The command line of the watch: `pnpm assets --watch`. Runs until it is stopped.
+ * The command line of the watch: `chassis-assets build --watch`. Runs until it is stopped.
  * @param {BuildOptions} options - The options of the command line
  */
 export async function watchCli(options) {

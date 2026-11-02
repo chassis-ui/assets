@@ -1090,7 +1090,7 @@ describe('generateAssets() with subset', () => {
   })
 })
 
-describe('pnpm assets --subset', () => {
+describe('chassis-assets build --subset', () => {
   const entry = path.join(ROOT, 'build/build-assets.js')
 
   test('prints the counts', () => {

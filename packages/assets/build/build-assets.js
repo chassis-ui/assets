@@ -33,7 +33,7 @@ export const BRAND_FOLDER = '_default'
 /** The folder of a brand that holds the files of every app of the brand */
 export const SHARED_FOLDER = '_shared'
 
-export const HELP = `Usage: pnpm assets [options]
+export const HELP = `Usage: chassis-assets build [options]
 
 Builds the assets of every brand, app and platform of \`chassis.build\` in package.json
 into dist/<platform>/<app>/<brand>/.
@@ -44,7 +44,7 @@ Options:
   --platform <name...>   Only these platforms
   --type <name...>       Only these type folders, such as images and icons
   --include <pattern...> Only the files that match a pattern, by their path in the
-                         folder of the app, such as "images/home/**". \`pnpm assets:lfs\`
+                         folder of the app, such as "images/home/**". \`chassis-assets lfs\`
                          prints the Git LFS paths of the same filters
   --clean                Remove the output first (of the selected jobs when filtered)
   --no-clean             Keep the output even for a full build
@@ -1589,7 +1589,7 @@ export async function generateAssets(options = {}) {
 }
 
 /**
- * The command line of the build: `pnpm assets`. Exits the process.
+ * The command line of the build: `chassis-assets build`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {

@@ -281,7 +281,7 @@ export async function archive(options = {}) {
   return { archives, to }
 }
 
-const HELP = `Usage: pnpm assets:archive [options]
+const HELP = `Usage: chassis-assets archive [options]
 
 Writes one archive per platform, app and brand of an existing output, for a release:
 <prefix>-<platform>-<app>-<brand>-<version>.zip, with the content of
@@ -300,7 +300,7 @@ Options:
 `
 
 /**
- * The command line of the archives: `pnpm assets:archive`. Exits the process.
+ * The command line of the archives: `chassis-assets archive`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {

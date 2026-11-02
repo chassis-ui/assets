@@ -727,7 +727,7 @@ describe('generateAssets() with res', () => {
   })
 })
 
-describe('pnpm assets --res', () => {
+describe('chassis-assets build --res', () => {
   beforeEach(() => vi.restoreAllMocks())
 
   test('builds the Android jobs with a res/ folder and prints the count', () => {

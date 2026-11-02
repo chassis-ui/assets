@@ -1,5 +1,5 @@
 /**
- * The Git LFS files of a build: `pnpm assets:lfs`.
+ * The Git LFS files of a build: `chassis-assets lfs`.
  *
  * Prints the paths of `source/` that a build with the same filters reads, as the value of
  * `git lfs pull --include`. A checkout made without Git LFS then fetches the files of its
@@ -20,7 +20,7 @@ import {
 import { coverPaths, createFileFilter } from './filters.js'
 import { buildVersion, isEntry, resolveRoot } from './root.js'
 
-export const HELP = `Usage: pnpm assets:lfs [options]
+export const HELP = `Usage: chassis-assets lfs [options]
 
 Prints the paths of source/ that a build with the same options reads, separated by commas:
 the value of \`git lfs pull --include\`. A folder whose files are all read is one path.
@@ -70,7 +70,7 @@ export function lfsInclude(options = {}) {
 }
 
 /**
- * The command line: `pnpm assets:lfs`. Exits the process.
+ * The command line: `chassis-assets lfs`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {

@@ -2,8 +2,8 @@
 /**
  * Chassis Assets Command Line
  *
- * One entry for the build and its checks, so that the scripts of the root `package.json`
- * run them with `node` and nothing installed: `node packages/assets/build/cli.js <command>`.
+ * One entry for the build and its checks, the `chassis-assets` command, which runs with `node`
+ * and nothing installed: `node packages/assets/build/cli.js <command>`.
  * Each command is the `cli()` of its module and takes the options that module documents.
  *
  * @module cli
@@ -11,72 +11,59 @@
 
 import { buildVersion } from './root.js'
 
-/** The commands, each with the module that runs it and the script that calls it. */
+/** The commands, each with the module that runs it. */
 export const COMMANDS = {
-  build: { module: './build-assets.js', script: 'pnpm assets', about: 'Build the assets' },
+  build: { module: './build-assets.js', about: 'Build the assets' },
   analyze: {
     module: './analyze-assets.js',
-    script: 'pnpm assets:analyze',
     about: 'Sizes, types and duplicates of the source and the output'
   },
   validate: {
     module: './validate-assets.js',
-    script: 'pnpm assets:validate',
     about: 'Check an existing output against the source and the configuration'
   },
   contract: {
     module: './contract.js',
-    script: 'pnpm assets:contract',
     about: 'Check the docs output against the consumer contract'
   },
   verify: {
     module: './verify.js',
-    script: 'pnpm assets:verify',
     about: 'The validator, then the contract check'
   },
   lfs: {
     module: './lfs-include.js',
-    script: 'pnpm assets:lfs',
     about: 'Print the Git LFS paths a build reads, for git lfs pull --include'
   },
   archive: {
     module: './archive.js',
-    script: 'pnpm assets:archive',
     about: 'One zip per platform, app and brand of an existing output, for a release'
   },
   manifest: {
     module: './manifest.js',
-    script: 'chassis-assets manifest',
     about: 'The files of an existing output with their sizes and hashes, for a release'
   },
   diff: {
     module: './diff.js',
-    script: 'chassis-assets diff',
     about: 'The files added, removed, renamed and changed since a manifest'
   },
   'release-notes': {
     module: './release-notes.js',
-    script: 'chassis-assets release-notes',
     about: 'Print the changelog entry of a version, and fail without one'
   },
   'check-native': {
     module: './check-native.js',
-    script: 'pnpm test:ios, pnpm test:android',
     about: 'Compile an existing output with the tools of Xcode and of Android'
   },
   init: {
     module: './init.js',
-    script: 'chassis-assets init',
     about: 'Write the baseline of a repository of assets into a folder'
   },
   'static-font': {
     module: './static-font.js',
-    script: 'chassis-assets static-font',
     about: 'Write the static font of a variable font at a weight, in each format given'
   },
   'lint-source': {
     module: './lint-source.js',
-    script: 'pnpm assets:lint:source',
     about: 'Check the names and the layout of source/'
   }
 }
@@ -85,7 +72,7 @@ export const HELP = `Usage: chassis-assets <command> [options]
 
 Commands:
 ${Object.entries(COMMANDS)
-  .map(([name, { about, script }]) => `  ${name.padEnd(16)}${about} (${script})`)
+  .map(([name, { about }]) => `  ${name.padEnd(16)}${about}`)
   .join('\n')}
 
 Options:

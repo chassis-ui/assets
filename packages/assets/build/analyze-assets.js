@@ -103,7 +103,7 @@ class AssetAnalyzer {
       this.log('📦 Analyzing distribution directory...')
       this.analyzeDirectory(this.distDir, 'dist')
     } else {
-      this.log('⚠️  Distribution directory not found. Run `pnpm assets` first.')
+      this.log('⚠️  Distribution directory not found. Run `chassis-assets build` first.')
     }
   }
 
@@ -582,7 +582,7 @@ class AssetAnalyzer {
   }
 }
 
-export const HELP = `Usage: pnpm assets:analyze [options]
+export const HELP = `Usage: chassis-assets analyze [options]
 
 Reports the sizes, the types, the largest files and the files with the same content of
 source/ and of an existing output, with recommendations. Changes nothing.
@@ -641,7 +641,7 @@ export function parseAnalyzerArgs(argv = process.argv.slice(2)) {
 }
 
 /**
- * The command line of the analyzer: `pnpm assets:analyze`.
+ * The command line of the analyzer: `chassis-assets analyze`.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {

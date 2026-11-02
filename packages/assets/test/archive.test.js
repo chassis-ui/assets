@@ -1,6 +1,6 @@
 /**
  * @file archive.test.js
- * @description `pnpm assets:archive`: one zip per platform, app and brand of an output, read
+ * @description `chassis-assets archive`: one zip per platform, app and brand of an output, read
  *              back entry by entry. The archives of the golden output are written to a
  *              temporary folder, and each entry is inflated and compared with its file.
  */
@@ -61,7 +61,7 @@ function readZip(file) {
   return entries
 }
 
-describe('pnpm assets:archive', () => {
+describe('chassis-assets archive', () => {
   const run = (...args) =>
     spawnSync(process.execPath, [CLI, 'archive', ...args], { cwd: FIXTURE, encoding: 'utf-8' })
 

@@ -224,7 +224,7 @@ export function printContracts(results) {
       ok = false
       const [platform, app, brand] = job.split('/')
       console.error(
-        `❌ Consumer contract: ${dir}/ does not exist. Run \`pnpm assets --platform ${platform} --app ${app} --brand ${brand}\``
+        `❌ Consumer contract: ${dir}/ does not exist. Run \`chassis-assets build --platform ${platform} --app ${app} --brand ${brand}\``
       )
     } else {
       ok = false
@@ -237,7 +237,7 @@ export function printContracts(results) {
   return ok
 }
 
-const HELP = `Usage: pnpm assets:contract [options]
+const HELP = `Usage: chassis-assets contract [options]
 
 Checks that the output of each job named in \`contracts\` of chassis.checks.json has the
 files its consumers read. Exits 1 and names the files and their readers when one is missing.
@@ -251,7 +251,7 @@ Options:
 `
 
 /**
- * The command line of the contract check: `pnpm assets:contract`. Exits the process.
+ * The command line of the contract check: `chassis-assets contract`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {

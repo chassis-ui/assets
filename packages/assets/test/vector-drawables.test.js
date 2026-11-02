@@ -287,7 +287,7 @@ describe('generateAssets() with vectorDrawables', () => {
   })
 })
 
-describe('pnpm assets --vector-drawables', () => {
+describe('chassis-assets build --vector-drawables', () => {
   beforeEach(() => vi.restoreAllMocks())
 
   test('builds the Android icons as vector drawables and prints the count', () => {

@@ -65,6 +65,24 @@ describe('the command', () => {
     expect(result.stderr).toContain('no res/ folder')
   })
 
+  test('without the Android SDK, it says what is missing', () => {
+    const cwd = tempDir()
+    fs.mkdirSync(path.join(cwd, 'dist', 'android'), { recursive: true })
+    const run = (env) =>
+      spawnSync(process.execPath, [CLI, 'check-native', '--platform', 'android', '--cwd', cwd], {
+        encoding: 'utf-8',
+        env: { PATH: '/usr/bin:/bin', ...env }
+      })
+
+    const noSdk = run({})
+    expect(noSdk.status).toBe(1)
+    expect(noSdk.stderr).toContain('no aapt2')
+
+    const noPlatform = run({ ANDROID_HOME: tempDir(), AAPT2: '/bin/true' })
+    expect(noPlatform.status).toBe(1)
+    expect(noPlatform.stderr).toContain('no android.jar')
+  })
+
   test('exits 2 on a wrong call', () => {
     const result = spawnSync(process.execPath, [CLI, 'check-native', '--zip'], {
       encoding: 'utf-8'

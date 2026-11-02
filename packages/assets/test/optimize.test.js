@@ -702,7 +702,7 @@ describe('generateAssets() with webp and avif', () => {
   })
 })
 
-describe('pnpm assets --optimize, --webp and --avif', () => {
+describe('chassis-assets build --optimize, --webp and --avif', () => {
   test('prints the counts', () => {
     const out = tempDir()
     const result = spawnSync(

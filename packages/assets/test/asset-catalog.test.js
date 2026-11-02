@@ -565,7 +565,7 @@ describe('generateAssets() with assetCatalog', () => {
   })
 })
 
-describe('pnpm assets --asset-catalog', () => {
+describe('chassis-assets build --asset-catalog', () => {
   beforeEach(() => vi.restoreAllMocks())
 
   test('builds the iOS images as an asset catalog and prints the count', () => {

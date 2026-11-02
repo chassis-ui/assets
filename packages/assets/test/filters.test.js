@@ -1,6 +1,6 @@
 /**
  * @file filters.test.js
- * @description The file filters of the build, `--type` and `--include`, and `pnpm assets:lfs`,
+ * @description The file filters of the build, `--type` and `--include`, and `chassis-assets lfs`,
  *              which prints the Git LFS paths of a build with the same filters.
  */
 
@@ -313,7 +313,7 @@ describe('lfsInclude()', () => {
   })
 })
 
-describe('pnpm assets:lfs and the filters of pnpm assets', () => {
+describe('chassis-assets lfs and the filters of chassis-assets build', () => {
   /** @param {string[]} args */
   const run = (args) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf-8' })
 
@@ -346,7 +346,7 @@ describe('pnpm assets:lfs and the filters of pnpm assets', () => {
     expect(run(['lfs', '--bogus']).status).toBe(2)
   })
 
-  test('pnpm assets --type and --include build the files of the filters', () => {
+  test('chassis-assets build --type and --include build the files of the filters', () => {
     const out = tempDir()
     const result = run([
       'build',

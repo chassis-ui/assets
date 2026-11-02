@@ -24,7 +24,7 @@ export async function verify(options = {}) {
   return { valid, contract }
 }
 
-const HELP = `Usage: pnpm assets:verify [options]
+const HELP = `Usage: chassis-assets verify [options]
 
 Runs the validator, then the check of the consumer contracts of chassis.checks.json, on an
 existing output. Exits 1 when either fails.
@@ -37,7 +37,7 @@ Options:
 `
 
 /**
- * The command line of verify: `pnpm assets:verify`. Exits the process.
+ * The command line of verify: `chassis-assets verify`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {

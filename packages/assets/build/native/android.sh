@@ -27,7 +27,8 @@ fail() {
 }
 
 newest() {
-  find "$1" -mindepth 2 -maxdepth 2 -name "$2" 2>/dev/null | sort -V | tail -1
+  # A folder that is not there is no match: the callers name what is missing
+  { find "$1" -mindepth 2 -maxdepth 2 -name "$2" 2>/dev/null || true; } | sort -V | tail -1
 }
 
 aapt2="${AAPT2:-$(command -v aapt2 || true)}"

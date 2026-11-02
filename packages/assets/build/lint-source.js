@@ -73,7 +73,7 @@ const FORMATS = /** @type {Record<string, string[]>} */ ({
   svg: ['.svg']
 })
 
-const HELP = `Usage: pnpm assets:lint:source [options]
+const HELP = `Usage: chassis-assets lint-source [options]
 
 Checks the names and the layout of source/ against the rules of the design-guidelines page,
 and the fonts against the stylesheets that declare them, as the fonts page describes them:
@@ -652,7 +652,7 @@ export function lintSource(options = {}) {
 }
 
 /**
- * The command line of the source lint: `pnpm assets:lint:source`. Exits the process.
+ * The command line of the source lint: `chassis-assets lint-source`. Exits the process.
  * @param {string[]} [argv] - The arguments. Default: `process.argv.slice(2)`
  */
 export function cli(argv = process.argv.slice(2)) {
