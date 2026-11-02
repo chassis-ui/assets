@@ -27,7 +27,7 @@ mkdir acme-assets && cd acme-assets
 npx @chassis-ui/assets init --brand acme --app docs:web --app mobile:ios,android
 ```
 
-Each `--app` is a name and its platforms, `web`, `ios` or `android`, separated by commas. Without options the repository has one brand, `main`, and one app, `site`, on the web. The command writes twelve files and prints them:
+Each `--app` is a name and its platforms, `web`, `ios` or `android`, separated by commas. Without options the repository has one brand, `main`, and one app, `site`, on the web. This example has iOS and Android, so the command writes thirteen files and prints them:
 
 ```text
 package.json                              -> The brands, the apps and the scripts
@@ -41,10 +41,11 @@ AGENTS.md                                 -> The rules for AI coding agents in t
 CLAUDE.md                                 -> Points Claude Code at AGENTS.md
 .github/workflows/ci.yml                  -> Changelog, lint, build and verify on every push
 .github/workflows/release.yml             -> Build, verify and archive a new version on main
+.github/workflows/native.yml              -> Compile the release build with Xcode and Android tools
 source/_default/_shared/other/readme.txt  -> A stand-in for the first asset
 ```
 
-It writes nothing when one of them exists; `--force` writes over the files that exist, but never `package.json`, `chassis.checks.json` or `CHANGELOG.md`, which hold your data, and `--dry-run` prints them without writing. `--name` sets the package name, by default the name of the folder, and `--pm pnpm` makes the README and the workflows use pnpm. `--repository`, `--license` and `--author` set those fields of `package.json`, by default from the `origin` remote, MIT and the name of your git configuration.
+A repository with only the web has no `native.yml`, and twelve files. It writes nothing when one of them exists; `--force` writes over the files that exist, but never `package.json`, `chassis.checks.json` or `CHANGELOG.md`, which hold your data, and `--dry-run` prints them without writing. `--name` sets the package name, by default the name of the folder, and `--pm pnpm` makes the README and the workflows use pnpm. `--repository`, `--license` and `--author` set those fields of `package.json`, by default from the `origin` remote, MIT and the name of your git configuration.
 
 A later version of the package writes other files. In a repository you already have, `init --check` reports where it differs from what the current version writes, and exits 1 when it does. `init --only <file...>` writes those files; add `--force` for one that exists.
 

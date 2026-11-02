@@ -1,0 +1,28 @@
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Fonts and images are Git LFS files
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: true
+          persist-credentials: false
+
+      # __PNPM_SETUP__
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: __PM__
+
+      - name: Install
+        run: __INSTALL_CI__
+
+      - name: Build
+        run: __RUN__ build:release
+
+      # aapt2, of the Android SDK: the runner has it
+      - name: Compile
+        run: npx chassis-assets check-native --platform android

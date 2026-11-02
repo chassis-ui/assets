@@ -21,7 +21,8 @@ packages/
   assets/              # @chassis-ui/assets, published to npm with the `chassis-assets` command
     build/             # the build and its checks (JavaScript with JSDoc types, Node.js modules only)
     build/templates/   # what `chassis-assets init` writes into a repository of assets
-    test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/)
+    test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/), the
+                       # small real files that the native checks compile (native/fixture/)
   site/                # chassis-assets-site, the Astro documentation site
 build/                 # repository scripts: the release notes, the version references
 docs/                  # architecture.md, decisions.md
@@ -60,6 +61,7 @@ Run the checks of the area you changed, and report the ones that fail.
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
 | The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                                  |
+| `packages/assets/build/native/` or `check-native.js`     | `pnpm assets:lint`, `pnpm test`, `pnpm test:native:ios` (Xcode), `pnpm test:native:android` (Android SDK).                                                  |
 | `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
 | `static-font.js` or `font-tables.js`                     | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`.                                                                                                   |
 | `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |

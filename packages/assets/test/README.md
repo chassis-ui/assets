@@ -86,33 +86,35 @@ keeps Prettier out of them.
 
 ## Compiling the asset catalogs
 
-The files of the fixture are lines of text, which the asset compiler of Xcode does not take,
-so the catalogs of a real build are compiled instead:
+The files of the fixture are lines of text, which the asset compiler of Xcode does not take, so
+`native/fixture/` holds a repository of a few small real files, without a golden output: a PNG at
+each density, a pair of logos, an icon, and an app icon with a gradient in each form. A case of
+the compiled output is a file there.
 
 ```sh
-pnpm assets --platform ios --asset-catalog --icon-catalog
-pnpm test:ios
+pnpm test:native:ios
 ```
 
-`test:ios` is `packages/assets/test/native/ios/check.sh`. It runs `actool` on every
-`*.xcassets` folder under `dist/`, or under the folder it is given, fails on a warning, and
+`test:native:ios` builds that fixture and runs `chassis-assets check-native --platform ios`, the
+script `build/native/ios.sh`, which runs `actool` on every `*.xcassets` folder of the output, fails on a warning, and
 checks that the compiled catalog has every image set by its name. It also compiles every
 `*.icon` bundle as an app icon, and checks that `CFBundleIconName` is the name of the bundle.
 It needs Xcode, not the command line tools alone; `DEVELOPER_DIR` selects an Xcode that
 `xcode-select` does not. The Native iOS job of CI runs it on a macOS runner.
 
 ```sh
-pnpm assets --platform android --res --vector-drawables
-pnpm test:android
+pnpm test:native:android
 ```
 
-`test:android` is `packages/assets/test/native/android/check.sh`. It looks at every `res/` folder
-under `android/` of `dist/`, or of the folder it is given. `aapt2` passes an SVG, a text file and a
+`test:native:android` builds that fixture and runs `chassis-assets check-native --platform android`,
+the script `build/native/android.sh`. It looks at every `res/` folder under `android/` of the
+output. `aapt2` passes an SVG, a text file and a
 vector without a shape, so the script fails on those first. It then runs `aapt2 compile` and
 `aapt2 link` against `android.jar`, which fails on an app icon that names a layer it does not
 have, and it fails on a night file without a file for the other mode. It reads the newest build
 tools and platform of `ANDROID_HOME`, and `AAPT2` and `ANDROID_JAR` name others. The Native
-Android job of CI runs it.
+Android job of CI runs it. `pnpm test:ios` and `pnpm test:android` run the same checks on an
+existing output of `vendor/assets`.
 
 ## Writing the baseline again
 

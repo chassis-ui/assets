@@ -447,3 +447,16 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   reports against it. A file of the release, not of `dist/`, so the output contract stays as it
   is. No download in the command: `gh release download` does that, with the sign-in a private
   repository needs. The maintainer, 2026-11-02.
+- **D49. Where do the checks of real files belong?** With the change they catch. The compilers of
+  Xcode and of Android ran only here, on `vendor/assets`, so a bad icon passed the CI of
+  website-assets and failed here when the pin moved, and a problem in a repository of assets could
+  stop a release of the package. A change to the build is now checked on `test/native/fixture/`, a
+  few small real files with no golden output, kept apart so that `fixtures/` stays lines of text.
+  A change to the files is checked where they are: `chassis-assets check-native` is published, the
+  scripts in `build/native/`, run with bash so that the package still imports no dependency, and
+  `init` writes `native.yml` with a job per platform of `chassis.build`, on a change to the assets
+  only, since each job pulls the Git LFS files. The build of a new version on real files, which
+  only happens when a repository of assets moves to it, is checked there, or first with a `next`
+  prerelease or a run of this checkout with `--cwd`. A submodule used to catch that earlier; the
+  package has no reason to know a repository of assets. Removing `vendor/assets` and moving the
+  docs site to a release archive is chassis-ui/website#33. The maintainer, 2026-11-02.

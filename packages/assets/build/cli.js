@@ -59,6 +59,11 @@ export const COMMANDS = {
     script: 'chassis-assets release-notes',
     about: 'Print the changelog entry of a version, and fail without one'
   },
+  'check-native': {
+    module: './check-native.js',
+    script: 'pnpm test:ios, pnpm test:android',
+    about: 'Compile an existing output with the tools of Xcode and of Android'
+  },
   init: {
     module: './init.js',
     script: 'chassis-assets init',
@@ -80,7 +85,7 @@ export const HELP = `Usage: chassis-assets <command> [options]
 
 Commands:
 ${Object.entries(COMMANDS)
-  .map(([name, { about, script }]) => `  ${name.padEnd(15)}${about} (${script})`)
+  .map(([name, { about, script }]) => `  ${name.padEnd(16)}${about} (${script})`)
   .join('\n')}
 
 Options:

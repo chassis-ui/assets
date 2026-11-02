@@ -331,6 +331,7 @@ describe('cli.js', () => {
     ['manifest', ['--help']],
     ['diff', ['--help']],
     ['release-notes', ['--help']],
+    ['check-native', ['--help']],
     ['init', ['--help']],
     ['static-font', ['--help']]
   ])('%s runs its module', (command, args) => {
@@ -357,6 +358,7 @@ describe('cli.js', () => {
       'manifest',
       'diff',
       'release-notes',
+      'check-native',
       'init',
       'static-font'
     ]) {

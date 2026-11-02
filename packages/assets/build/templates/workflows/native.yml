@@ -1,0 +1,26 @@
+name: Native
+
+# On a change to the assets: the build of a release, compiled with the tools of each platform, as
+# an app compiles it. A file that the source lint and the build pass can still fail there. Written
+# by `chassis-assets init`, with a job per platform of chassis.build.
+on:
+  push:
+    branches: [main]
+    paths:
+      - source/**
+      - chassis.checks.json
+      - package.json
+      - __LOCKFILE__
+      - .github/workflows/native.yml
+  pull_request:
+    paths:
+      - source/**
+      - chassis.checks.json
+      - package.json
+      - __LOCKFILE__
+      - .github/workflows/native.yml
+
+permissions:
+  contents: read
+
+jobs:

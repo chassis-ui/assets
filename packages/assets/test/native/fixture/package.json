@@ -1,0 +1,22 @@
+{
+  "name": "chassis-assets-native-fixture",
+  "version": "0.0.0-fixture",
+  "private": true,
+  "description": "Small real files that the compilers of Xcode and Android take. See test/README.md.",
+  "chassis": {
+    "defaults": {
+      "brandFolder": "_default"
+    },
+    "build": {
+      "brands": [
+        "acme"
+      ],
+      "apps": {
+        "mobile": [
+          "ios",
+          "android"
+        ]
+      }
+    }
+  }
+}

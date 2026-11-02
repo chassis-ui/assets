@@ -47,6 +47,10 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   until then. sinefil-web reads `chassis-assets-web-docs-<brand>-<version>.zip` of 0.5.0: its
   move to a release of website-assets (ozgurgunes/sinefil-web#222) takes the name of D46.
 
+- **`vendor/assets` until chassis-ui/website#33.** The native checks left it (D49). The Assets and
+  Site jobs of CI, the root `assets*` scripts and the docs site still read it, and the session of
+  that issue removes them, the submodule and the sentence of `AGENTS.md` about the pin.
+
 ## Not written
 
 - Files of the fixture for a `_light` and `_dark` pair, an SVG in `currentcolor` and a sprite.

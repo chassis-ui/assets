@@ -26,6 +26,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { BRAND_FOLDER } from './build-assets.js'
 import { getPlatformNames } from './processors/index.js'
+import { CONVERTER_PACKAGE } from './vector-drawables.js'
 import { buildVersion, isEntry, repositoryWebUrl } from './root.js'
 
 /** The folder of the templates. */
@@ -65,6 +66,9 @@ export const PACKAGE_MANAGERS = {
 
 /** The brand and the app a repository starts with, when none is given. */
 export const DEFAULTS = { brands: ['main'], apps: { site: ['web'] }, pm: 'npm', license: 'MIT' }
+
+/** The platforms with a compiler to check an output with, each a job of `native.yml`. */
+const NATIVE_PLATFORMS = ['ios', 'android']
 
 /** The files that hold the data of a repository: written when missing, never over one. */
 export const DATA_FILES = ['package.json', 'chassis.checks.json', 'CHANGELOG.md']
@@ -217,6 +221,7 @@ export function planFiles(options = {}) {
   )
   const apps = options.apps && Object.keys(options.apps).length > 0 ? options.apps : DEFAULTS.apps
   for (const app of Object.keys(apps)) checkName('app', app)
+  const platforms = new Set(Object.values(apps).flat())
   const pm = options.pm || DEFAULTS.pm
   if (!Object.hasOwn(PACKAGE_MANAGERS, pm)) {
     throw new Error(
@@ -234,6 +239,7 @@ export function planFiles(options = {}) {
     INSTALL: commands.install,
     INSTALL_CI: commands.ci,
     RUN: commands.run,
+    LOCKFILE: commands.lockfile,
     PM: pm,
     PNPM_SETUP: commands.setup
   }
@@ -253,7 +259,7 @@ export function planFiles(options = {}) {
     },
     scripts: {
       build: 'chassis-assets build',
-      'build:release': 'chassis-assets build --asset-catalog --icon-catalog',
+      'build:release': `chassis-assets build --asset-catalog --icon-catalog${platforms.has('android') ? ' --res --vector-drawables' : ''}`,
       lint: 'chassis-assets lint-source',
       verify: 'chassis-assets verify',
       archive: 'chassis-assets archive',
@@ -261,9 +267,19 @@ export function planFiles(options = {}) {
       'release-notes': 'chassis-assets release-notes'
     },
     engines: { node: '>=22.12.0' },
-    devDependencies: { '@chassis-ui/assets': `^${buildVersion()}` }
+    devDependencies: {
+      '@chassis-ui/assets': `^${buildVersion()}`,
+      ...(platforms.has('android') && {
+        [CONVERTER_PACKAGE]: JSON.parse(
+          fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+        ).peerDependencies[CONVERTER_PACKAGE]
+      })
+    }
   }
   const checks = { contracts: {}, lint: { allow: [] } }
+  const nativeJobs = NATIVE_PLATFORMS.filter((platform) => platforms.has(platform)).map(
+    (platform) => template(`workflows/native-${platform}.yml`)
+  )
 
   return new Map([
     ['package.json', `${JSON.stringify(packageJson, null, 2)}\n`],
@@ -277,6 +293,11 @@ export function planFiles(options = {}) {
     ['CLAUDE.md', template('CLAUDE.md')],
     ['.github/workflows/ci.yml', template('workflows/ci.yml')],
     ['.github/workflows/release.yml', template('workflows/release.yml')],
+    ...(nativeJobs.length > 0
+      ? /** @type {[string, string][]} */ ([
+          ['.github/workflows/native.yml', template('workflows/native.yml') + nativeJobs.join('\n')]
+        ])
+      : []),
     [`source/${BRAND_FOLDER}/_shared/other/readme.txt`, template('readme.txt')]
   ])
 }
@@ -369,8 +390,8 @@ const HELP = `Usage: chassis-assets init [dir] [options]
 Writes the baseline of a repository of assets into dir, the working directory by default:
 package.json with the chassis block and the scripts, chassis.checks.json, .gitattributes
 with the Git LFS rules, .gitignore, .nvmrc, README.md, CHANGELOG.md, AGENTS.md, CLAUDE.md, a
-CI and a release workflow, and one file under source/ for the first build. Writes nothing when
-a file exists. package.json, chassis.checks.json and CHANGELOG.md are never written over.
+CI and a release workflow, a workflow of the native checks for iOS or Android, and one file under
+source/ for the first build. Writes nothing when a file exists. package.json, chassis.checks.json and CHANGELOG.md are never written over.
 
 Options:
   --name <name>          The package name, default the name of the folder

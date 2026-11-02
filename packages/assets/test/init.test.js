@@ -54,6 +54,33 @@ function run(cwd, ...args) {
 }
 
 describe('chassis-assets init', () => {
+  test('a repository with iOS or Android gets the native jobs of its platforms, and the build they read', async () => {
+    const web = planFiles({ dir: 'x' })
+    expect(web.has('.github/workflows/native.yml')).toBe(false)
+    expect(JSON.parse(web.get('package.json')).devDependencies).toEqual({
+      '@chassis-ui/assets': `^${VERSION}`
+    })
+
+    const ios = planFiles({ dir: 'x', apps: { mobile: ['ios'] } })
+    const iosJobs = ios.get('.github/workflows/native.yml')
+    expect(iosJobs).toContain('runs-on: macos-26')
+    expect(iosJobs).toContain('npx chassis-assets check-native --platform ios')
+    expect(iosJobs).not.toContain('--platform android')
+    expect(JSON.parse(ios.get('package.json')).scripts['build:release']).not.toContain('--res')
+
+    const both = planFiles({ dir: 'x', pm: 'pnpm', apps: { mobile: ['ios', 'android'] } })
+    const jobs = both.get('.github/workflows/native.yml')
+    expect(jobs).toContain('--platform ios')
+    expect(jobs).toContain('--platform android')
+    expect(jobs).toContain('- pnpm-lock.yaml')
+    expect(jobs).toContain('run: pnpm build:release')
+    expect(jobs.match(/uses: pnpm\/action-setup/g)).toHaveLength(2)
+    expect(jobs).not.toMatch(/__[A-Z_]+__/)
+    const pkg = JSON.parse(both.get('package.json'))
+    expect(pkg.scripts['build:release']).toContain('--res --vector-drawables')
+    expect(pkg.devDependencies.svg2vectordrawable).toBeDefined()
+  })
+
   test('writes the files of a repository with the defaults, named after the folder', async () => {
     const dir = path.join(tempDir(), 'acme-assets')
     const result = await init({ dir })

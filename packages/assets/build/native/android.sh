@@ -7,19 +7,18 @@
 # so this checks the formats of each folder and the shapes first. It also checks that a night
 # file has a file for the other mode.
 #
-#   test/native/android/check.sh [folder]
+#   chassis-assets check-native --platform android, which runs this on the output of a repository:
 #
-#   folder   The output to look for res/ folders in. Default: dist/ of the repository, which
-#            has them after `pnpm assets --res --vector-drawables`.
+#   native/android.sh <folder>
+#
+#   folder   The output to look for res/ folders in, built with --res --vector-drawables.
 #
 # It looks for aapt2 and android.jar in the newest build tools and platform of ANDROID_HOME, or
 # ANDROID_SDK_ROOT. AAPT2 and ANDROID_JAR name them. It writes to a temporary folder only.
 
 set -euo pipefail
 
-package_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-repository_root="$(cd "$package_root/../.." && pwd)"
-output="${1:-$repository_root/dist}"
+output="$1"
 sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 
 fail() {
@@ -36,13 +35,18 @@ aapt2="${AAPT2:-$(command -v aapt2 || true)}"
 [ -n "$aapt2" ] || fail 'no aapt2: set ANDROID_HOME to the Android SDK, or AAPT2'
 android_jar="${ANDROID_JAR:-$(newest "$sdk/platforms" android.jar)}"
 [ -n "$android_jar" ] || fail 'no android.jar: install a platform of the Android SDK, or set ANDROID_JAR'
-[ -d "$output" ] || fail "no folder $output: run \`pnpm assets --res --vector-drawables\`"
+[ -d "$output" ] || fail "no folder $output: run \`chassis-assets build --res --vector-drawables\`"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 folders="$(find "$output" -type d -name res -path '*/android/*' | sort)"
-[ -n "$folders" ] || fail "no res/ folder in $output: run \`pnpm assets --res --vector-drawables\`"
+if [ -z "$folders" ]; then
+  # A new repository has nothing to compile yet. An image without res/ is a wrong build
+  images="$(find "$output" -path '*/android/*' \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' -o -iname '*.svg' -o -iname '*.pdf' -o -iname '*.icon' \) | head -1)"
+  [ -n "$images" ] || { echo "Nothing to compile in $output."; exit 0; }
+  fail "no res/ folder in $output: run \`chassis-assets build --res --vector-drawables\`"
+fi
 
 "$aapt2" version
 echo "android.jar: $android_jar"

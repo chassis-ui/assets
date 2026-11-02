@@ -6,18 +6,17 @@
 # command line tools alone have no asset compiler, so this needs Xcode; CI runs it on a macOS
 # runner.
 #
-#   test/native/ios/check.sh [folder]
+#   chassis-assets check-native --platform ios, which runs this on the output of a repository:
 #
-#   folder   The output to look for catalogs and bundles in. Default: dist/ of the repository,
-#            which has catalogs after `pnpm assets --asset-catalog`.
+#   native/ios.sh <folder>
+#
+#   folder   The output to look for catalogs and bundles in, built with --asset-catalog.
 #
 # It writes to a temporary folder only.
 
 set -euo pipefail
 
-package_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-repository_root="$(cd "$package_root/../.." && pwd)"
-output="${1:-$repository_root/dist}"
+output="$1"
 
 sdk_name=iphonesimulator
 # SVG files in an asset catalog need iOS 13
@@ -30,13 +29,18 @@ fail() {
 
 xcrun --find actool >/dev/null 2>&1 ||
   fail 'no actool: install Xcode and select it with xcode-select, or set DEVELOPER_DIR'
-[ -d "$output" ] || fail "no folder $output: run \`pnpm assets --asset-catalog\`"
+[ -d "$output" ] || fail "no folder $output: run \`chassis-assets build --asset-catalog\`"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 catalogs="$(find "$output" -type d -name '*.xcassets' | sort)"
-[ -n "$catalogs" ] || fail "no asset catalog in $output: run \`pnpm assets --asset-catalog\`"
+if [ -z "$catalogs" ]; then
+  # A new repository has nothing to compile yet. An image without a catalog is a wrong build
+  images="$(find "$output" -path '*/ios/*' \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' -o -iname '*.svg' -o -iname '*.pdf' -o -iname '*.icon' \) | head -1)"
+  [ -n "$images" ] || { echo "Nothing to compile in $output."; exit 0; }
+  fail "no asset catalog in $output: run \`chassis-assets build --asset-catalog\`"
+fi
 
 xcodebuild -version
 
