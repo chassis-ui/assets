@@ -48,24 +48,25 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
         <FeatureCard icon="cx-number-two">
           <Fragment slot="title">Run Build Command</Fragment>
           <Fragment slot="body">
-            Run pnpm assets to build every job, or use the --brand, --app and --platform options to
-            build a part. The build copies, renames and sorts the files for each platform.
+            Run chassis-assets build to build every job, or use the --brand, --app and --platform
+            options to build a part. The build copies, renames and sorts the files for each
+            platform.
           </Fragment>
           <Code
             noToolbar
             lang="bash"
             containerClass="border-top border-subtle pt-md mt-auto"
             code={`# Build every job
-pnpm assets
+npx chassis-assets build
 
 # Build specific brand
-pnpm assets --brand chassis
+npx chassis-assets build --brand chassis
 
 # Build specific app
-pnpm assets --app demo
+npx chassis-assets build --app demo
 
 # Build with filters
-pnpm assets --brand chassis --app demo`}
+npx chassis-assets build --brand chassis --app demo`}
           />
         </FeatureCard>
       </div>

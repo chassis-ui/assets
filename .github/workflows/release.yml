@@ -145,7 +145,7 @@ jobs:
       id-token: write # for npm trusted publishing and provenance
 
     steps:
-      # No submodule and no Git LFS file: the release is the package
+      # The release is the package
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

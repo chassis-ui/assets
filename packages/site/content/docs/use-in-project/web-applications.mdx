@@ -53,7 +53,7 @@ An archive needs no Node.js, no package and no Git LFS on the machine that uses 
 
 ### Git submodule
 
-A submodule pins the assets to a commit and builds them inside your project. The Chassis sites do this: each one has its repository of assets as the submodule `vendor/assets`, and builds the job it reads. The submodule needs nothing installed; the project installs `@chassis-ui/assets` and runs the build on the folder with `--cwd`.
+A submodule pins the assets to a commit and builds them inside your project. The submodule needs nothing installed; the project installs `@chassis-ui/assets` and runs the build on the folder with `--cwd`.
 
 ```bash
 git submodule add https://github.com/chassis-ui/website-assets.git vendor/assets

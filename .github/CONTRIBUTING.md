@@ -7,14 +7,11 @@ documents that are kept up to date, rather than repeating them.
 ## Dev setup
 
 You need Node.js 22.12 or later (the repository pins 24 in `.nvmrc`), pnpm (the version in
-`packageManager` of the root `package.json`; `corepack enable` picks it up) and
-[Git LFS](https://git-lfs.com). Run `git lfs install` once on your machine: the fonts and the
-raster images of the `vendor/assets` submodule are Git LFS files.
+`packageManager` of the root `package.json`; `corepack enable` picks it up).
 
 ```sh
 git clone https://github.com/chassis-ui/assets.git
 cd assets
-pnpm vendor
 pnpm install
 ```
 
@@ -24,16 +21,15 @@ The repository is a pnpm workspace with two packages:
   tests in `test/`. It is published to npm, with the `chassis-assets` command.
 - [`packages/site`](../packages/site/): `chassis-assets-site`, the Astro documentation site.
 
-The root holds the `vendor/assets` submodule, a checkout of
-[chassis-ui/website-assets](https://github.com/chassis-ui/website-assets): the assets of the
-Chassis sites in `source/`, their `chassis` configuration in `package.json`, what the checks
-verify in `chassis.checks.json`, and the output in `dist/`, which is not committed. The root
-scripts run the build of this checkout on it, with `--cwd vendor/assets`. The root also holds
-the lint and format configurations, the repository scripts in `build/` and the CI workflows.
-Run every command from the root. The [README](../README.md#commands) lists the commands with their options.
+The site takes the assets of the Chassis sites from a release of
+[chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), which
+`vendor/assets.json` pins and `pnpm vendor` unpacks into `vendor/assets/`, which is not committed.
+The root also holds the lint and format configurations, the repository scripts in `build/` and
+the CI workflows. Run every command from the root. The [README](../README.md#commands) lists the
+commands with their options.
 
-The build imports Node.js modules only, so `pnpm assets` runs before `pnpm install`. The
-install is for the tests, the checks and the site.
+The build imports Node.js modules only, so `node packages/assets/build/cli.js build --cwd <dir>`
+runs before `pnpm install`. The install is for the tests, the checks and the site.
 
 ## Branches and commits
 
@@ -56,20 +52,19 @@ Branch names aren't templated; name yours descriptively, for example `fix/androi
 
 The assets of the Chassis sites are in
 [chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), a repository of
-assets made with `chassis-assets init`, and `vendor/assets` is a checkout of it. Change an
-asset there, by its README and `docs/fonts.md`, and release it there. Then move the pin of the
-submodule here, and check the build on it:
+assets made with `chassis-assets init`. Change an asset there, by its README and `docs/fonts.md`,
+and release it there. Then move the pin here and build the site on it:
 
 ```sh
-git -C vendor/assets fetch origin main && git -C vendor/assets checkout origin/main
-pnpm vendor
-pnpm assets:lint:source
-pnpm assets
-pnpm assets:verify
+GH_TOKEN=$(gh auth token) pnpm sync-assets
+pnpm site:build
 ```
 
-Commit the new pin with a changeset only when the output of the site changes; a pin alone
-releases nothing. Never edit a file under `vendor/assets/` from here.
+`sync-assets` writes `vendor/assets.json`, with the digest of each archive: never edit it by hand.
+Compare the site before and after, and commit the pin; a pin alone releases nothing. To try
+assets that are not released, `CHASSIS_ASSETS_CHECKOUT` names a checkout of website-assets with a
+build, and `pnpm vendor` copies that in place of the archive. Never edit a file under
+`vendor/assets/`.
 
 ## Changing the build
 
@@ -85,9 +80,9 @@ each platform and the known oddities.
   install of `@chassis-ui/assets` brings nothing else. A feature that needs a package declares
   it as an optional entry of `peerDependencies`, lists it in `devDependencies` for the tests,
   and loads it when its option is given, never at import time.
-- **The build names nothing of this repository.** No brand, app, job or file name of the
-  Chassis sites in `packages/assets/build/` or in the scripts of `build/`. What is particular
-  to this repository is data: the `chassis` block of `package.json` and `chassis.checks.json`.
+- **The build names nothing of any repository of assets.** No brand, app, job or file name of
+  the Chassis sites in `packages/assets/build/` or in the scripts of `build/`. Such data is the
+  `chassis` block of `package.json` and `chassis.checks.json` of the repository of assets.
 - **The layout of `dist/`, the names in it and the commands are the public API.** See
   [What a version may break](#what-a-version-may-break).
 - **Tests use real files.** They run on the fixture in `packages/assets/test/fixtures/` and
@@ -106,7 +101,8 @@ pnpm test
 
 A change that is meant to change the output also writes the baseline again with
 `pnpm test:golden`, with the difference of `packages/assets/test/golden/` reviewed line by
-line, runs `pnpm assets && pnpm assets:verify` on the real source, and adds a changeset.
+line, runs `build` and `verify` of this checkout with `--cwd` on a checkout of
+chassis-ui/website-assets, and adds a changeset.
 
 ## Changing the site
 
@@ -133,9 +129,9 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 
 | Changed                                                  | Run                                                                                                                                                         |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The pin of `vendor/assets`                               | `pnpm assets:lint:source`, then `pnpm assets && pnpm assets:verify`. Needs Git LFS.                                                                         |
+| The pin, `vendor/assets.json`                            | `pnpm site:build`, and compare the site before and after.                                                                                                   |
 | `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
-| The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build.                                                                  |
+| The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build, with `--cwd` on a checkout of chassis-ui/website-assets.         |
 | `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
 | `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
 | `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
@@ -144,17 +140,16 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 ## What a pull request needs
 
 - **Passing CI**: `.github/workflows/ci.yml` runs on pushes to `develop` and on pull
-  requests. Lint: `pnpm lint:prettier`, `pnpm site:lint` and `pnpm check:astro`. Assets: the
-  build as a site runs it, with nothing installed, then `pnpm assets:lint`,
-  `pnpm assets:lint:source`, `pnpm assets:typecheck`, `pnpm test`, a pack of the package
-  installed into an empty folder and run on the fixture, `pnpm assets` and
-  `pnpm assets:verify`. Site: `pnpm site:build`. Native iOS, on a macOS runner: `chassis-assets check-native --platform ios` on the
-  native fixture, `pnpm test:native:ios` here, which compiles the catalogs with `actool` and needs
-  Xcode. Native Android: the same with `--platform android`, `pnpm test:native:android`, which
-  compiles and links the `res/` folders with `aapt2` and needs the Android SDK. The commands above run the same checks locally, and
-  `pnpm test:ci` runs the Lint, Assets, Site and Audit checks in one command. It leaves out
-  Native iOS, Native Android, Changeset and the report of `pnpm audit`, and the build as a site runs without
-  its install and its check of a clean checkout, which would change a local `node_modules`.
+  requests. Lint: `pnpm lint:prettier`, `pnpm site:lint` and `pnpm check:astro`. Assets:
+  `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and a pack of the package installed
+  into an empty folder and run on the fixture. Site: `pnpm site:build`. Native iOS, on a macOS
+  runner: `chassis-assets check-native --platform ios` on the native fixture,
+  `pnpm test:native:ios` here, which compiles the catalogs with `actool` and needs Xcode. Native
+  Android: the same with `--platform android`, `pnpm test:native:android`, which compiles and
+  links the `res/` folders with `aapt2` and needs the Android SDK. The commands above run the same
+  checks locally, and `pnpm test:ci` runs the Lint, Assets, Site and Audit checks in one command,
+  without the pack. It leaves out Native iOS, Native Android, Changeset and the report of
+  `pnpm audit`.
 - **A clean audit**: the Audit job runs `pnpm check:pnpm`, which is
   `pnpm audit --prod --audit-level moderate` and fails on an advisory in a package that an
   option of the build loads, the optional `peerDependencies` of `packages/assets/package.json`,
@@ -193,8 +188,8 @@ are the public API. Before 1.0, a change that breaks one of them is a `minor` bu
 summary starts with `**Breaking.**`. Everything else is a `patch`.
 
 The [consumer contract](../README.md#what-consumers-rely-on) is not for a version to
-break. It is `contracts` in `chassis.checks.json`, and `pnpm assets:contract`
-checks it on every commit.
+break. It is `contracts` in `chassis.checks.json` of chassis-ui/website-assets, and
+`chassis-assets contract` checks it there on every commit.
 
 ## Releases
 
@@ -237,9 +232,7 @@ text. A version without a changelog entry is not released. A prerelease goes to 
   first version; the first version was published by the workflow.
 
 The archives of the Chassis assets, one per platform, app and brand, are made by the release
-workflow of website-assets on a push of a new version to its `main`. To see what one holds, run
-`pnpm assets --optimize && pnpm assets:archive` here: it writes them to
-`vendor/assets/archives/`, which is not committed.
+workflow of website-assets on a push of a new version to its `main`.
 
 ### Prereleases
 

@@ -3,7 +3,7 @@ name: CI
 # release.yml reads the results of these jobs on the commit it releases, by their names.
 on:
   push:
-    # A commit reaches `staging`, `main` and `app/docs` only after these checks passed on
+    # A commit reaches `staging` and `main` only after these checks passed on
     # it, so they run on `develop` first, as in chassis-website. Their results belong to the
     # commit, and the ruleset reads them there, so pushing the same commit to the other
     # branches does not run them again.
@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Formatting, the site's code and its types. Needs no Git LFS files.
+  # Formatting, the site's code and its types.
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -53,10 +53,8 @@ jobs:
       - name: Astro check
         run: pnpm check:astro
 
-  # The build's lint, source lint, type check and tests, then a full build of every brand,
-  # The build and its checks on the fixture, and on the assets of the vendor/assets
-  # submodule, chassis-ui/website-assets, which this checkout pins. The fonts and the images
-  # of the submodule are Git LFS files, cached by the list of their ids.
+  # The build's lint, type check and tests, and the package as npm publishes it, on the fixture.
+  # The checks of the real files run in chassis-ui/website-assets.
   assets:
     name: Assets
     runs-on: ubuntu-latest
@@ -65,21 +63,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
           persist-credentials: false
-
-      - name: List Git LFS objects
-        run: git -C vendor/assets lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
-
-      - name: Cache Git LFS objects
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .git/modules/vendor/assets/lfs
-          key: lfs-${{ hashFiles('.lfs-ids') }}
-          restore-keys: lfs-
-
-      - name: Pull Git LFS objects
-        run: git -C vendor/assets lfs pull
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -95,9 +79,6 @@ jobs:
 
       - name: Lint build scripts and tests
         run: pnpm assets:lint
-
-      - name: Lint source
-        run: pnpm assets:lint:source
 
       - name: Type check
         run: pnpm assets:typecheck
@@ -123,12 +104,6 @@ jobs:
           npx chassis-assets build --cwd "$FIXTURE" --out "$PACK/out" --quiet
           npx chassis-assets verify --cwd "$FIXTURE" --out "$PACK/out"
           npx chassis-assets archive --cwd "$FIXTURE" --out "$PACK/out" --to "$PACK/archives"
-
-      - name: Build all assets
-        run: pnpm assets
-
-      - name: Verify distribution
-        run: pnpm assets:verify
 
   # The asset catalogs of a build with --asset-catalog --icon-catalog, compiled with actool, the asset
   # compiler of Xcode, as chassis-tokens compiles its own. Needs no install: the build and a
@@ -183,8 +158,8 @@ jobs:
       - name: Build and compile the res/ folders of the native fixture
         run: pnpm test:native:android
 
-  # The documentation site, with the fonts and the images of the chassis brand built from
-  # the submodule by pnpm site:assets.
+  # The documentation site, with the assets of the archive that vendor/assets.json pins. The
+  # same build as Vercel.
   site:
     name: Site
     runs-on: ubuntu-latest
@@ -193,21 +168,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
           persist-credentials: false
-
-      - name: List Git LFS objects
-        run: git -C vendor/assets lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
-
-      - name: Cache Git LFS objects
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .git/modules/vendor/assets/lfs
-          key: lfs-${{ hashFiles('.lfs-ids') }}
-          restore-keys: lfs-
-
-      - name: Pull Git LFS objects
-        run: git -C vendor/assets lfs pull
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0

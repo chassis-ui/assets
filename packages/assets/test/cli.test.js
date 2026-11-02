@@ -1,7 +1,7 @@
 /**
  * @file cli.test.js
  * @description The command-line entries of the build and its checks, run as
- *              `node build/<entry>.js` the way the `pnpm assets*` scripts run them: the
+ *              `node build/<entry>.js` the way a repository of assets runs them: the
  *              flags of the build-system page, the exit codes, and the messages of a wrong
  *              call. Every run reads the fixture and writes to a temporary folder.
  */

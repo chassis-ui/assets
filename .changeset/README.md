@@ -10,6 +10,5 @@ and names the old and the new path. Everything else is a `patch`.
 
 To release, run `pnpm changeset:version` on `develop`. It bumps the version in
 `packages/assets/package.json`, writes `packages/assets/CHANGELOG.md` and copies the version
-to the places that show it. Commit that, and push it to `develop`, `staging`, `main` and
-`app/docs`. The push to `main` creates the tag and the GitHub release. See
+to the places that show it. Commit that, and push it to `develop`, `staging` and `main`. The push to `main` creates the tag and the GitHub release. See
 [Releases](../.github/CONTRIBUTING.md#releases).

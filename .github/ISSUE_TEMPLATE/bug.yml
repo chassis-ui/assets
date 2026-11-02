@@ -12,8 +12,8 @@ body:
       label: Where
       options:
         - A file in the output, dist/
-        - The build, pnpm assets
-        - A check, such as pnpm assets:verify or pnpm assets:lint:source
+        - The build, chassis-assets build
+        - A check, such as chassis-assets verify or chassis-assets lint-source
         - The documentation site
     validations:
       required: true
@@ -35,7 +35,7 @@ body:
     attributes:
       label: How to reproduce it
       description: The command you ran, and the `chassis` block of `package.json` if you changed it. For a file, its path in `source/` and in `dist/`.
-      placeholder: pnpm assets --brand chassis --platform android
+      placeholder: chassis-assets build --brand chassis --platform android
     validations:
       required: true
   - type: input

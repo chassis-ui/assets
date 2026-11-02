@@ -10,7 +10,7 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
 - **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
   commands, `chassis-ui/website-assets` holds the assets with their history, and this
-  repository builds them from the `vendor/assets` submodule. The pages
+  repository takes them from a pinned release (D50). The pages
   describe a repository of assets as `init` writes it since step 5, on 2026-10-29; the
   build-system and the use-in-project pages keep their `work-in-progress` callout, since
   their CI samples and the workflows of `init` were not run on GitHub Actions, ; `npx @chassis-ui/assets init` was run from the registry on 2026-10-29, and the
@@ -19,16 +19,11 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   takes a pinned archive, chassis-ui/website#33, which blocks the move of chassis-ui/css#87,
   chassis-ui/icons#19, chassis-ui/figma#14, chassis-ui/react#125 and chassis-ui/tokens#30,
   and sinefil.org takes its archive from website-assets, ozgurgunes/sinefil-web#222; then
-  the `app/docs` branch of this repository deleted on GitHub once no site pins it. This
-  repository keeps its `vendor/assets` submodule: its CI checks the build on the real files.
-  Agreed on 2026-10-29.
+  the `app/docs` branch of this repository deleted on GitHub once no site pins it.
 - **The choices of D29.** `chassis.ignore` adds names and takes none away, a pattern is a
   name and not a path, a list of `chassis.formats` replaces the rule of a processor, and both
   are read from the configuration without an option. In 0.3.1, and they wait for a
   confirmation.
-- **The choices of D30.** The site builds its fonts with `pnpm site:assets`, a script of its
-  own beside `pnpm assets:site`, and with the range `symbols2` beside `latin` and
-  `latin-ext`. Both are the session's and wait for a confirmation.
 - **1.0.** The five requirements that were set for it hold: the pages and the build agree,
   the consumer contract is tested, the build has unit and build tests, releases are
   automated, and the docs site uses `@chassis-ui/docs` 0.6 or later. Whether a release
@@ -41,15 +36,21 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   from the logomark and the fill of each `.icon` bundle, with a mark of 60 dp for `chassis` and
   46 dp for `sinefil` in the safe zone of 66 dp. They are the designer's to replace.
 
-- **The sites that still read `app/docs`.** chassis-ui/tokens has `vendor/assets` on `app/docs`
-  of this repository at `1e37c96`, so the statement of D38 that the sites pin website-assets
-  holds only once chassis-ui/website#33 and chassis-ui/tokens#30 are done. `app/docs` stays
-  until then. sinefil-web reads `chassis-assets-web-docs-<brand>-<version>.zip` of 0.5.0: its
-  move to a release of website-assets (ozgurgunes/sinefil-web#222) takes the name of D46.
+- **The sites that still read `app/docs`.** Nothing in this repository reads it since D50. The
+  sites of chassis-ui/css#87, chassis-ui/icons#19, chassis-ui/figma#14 and chassis-ui/react#125
+  move in their own repositories, and `app/docs` stays until they have. sinefil-web reads
+  `chassis-assets-web-docs-<brand>-<version>.zip` of 0.5.0: its move to a release of website-assets
+  (ozgurgunes/sinefil-web#222) takes the name of D46.
 
-- **`vendor/assets` until chassis-ui/website#33.** The native checks left it (D49). The Assets and
-  Site jobs of CI, the root `assets*` scripts and the docs site still read it, and the session of
-  that issue removes them, the submodule and the sentence of `AGENTS.md` about the pin.
+- **The commands that the build prints.** The `--help` of the commands and some messages of
+  `packages/assets/build/` still say `pnpm assets` and `pnpm assets:verify`, the root scripts that
+  D50 removed. A repository of assets has `chassis-assets build` and its own scripts, so they are
+  wrong there too. A change to the published package, with a changeset, so it was left out of D50.
+
+- **`check-native --platform android` fails without a message on a machine with no Android SDK.**
+  Under `set -euo pipefail`, `newest()` of `build/native/android.sh` exits when `find` finds no
+  `build-tools`, before the `no aapt2` error of the next line. Seen on 2026-11-02. A change to the
+  published package, with a changeset.
 
 ## Not written
 

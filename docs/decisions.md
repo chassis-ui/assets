@@ -460,3 +460,15 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   prerelease or a run of this checkout with `--cwd`. A submodule used to catch that earlier; the
   package has no reason to know a repository of assets. Removing `vendor/assets` and moving the
   docs site to a release archive is chassis-ui/website#33. The maintainer, 2026-11-02.
+- **D50. How does the site of this repository get the assets?** Like every Chassis site, from the
+  archive of `web/docs/chassis` of a pinned release of `chassis-ui/website-assets`, with
+  `chassis-docs vendor` of `@chassis-ui/docs` 0.13 and the pin in `vendor/assets.json`. Amends D38:
+  the `vendor/assets` submodule, the root scripts on `--cwd vendor/assets` and the steps of CI on
+  the real files are gone, and CI here no longer checks the build on them. Those checks run in
+  website-assets (D49), where `chassis-assets verify`, `lint-source` and `check-native` check each
+  change to the files, and a change to the build is tried on them with
+  `node packages/assets/build/cli.js <command> --cwd <checkout>`. Supersedes the copy of the site
+  in D30: the release has made the choice of the ranges (D39), so `pnpm site:assets` is gone, with
+  no change to a font a latin page loads. `pnpm vendor` no longer needs Git LFS, and a build of the
+  site a download of 36 MB in place of a pull of about 77 MB. `app/docs` has no reader here; deleting
+  it stays the maintainer's. chassis-ui/website#33. The maintainer, 2026-11-02.

@@ -10,7 +10,7 @@
 
 A repository of assets holds the design files a designer exports, in `source/<brand>/<app>/<type>/`, and `@chassis-ui/assets` copies them to `dist/<platform>/<app>/<brand>/` with the naming and the formats of each platform. The build is file-driven: add a file to `source/` and it is in the output of the next build. There is no manifest to maintain.
 
-The build is published to npm as [`@chassis-ui/assets`](https://www.npmjs.com/package/@chassis-ui/assets), with the `chassis-assets` command, and `chassis-assets init` writes a repository of assets for a team. The assets of the Chassis sites are in [chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), which this repository vendors as `vendor/assets` to build, to check and to show in its documentation site. The [documentation site](https://chassis-ui.com/assets/docs/getting-started/introduction/) covers the asset types and how to use the output on each platform.
+The build is published to npm as [`@chassis-ui/assets`](https://www.npmjs.com/package/@chassis-ui/assets), with the `chassis-assets` command, and `chassis-assets init` writes a repository of assets for a team. The assets of the Chassis sites are in [chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), and the documentation site of this repository takes them from a pinned release, like every Chassis site. The [documentation site](https://chassis-ui.com/assets/docs/getting-started/introduction/) covers the asset types and how to use the output on each platform.
 
 ## Getting started
 
@@ -24,33 +24,28 @@ To work on the build, the site or the Chassis assets, you need:
 
 - **Node.js** 22.12 or later, see `engines` in `package.json`. The repository pins 24 in `.nvmrc`.
 - **pnpm**, the version named by `packageManager` in `package.json`. Run `corepack enable` once and pnpm is used at that version.
-- **Git LFS**, from [git-lfs.com](https://git-lfs.com), for the submodule. Run `git lfs install` once on your machine. The fonts and the raster images of website-assets are Git LFS files.
-
-Clone the repository, check out the submodule with its Git LFS files, and build the assets:
+  Clone the repository and install the dependencies:
 
 ```shell
 git clone https://github.com/chassis-ui/assets.git
 cd assets
-pnpm vendor
-pnpm assets
-```
-
-The build imports Node.js modules only, so it runs on a fresh clone with nothing installed. Install the dependencies to run the tests, the checks, the documentation site and the options that load a package:
-
-```shell
 pnpm install
 ```
 
-A submodule checked out without Git LFS has pointer files in place of the fonts and the images. The build fails on them and lists them; run `pnpm vendor`.
+The build imports Node.js modules only, so it runs on a fresh clone with nothing installed, on any repository of assets, with `--cwd`. The install is for the tests, the checks, the documentation site and the options that load a package. To try the build on the real files, build a checkout of chassis-ui/website-assets, which needs [Git LFS](https://git-lfs.com):
+
+```shell
+node packages/assets/build/cli.js build --cwd <checkout of website-assets>
+```
 
 ## Repository layout
 
 A pnpm workspace. Run every command from the root.
 
 ```
-vendor/assets/            -> The chassis-ui/website-assets submodule: the assets of the Chassis sites
-vendor/assets/dist/       -> The build output, as dist/<platform>/<app>/<brand>/. Not committed
-package.json              -> The commands; the root scripts run the build on vendor/assets
+vendor/assets.json        -> The pin: the release of chassis-ui/website-assets that the documentation site reads
+vendor/assets/            -> What `pnpm vendor` unpacks from that release. Not committed
+package.json              -> The commands
 packages/assets/          -> @chassis-ui/assets: the build in build/, its templates in build/templates/, its tests in test/
 packages/site/            -> The documentation site, built with Astro
 build/                    -> Scripts of the repository: the release notes, the version references
@@ -62,7 +57,7 @@ ref/OPEN.md               -> What is left to do, decide or check
 
 ### Source
 
-A repository of assets, `vendor/assets` here, has this layout. `chassis-assets init` writes the files around it.
+A repository of assets, such as chassis-ui/website-assets, has this layout. `chassis-assets init` writes the files around it.
 
 ```
 package.json              -> The `chassis` configuration: the brands, the apps and their platforms
@@ -85,13 +80,13 @@ A job of a brand and an app reads four folders, and a file of a later folder rep
 
 ### Output
 
-The output of website-assets, in `vendor/assets/dist/` after `pnpm assets`:
+The output of website-assets, in `dist/` after a build there:
 
 ```
 dist/
 ├── web/
 │   └── docs/
-│       ├── chassis/      -> What the Chassis sites read, built by pnpm assets:site
+│       ├── chassis/      -> What the Chassis sites read, from the archive of a release
 │       └── sinefil/
 ├── ios/
 │   └── demo/
@@ -117,12 +112,13 @@ On Android an image without an indicator goes to `drawable/`, `@2x` to `drawable
 
 ### Build
 
+In a repository of assets, or from this checkout with `node packages/assets/build/cli.js` and `--cwd`:
+
 ```shell
-pnpm assets                                   # Every brand, app and platform
-pnpm assets --brand chassis                   # One brand
-pnpm assets --brand chassis sinefil           # --brand, --app and --platform take one or more values
-pnpm assets --app docs --platform web         # Filters combine
-pnpm assets:site                              # The output the Chassis sites read: --clean --brand chassis --app docs
+chassis-assets build                               # Every brand, app and platform
+chassis-assets build --brand chassis               # One brand
+chassis-assets build --brand chassis sinefil       # --brand, --app and --platform take one or more values
+chassis-assets build --app docs --platform web     # Filters combine
 ```
 
 | Option                   | What it does                                                                                                                                                                                                            |
@@ -156,39 +152,39 @@ A full build removes `dist/` first; a filtered build keeps it. A filter value th
 
 ### Check
 
-| Command                                                        | What it does                                                                                                                                                                                                                                                                                    | Options                                                          |
-| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `pnpm test`                                                    | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files                                                                                                                                                                                              |                                                                  |
-| `pnpm test:ci`                                                 | The Lint, Assets, Site and Audit jobs of CI in one command, without the iOS catalogs, the changeset check and the report of `pnpm audit`                                                                                                                                                        |                                                                  |
-| `pnpm test:golden`                                             | Writes `packages/assets/test/golden/` again, after an intended change to the output                                                                                                                                                                                                             |                                                                  |
-| `pnpm test:native:ios`, `pnpm test:native:android`             | Builds the native fixture and compiles it with `actool`, which needs Xcode, or `aapt2`, which needs the Android SDK in `ANDROID_HOME`                                                                                                                                                           |
-| `pnpm test:ios`, `pnpm test:android`                           | Compiles an existing output of `vendor/assets`, built with the options the check names                                                                                                                                                                                                          |
-| `chassis-assets check-native`                                  | Compiles an existing output of any repository of assets, by `--platform`                                                                                                                                                                                                                        |
-| `pnpm assets:analyze`                                          | Sizes, types, largest files and files with the same content, of `source/` and of an existing output                                                                                                                                                                                             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet`    |
-| `pnpm assets:validate`                                         | Checks an existing output against `source/` and the configuration                                                                                                                                                                                                                               | `--out`, `--cwd`                                                 |
-| `pnpm assets:archive`                                          | One zip per platform, app and brand of an existing output, `<name>-<platform>-<app>-<brand>-<version>.zip`, for a release, `<name>` being the name of `package.json` without its scope. Writes to `archives/`                                                                                   | `--out`, `--to`, `--prefix`, `--release`, `--cwd`                |
-| `pnpm assets:manifest`, `pnpm assets:diff --base <manifest>`   | The files of an existing output with their sizes and hashes, and the files added, removed, renamed and changed since a manifest                                                                                                                                                                 |
-| `pnpm release:notes`                                           | Prints the entry of a version in the changelog of the package, and exits 1 without one                                                                                                                                                                                                          |
-| `chassis-assets init [dir]`                                    | Writes the baseline of a repository of assets into a folder: `package.json` with the `chassis` block and the scripts, `chassis.checks.json`, the Git LFS attributes, a README, a changelog, `AGENTS.md`, a CI and a release workflow. Through the CLI: `node packages/assets/build/cli.js init` | `--name`, `--brand`, `--app <name:platforms>`, `--pm <npm        | pnpm>`, `--force`, `--dry-run` |
-| `chassis-assets static-font <font> <output...> <axis>=<value>` | The static font of a variable font with every axis fixed, the given ones at their value: the files by weight of a role, with the names of `STAT`. Writes the font to each output, WOFF2 where the output ends so. Needs `subset-font`                                                           | `--help`                                                         |
-| `pnpm assets:lfs`                                              | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include`                                                                                                                                                                                                 | `--brand`, `--app`, `--platform`, `--type`, `--include`, `--cwd` |
-| `pnpm assets:contract`                                         | Checks that each output has the files of its contracts in `chassis.checks.json`                                                                                                                                                                                                                 | `--out`, `--cwd`                                                 |
-| `pnpm assets:verify`                                           | The validator, then the contract check                                                                                                                                                                                                                                                          | `--out`, `--cwd`                                                 |
-| `pnpm assets:lint:source`                                      | The names and the layout of `source/`, LFS pointers, the fonts against their stylesheets and against each other                                                                                                                                                                                 | `--cwd`, `--allow-lfs-pointers`                                  |
-| `pnpm assets:lint`                                             | ESLint over the build, its tests and the repository scripts                                                                                                                                                                                                                                     |                                                                  |
-| `pnpm assets:typecheck`                                        | TypeScript over `packages/assets/build/`, from its JSDoc                                                                                                                                                                                                                                        |                                                                  |
-| `pnpm lint:prettier`                                           | Formatting, across the repository                                                                                                                                                                                                                                                               |                                                                  |
-| `pnpm check`                                                   | The types of the site, then `pnpm check:pnpm`: `pnpm audit --prod --audit-level moderate`                                                                                                                                                                                                       |                                                                  |
+| Command                                                            | What it does                                                                                                                                                                                                                                                                                    | Options                                                          |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `pnpm test`                                                        | The tests of the build, on the fixture in `packages/assets/test/fixtures/`. Needs no Git LFS files                                                                                                                                                                                              |                                                                  |
+| `pnpm test:ci`                                                     | The Lint, Assets, Site and Audit jobs of CI in one command, without the iOS catalogs, the changeset check and the report of `pnpm audit`                                                                                                                                                        |                                                                  |
+| `pnpm test:golden`                                                 | Writes `packages/assets/test/golden/` again, after an intended change to the output                                                                                                                                                                                                             |                                                                  |
+| `pnpm test:native:ios`, `pnpm test:native:android`                 | Builds the native fixture and compiles it with `actool`, which needs Xcode, or `aapt2`, which needs the Android SDK in `ANDROID_HOME`                                                                                                                                                           |
+| `chassis-assets check-native`                                      | Compiles an existing output of any repository of assets, by `--platform`                                                                                                                                                                                                                        |
+| `chassis-assets analyze`                                           | Sizes, types, largest files and files with the same content, of `source/` and of an existing output                                                                                                                                                                                             | `--brand`, `--app`, `--platform`, `--out`, `--cwd`, `--quiet`    |
+| `chassis-assets validate`                                          | Checks an existing output against `source/` and the configuration                                                                                                                                                                                                                               | `--out`, `--cwd`                                                 |
+| `chassis-assets archive`                                           | One zip per platform, app and brand of an existing output, `<name>-<platform>-<app>-<brand>-<version>.zip`, for a release, `<name>` being the name of `package.json` without its scope. Writes to `archives/`                                                                                   | `--out`, `--to`, `--prefix`, `--release`, `--cwd`                |
+| `chassis-assets manifest`, `chassis-assets diff --base <manifest>` | The files of an existing output with their sizes and hashes, and the files added, removed, renamed and changed since a manifest                                                                                                                                                                 |
+| `pnpm release:notes`                                               | Prints the entry of a version in the changelog of the package, and exits 1 without one                                                                                                                                                                                                          |
+| `chassis-assets init [dir]`                                        | Writes the baseline of a repository of assets into a folder: `package.json` with the `chassis` block and the scripts, `chassis.checks.json`, the Git LFS attributes, a README, a changelog, `AGENTS.md`, a CI and a release workflow. Through the CLI: `node packages/assets/build/cli.js init` | `--name`, `--brand`, `--app <name:platforms>`, `--pm <npm        | pnpm>`, `--force`, `--dry-run` |
+| `chassis-assets static-font <font> <output...> <axis>=<value>`     | The static font of a variable font with every axis fixed, the given ones at their value: the files by weight of a role, with the names of `STAT`. Writes the font to each output, WOFF2 where the output ends so. Needs `subset-font`                                                           | `--help`                                                         |
+| `chassis-assets lfs`                                               | Prints the Git LFS paths that a build with the same filters reads, for `git lfs pull --include`                                                                                                                                                                                                 | `--brand`, `--app`, `--platform`, `--type`, `--include`, `--cwd` |
+| `chassis-assets contract`                                          | Checks that each output has the files of its contracts in `chassis.checks.json`                                                                                                                                                                                                                 | `--out`, `--cwd`                                                 |
+| `chassis-assets verify`                                            | The validator, then the contract check                                                                                                                                                                                                                                                          | `--out`, `--cwd`                                                 |
+| `chassis-assets lint-source`                                       | The names and the layout of `source/`, LFS pointers, the fonts against their stylesheets and against each other                                                                                                                                                                                 | `--cwd`, `--allow-lfs-pointers`                                  |
+| `pnpm assets:lint`                                                 | ESLint over the build, its tests and the repository scripts                                                                                                                                                                                                                                     |                                                                  |
+| `pnpm assets:typecheck`                                            | TypeScript over `packages/assets/build/`, from its JSDoc                                                                                                                                                                                                                                        |                                                                  |
+| `pnpm lint:prettier`                                               | Formatting, across the repository                                                                                                                                                                                                                                                               |                                                                  |
+| `pnpm check`                                                       | The types of the site, then `pnpm check:pnpm`: `pnpm audit --prod --audit-level moderate`                                                                                                                                                                                                       |                                                                  |
 
-Every `pnpm assets*` command prints its options with `--help`. [docs/architecture.md](docs/architecture.md#checks-per-changed-area) says which checks to run for which change.
+Every `chassis-assets` command prints its options with `--help`. [docs/architecture.md](docs/architecture.md#checks-per-changed-area) says which checks to run for which change.
 
 ### Documentation site
 
 ```shell
-pnpm dev                # Build the docs assets and run the site at http://localhost:4325/assets/
-pnpm site:build         # Build the docs assets, the site and its search index into _site/
-pnpm site:assets        # Build the docs assets with the fonts of the site: subsetted, a file per range
-pnpm astro:dev          # Run the site without building the assets
+pnpm dev                # Unpack the pinned assets and run the site at http://localhost:4325/assets/
+pnpm site:build         # Unpack the pinned assets, build the site and its search index into _site/
+pnpm vendor             # Unpack the archive that vendor/assets.json pins into vendor/assets/
+pnpm sync-assets        # Move the pin to the latest release of website-assets, or to --version <version>
+pnpm astro:dev          # Run the site without unpacking the assets
 pnpm astro:build        # Build the site without the assets and the search index
 pnpm site:lint          # ESLint, Stylelint, unused Sass variables and Prettier over the site
 pnpm site:lint:html     # html-validate over _site/, after a build
@@ -200,7 +196,6 @@ pnpm site:lint:vnu      # The Nu Html Checker over _site/, after a build; skippe
 ```shell
 pnpm changeset              # Describe a change to the build
 pnpm changeset:version      # Bump the version and write the changelog
-pnpm assets:archive         # Write the archives of the submodule's output to vendor/assets/archives/, after pnpm assets --optimize
 ```
 
 See [Releases](.github/CONTRIBUTING.md#releases) and the [changelog](packages/assets/CHANGELOG.md). The archives of the Chassis assets are released by website-assets.
@@ -235,8 +230,8 @@ The `chassis` block of the `package.json` of a repository of assets names the br
 
 What the checks verify is in `chassis.checks.json`, beside `package.json`. The build does not read it, and the file is optional:
 
-- `contracts` lists, for a job, the files that a consumer reads by name from its output. `pnpm assets:contract` checks them.
-- `lint.allow` lists the source files that break a naming rule and are kept, each with the reason. `pnpm assets:lint:source` warns about them instead of failing.
+- `contracts` lists, for a job, the files that a consumer reads by name from its output. `chassis-assets contract` checks them.
+- `lint.allow` lists the source files that break a naming rule and are kept, each with the reason. `chassis-assets lint-source` warns about them instead of failing.
 
 The build in `packages/assets/build/` names no brand, app or file: a team's repository holds its own `source/`, `chassis` block and checks file, which `chassis-assets init` writes. The [build system page](https://chassis-ui.com/assets/docs/getting-started/build-system/#configuration) has the schema of both.
 
@@ -246,11 +241,11 @@ The build writes one job per brand, app and platform: the files of `source/_defa
 
 Every repository of assets relies on the commands, the flags and the output layout of the build, which are its public API: a change to one of them is a breaking change for every adopting team.
 
-A Chassis site vendors its assets as the submodule `vendor/assets` and builds it with `pnpm install --ignore-workspace && pnpm assets:site`, which `chassis-docs vendor` of `@chassis-ui/docs` runs, then copies `dist/web/docs/chassis/` to `/static/`. The files a site reads by name are `contracts` of the `chassis.checks.json` of website-assets, and `pnpm assets:verify` checks them here on the pinned submodule on every commit. sinefil.org takes the archive of its job from a release of website-assets instead.
+A Chassis site takes its assets from a pinned release of website-assets: `chassis-docs vendor` of `@chassis-ui/docs` downloads the archive of the job that `vendor/assets.json` names, checks its SHA-256 and unpacks it into `vendor/assets/dist/web/docs/chassis/`, and the site copies that folder to `/static/`. The site of this repository does the same. The files a site reads by name are `contracts` of the `chassis.checks.json` of website-assets, and `chassis-assets verify` checks them there on every commit.
 
 ## Branches and CI
 
-Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, Assets, Site and Audit, and Changeset on pull requests. The Assets, Native iOS, Native Android and Site jobs check out `vendor/assets` with its Git LFS files, so the pin of the submodule has to be pushed to website-assets first. The commit that passed is then pushed to `staging` and `main`, which accept only a commit with those checks. A push to `main` with a new version publishes the package and creates its tag and its GitHub release, see [Releases](.github/CONTRIBUTING.md#releases).
+Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, Assets, Site and Audit, and Changeset on pull requests. No job needs a Git LFS file: the checks of the real files run in website-assets (D49, D50). The commit that passed is then pushed to `staging` and `main`, which accept only a commit with those checks. A push to `main` with a new version publishes the package and creates its tag and its GitHub release, see [Releases](.github/CONTRIBUTING.md#releases).
 
 ## Chassis ecosystem
 

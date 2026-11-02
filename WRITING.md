@@ -132,7 +132,7 @@ The project has one word for each concept. Using a synonym makes the reader wond
 | density       | An Android density folder, `drawable-xhdpi/`                                               | resolution, bucket                           |
 | override      | A brand file that replaces the default file of the same path                               | overwrite, customization                     |
 | processor     | The module of a platform in `packages/assets/build/processors/`                            | plugin, transformer                          |
-| the build     | The build in `packages/assets/build/`, `pnpm assets`                                       | the pipeline, the generator, the script      |
+| the build     | The build in `packages/assets/build/`, `chassis-assets build`                              | the pipeline, the generator, the script      |
 | consumer      | A site or an app that reads the output                                                     | client, user                                 |
 | contract      | The files a consumer reads by name, in `chassis.checks.json`                               | manifest, requirements                       |
 
@@ -165,7 +165,7 @@ Don't use the name of one platform where another is meant — `hero-banner.png` 
 
 **Placeholders** go in angle brackets, lowercase: `` `dist/<platform>/<app>/<brand>/` ``, `` `source/<brand>/<app>/<type>/` ``. Don't use square brackets for placeholders.
 
-**Other references:** file paths relative to the repository root (`` `packages/assets/build/cli.js` ``); commands in full (`` `pnpm assets --platform ios` ``); configuration keys as a path (`` `chassis.build.apps` ``). Interface labels of Figma, Xcode and Android Studio are bold, not code: **File → Add Files to…**.
+**Other references:** file paths relative to the repository root (`` `packages/assets/build/cli.js` ``); commands in full (`` `chassis-assets build --platform ios` ``); configuration keys as a path (`` `chassis.build.apps` ``). Interface labels of Figma, Xcode and Android Studio are bold, not code: **File → Add Files to…**.
 
 ---
 
@@ -180,12 +180,12 @@ Chassis Assets is a multi-brand, multi-platform repository that its adopters own
 **Names must exist.** Every path, command and option in a doc must exist as written, and the output name of a placeholder file is the one a build writes for it. Don't write a name from memory, and don't invent a flag — a reader will run it. Before adding a name, find it:
 
 ```bash
-pnpm assets --help
-pnpm assets --dry-run
+chassis-assets build --help
+chassis-assets build --dry-run
 find dist/android/demo/chassis -name 'ic_arrow_right_solid*'
 ```
 
-**Trees are copied from a build.** A tree of `dist/` shows files that a build wrote, with the names and folders it wrote them in: put the placeholder files in the `source/` of a scratch repository, build it with `--cwd`, and copy the tree. Shorten a tree by leaving lines out and ending a folder with `└── ...`, never by editing a name. Check an output name by building: the web name of `HeroBanner@2x.png` is whatever `pnpm assets` writes, not what the rule suggests.
+**Trees are copied from a build.** A tree of `dist/` shows files that a build wrote, with the names and folders it wrote them in: put the placeholder files in the `source/` of a scratch repository, build it with `--cwd`, and copy the tree. Shorten a tree by leaving lines out and ending a folder with `└── ...`, never by editing a name. Check an output name by building: the web name of `HeroBanner@2x.png` is whatever `chassis-assets build` writes, not what the rule suggests.
 
 **A statement about the build is checked by running it.** "A filtered build keeps `dist/`", "the build fails on a Git LFS pointer": run the command, read what it prints, then write the sentence. When the page and the build disagree, see the rules of [AGENTS.md](AGENTS.md#rules) for which one changes.
 

@@ -46,8 +46,8 @@ describe('findRoot()', () => {
   })
 
   test('from the package of the build, the root is the fixture, not this repository', () => {
-    // The repository has no chassis block since D38: the assets are in vendor/assets, and the
-    // root scripts pass --cwd. From the package itself, nothing above has one
+    // The repository has no chassis block since D38: the assets are in chassis-ui/website-assets.
+    // From the package itself, nothing above has one
     expect(findRoot(ROOT)).toBe(ROOT)
     expect(findRoot(FIXTURE)).toBe(FIXTURE)
   })
