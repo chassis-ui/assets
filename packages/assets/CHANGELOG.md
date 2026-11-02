@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- **Breaking.** `init --force` no longer writes over `package.json`, `chassis.checks.json` or `CHANGELOG.md`; to take a new script, add it by hand. Add `chassis-assets release-notes`, `manifest` and `diff`, and let a repository of assets take what `init` writes now. No file of `dist/` is added, removed or renamed.
+
+  - `release-notes [version]` prints the entry of a version in `CHANGELOG.md`, and exits 1 without one. The workflows of `init` run it in CI and first in the release, and the body of the GitHub release is the entry, in place of `--generate-notes`.
+  - `manifest` writes `<name>-manifest-<version>.json`, the size and the SHA-256 of every file by job, and the release workflow attaches it. `diff --base <manifest>` reports the files added, removed, renamed and changed since one.
+  - `init` writes `CHANGELOG.md`, `AGENTS.md` and `CLAUDE.md`, a script `release-notes`, and takes `--repository`, `--license` and `--author`. The workflows install with `npm ci` or `pnpm install --frozen-lockfile` and cache the packages, so the lockfile has to be committed.
+  - `init --check` reports where a repository differs from what this version writes, and `init --only <file…>` writes those files.
+
+  A repository of assets takes the gate with `npx chassis-assets init --only AGENTS.md CLAUDE.md`, `--only .github/workflows/ci.yml .github/workflows/release.yml --force`, a `CHANGELOG.md` with an entry for its version, and the script `"release-notes": "chassis-assets release-notes"`. The package now holds its `LICENSE`.
+
+### Patch Changes
+
+- The source lint reads the `.icon` bundle of an app icon: `icon.json` has to be there and be JSON, and every layer file it names has to be in `Assets/`. A build with `--res` says of an `.adaptive` bundle that stays why it is no app icon: without `--vector-drawables` it names the option, and with it the layer or the name that is missing. No file of `dist/` is added, removed or renamed. A repository of assets whose `.icon` bundle lacks `icon.json` or a file it names fails `chassis-assets lint-source` now, where it failed in Xcode before.
+- `--vector-drawables` writes a path that a gradient fills without a second fill color. With both, `aapt2` kept the black color and dropped the gradient, so the path was drawn black. No file of `dist/` is added, removed or renamed, and a repository of assets changes nothing.
+
 ## 0.9.0
 
 ### Minor Changes
