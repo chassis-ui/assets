@@ -8,7 +8,7 @@ import webProcessor from './web.js'
 import iosProcessor from './ios.js'
 import androidProcessor from './android.js'
 
-/** @import { Processor } from '../types.js' */
+/** @import { Processor } from '../../types.js' */
 
 /**
  * Platform processor registry

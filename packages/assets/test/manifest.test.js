@@ -9,8 +9,8 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import { diffManifests, formatDiff } from '../build/diff.js'
-import { buildManifest, writeManifest } from '../build/manifest.js'
+import { diffManifests, formatDiff } from '../lib/commands/diff.js'
+import { buildManifest, writeManifest } from '../lib/commands/manifest.js'
 import { CLI, FIXTURE, GOLDEN, listFiles, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

@@ -27,17 +27,18 @@
     "android"
   ],
   "bin": {
-    "chassis-assets": "build/cli.js"
+    "chassis-assets": "lib/cli.js"
   },
   "files": [
-    "build",
+    "lib",
+    "templates",
     "README.md",
     "CHANGELOG.md"
   ],
   "exports": {
-    ".": "./build/api/index.js",
-    "./api": "./build/api/index.js",
-    "./build/*": "./build/*",
+    ".": "./lib/api/index.js",
+    "./api": "./lib/api/index.js",
+    "./lib/*": "./lib/*",
     "./package.json": "./package.json"
   },
   "engines": {

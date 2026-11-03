@@ -15,7 +15,7 @@ import fs from 'fs'
 import path from 'path'
 import { findBundles } from './processors/shared.js'
 
-/** @import { ResCollision, ResLayout } from './types.js' */
+/** @import { ResCollision, ResLayout } from '../types.js' */
 
 /**
  * The name of a resource: lowercase letters, digits and underscores, a letter first, since

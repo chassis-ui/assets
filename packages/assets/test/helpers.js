@@ -21,13 +21,13 @@ export const FIXTURE = path.join(here, 'fixtures')
 export const GOLDEN = path.join(here, 'golden')
 
 /** The command-line entries of the build and its checks. */
-export const CLI = path.join(ROOT, 'build', 'cli.js')
-export const BUILD_CLI = path.join(ROOT, 'build', 'build-assets.js')
-export const ANALYZE_CLI = path.join(ROOT, 'build', 'analyze-assets.js')
-export const VALIDATE_CLI = path.join(ROOT, 'build', 'validate-assets.js')
-export const LINT_SOURCE_CLI = path.join(ROOT, 'build', 'lint-source.js')
-export const CONTRACT_CLI = path.join(ROOT, 'build', 'contract.js')
-export const VERIFY_CLI = path.join(ROOT, 'build', 'verify.js')
+export const CLI = path.join(ROOT, 'lib/cli.js')
+export const BUILD_CLI = path.join(ROOT, 'lib/build/build-assets.js')
+export const ANALYZE_CLI = path.join(ROOT, 'lib/commands/analyze-assets.js')
+export const VALIDATE_CLI = path.join(ROOT, 'lib/commands/validate-assets.js')
+export const LINT_SOURCE_CLI = path.join(ROOT, 'lib/commands/lint-source.js')
+export const CONTRACT_CLI = path.join(ROOT, 'lib/commands/contract.js')
+export const VERIFY_CLI = path.join(ROOT, 'lib/commands/verify.js')
 
 const made = []
 

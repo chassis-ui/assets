@@ -14,8 +14,8 @@ import { spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import subsetFont from 'subset-font'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { generateAssets } from '../build/build-assets.js'
-import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
+import { generateAssets } from '../lib/build/build-assets.js'
+import { androidProcessor, iosProcessor, webProcessor } from '../lib/build/processors/index.js'
 import {
   NAMED_RANGES,
   RANGES_FILE,
@@ -27,8 +27,8 @@ import {
   rangeSlug,
   resolveSubset,
   subsetJob
-} from '../build/subset-fonts.js'
-import DistValidator from '../build/validate-assets.js'
+} from '../lib/build/subset-fonts.js'
+import DistValidator from '../lib/commands/validate-assets.js'
 import { ROOT, compareDirs, copyFixture, listFiles, removeTempDirs, tempDir } from './helpers.js'
 
 vi.setConfig({ testTimeout: 30_000 })
@@ -46,7 +46,7 @@ const fonts = /** @type {Record<string, Buffer>} */ ({
   'variable.woff2': fs.readFileSync(VARIABLE)
 })
 
-/** @type {import('../build/subset-fonts.js').Subsetter} */
+/** @type {import('../lib/build/subset-fonts.js').Subsetter} */
 let subsetter
 
 beforeAll(async () => {
@@ -111,7 +111,7 @@ function root(subset, { variable = false, sheet = '@font-face { font-family: "Te
 /**
  * Build a root into a temporary folder.
  * @param {string} cwd
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  */
 async function build(cwd, options = {}) {
   const out = tempDir()
@@ -205,7 +205,7 @@ describe('resolveSubset()', () => {
   })
 
   test('the names are those of the file of the ranges, each one a name of a file', () => {
-    const file = path.join(ROOT, 'build', RANGES_FILE)
+    const file = path.join(ROOT, 'lib/build', RANGES_FILE)
     expect(JSON.parse(fs.readFileSync(file, 'utf8'))).toEqual(NAMED_RANGES)
     for (const [name, ranges] of Object.entries(NAMED_RANGES)) {
       expect(rangeSlug(name)).toBe(name)
@@ -442,7 +442,7 @@ describe('loadSubsetter()', () => {
 
 describe('subsetJob()', () => {
   const settings = resolveSubset()
-  const web = /** @type {import('../build/types.js').FontSubset} */ (webProcessor.subset)
+  const web = /** @type {import('../lib/types.js').FontSubset} */ (webProcessor.subset)
 
   /** A job folder with the fonts of the tests under `fonts/`. */
   function job() {
@@ -567,7 +567,7 @@ describe('subsetJob()', () => {
 })
 
 describe('subsetJob() with split', () => {
-  const web = /** @type {import('../build/types.js').FontSubset} */ (webProcessor.subset)
+  const web = /** @type {import('../lib/types.js').FontSubset} */ (webProcessor.subset)
   // A range of each kind: two that the font has, by name, and one that it has not
   const settings = resolveSubset({ split: true }, ['latin', 'greek', 'U+4E00-4E10'])
 
@@ -1091,7 +1091,7 @@ describe('generateAssets() with subset', () => {
 })
 
 describe('chassis-assets build --subset', () => {
-  const entry = path.join(ROOT, 'build/build-assets.js')
+  const entry = path.join(ROOT, 'lib/build/build-assets.js')
 
   test('prints the counts', () => {
     const result = spawnSync(
@@ -1169,13 +1169,13 @@ describe('chassis-assets build --subset', () => {
   test('without the package fails before it writes, and says how to install it', () => {
     // A copy of the build outside the repository finds no package
     const copy = fs.realpathSync(tempDir())
-    fs.cpSync(path.join(ROOT, 'build'), path.join(copy, 'build'), { recursive: true })
+    fs.cpSync(path.join(ROOT, 'lib'), path.join(copy, 'lib'), { recursive: true })
     const cwd = root()
     const out = tempDir()
     const run = (/** @type {string[]} */ args) =>
       spawnSync(
         process.execPath,
-        [path.join(copy, 'build/build-assets.js'), '--cwd', cwd, '--out', out, ...args],
+        [path.join(copy, 'lib/build/build-assets.js'), '--cwd', cwd, '--out', out, ...args],
         { encoding: 'utf-8' }
       )
 

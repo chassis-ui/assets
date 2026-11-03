@@ -19,11 +19,11 @@ import { IMAGE_FORMATS, loadEncoders, optimizeJob, resolveSettings } from './opt
 import { platformProcessors } from './processors/index.js'
 import { bundleIndex, findBundles, keepsBundle } from './processors/shared.js'
 import { writeRes } from './res-layout.js'
-import { buildVersion, findRoot, isEntry, resolveRoot } from './root.js'
+import { buildVersion, findRoot, isEntry, resolveRoot } from '../root.js'
 import { loadSubsetter, resolveSubset, subsetJob } from './subset-fonts.js'
 import { convertFolder, loadConverter } from './vector-drawables.js'
 
-/** @import { BuildConfig, BuildOptions, BuildStats, ContractEntry, Job, LintAllowance, Processor } from './types.js' */
+/** @import { BuildConfig, BuildOptions, BuildStats, ContractEntry, Job, LintAllowance, Processor } from '../types.js' */
 
 const LFS_POINTER_HEADER = 'version https://git-lfs.github.com/spec/v1'
 
@@ -1166,7 +1166,7 @@ async function convertVectorDrawables(processor, destPath, convert) {
  * and `--avif` that the processor takes.
  * @param {Processor} processor - The platform processor
  * @param {string} destPath - The output folder of the job
- * @param {{ settings: import('./types.js').OptimizeSettings, encoders: import('./optimize.js').Encoders }} tools
+ * @param {{ settings: import('../types.js').OptimizeSettings, encoders: import('./optimize.js').Encoders }} tools
  */
 async function optimizeImages(processor, destPath, tools) {
   const formats = Object.fromEntries(
@@ -1200,7 +1200,7 @@ async function optimizeImages(processor, destPath, tools) {
 /**
  * What the subset step of a run works with.
  * @typedef {Object} FontTools
- * @property {import('./types.js').SubsetSettings} settings - The settings, checked
+ * @property {import('../types.js').SubsetSettings} settings - The settings, checked
  * @property {import('./subset-fonts.js').Subsetter} subsetter - The subsetter, loaded
  * @property {Set<string>} read - The brands that had a font subsetted or kept
  * @property {Set<string>} fixed - The axes that were fixed in a font, as `<brand> <tag>`
@@ -1255,7 +1255,7 @@ async function subsetFonts(processor, destPath, brand, tools) {
 /**
  * Move the files of a type folder into an asset catalog, in the output of one job. A file
  * without a place in an image set stays in its folder, with a warning for the job.
- * @param {import('./types.js').Catalog | undefined} catalog - The catalog of the processor
+ * @param {import('../types.js').Catalog | undefined} catalog - The catalog of the processor
  * @param {string} destPath - The output folder of the job
  */
 function writeAssetCatalog(catalog, destPath) {

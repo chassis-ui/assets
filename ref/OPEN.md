@@ -63,7 +63,7 @@ of the brands moved to `ref/OPEN.md` of the repository of the Chassis assets wit
   `mipmap-*dpi` files, from a master image. The build resizes nothing (D42, D44, D45), and
   the pages say that an app adds its own icon for those. Comes back with a team that needs
   one, as a bundle of the designer's files or as an option.
-- The ranges `latin-ext`, `math` and `symbols` of `packages/assets/build/subset-ranges.json`
+- The ranges `latin-ext`, `math` and `symbols` of `packages/assets/lib/build/subset-ranges.json`
   differ from the stylesheets of Google Fonts: `U+20AD-20C4` for `U+20AD-20C0`, `U+2074-209F`
   for `U+2074-208E, U+2090-209C`, and eight entries of `symbols`. Found with issue 7 and not
   changed.
@@ -108,7 +108,7 @@ Considered and left out. Each needs a reason to come back.
 - **Publishing the built assets on npm for the sites.** D2, and D9 of the website's roadmap:
   the archives are per platform and app, too large as one package and not what a site reads.
   `--type` and `--include` are the lighter alternative for a site (D13).
-- **Processors loaded from outside `packages/assets/build/`**, named in the `chassis` block.
+- **Processors loaded from outside `packages/assets/lib/`**, named in the `chassis` block.
   D20. The registry is read synchronously by the build, the validator, the watch and the
   API, so a path in `package.json` makes each of them load asynchronously, and the shape of a
   processor becomes a public API. An adopting team edits the build, as the build-system page

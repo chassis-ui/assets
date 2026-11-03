@@ -1,20 +1,20 @@
 import fs from 'fs'
 import path from 'path'
-import ChassisAssets from './api/index.js'
-import { catalogPaths } from './asset-catalog.js'
+import ChassisAssets from '../api/index.js'
+import { catalogPaths } from '../build/asset-catalog.js'
 import {
   BRAND_FOLDER,
   resolveFormats,
   resolveIgnore,
   shouldIgnoreFile,
   sourceLayers
-} from './build-assets.js'
-import { formatName } from './optimize.js'
-import { platformProcessors, extractResolutionIndicator } from './processors/index.js'
-import { bundleIndex, keepsBundle } from './processors/shared.js'
-import { getValidExtensions, getAllValidExtensions, isMetadataFile } from './asset-types.js'
-import { appIconPath, resourcePaths } from './res-layout.js'
-import { isEntry, resolveRoot } from './root.js'
+} from '../build/build-assets.js'
+import { formatName } from '../build/optimize.js'
+import { platformProcessors, extractResolutionIndicator } from '../build/processors/index.js'
+import { bundleIndex, keepsBundle } from '../build/processors/shared.js'
+import { getValidExtensions, getAllValidExtensions, isMetadataFile } from '../asset-types.js'
+import { appIconPath, resourcePaths } from '../build/res-layout.js'
+import { isEntry, resolveRoot } from '../root.js'
 
 /**
  * Distribution integrity validator.

@@ -1,5 +1,5 @@
 /**
- * The shared types of the build, as JSDoc. `pnpm assets:typecheck` checks `build/` against
+ * The shared types of the build, as JSDoc. `pnpm assets:typecheck` checks `lib/` against
  * them with TypeScript's `checkJs`. The build stays JavaScript: this module exports nothing
  * at run time.
  *
@@ -211,7 +211,7 @@
  */
 
 /**
- * A platform processor of `build/processors/`: the platform's names and filters.
+ * A platform processor of `lib/build/processors/`: the platform's names and filters.
  * @typedef {Object} Processor
  * @property {string} name - The platform, a key of `platformProcessors`
  * @property {string} icon - Printed before the platform's name

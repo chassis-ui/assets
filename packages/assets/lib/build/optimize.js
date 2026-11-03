@@ -16,7 +16,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-/** @import { OptimizeSettings } from './types.js' */
+/** @import { OptimizeSettings } from '../types.js' */
 
 /** The package that encodes the raster images. */
 export const RASTER_PACKAGE = 'sharp'

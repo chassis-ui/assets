@@ -124,11 +124,11 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Build the native fixture with asset catalogs
-        run: node packages/assets/build/cli.js build --cwd packages/assets/test/native/fixture --platform ios --asset-catalog --icon-catalog --quiet
+        run: node packages/assets/lib/cli.js build --cwd packages/assets/test/native/fixture --platform ios --asset-catalog --icon-catalog --quiet
 
       # The command itself: the job sets up no pnpm
       - name: Compile the asset catalogs
-        run: node packages/assets/build/cli.js check-native --platform ios --cwd packages/assets/test/native/fixture
+        run: node packages/assets/lib/cli.js check-native --platform ios --cwd packages/assets/test/native/fixture
 
   # The res/ folders of a build with --res --vector-drawables, compiled and linked with aapt2,
   # the resource compiler of Android, from the Android SDK of the runner. The conversion needs
@@ -185,11 +185,11 @@ jobs:
       - name: Build site
         run: pnpm site:build
 
-  # A change to packages/assets/build/ needs a changeset; `pnpm changeset --empty` adds one
-  # that releases nothing. Changesets checks build/ (changedFilePatterns in
-  # .changeset/config.json). A pull request is compared with its base branch, a push to
-  # develop with the tip it replaced. The version commit consumes the changesets, so a push
-  # that changes the version is skipped.
+  # A change to packages/assets/lib/ or packages/assets/templates/ needs a changeset; `pnpm
+  # changeset --empty` adds one that releases nothing. Changesets checks both folders
+  # (changedFilePatterns in .changeset/config.json). A pull request is compared with its base
+  # branch, a push to develop with the tip it replaced. The version commit consumes the
+  # changesets, so a push that changes the version is skipped.
   changeset:
     name: Changeset
     # A manual run has nothing to compare with

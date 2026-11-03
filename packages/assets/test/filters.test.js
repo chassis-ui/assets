@@ -8,9 +8,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { afterAll, describe, expect, test } from 'vitest'
-import { generateAssets } from '../build/build-assets.js'
-import { compileInclude, coverPaths, createFileFilter } from '../build/filters.js'
-import { lfsInclude } from '../build/lfs-include.js'
+import { generateAssets } from '../lib/build/build-assets.js'
+import { compileInclude, coverPaths, createFileFilter } from '../lib/build/filters.js'
+import { lfsInclude } from '../lib/commands/lfs-include.js'
 import {
   CLI,
   FIXTURE,
@@ -31,7 +31,7 @@ afterAll(removeTempDirs)
 
 /**
  * Build the fixture into a temporary folder.
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  */
 async function build(options = {}) {
   const out = tempDir()

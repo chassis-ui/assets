@@ -613,7 +613,7 @@ In `chassis.checks.json`, the entry of a file that another project names:
 
 ## Custom platforms
 
-A platform is a processor: a module of `build/processors/` of the package with the formats the platform keeps and a function that names a file. The package loads no processor from outside itself, so a fourth platform is a change to the package: a pull request to its repository, or a fork of it that adds the module to the registry of `build/processors/index.js` and names the platform in an app of the `chassis` block.
+A platform is a processor: a module of `lib/build/processors/` of the package with the formats the platform keeps and a function that names a file. The package loads no processor from outside itself, so a fourth platform is a change to the package: a pull request to its repository, or a fork of it that adds the module to the registry of `lib/build/processors/index.js` and names the platform in an app of the `chassis` block.
 
 A processor has `allowedFontFormats`, `allowedIconFormats` and `excludedImageFormats`, and `renameFile(fileName)`. It may place an image itself with `processImage()`, as the Android processor does for the density folders, with `imageFolder(fileName)` for the folder the image goes to. The options of the build each ask a processor for a property: `vectorDrawables`, `assetCatalog`, `res`, `imageFormats` and `subset`, as the modules of the three platforms show.
 
@@ -625,8 +625,8 @@ Import them from the package, installed in the repository of assets or beside it
 
 ```js
 import ChassisAssets from '@chassis-ui/assets'
-import AssetAnalyzer from '@chassis-ui/assets/build/analyze-assets.js'
-import { generateAssets } from '@chassis-ui/assets/build/build-assets.js'
+import AssetAnalyzer from '@chassis-ui/assets/lib/commands/analyze-assets.js'
+import { generateAssets } from '@chassis-ui/assets/lib/build/build-assets.js'
 
 // The root of the repository of assets: where package.json and source/ are
 const cwd = new URL('./', import.meta.url).pathname

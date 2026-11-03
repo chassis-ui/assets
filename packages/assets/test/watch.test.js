@@ -10,9 +10,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { afterAll, afterEach, describe, expect, test } from 'vitest'
-import { loadConfig, planJobs } from '../build/build-assets.js'
-import { createFileFilter } from '../build/filters.js'
-import { affectedJobs, isRelevant, watchAssets } from '../build/watch.js'
+import { loadConfig, planJobs } from '../lib/build/build-assets.js'
+import { createFileFilter } from '../lib/build/filters.js'
+import { affectedJobs, isRelevant, watchAssets } from '../lib/build/watch.js'
 import {
   BUILD_CLI,
   FIXTURE,
@@ -29,7 +29,7 @@ oid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393
 size 12345
 `
 
-/** @param {import('../build/types.js').Job[]} jobs */
+/** @param {import('../lib/types.js').Job[]} jobs */
 const names = (jobs) => jobs.map((job) => `${job.platform}/${job.app}/${job.brand}`)
 
 /** The watches of a test, closed after it. @type {Array<{ close: () => Promise<void> }>} */
@@ -42,7 +42,7 @@ afterAll(removeTempDirs)
 
 /**
  * Watch a copy of the fixture.
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  * @returns {Promise<{ root: string, out: string, next: () => Promise<{ jobs: string[], changed?: string[], error?: Error }> }>}
  *   The root, the output, and `next()`, which resolves with the next build or its error
  */

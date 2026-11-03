@@ -1,6 +1,6 @@
 /**
  * @file lint-source.test.js
- * @description The source lint of `build/lint-source.js`: the naming rules of the
+ * @description The source lint of `lib/commands/lint-source.js`: the naming rules of the
  *              design-guidelines page as a table, the names `lint.allow` of `chassis.checks.json` keeps, and `lintSource()` on
  *              the fixture and on copies of it that break a rule. The fonts of the fixture
  *              are lines of text, so the rules of the fonts are tried on copies with the
@@ -23,7 +23,7 @@ import {
   isOfFormat,
   lintSource,
   matchesPattern
-} from '../build/lint-source.js'
+} from '../lib/commands/lint-source.js'
 import { FIXTURE, copyFixture, removeTempDirs } from './helpers.js'
 
 const INTER = path.dirname(createRequire(import.meta.url).resolve('inter-ui/package.json'))

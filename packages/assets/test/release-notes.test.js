@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import { releaseNotes } from '../build/release-notes.js'
+import { releaseNotes } from '../lib/commands/release-notes.js'
 import { CLI, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

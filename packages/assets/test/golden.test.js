@@ -10,7 +10,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import { generateAssets } from '../build/build-assets.js'
+import { generateAssets } from '../lib/build/build-assets.js'
 import { FIXTURE, GOLDEN, compareDirs, listFiles, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

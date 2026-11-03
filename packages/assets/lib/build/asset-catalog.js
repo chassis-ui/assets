@@ -12,7 +12,7 @@ import fs from 'fs'
 import path from 'path'
 import { extractResolutionIndicator } from './processors/shared.js'
 
-/** @import { Catalog } from './types.js' */
+/** @import { Catalog } from '../types.js' */
 
 /** The extension of the folder of an image set. */
 export const IMAGE_SET = '.imageset'

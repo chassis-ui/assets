@@ -17,8 +17,9 @@ pnpm install
 
 The repository is a pnpm workspace with two packages:
 
-- [`packages/assets`](../packages/assets/): `@chassis-ui/assets`, the build in `build/` and its
-  tests in `test/`. It is published to npm, with the `chassis-assets` command.
+- [`packages/assets`](../packages/assets/): `@chassis-ui/assets`, the `chassis-assets` command
+  in `lib/` (the build in `lib/build/`, the commands on a repository in `lib/commands/`), what
+  `init` writes in `templates/`, and its tests in `test/`. It is published to npm.
 - [`packages/site`](../packages/site/): `chassis-assets-site`, the Astro documentation site.
 
 The site takes the assets of the Chassis sites from a release of their repository, which
@@ -28,7 +29,7 @@ The root also holds the lint and format configurations, the repository scripts i
 the CI workflows. Run every command from the root. The [README](../README.md#commands) lists the
 commands with their options.
 
-The build imports Node.js modules only, so `node packages/assets/build/cli.js build --cwd <dir>`
+The build imports Node.js modules only, so `node packages/assets/lib/cli.js build --cwd <dir>`
 runs before `pnpm install`. The install is for the tests, the checks and the site.
 
 ## Branches and commits
@@ -67,7 +68,7 @@ build, and `pnpm vendor` copies that in place of the archive. Never edit a file 
 
 ## Changing the build
 
-The build in `packages/assets/build/` follows the rules of
+The build in `packages/assets/lib/` follows the rules of
 [AGENTS.md](../AGENTS.md#rules); please keep them.
 [docs/architecture.md](../docs/architecture.md) describes the modules, the output contract of
 each platform and the known oddities.
@@ -80,14 +81,14 @@ each platform and the known oddities.
   it as an optional entry of `peerDependencies`, lists it in `devDependencies` for the tests,
   and loads it when its option is given, never at import time.
 - **The build names nothing of any repository of assets.** No brand, app, job or file name of
-  the Chassis sites in `packages/assets/build/` or in the scripts of `build/`. Such data is the
+  the Chassis sites in `packages/assets/lib/` or in the scripts of `build/`. Such data is the
   `chassis` block of `package.json` and `chassis.checks.json` of the repository of assets.
 - **The layout of `dist/`, the names in it and the commands are the public API.** See
   [What a version may break](#what-a-version-may-break).
 - **Tests use real files.** They run on the fixture in `packages/assets/test/fixtures/` and
   compare a build of it with `test/golden/`, without mocks. See
   [packages/assets/test/README.md](../packages/assets/test/README.md).
-- **Types in JSDoc.** `pnpm assets:typecheck` runs TypeScript's `checkJs` on `build/`, with the
+- **Types in JSDoc.** `pnpm assets:typecheck` runs TypeScript's `checkJs` on `lib/`, with the
   shared types in `types.js`. The build stays JavaScript.
 
 After a change, run:
@@ -126,15 +127,15 @@ pnpm site:build
 
 What to run before a commit, by what the commit changes. CI runs all of it.
 
-| Changed                                                  | Run                                                                                                                                                         |
-| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The pin, `vendor/assets.json`                            | `pnpm site:build`, and compare the site before and after.                                                                                                   |
-| `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
-| The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build, with `--cwd` on a checkout of the Chassis assets.                |
-| `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
-| `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
-| `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
-| Anything                                                 | `pnpm lint:prettier`.                                                                                                                                       |
+| Changed                                                      | Run                                                                                                                                                         |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The pin, `vendor/assets.json`                                | `pnpm site:build`, and compare the site before and after.                                                                                                   |
+| `packages/assets/lib/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
+| The analyzer, validator, contract or lint                    | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build, with `--cwd` on a checkout of the Chassis assets.                |
+| `packages/assets/lib/commands/init.js` or its templates      | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
+| `packages/assets/test/`                                      | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
+| `packages/site/`                                             | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
+| Anything                                                     | `pnpm lint:prettier`.                                                                                                                                       |
 
 ## What a pull request needs
 
@@ -158,7 +159,7 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 - **No vulnerable dependency added**: on a pull request, the Dependency Review job fails
   when the change adds a dependency with a known vulnerability of moderate severity or
   above.
-- **A changeset** for a change to `packages/assets/build/`. The Changeset job
+- **A changeset** for a change to `packages/assets/lib/` or `packages/assets/templates/`. The Changeset job
   fails without one, on a pull request, which it compares with its base branch, and on a
   push to `develop`, which it compares with the tip the push replaced. A change that only
   touches the site, the documents, the tests or the tooling needs none. The release commit

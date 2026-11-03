@@ -3,7 +3,7 @@
  * Chassis Assets Command Line
  *
  * One entry for the build and its checks, the `chassis-assets` command, which runs with `node`
- * and nothing installed: `node packages/assets/build/cli.js <command>`.
+ * and nothing installed: `node packages/assets/lib/cli.js <command>`.
  * Each command is the `cli()` of its module and takes the options that module documents.
  *
  * @module cli
@@ -13,57 +13,57 @@ import { buildVersion } from './root.js'
 
 /** The commands, each with the module that runs it. */
 export const COMMANDS = {
-  build: { module: './build-assets.js', about: 'Build the assets' },
+  build: { module: './build/build-assets.js', about: 'Build the assets' },
   analyze: {
-    module: './analyze-assets.js',
+    module: './commands/analyze-assets.js',
     about: 'Sizes, types and duplicates of the source and the output'
   },
   validate: {
-    module: './validate-assets.js',
+    module: './commands/validate-assets.js',
     about: 'Check an existing output against the source and the configuration'
   },
   contract: {
-    module: './contract.js',
+    module: './commands/contract.js',
     about: 'Check an existing output against the consumer contracts of chassis.checks.json'
   },
   verify: {
-    module: './verify.js',
+    module: './commands/verify.js',
     about: 'The validator, then the contract check'
   },
   lfs: {
-    module: './lfs-include.js',
+    module: './commands/lfs-include.js',
     about: 'Print the Git LFS paths a build reads, for git lfs pull --include'
   },
   archive: {
-    module: './archive.js',
+    module: './commands/archive.js',
     about: 'One zip per platform, app and brand of an existing output, for a release'
   },
   manifest: {
-    module: './manifest.js',
+    module: './commands/manifest.js',
     about: 'The files of an existing output with their sizes and hashes, for a release'
   },
   diff: {
-    module: './diff.js',
+    module: './commands/diff.js',
     about: 'The files added, removed, renamed and changed since a manifest'
   },
   'release-notes': {
-    module: './release-notes.js',
+    module: './commands/release-notes.js',
     about: 'Print the changelog entry of a version, and fail without one'
   },
   'check-native': {
-    module: './check-native.js',
+    module: './commands/check-native.js',
     about: 'Compile an existing output with the tools of Xcode and of Android'
   },
   init: {
-    module: './init.js',
+    module: './commands/init.js',
     about: 'Write the baseline of a repository of assets into a folder'
   },
   'static-font': {
-    module: './static-font.js',
+    module: './commands/static-font.js',
     about: 'Write the static font of a variable font at a weight, in each format given'
   },
   'lint-source': {
-    module: './lint-source.js',
+    module: './commands/lint-source.js',
     about: 'Check the names and the layout of source/'
   }
 }

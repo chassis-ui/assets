@@ -1,6 +1,6 @@
 /**
  * @file font-info.test.js
- * @description What a font file says of itself, `readFont()` of `build/font-info.js`: the
+ * @description What a font file says of itself, `readFont()` of `lib/build/font-info.js`: the
  *              family, the weight, the italic, the axes, the version and the number of
  *              glyphs, read from the fonts of the dev dependency `inter-ui` as WOFF2, and as
  *              WOFF and TrueType, which `beforeAll()` writes of them.
@@ -11,7 +11,7 @@ import path from 'node:path'
 import { createRequire } from 'node:module'
 import subsetFont from 'subset-font'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
-import { READABLE_FORMATS, axesOf, fontTables, readFont } from '../build/font-info.js'
+import { READABLE_FORMATS, axesOf, fontTables, readFont } from '../lib/build/font-info.js'
 
 vi.setConfig({ testTimeout: 30_000 })
 

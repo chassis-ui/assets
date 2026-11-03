@@ -11,10 +11,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import { generateAssets } from '../build/build-assets.js'
-import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
-import DistValidator from '../build/validate-assets.js'
-import { convertFolder, drawsSomething, loadConverter } from '../build/vector-drawables.js'
+import { generateAssets } from '../lib/build/build-assets.js'
+import { androidProcessor, iosProcessor, webProcessor } from '../lib/build/processors/index.js'
+import DistValidator from '../lib/commands/validate-assets.js'
+import { convertFolder, drawsSomething, loadConverter } from '../lib/build/vector-drawables.js'
 import {
   BUILD_CLI,
   compareDirs,
@@ -110,7 +110,7 @@ function fixtureWithIcons() {
 /**
  * Build a root into a temporary folder.
  * @param {string} cwd
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  */
 async function build(cwd, options = {}) {
   const out = tempDir()

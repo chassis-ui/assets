@@ -12,16 +12,16 @@ import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import sharp from 'sharp'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { generateAssets } from '../build/build-assets.js'
+import { generateAssets } from '../lib/build/build-assets.js'
 import {
   OPTIMIZE_DEFAULTS,
   formatName,
   loadEncoders,
   optimizeJob,
   resolveSettings
-} from '../build/optimize.js'
-import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
-import DistValidator from '../build/validate-assets.js'
+} from '../lib/build/optimize.js'
+import { androidProcessor, iosProcessor, webProcessor } from '../lib/build/processors/index.js'
+import DistValidator from '../lib/commands/validate-assets.js'
 import { FIXTURE, ROOT, compareDirs, listFiles, read, removeTempDirs, tempDir } from './helpers.js'
 
 const SVG = `<?xml version="1.0" encoding="UTF-8"?>
@@ -101,7 +101,7 @@ function root(optimize) {
 /**
  * Build a root into a temporary folder.
  * @param {string} cwd
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  */
 async function build(cwd, options = {}) {
   const out = tempDir()
@@ -331,7 +331,7 @@ describe('optimizeJob()', () => {
   /**
    * Encoders that write a text: `optimize` half of the file, `convert` a text of a length.
    * @param {number} converted - The length of a converted file
-   * @returns {import('../build/optimize.js').Encoders}
+   * @returns {import('../lib/build/optimize.js').Encoders}
    */
   const encoders = (converted) => ({
     optimize: async (buffer, ext) =>
@@ -708,7 +708,7 @@ describe('chassis-assets build --optimize, --webp and --avif', () => {
     const result = spawnSync(
       process.execPath,
       [
-        path.join(ROOT, 'build/build-assets.js'),
+        path.join(ROOT, 'lib/build/build-assets.js'),
         '--cwd',
         root(),
         '--out',
@@ -733,12 +733,12 @@ describe('chassis-assets build --optimize, --webp and --avif', () => {
     (flags, message) => {
       // A copy of the build outside the repository finds no package
       const copy = fs.realpathSync(tempDir())
-      fs.cpSync(path.join(ROOT, 'build'), path.join(copy, 'build'), { recursive: true })
+      fs.cpSync(path.join(ROOT, 'lib'), path.join(copy, 'lib'), { recursive: true })
       const out = tempDir()
       const run = (/** @type {string[]} */ args) =>
         spawnSync(
           process.execPath,
-          [path.join(copy, 'build/build-assets.js'), '--cwd', root(), '--out', out, ...args],
+          [path.join(copy, 'lib/build/build-assets.js'), '--cwd', root(), '--out', out, ...args],
           {
             encoding: 'utf-8'
           }

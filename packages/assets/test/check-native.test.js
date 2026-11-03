@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import { planChecks } from '../build/check-native.js'
+import { planChecks } from '../lib/commands/check-native.js'
 import { CLI, removeTempDirs, ROOT, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)
@@ -35,10 +35,10 @@ describe('planChecks', () => {
 })
 
 describe('the command', () => {
-  test('is published: the scripts are under build/, which files of the package names', () => {
+  test('is published: the scripts are under lib/, which files of the package names', () => {
     const { files } = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'))
-    expect(files).toContain('build')
-    expect(fs.existsSync(path.join(ROOT, 'build/native/ios.sh'))).toBe(true)
+    expect(files).toContain('lib')
+    expect(fs.existsSync(path.join(ROOT, 'lib/native/ios.sh'))).toBe(true)
   })
 
   test('a new repository has nothing to compile, and an image without res/ is a wrong build', () => {

@@ -31,7 +31,7 @@ import fs from 'fs'
 import { createRequire } from 'module'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { fontTables } from './font-info.js'
+import { fontTables } from '../build/font-info.js'
 import {
   layoutNameIds,
   readAxes,
@@ -39,8 +39,8 @@ import {
   readStat,
   replaceTables,
   writeNames
-} from './font-tables.js'
-import { isEntry } from './root.js'
+} from '../font-tables.js'
+import { isEntry } from '../root.js'
 
 /** The package whose HarfBuzz writes the static font: an optional peer dependency. */
 export const STATIC_FONT_PACKAGE = 'subset-font'
@@ -62,9 +62,9 @@ const HB_SETS = { glyphs: 0, unicodes: 1, nameIds: 4, nameLanguages: 5, features
 const HB_FLAGS = 0x08 | 0x10 | 0x20 | 0x40 | 0x80 | 0x100
 
 /**
- * @typedef {import('./font-tables.js').NameRecord} NameRecord
- * @typedef {import('./font-tables.js').StatTable} StatTable
- * @typedef {import('./font-tables.js').AxisValue} AxisValue
+ * @typedef {import('../font-tables.js').NameRecord} NameRecord
+ * @typedef {import('../font-tables.js').StatTable} StatTable
+ * @typedef {import('../font-tables.js').AxisValue} AxisValue
  * @typedef {{ platform: number, encoding: number, language: number }} Platform
  */
 

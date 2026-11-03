@@ -26,23 +26,23 @@
 
 import fs from 'fs'
 import path from 'path'
-import { assetTypes } from './asset-types.js'
-import androidProcessor from './processors/android.js'
-import iosProcessor from './processors/ios.js'
-import { bundleIndex } from './processors/shared.js'
+import { assetTypes } from '../asset-types.js'
+import androidProcessor from '../build/processors/android.js'
+import iosProcessor from '../build/processors/ios.js'
+import { bundleIndex } from '../build/processors/shared.js'
 import {
   SHARED_FOLDER,
   isLfsPointer,
   loadConfig,
   shouldIgnoreFile,
   sourceLayers
-} from './build-assets.js'
-import { findFontFaces } from './font-faces.js'
-import { READABLE_FORMATS, readFont } from './font-info.js'
-import { isEntry, resolveRoot } from './root.js'
+} from '../build/build-assets.js'
+import { findFontFaces } from '../build/font-faces.js'
+import { READABLE_FORMATS, readFont } from '../build/font-info.js'
+import { isEntry, resolveRoot } from '../root.js'
 
-/** @import { FontInfo } from './font-info.js' */
-/** @import { LintProblem } from './types.js' */
+/** @import { FontInfo } from '../build/font-info.js' */
+/** @import { LintProblem } from '../types.js' */
 
 /** A name or a folder: lowercase letters and digits, words joined by one hyphen. */
 const NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/

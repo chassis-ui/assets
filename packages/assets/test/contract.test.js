@@ -1,6 +1,6 @@
 /**
  * @file contract.test.js
- * @description The consumer contracts of `build/contract.js`: the pattern expansion, the
+ * @description The consumer contracts of `lib/commands/contract.js`: the pattern expansion, the
  *              files and the sets of a contract, and `checkContracts()` on the contracts of
  *              the fixture's `chassis.checks.json` and on outputs written into temporary folders.
  */
@@ -14,7 +14,7 @@ import {
   expand,
   missingFromContract,
   missingFromSet
-} from '../build/contract.js'
+} from '../lib/commands/contract.js'
 import { FIXTURE, GOLDEN, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

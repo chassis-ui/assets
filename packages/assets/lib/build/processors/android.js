@@ -11,7 +11,7 @@ import { extractResolutionIndicator } from './shared.js'
  * Converts assets to Android-compatible formats with snake_case naming,
  * ic_ prefix for icons, and density-specific folder structure
  */
-/** @type {import('../types.js').Processor} */
+/** @type {import('../../types.js').Processor} */
 const androidProcessor = {
   name: 'android',
   icon: '🤖',
@@ -103,7 +103,7 @@ const androidProcessor = {
    * Note: Resolution indicators are NOT included in Android filenames
    * as they are handled by the density folder structure
    * @param {string} fileName - Original filename
-   * @param {import('../types.js').RenameContext} [context] - The folder of the file and its
+   * @param {import('../../types.js').RenameContext} [context] - The folder of the file and its
    *   parent, `{ currentDir, parentDir }`, or the legacy boolean that says it is an icon
    * @returns {string} Transformed filename in snake_case (no resolution)
    * @example

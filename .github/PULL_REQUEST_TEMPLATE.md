@@ -23,7 +23,7 @@ for the details behind each of these.
 - [ ] `pnpm assets:lint`, `pnpm assets:typecheck` and `pnpm test` pass, if the build or its
       tests changed; `packages/assets/test/golden/` written again with `pnpm test:golden` and
       reviewed, if the output of the build is meant to change
-- [ ] **Changeset** (`pnpm changeset`) if `packages/assets/build/` changed, naming
+- [ ] **Changeset** (`pnpm changeset`) if `packages/assets/lib/` or `packages/assets/templates/` changed, naming
       the files of `dist/` that are added, removed or renamed, with **Breaking.** when a file
       name, the layout of `dist/` or a command changes
 - [ ] `pnpm site:lint`, `pnpm check:astro` and `pnpm site:build` pass, if the site changed

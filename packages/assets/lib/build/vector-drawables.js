@@ -10,7 +10,7 @@
 import fs from 'fs'
 import path from 'path'
 
-/** @import { Conversion } from './types.js' */
+/** @import { Conversion } from '../types.js' */
 
 /** The package that converts an SVG to a vector drawable. */
 export const CONVERTER_PACKAGE = 'svg2vectordrawable'

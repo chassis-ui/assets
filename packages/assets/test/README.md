@@ -1,6 +1,6 @@
 # Build tests
 
-Tests for the build in `packages/assets/build/`. Run them from the repository root:
+Tests for the build in `packages/assets/lib/`. Run them from the repository root:
 
 ```sh
 pnpm test
@@ -78,9 +78,9 @@ keeps Prettier out of them.
 | `filters.test.js`          | The `types` and `include` filters: the patterns as a table, `createFileFilter()` and `coverPaths()`, builds of the fixture that write the files of the filters and no other, a Git LFS pointer that fails the build only when the filters read it, and `lfsInclude()` and `chassis-assets lfs`, whose paths are those the build reads.                                                                                                   |
 | `watch.test.js`            | The watch, `--watch`, on a copy of the fixture: which jobs a changed path belongs to and which changes count, as tables, then real changes: a file of the default brand builds the app for every brand, a file of a brand builds that brand, a removed file is gone from the output, changes that come together are one build, a failed build is reported and the watch goes on.                                                         |
 | `asset-types.test.js`      | The extension lists and `isMetadataFile()` that the validator uses.                                                                                                                                                                                                                                                                                                                                                                      |
-| `contract.test.js`         | The consumer contracts of `build/contract.js`: the pattern expansion, the files and the sets of a contract with their exceptions, and `checkContracts()` on the contracts of the fixture's `chassis.checks.json` and on outputs in temporary folders.                                                                                                                                                                                    |
+| `contract.test.js`         | The consumer contracts of `lib/commands/contract.js`: the pattern expansion, the files and the sets of a contract with their exceptions, and `checkContracts()` on the contracts of the fixture's `chassis.checks.json` and on outputs in temporary folders.                                                                                                                                                                             |
 | `lint-source.test.js`      | The source lint: the naming rules of the design-guidelines page as a table, the names `lint.allow` of `chassis.checks.json` keeps, and `lintSource()` on the fixture, whose names break the rules on purpose, and on copies that add a pointer, an unread brand or real fonts: a font against its rule, the file of the same name in another format against that rule, and two files of one name against each other.                     |
-| `cli.test.js`              | `node build/build-assets.js`, `analyze-assets.js` and `validate-assets.js` on their own, and `cli.js` as a repository of assets runs it: every flag, the output and the exit codes.                                                                                                                                                                                                                                                      |
+| `cli.test.js`              | `node lib/build/build-assets.js`, `analyze-assets.js` and `validate-assets.js` on their own, and `cli.js` as a repository of assets runs it: every flag, the output and the exit codes.                                                                                                                                                                                                                                                  |
 | `root.test.js`             | `findRoot()`, `resolveRoot()` and `buildVersion()`: the repository root from a folder below it, a given `cwd`, and the version of the build.                                                                                                                                                                                                                                                                                             |
 | `helpers.js`               | The paths, temporary folders and the file-by-file comparison.                                                                                                                                                                                                                                                                                                                                                                            |
 
@@ -96,7 +96,7 @@ pnpm test:native:ios
 ```
 
 `test:native:ios` builds that fixture and runs `chassis-assets check-native --platform ios`, the
-script `build/native/ios.sh`, which runs `actool` on every `*.xcassets` folder of the output, fails on a warning, and
+script `lib/native/ios.sh`, which runs `actool` on every `*.xcassets` folder of the output, fails on a warning, and
 checks that the compiled catalog has every image set by its name. It also compiles every
 `*.icon` bundle as an app icon, and checks that `CFBundleIconName` is the name of the bundle.
 It needs Xcode, not the command line tools alone; `DEVELOPER_DIR` selects an Xcode that
@@ -107,7 +107,7 @@ pnpm test:native:android
 ```
 
 `test:native:android` builds that fixture and runs `chassis-assets check-native --platform android`,
-the script `build/native/android.sh`. It looks at every `res/` folder under `android/` of the
+the script `lib/native/android.sh`. It looks at every `res/` folder under `android/` of the
 output. `aapt2` passes an SVG, a text file and a
 vector without a shape, so the script fails on those first. It then runs `aapt2 compile` and
 `aapt2 link` against `android.jar`, which fails on an app icon that names a layer it does not
@@ -123,7 +123,7 @@ pnpm test:golden
 git diff --stat packages/assets/test/golden
 ```
 
-`test:golden` is `node packages/assets/build/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet`: a
+`test:golden` is `node packages/assets/lib/cli.js build --cwd packages/assets/test/fixtures --out ../golden --quiet`: a
 full build of the fixture, which removes `golden/` first. Commit the new baseline with the
 change that caused it, and say in the changeset which files of `dist/` change with it.
 

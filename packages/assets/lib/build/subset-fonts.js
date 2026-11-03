@@ -21,7 +21,7 @@ import { fileURLToPath } from 'url'
 import { findFontFaces, splitFontFaces } from './font-faces.js'
 import { axesOf, fontTables } from './font-info.js'
 
-/** @import { FontSubset, SubsetPart, SubsetSettings } from './types.js' */
+/** @import { FontSubset, SubsetPart, SubsetSettings } from '../types.js' */
 
 /** The package that subsets a font. */
 export const SUBSET_PACKAGE = 'subset-font'

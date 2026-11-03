@@ -7,7 +7,7 @@ branches for older versions.
 
 The repository holds design files (fonts, images, icons) and a build that copies them. The
 output in `dist/` is files only and runs no code in your app. The build in
-`packages/assets/build/` imports Node.js modules only, and runs on contributors' machines, in
+`packages/assets/lib/` imports Node.js modules only, and runs on contributors' machines, in
 CI and in the build of each site that vendors this repository. The documentation site and its
 dependencies are built in CI and by Vercel.
 

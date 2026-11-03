@@ -10,7 +10,7 @@ import {
   resolveIgnore,
   shouldIgnoreFile,
   sourceLayers
-} from '../build-assets.js'
+} from '../build/build-assets.js'
 import { resolveRoot } from '../root.js'
 
 /**

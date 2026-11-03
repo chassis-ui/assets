@@ -1,6 +1,6 @@
 /**
  * @file processors.test.js
- * @description The platform rules of `build/processors/`: the renaming of each platform, the
+ * @description The platform rules of `lib/build/processors/`: the renaming of each platform, the
  *              resolution indicator, the Android density folders and `ic_` prefix, and the
  *              formats each platform keeps per type. One row per rule of the pages
  *              `build-system.mdx`, `fonts.mdx`, `images.mdx`, `icons.mdx` and
@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, test } from 'vitest'
-import { keepsFile } from '../build/build-assets.js'
+import { keepsFile } from '../lib/build/build-assets.js'
 import {
   androidProcessor,
   extractResolutionIndicator,
@@ -19,7 +19,7 @@ import {
   isExcludedFormat,
   platformProcessors,
   webProcessor
-} from '../build/processors/index.js'
+} from '../lib/build/processors/index.js'
 
 describe('registry', () => {
   test('has the three platforms of the pages', () => {

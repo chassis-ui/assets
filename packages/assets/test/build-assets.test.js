@@ -1,6 +1,6 @@
 /**
  * @file build-assets.test.js
- * @description The library of `build/build-assets.js`: the pure helpers, the configuration,
+ * @description The library of `lib/build/build-assets.js`: the pure helpers, the configuration,
  *              the argument parser, the job plan, and `generateAssets()` on the fixture for
  *              what the golden test cannot show: the brand override, cleaning, dry runs,
  *              Git LFS pointers and rename collisions. Every build writes to a temporary
@@ -28,11 +28,11 @@ import {
   resolveIgnore,
   shouldIgnoreFile,
   sourceLayers
-} from '../build/build-assets.js'
-import { lfsInclude } from '../build/lfs-include.js'
-import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
-import { bundleIndex, keepsBundle } from '../build/processors/shared.js'
-import DistValidator from '../build/validate-assets.js'
+} from '../lib/build/build-assets.js'
+import { lfsInclude } from '../lib/commands/lfs-include.js'
+import { androidProcessor, iosProcessor, webProcessor } from '../lib/build/processors/index.js'
+import { bundleIndex, keepsBundle } from '../lib/build/processors/shared.js'
+import DistValidator from '../lib/commands/validate-assets.js'
 import {
   FIXTURE,
   GOLDEN,
@@ -56,7 +56,7 @@ afterEach(() => {
 
 /**
  * Build the fixture, or a copy of it, into a temporary folder.
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  */
 async function build(options = {}) {
   const out = options.out || tempDir()

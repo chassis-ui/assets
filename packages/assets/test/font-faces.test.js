@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, test } from 'vitest'
-import { findFontFaces, splitFontFaces } from '../build/font-faces.js'
+import { findFontFaces, splitFontFaces } from '../lib/build/font-faces.js'
 
 const SHEET = `/* Text, the "text" family. */
 

@@ -14,7 +14,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { isEntry, resolveRoot } from './root.js'
+import { isEntry, resolveRoot } from '../root.js'
 
 /** The changelog of a repository, at its root. */
 export const CHANGELOG = 'CHANGELOG.md'

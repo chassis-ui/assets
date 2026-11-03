@@ -16,9 +16,9 @@ import {
   parseArgs,
   planJobs,
   shouldIgnoreFile
-} from './build-assets.js'
-import { coverPaths, createFileFilter } from './filters.js'
-import { buildVersion, isEntry, resolveRoot } from './root.js'
+} from '../build/build-assets.js'
+import { coverPaths, createFileFilter } from '../build/filters.js'
+import { buildVersion, isEntry, resolveRoot } from '../root.js'
 
 export const HELP = `Usage: chassis-assets lfs [options]
 
@@ -41,7 +41,7 @@ Options:
 
 /**
  * The paths a build reads, for `git lfs pull --include`.
- * @param {import('./types.js').BuildOptions} [options] - The filters of the build, and `cwd`
+ * @param {import('../types.js').BuildOptions} [options] - The filters of the build, and `cwd`
  * @returns {string[]} Paths relative to the repository root, with forward slashes, sorted. A
  *   folder whose files are all read is `<folder>/**`
  * @throws {Error} On a filter that is not configured, or that selects no file

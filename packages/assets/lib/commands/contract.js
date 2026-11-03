@@ -29,10 +29,10 @@
 
 import fs from 'fs'
 import path from 'path'
-import { CHECKS_FILE, loadConfig, platformProcessors } from './build-assets.js'
-import { isEntry, resolveRoot } from './root.js'
+import { CHECKS_FILE, loadConfig, platformProcessors } from '../build/build-assets.js'
+import { isEntry, resolveRoot } from '../root.js'
 
-/** @import { ContractEntry, ContractProblem, ContractSet } from './types.js' */
+/** @import { ContractEntry, ContractProblem, ContractSet } from '../types.js' */
 
 /**
  * Write out the alternatives of a pattern: `a-{b,c}.svg` gives `a-b.svg` and `a-c.svg`.

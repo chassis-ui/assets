@@ -18,9 +18,9 @@ import {
   shouldIgnoreFile
 } from './build-assets.js'
 import { createFileFilter } from './filters.js'
-import { resolveRoot } from './root.js'
+import { resolveRoot } from '../root.js'
 
-/** @import { BuildConfig, BuildOptions, BuildStats, Job } from './types.js' */
+/** @import { BuildConfig, BuildOptions, BuildStats, Job } from '../types.js' */
 
 /** How long the watcher waits after a change for the next one, in milliseconds. */
 const SETTLE = 150

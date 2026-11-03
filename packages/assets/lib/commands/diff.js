@@ -16,7 +16,7 @@
 
 import fs from 'fs'
 import { buildManifest } from './manifest.js'
-import { isEntry } from './root.js'
+import { isEntry } from '../root.js'
 
 /**
  * @typedef {object} JobDiff

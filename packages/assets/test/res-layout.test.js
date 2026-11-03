@@ -12,8 +12,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import { generateAssets } from '../build/build-assets.js'
-import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
+import { generateAssets } from '../lib/build/build-assets.js'
+import { androidProcessor, iosProcessor, webProcessor } from '../lib/build/processors/index.js'
 import {
   appIconPath,
   isResourceName,
@@ -21,8 +21,8 @@ import {
   resourcePath,
   resourcePaths,
   writeRes
-} from '../build/res-layout.js'
-import DistValidator from '../build/validate-assets.js'
+} from '../lib/build/res-layout.js'
+import DistValidator from '../lib/commands/validate-assets.js'
 import {
   BUILD_CLI,
   FIXTURE,
@@ -34,7 +34,7 @@ import {
   tempDir
 } from './helpers.js'
 
-const res = /** @type {import('../build/types.js').ResLayout} */ (androidProcessor.res)
+const res = /** @type {import('../lib/types.js').ResLayout} */ (androidProcessor.res)
 
 const ARROW = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
   <path d="M4 11H16L11 6L12.5 4.5L20 12L12.5 19.5L11 18L16 13H4Z"/>
@@ -46,7 +46,7 @@ afterAll(removeTempDirs)
 /**
  * Build a root into a temporary folder.
  * @param {string} cwd
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  */
 async function build(cwd, options = {}) {
   const out = tempDir()

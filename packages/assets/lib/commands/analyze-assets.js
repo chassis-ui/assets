@@ -10,8 +10,8 @@
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { resolveIgnore, shouldIgnoreFile } from './build-assets.js'
-import { isEntry, resolveRoot } from './root.js'
+import { resolveIgnore, shouldIgnoreFile } from '../build/build-assets.js'
+import { isEntry, resolveRoot } from '../root.js'
 
 /**
  * Asset analyzer for Chassis build system

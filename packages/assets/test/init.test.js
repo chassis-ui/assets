@@ -18,8 +18,8 @@ import {
   parseApp,
   parseInitArgs,
   planFiles
-} from '../build/init.js'
-import { getPlatformNames } from '../build/processors/index.js'
+} from '../lib/commands/init.js'
+import { getPlatformNames } from '../lib/build/processors/index.js'
 import { CLI, listFiles, read, removeTempDirs, ROOT, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

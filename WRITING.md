@@ -131,8 +131,8 @@ The project has one word for each concept. Using a synonym makes the reader wond
 | indicator     | The `@2x` or `@3x` at the end of a name                                                    | suffix, scale                                |
 | density       | An Android density folder, `drawable-xhdpi/`                                               | resolution, bucket                           |
 | override      | A brand file that replaces the default file of the same path                               | overwrite, customization                     |
-| processor     | The module of a platform in `packages/assets/build/processors/`                            | plugin, transformer                          |
-| the build     | The build in `packages/assets/build/`, `chassis-assets build`                              | the pipeline, the generator, the script      |
+| processor     | The module of a platform in `packages/assets/lib/build/processors/`                        | plugin, transformer                          |
+| the build     | The build in `packages/assets/lib/`, `chassis-assets build`                                | the pipeline, the generator, the script      |
 | consumer      | A site or an app that reads the output                                                     | client, user                                 |
 | contract      | The files a consumer reads by name, in `chassis.checks.json`                               | manifest, requirements                       |
 
@@ -165,7 +165,7 @@ Don't use the name of one platform where another is meant — `hero-banner.png` 
 
 **Placeholders** go in angle brackets, lowercase: `` `dist/<platform>/<app>/<brand>/` ``, `` `source/<brand>/<app>/<type>/` ``. Don't use square brackets for placeholders.
 
-**Other references:** file paths relative to the repository root (`` `packages/assets/build/cli.js` ``); commands in full (`` `chassis-assets build --platform ios` ``); configuration keys as a path (`` `chassis.build.apps` ``). Interface labels of Figma, Xcode and Android Studio are bold, not code: **File → Add Files to…**.
+**Other references:** file paths relative to the repository root (`` `packages/assets/lib/cli.js` ``); commands in full (`` `chassis-assets build --platform ios` ``); configuration keys as a path (`` `chassis.build.apps` ``). Interface labels of Figma, Xcode and Android Studio are bold, not code: **File → Add Files to…**.
 
 ---
 

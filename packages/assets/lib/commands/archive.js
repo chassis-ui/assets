@@ -21,7 +21,7 @@
 import fs from 'fs'
 import path from 'path'
 import zlib from 'zlib'
-import { isEntry, resolveRoot } from './root.js'
+import { isEntry, resolveRoot } from '../root.js'
 
 /** The folder the archives are written to, under the repository root, unless `--to` names one. */
 export const ARCHIVES_DIR = 'archives'

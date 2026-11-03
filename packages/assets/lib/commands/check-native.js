@@ -16,7 +16,7 @@ import { spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { isEntry, resolveRoot } from './root.js'
+import { isEntry, resolveRoot } from '../root.js'
 
 /** The platforms with a check, each a script in `native/`. */
 export const NATIVE_PLATFORMS = ['ios', 'android']
@@ -46,7 +46,7 @@ export function planChecks(options = {}) {
     output,
     checks: platforms.map((platform) => ({
       platform,
-      script: fileURLToPath(new URL(`./native/${platform}.sh`, import.meta.url))
+      script: fileURLToPath(new URL(`../native/${platform}.sh`, import.meta.url))
     }))
   }
 }

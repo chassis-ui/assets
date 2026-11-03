@@ -24,13 +24,13 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { BRAND_FOLDER } from './build-assets.js'
-import { getPlatformNames } from './processors/index.js'
-import { CONVERTER_PACKAGE } from './vector-drawables.js'
-import { buildVersion, isEntry, repositoryWebUrl } from './root.js'
+import { BRAND_FOLDER } from '../build/build-assets.js'
+import { getPlatformNames } from '../build/processors/index.js'
+import { CONVERTER_PACKAGE } from '../build/vector-drawables.js'
+import { buildVersion, isEntry, repositoryWebUrl } from '../root.js'
 
 /** The folder of the templates. */
-const TEMPLATES = fileURLToPath(new URL('./templates/', import.meta.url))
+const TEMPLATES = fileURLToPath(new URL('../../templates/', import.meta.url))
 
 /** The version of Node.js written to `.nvmrc`. */
 export const NODE_VERSION = '24'
@@ -274,7 +274,7 @@ export function planFiles(options = {}) {
       '@chassis-ui/assets': `^${buildVersion()}`,
       ...(platforms.has('android') && {
         [CONVERTER_PACKAGE]: JSON.parse(
-          fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+          fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf-8')
         ).peerDependencies[CONVERTER_PACKAGE]
       })
     }

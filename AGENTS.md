@@ -21,8 +21,11 @@ vendor/assets.json     # the pin: the repository and the release of the Chassis 
 vendor/assets/         # what `pnpm vendor` unpacks from that release, not committed
 packages/
   assets/              # @chassis-ui/assets, published to npm with the `chassis-assets` command
-    build/             # the build and its checks (JavaScript with JSDoc types, Node.js modules only)
-    build/templates/   # what `chassis-assets init` writes into a repository of assets
+    lib/               # the `chassis-assets` command (JavaScript with JSDoc types, Node.js modules
+                       # only): cli.js, the shared modules, build/ (the build), commands/ (one
+                       # module per command on a repository), api/ (the library) and native/
+                       # (the scripts of check-native)
+    templates/         # what `chassis-assets init` writes into a repository of assets
     test/              # Vitest tests, the fixture (fixtures/) and its golden output (golden/), the
                        # small real files that the native checks compile (native/fixture/)
   site/                # chassis-assets-site, the Astro documentation site
@@ -42,16 +45,16 @@ A repository of assets holds `source/`, `chassis.checks.json` and a `package.jso
   `vendor/assets/dist/web/docs/chassis/`, and `pnpm dev` and `pnpm site:build` run it first.
   `pnpm sync-assets` moves the pin, with `GH_TOKEN=$(gh auth token)` where several sessions call
   the GitHub API. Never edit the pin by hand. The tests need no assets.
-- `node packages/assets/build/cli.js <command> --cwd <dir>` runs the build of this checkout on a
+- `node packages/assets/lib/cli.js <command> --cwd <dir>` runs the build of this checkout on a
   repository of assets, such as a checkout of the Chassis assets, which needs Git LFS.
   `--brand`, `--app` and `--platform` build a part of it, `--dry-run` prints the jobs without
   writing, and every command has `--help`. Without the Git LFS files, `--allow-lfs-pointers` or
   `CHASSIS_ALLOW_LFS_POINTERS=1` lets the build and the source lint pass.
 - The build runs with nothing installed. `pnpm install` is for the tests, the checks, the site
   and the options that load a package.
-- `node packages/assets/build/cli.js init <dir>` writes the baseline of a repository of assets
-  for an adopting team; its templates are in `packages/assets/build/templates/`.
-- `node packages/assets/build/cli.js static-font <variable> <output...> wght=600` writes the
+- `node packages/assets/lib/cli.js init <dir>` writes the baseline of a repository of assets
+  for an adopting team; its templates are in `packages/assets/templates/`.
+- `node packages/assets/lib/cli.js static-font <variable> <output...> wght=600` writes the
   static font of a variable font to each output, the files by weight of a role, with HarfBuzz
   from `subset-font`.
 - `pnpm dev` runs the site at `http://localhost:4325/assets/`.
@@ -60,17 +63,17 @@ A repository of assets holds `source/`, `chassis.checks.json` and a `package.jso
 
 Run the checks of the area you changed, and report the ones that fail.
 
-| Area changed                                             | Run                                                                                                                                                         |
-| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
-| The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build, with `--cwd` on a checkout of the Chassis assets.                |
-| `packages/assets/build/native/` or `check-native.js`     | `pnpm assets:lint`, `pnpm test`, `pnpm test:native:ios` (Xcode), `pnpm test:native:android` (Android SDK).                                                  |
-| `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
-| `static-font.js` or `font-tables.js`                     | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`.                                                                                                   |
-| `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
-| The pin, `vendor/assets.json`                            | `pnpm site:build`, and compare the site before and after.                                                                                                   |
-| `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
-| Any Markdown, JSON, YAML or configuration file           | `pnpm lint:prettier`.                                                                                                                                       |
+| Area changed                                                 | Run                                                                                                                                                         |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/assets/lib/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
+| The analyzer, validator, contract or lint                    | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build, with `--cwd` on a checkout of the Chassis assets.                |
+| `packages/assets/lib/native/` or `check-native.js`           | `pnpm assets:lint`, `pnpm test`, `pnpm test:native:ios` (Xcode), `pnpm test:native:android` (Android SDK).                                                  |
+| `packages/assets/lib/commands/init.js` or its templates      | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
+| `static-font.js` or `font-tables.js`                         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`.                                                                                                   |
+| `packages/assets/test/`                                      | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
+| The pin, `vendor/assets.json`                                | `pnpm site:build`, and compare the site before and after.                                                                                                   |
+| `packages/site/`                                             | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
+| Any Markdown, JSON, YAML or configuration file               | `pnpm lint:prettier`.                                                                                                                                       |
 
 ## Rules
 
@@ -89,7 +92,7 @@ broke them and was reverted.
 - **Every asset type the pages describe is kept.** Do not remove a type from the build, or a
   file from the Chassis assets, because no consumer of today reads it. Removing an asset is the
   maintainer's decision, made in their repository.
-- **Add, do not replace.** The build in `packages/assets/build/` is the build. Do not rewrite
+- **Add, do not replace.** The build in `packages/assets/lib/` is the build. Do not rewrite
   it beside itself. Its commands and flags keep working.
 - **The pages are the specification, and they win over the code.** When the build does less
   than a page says, fix the build. When a page describes something the build never did, say
@@ -100,14 +103,14 @@ broke them and was reverted.
   whose changeset starts with `**Breaking.**`.
 - **Match the siblings in tooling, not in product.** Tests, CI, Changesets and the docs site
   follow `chassis-ui/tokens` and `chassis-ui/website`. The product follows its own pages.
-- **The package has no dependencies.** `packages/assets/build/` imports Node.js modules
+- **The package has no dependencies.** `packages/assets/lib/` imports Node.js modules
   only, and neither the root `package.json` nor `packages/assets/package.json` has
   `dependencies`: a plain install of `@chassis-ui/assets` brings nothing else. Do not add an
   import of a package to the build. A feature that needs one declares it as an optional entry
   of `peerDependencies`, lists it in `devDependencies` for the tests, and loads it when its
   option is given, with an error that names the package when it is not installed.
 - **The build names nothing of any repository of assets.** No brand, app, job or file name of
-  the Chassis sites in `packages/assets/build/` or in the scripts of `build/`. Such data is the
+  the Chassis sites in `packages/assets/lib/` or in the scripts of `build/`. Such data is the
   `chassis` block and `chassis.checks.json` of the repository of assets. Tests run on the
   fixture.
 
@@ -134,8 +137,8 @@ And these:
 - **Types are JSDoc.** The build is JavaScript checked with `checkJs`; do not convert it to
   TypeScript.
 - **Add a changeset** (`pnpm changeset`, or a file in `.changeset/`) to a change in
-  `packages/assets/build/`. It names the files of `dist/` that are added, removed or renamed,
-  and what a repository of assets has to change.
+  `packages/assets/lib/` or `packages/assets/templates/`. It names the files of `dist/` that
+  are added, removed or renamed, and what a repository of assets has to change.
 
 ## Documentation
 

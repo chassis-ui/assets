@@ -1,13 +1,13 @@
 /**
  * @file api.test.js
- * @description `ChassisAssets` of `build/api/index.js`, the Programmatic API of the
+ * @description `ChassisAssets` of `lib/api/index.js`, the Programmatic API of the
  *              build-system page, on the fixture and the golden output.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import ChassisAssets from '../build/api/index.js'
+import ChassisAssets from '../lib/api/index.js'
 import { FIXTURE, GOLDEN, compareDirs, listFiles, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

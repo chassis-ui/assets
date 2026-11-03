@@ -8,6 +8,6 @@ packages/assets/test/fixtures/source
 packages/assets/test/golden
 packages/assets/test/native/fixture/source
 # Templates: __NAME__ outside a code span is a placeholder, not bold text
-packages/assets/build/templates/*.md
+packages/assets/templates/*.md
 # Jobs of native.yml, appended to it: alone they are not a document
-packages/assets/build/templates/workflows/native-*.yml
+packages/assets/templates/workflows/native-*.yml

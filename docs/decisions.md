@@ -105,7 +105,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   not read. No ranges per file, which would be a manifest. A missing package is an error
   before the output is removed. The release archives are built without it. With the
   maintainer, 2026-10-01. D25 adds the axes, and D27 takes back that a font is never split.
-- **D20. Processors outside `packages/assets/build/`?** No, parked. A platform stays a module
+- **D20. Processors outside `packages/assets/lib/`?** No, parked. A platform stays a module
   of `processors/` that is added to the registry. A loader would make the shape of a
   processor a public API, and every reader of the registry asynchronous. With the
   maintainer, 2026-10-01.
@@ -453,7 +453,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   stop a release of the package. A change to the build is now checked on `test/native/fixture/`, a
   few small real files with no golden output, kept apart so that `fixtures/` stays lines of text.
   A change to the files is checked where they are: `chassis-assets check-native` is published, the
-  scripts in `build/native/`, run with bash so that the package still imports no dependency, and
+  scripts in `lib/native/`, run with bash so that the package still imports no dependency, and
   `init` writes `native.yml` with a job per platform of `chassis.build`, on a change to the assets
   only, since each job pulls the Git LFS files. The build of a new version on real files, which
   only happens when a repository of assets moves to it, is checked there, or first with a `next`
@@ -467,7 +467,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   the real files are gone, and CI here no longer checks the build on them. Those checks run in
   the Chassis assets (D49), where `chassis-assets verify`, `lint-source` and `check-native` check each
   change to the files, and a change to the build is tried on them with
-  `node packages/assets/build/cli.js <command> --cwd <checkout>`. Supersedes the copy of the site
+  `node packages/assets/lib/cli.js <command> --cwd <checkout>`. Supersedes the copy of the site
   in D30: the release has made the choice of the ranges (D39), so `pnpm site:assets` is gone, with
   no change to a font a latin page loads. `pnpm vendor` no longer needs Git LFS, and a build of the
   site a download of 36 MB in place of a pull of about 77 MB. `app/docs` has no reader here; deleting

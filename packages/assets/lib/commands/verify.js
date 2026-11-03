@@ -9,7 +9,7 @@
  */
 
 import { checkContracts, printContracts } from './contract.js'
-import { isEntry } from './root.js'
+import { isEntry } from '../root.js'
 import DistValidator from './validate-assets.js'
 
 /**

@@ -17,7 +17,7 @@ import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
 import { ARCHIVES_DIR, archiveNames, folders, listFiles } from './archive.js'
-import { buildVersion, isEntry, resolveRoot } from './root.js'
+import { buildVersion, isEntry, resolveRoot } from '../root.js'
 
 /**
  * @typedef {object} ManifestFile

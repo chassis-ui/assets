@@ -20,10 +20,10 @@ import {
   isTemplateSvg,
   planImageSets,
   writeCatalog
-} from '../build/asset-catalog.js'
-import { generateAssets } from '../build/build-assets.js'
-import { androidProcessor, iosProcessor, webProcessor } from '../build/processors/index.js'
-import DistValidator from '../build/validate-assets.js'
+} from '../lib/build/asset-catalog.js'
+import { generateAssets } from '../lib/build/build-assets.js'
+import { androidProcessor, iosProcessor, webProcessor } from '../lib/build/processors/index.js'
+import DistValidator from '../lib/commands/validate-assets.js'
 import {
   BUILD_CLI,
   FIXTURE,
@@ -42,7 +42,7 @@ afterAll(removeTempDirs)
 /**
  * Build a root into a temporary folder.
  * @param {string} cwd
- * @param {import('../build/build-assets.js').BuildOptions} [options]
+ * @param {import('../lib/build/build-assets.js').BuildOptions} [options]
  */
 async function build(cwd, options = {}) {
   const out = tempDir()

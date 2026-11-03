@@ -11,7 +11,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
 import { afterAll, describe, expect, test } from 'vitest'
-import { archive, crc32, dosDateTime, zipFolder } from '../build/archive.js'
+import { archive, crc32, dosDateTime, zipFolder } from '../lib/commands/archive.js'
 import { CLI, FIXTURE, GOLDEN, listFiles, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

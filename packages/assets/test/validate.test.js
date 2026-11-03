@@ -1,6 +1,6 @@
 /**
  * @file validate.test.js
- * @description `DistValidator` of `build/validate-assets.js` against the golden output: it
+ * @description `DistValidator` of `lib/commands/validate-assets.js` against the golden output: it
  *              passes on the baseline, and each of its checks fails, naming the problem, on a
  *              copy of the baseline that breaks it.
  */
@@ -8,7 +8,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import DistValidator from '../build/validate-assets.js'
+import DistValidator from '../lib/commands/validate-assets.js'
 import { FIXTURE, GOLDEN, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

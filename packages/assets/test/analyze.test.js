@@ -1,6 +1,6 @@
 /**
  * @file analyze.test.js
- * @description `AssetAnalyzer` of `build/analyze-assets.js` on the fixture and on the golden
+ * @description `AssetAnalyzer` of `lib/commands/analyze-assets.js` on the fixture and on the golden
  *              output: the counts per type, platform, app and brand, the filters, and the
  *              duplicate the fixture holds on purpose.
  */
@@ -8,7 +8,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import AssetAnalyzer, { parseAnalyzerArgs } from '../build/analyze-assets.js'
+import AssetAnalyzer, { parseAnalyzerArgs } from '../lib/commands/analyze-assets.js'
 import { FIXTURE, GOLDEN, listFiles, removeTempDirs, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)

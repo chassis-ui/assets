@@ -1,6 +1,6 @@
 /**
  * @file asset-types.test.js
- * @description The extension lists and the metadata check of `build/asset-types.js`, which
+ * @description The extension lists and the metadata check of `lib/asset-types.js`, which
  *              the validator uses to decide which source files it expects in the output.
  */
 
@@ -13,7 +13,7 @@ import {
   isAssetType,
   isMetadataFile,
   isValidExtension
-} from '../build/asset-types.js'
+} from '../lib/asset-types.js'
 
 describe('asset types', () => {
   test('fonts, icons and images', () => {

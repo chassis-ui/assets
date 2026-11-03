@@ -11,7 +11,7 @@ import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { afterAll, describe, expect, test } from 'vitest'
-import { fontTables, readFont } from '../build/font-info.js'
+import { fontTables, readFont } from '../lib/build/font-info.js'
 import {
   layoutNameIds,
   readAxes,
@@ -19,8 +19,8 @@ import {
   readStat,
   replaceTables,
   writeNames
-} from '../build/font-tables.js'
-import { axisValuesAt, parseArgs, parseSettings, staticFont } from '../build/static-font.js'
+} from '../lib/font-tables.js'
+import { axisValuesAt, parseArgs, parseSettings, staticFont } from '../lib/commands/static-font.js'
 import { CLI, removeTempDirs, ROOT, tempDir } from './helpers.js'
 
 afterAll(removeTempDirs)
@@ -185,7 +185,9 @@ describe('parseSettings()', () => {
 
 describe('font-tables.js', () => {
   test('reads the axes of fvar, the values of STAT and the names of the features', async () => {
-    const { fontverter } = await import('../build/static-font.js').then((m) => m.loadHarfBuzz())
+    const { fontverter } = await import('../lib/commands/static-font.js').then((m) =>
+      m.loadHarfBuzz()
+    )
     const sfnt = Buffer.from(await fontverter.convert(UPRIGHT, 'truetype'))
     const tables = fontTables(sfnt, ['fvar', 'STAT', 'GSUB'])
     expect(readAxes(tables.fvar)).toEqual([
@@ -281,12 +283,17 @@ describe('chassis-assets static-font', () => {
   test('names the package to install when subset-font is not installed', () => {
     // A copy of the build where no node_modules is reached
     const copy = fs.realpathSync(tempDir())
-    fs.cpSync(path.join(ROOT, 'build'), path.join(copy, 'build'), { recursive: true })
+    fs.cpSync(path.join(ROOT, 'lib'), path.join(copy, 'lib'), { recursive: true })
     const source = path.join(copy, 'ui.woff2')
     fs.writeFileSync(source, UPRIGHT)
     const result = spawnSync(
       process.execPath,
-      [path.join(copy, 'build/static-font.js'), source, path.join(copy, 'out.ttf'), 'wght=600'],
+      [
+        path.join(copy, 'lib/commands/static-font.js'),
+        source,
+        path.join(copy, 'out.ttf'),
+        'wght=600'
+      ],
       { encoding: 'utf-8' }
     )
     expect(result.status).toBe(1)
