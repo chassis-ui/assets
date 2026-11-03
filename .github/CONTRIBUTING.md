@@ -21,9 +21,9 @@ The repository is a pnpm workspace with two packages:
   tests in `test/`. It is published to npm, with the `chassis-assets` command.
 - [`packages/site`](../packages/site/): `chassis-assets-site`, the Astro documentation site.
 
-The site takes the assets of the Chassis sites from a release of
-[chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), which
-`vendor/assets.json` pins and `pnpm vendor` unpacks into `vendor/assets/`, which is not committed.
+The site takes the assets of the Chassis sites from a release of their repository, which
+`vendor/assets.json` names and pins and `pnpm vendor` unpacks into `vendor/assets/`, which is not
+committed.
 The root also holds the lint and format configurations, the repository scripts in `build/` and
 the CI workflows. Run every command from the root. The [README](../README.md#commands) lists the
 commands with their options.
@@ -50,9 +50,8 @@ Branch names aren't templated; name yours descriptively, for example `fix/androi
 
 ## Changing the assets of the Chassis sites
 
-The assets of the Chassis sites are in
-[chassis-ui/website-assets](https://github.com/chassis-ui/website-assets), a repository of
-assets made with `chassis-assets init`. Change an asset there, by its README and `docs/fonts.md`,
+The assets of the Chassis sites are in the repository that `vendor/assets.json` names, a repository of assets made
+with `chassis-assets init`, like the one of any adopting team. Change an asset there, by its README and `docs/fonts.md`,
 and release it there. Then move the pin here and build the site on it:
 
 ```sh
@@ -62,7 +61,7 @@ pnpm site:build
 
 `sync-assets` writes `vendor/assets.json`, with the digest of each archive: never edit it by hand.
 Compare the site before and after, and commit the pin; a pin alone releases nothing. To try
-assets that are not released, `CHASSIS_ASSETS_CHECKOUT` names a checkout of website-assets with a
+assets that are not released, `CHASSIS_ASSETS_CHECKOUT` names a checkout of that repository with a
 build, and `pnpm vendor` copies that in place of the archive. Never edit a file under
 `vendor/assets/`.
 
@@ -101,8 +100,8 @@ pnpm test
 
 A change that is meant to change the output also writes the baseline again with
 `pnpm test:golden`, with the difference of `packages/assets/test/golden/` reviewed line by
-line, runs `build` and `verify` of this checkout with `--cwd` on a checkout of
-chassis-ui/website-assets, and adds a changeset.
+line, runs `build` and `verify` of this checkout with `--cwd` on a checkout of the Chassis assets, and
+adds a changeset.
 
 ## Changing the site
 
@@ -131,7 +130,7 @@ What to run before a commit, by what the commit changes. CI runs all of it.
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The pin, `vendor/assets.json`                            | `pnpm site:build`, and compare the site before and after.                                                                                                   |
 | `packages/assets/build/processors/` or `build-assets.js` | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`; `pnpm test:golden` when the output is meant to change, and review `packages/assets/test/golden/`. |
-| The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build, with `--cwd` on a checkout of chassis-ui/website-assets.         |
+| The analyzer, validator, contract or lint                | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, and the command on a full build, with `--cwd` on a checkout of the Chassis assets.                |
 | `packages/assets/build/init.js` or its templates         | `pnpm assets:lint`, `pnpm assets:typecheck`, `pnpm test`, `pnpm lint:prettier`.                                                                             |
 | `packages/assets/test/`                                  | `pnpm assets:lint`, `pnpm test`.                                                                                                                            |
 | `packages/site/`                                         | `pnpm site:lint`, `pnpm check:astro`, `pnpm site:build`.                                                                                                    |
@@ -188,14 +187,14 @@ are the public API. Before 1.0, a change that breaks one of them is a `minor` bu
 summary starts with `**Breaking.**`. Everything else is a `patch`.
 
 The [consumer contract](../README.md#what-consumers-rely-on) is not for a version to
-break. It is `contracts` in `chassis.checks.json` of chassis-ui/website-assets, and
+break. It is `contracts` in `chassis.checks.json` of the Chassis assets, and
 `chassis-assets contract` checks it there on every commit.
 
 ## Releases
 
 `@chassis-ui/assets` is released with [Changesets](https://changesets.dev). A version is the
 package on npm, a tag, `v<version>`, and a GitHub release with the changelog entry. The
-assets of the Chassis sites are released by chassis-ui/website-assets, with their archives.
+assets of the Chassis sites are released from their own repository, with their archives.
 
 ### Release a version
 
@@ -232,7 +231,7 @@ text. A version without a changelog entry is not released. A prerelease goes to 
   first version; the first version was published by the workflow.
 
 The archives of the Chassis assets, one per platform, app and brand, are made by the release
-workflow of website-assets on a push of a new version to its `main`.
+workflow of their repository on a push of a new version to its `main`.
 
 ### Prereleases
 

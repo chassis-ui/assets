@@ -24,7 +24,7 @@ export const COMMANDS = {
   },
   contract: {
     module: './contract.js',
-    about: 'Check the docs output against the consumer contract'
+    about: 'Check an existing output against the consumer contracts of chassis.checks.json'
   },
   verify: {
     module: './verify.js',

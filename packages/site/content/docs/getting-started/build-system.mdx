@@ -79,9 +79,9 @@ The options of `chassis-assets build` select the jobs, the folders and what happ
 A filter takes one or more values, and the filters combine: the build runs the jobs that match all of them.
 
 ```bash
-chassis-assets build --brand chassis
-chassis-assets build --platform ios android
-chassis-assets build --brand chassis --app docs --platform web
+npx chassis-assets build --brand acme
+npx chassis-assets build --platform ios android
+npx chassis-assets build --brand acme --app site --platform web
 ```
 
 A value that the configuration does not have fails the build and names the configured values. Filters that match no job together, such as an app with a platform it is not built for, fail the build too.
@@ -91,8 +91,8 @@ A value that the configuration does not have fails the build and names the confi
 The `--type` and `--include` options build a part of a job: the build reads only the files of an app that match, and writes them where a full build does, with the same names. Use them when you read a part of the output, to fetch and copy that part only.
 
 ```bash
-chassis-assets build --type images icons
-chassis-assets build --brand chassis --app docs --include "fonts/**" "images/logo/**"
+npx chassis-assets build --type images icons
+npx chassis-assets build --brand acme --app site --include "fonts/**" "images/logo/**"
 ```
 
 `--type` names type folders. `--include` takes patterns of paths as they are in `source/`, relative to the folder of the app, so with the source names and not the names of a platform. A file has to pass both options when both are given.
@@ -112,9 +112,9 @@ Quote a pattern, or the shell expands it. A build with a file filter keeps the r
 A file that the filters leave out is not read, so it may be a Git LFS pointer. `chassis-assets lfs` takes the same filters and prints the paths of `source/` that the build reads, separated by commas, which is the value `git lfs pull --include` takes. A folder whose files are all read is one path. In a clone made without the Git LFS files, fetch the files of a build and run it:
 
 ```bash
-FILTERS=(--brand chassis --app docs --include "fonts/**" "images/logo/**")
+FILTERS=(--brand acme --app site --include "fonts/**" "images/logo/**")
 git lfs pull --include "$(chassis-assets lfs "${FILTERS[@]}")"
-chassis-assets build "${FILTERS[@]}"
+npx chassis-assets build "${FILTERS[@]}"
 ```
 
 ### Cleaning
@@ -122,10 +122,10 @@ chassis-assets build "${FILTERS[@]}"
 A build without filters removes `dist/` first, so the output holds nothing of an earlier build. A build with filters keeps `dist/` and writes over the files of its jobs, so you can build one job after another.
 
 ```bash
-chassis-assets build                                    # removes dist/, builds every job
-chassis-assets build --no-clean                         # keeps dist/, builds every job
-chassis-assets build --brand chassis --platform web     # keeps dist/, builds the selected jobs
-chassis-assets build --clean --brand chassis --app docs # removes the folders of the selected jobs first
+npx chassis-assets build                                    # removes dist/, builds every job
+npx chassis-assets build --no-clean                         # keeps dist/, builds every job
+npx chassis-assets build --brand acme --platform web     # keeps dist/, builds the selected jobs
+npx chassis-assets build --clean --brand acme --app site # removes the folders of the selected jobs first
 ```
 
 With filters, `--clean` removes the folders of the selected jobs only. The output of the other jobs stays.
@@ -135,7 +135,7 @@ With filters, `--clean` removes the folders of the selected jobs only. The outpu
 The `--watch` option builds once, then keeps running and builds again when a file under `source/` changes. Use it while you export from a design tool, with the filters of the jobs you look at:
 
 ```bash
-chassis-assets build --watch --platform ios --app demo
+npx chassis-assets build --watch --platform ios --app mobile
 ```
 
 A change builds the jobs it belongs to, and no other. A file of a brand builds the jobs of that brand and its app. A file of the default brand builds the jobs of its app for every brand, since every brand gets it. A file of a `_shared` folder builds every app of its brand. Changes that come together, as an export of many files does, are one build.
@@ -150,7 +150,7 @@ The `--vector-drawables` option writes each SVG file under `icons/` of an Androi
 
 ```bash
 npm install svg2vectordrawable
-chassis-assets build --vector-drawables
+npx chassis-assets build --vector-drawables
 ```
 
 The file keeps its folder and its name and gets the `.xml` extension: `icons/svgs/ic_arrow_right_solid.svg` becomes `icons/svgs/ic_arrow_right_solid.xml`. A path without a fill color is filled black, which a tint replaces in the app.
@@ -162,7 +162,7 @@ The conversion is the one step of the build that uses a package, `svg2vectordraw
 The `--asset-catalog` option moves the images of an iOS job from `images/` into `Assets.xcassets`, the folder Xcode reads image sets from. It is off by default, needs nothing installed, and leaves the output of every other platform and type as it is.
 
 ```bash
-chassis-assets build --asset-catalog
+npx chassis-assets build --asset-catalog
 ```
 
 The files of one base name are one image set, with the `Contents.json` that Xcode writes: `images/badge.png`, `images/badge@2x.png` and `images/badge@3x.png` become `Assets.xcassets/badge.imageset/`, each file in the slot of its indicator. An SVG or a PDF without a raster of its name is an image set of one file that keeps its vector data. A subfolder of `images/` is a folder of the catalog that provides a namespace, so `images/logo/mark@2x.png` is in `Assets.xcassets/logo/mark.imageset/` and an app names it `logo/mark`.
@@ -172,7 +172,7 @@ A file without a place in an image set stays in `images/`, and the build warns o
 The `--icon-catalog` option does the same for the icons of an iOS job, from `icons/` into `Icons.xcassets`. An icon SVG that paints only in `currentcolor` renders as a template, in the tint of its view; one with another color or a gradient keeps its colors. A sprite of `<symbol>` elements is no image, and stays in `icons/`.
 
 ```bash
-chassis-assets build --asset-catalog --icon-catalog
+npx chassis-assets build --asset-catalog --icon-catalog
 ```
 
 ### Optimization
@@ -181,7 +181,7 @@ The `--optimize` option writes each image of `images/` again under its own name,
 
 ```bash
 npm install sharp svgo
-chassis-assets build --optimize
+npx chassis-assets build --optimize
 ```
 
 Without settings the option changes no pixel that anyone sees. What it does to a format:
@@ -207,8 +207,8 @@ The `--webp` and `--avif` options write each PNG and JPEG image of `images/` in 
 
 ```bash
 npm install sharp
-chassis-assets build --webp          # WebP for the web and Android
-chassis-assets build --webp --avif   # and AVIF for the web
+npx chassis-assets build --webp          # WebP for the web and Android
+npx chassis-assets build --webp --avif   # and AVIF for the web
 ```
 
 Where the file is written depends on the platform:
@@ -231,9 +231,9 @@ The `--subset` option writes each WOFF and WOFF2 font of a web job again under i
 
 ```bash
 npm install subset-font
-chassis-assets build --subset                 # the ranges of chassis.subset, or latin and latin-ext
-chassis-assets build --subset latin greek     # these ranges
-chassis-assets build --subset U+0020-007E     # a range by its code points
+npx chassis-assets build --subset                 # the ranges of chassis.subset, or latin and latin-ext
+npx chassis-assets build --subset latin greek     # these ranges
+npx chassis-assets build --subset U+0020-007E     # a range by its code points
 ```
 
 A range is a name or a range of code points written as `U+0370-03FF`. A name stands for the code points that Google Fonts serves under it. The values of the option win over the [chassis.subset](#chassissubset) block, and without either the build keeps `latin` and `latin-ext`.
@@ -258,7 +258,7 @@ A variable font keeps its axes. A browser uses an axis without being asked: it s
 A font is one file with the characters of every range. With the `--split` option, the build also writes each font that a stylesheet of `fonts/` declares once per range, beside it, and writes the `@font-face` rule of the stylesheet once per range, each with the `unicode-range` of its file. A browser then downloads the file of a range only when the page has a character of that range.
 
 ```bash
-chassis-assets build --subset latin latin-ext --split
+npx chassis-assets build --subset latin latin-ext --split
 ```
 
 ```text
@@ -287,8 +287,8 @@ The option uses the package `subset-font`, which the build loads only with it. W
 The `--res` option moves the files of an Android job that the `res/` folder of an app takes into one, `dist/android/<app>/<brand>/res/`. It is off by default, needs nothing installed, and leaves the output of every other platform as it is.
 
 ```bash
-chassis-assets build --res
-chassis-assets build --res --vector-drawables   # with the icons, needs svg2vectordrawable
+npx chassis-assets build --res
+npx chassis-assets build --res --vector-drawables   # with the icons, needs svg2vectordrawable
 ```
 
 A TTF or OTF file of `fonts/` moves to `res/font/`. A PNG, WebP, JPEG or GIF file of `images/` moves to the folder of `res/` that is named as its density folder, so `images/logo/drawable-xhdpi/mark.png` becomes `res/drawable-xhdpi/mark.png`. An image with no density folder at all goes to `res/drawable-nodpi/`, which Android does not scale. A vector drawable of `icons/` moves to `res/drawable/`, which makes `--vector-drawables` the option that brings the icons into `res/`.
@@ -301,7 +301,7 @@ A file without a place in `res/` stays where it is, and the build warns once per
 
 ## Configuration
 
-The `chassis` block of the `package.json` of the repository of assets names what is built, and holds the optional settings: [optimize](#chassisoptimize), [subset](#chassissubset), [ignore](#chassisignore) and [formats](#chassisformats). What the checks verify is in a file of its own, see [Checks file](#checks-file). The block of the Chassis sites, two brands and two apps:
+The `chassis` block of the `package.json` of the repository of assets names what is built, and holds the optional settings: [optimize](#chassisoptimize), [subset](#chassissubset), [ignore](#chassisignore) and [formats](#chassisformats). What the checks verify is in a file of its own, see [Checks file](#checks-file). The block of a repository with two brands and two apps:
 
 ```json
 {
@@ -310,10 +310,10 @@ The `chassis` block of the `package.json` of the repository of assets names what
       "brandFolder": "_default"
     },
     "build": {
-      "brands": ["chassis", "sinefil"],
+      "brands": ["acme", "globex"],
       "apps": {
-        "docs": ["web"],
-        "demo": ["ios", "android"]
+        "site": ["web"],
+        "mobile": ["ios", "android"]
       }
     }
   }
@@ -380,7 +380,7 @@ The settings are in `package.json` and not in options of the command, so that ev
     "subset": {
       "ranges": ["latin", "latin-ext"],
       "axes": {
-        "chassis": { "opsz": 14 }
+        "acme": { "opsz": 14 }
       },
       "split": true
     }
@@ -449,9 +449,9 @@ In the `chassis` block of `package.json`, two brands and two apps:
 {
   "chassis": {
     "build": {
-      "brands": ["acme", "wonka"],
+      "brands": ["acme", "globex"],
       "apps": {
-        "website": ["web"],
+        "site": ["web"],
         "mobile": ["ios", "android"]
       }
     }
@@ -462,12 +462,12 @@ In the `chassis` block of `package.json`, two brands and two apps:
 The build of this configuration writes these folders:
 
 ```text
-dist/web/website/acme/
-dist/web/website/wonka/
+dist/web/site/acme/
+dist/web/site/globex/
 dist/ios/mobile/acme/
-dist/ios/mobile/wonka/
+dist/ios/mobile/globex/
 dist/android/mobile/acme/
-dist/android/mobile/wonka/
+dist/android/mobile/globex/
 ```
 
 ## Platform rules
@@ -506,8 +506,8 @@ The checks read `source/` or an existing output and change nothing. Each exits w
 `chassis-assets validate` checks an existing output against the source and the configuration. Run it after a full build.
 
 ```bash
-chassis-assets build
-chassis-assets validate
+npx chassis-assets build
+npx chassis-assets validate
 ```
 
 It checks that the output and the source exist, that every job has its folder and the type folders of its source, that every source file is there under the name of the platform, that the output has no fewer files than the source and no empty folder, and that the names keep the rules of the platform. `--out <dir>` reads another folder than `dist/`.
@@ -517,8 +517,8 @@ It checks that the output and the source exist, that every job has its folder an
 A contract is a list of files that a consumer reads by name from the output of one job. `chassis-assets contract` checks the contracts of `chassis.checks.json`, and names each missing file and its reader.
 
 ```bash
-chassis-assets contract
-chassis-assets verify
+npx chassis-assets contract
+npx chassis-assets verify
 ```
 
 `chassis-assets verify` runs the validator and then the contract check. A repository without contracts has nothing to check, and the command is the validator alone.
@@ -542,8 +542,8 @@ It warns about a font of the default brand that a brand gets beside a family of 
 `chassis-assets analyze` reports on `source/` and on an existing output: the file types, the files per platform, brand and app, the largest files, and the files with the same content. It takes the filters of the build.
 
 ```bash
-chassis-assets analyze
-chassis-assets analyze --brand chassis --platform web
+npx chassis-assets analyze
+npx chassis-assets analyze --brand acme --platform web
 ```
 
 Files with the same content are listed per group, for the source and for the output apart. An app that holds a copy of the files of another app shows up there.
@@ -569,7 +569,7 @@ In `chassis.checks.json`, a contract with a list of files and a set:
 ```json
 {
   "contracts": {
-    "web/docs/chassis": [
+    "web/site/acme": [
       {
         "reader": "the layout of the site",
         "files": ["fonts/fonts.css", "images/logo/wordmark.svg"]
@@ -633,8 +633,8 @@ const cwd = new URL('./', import.meta.url).pathname
 
 // The build, with the options of the command line. Throws on an unknown brand
 const result = await generateAssets({
-  brands: ['chassis'],
-  apps: ['docs'],
+  brands: ['acme'],
+  apps: ['site'],
   platforms: ['web'],
   cwd,
   out: 'dist',
@@ -647,7 +647,7 @@ const assets = new ChassisAssets('package.json', { cwd })
 console.log(assets.getBrands(), assets.getCombinations())
 
 // The analyzer. analyze() is synchronous
-const analyzer = new AssetAnalyzer({ brands: ['chassis'], platforms: ['web'], cwd, quiet: true })
+const analyzer = new AssetAnalyzer({ brands: ['acme'], platforms: ['web'], cwd, quiet: true })
 analyzer.analyze()
 console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 ```
@@ -684,9 +684,9 @@ console.log(analyzer.stats.totalFiles, analyzer.stats.duplicatesInSource.length)
 A release of a repository of assets is one archive per job, `<name>-<platform>-<app>-<brand>-<version>.zip`, with the content of `dist/<platform>/<app>/<brand>/` at its top level. `chassis-assets archive` writes them from an existing output, with the name and the version of `package.json`, into `archives/`.
 
 ```bash
-chassis-assets build --optimize
-chassis-assets archive
-chassis-assets archive --to /tmp/release --prefix acme --release 1.2.0
+npx chassis-assets build --optimize
+npx chassis-assets archive
+npx chassis-assets archive --to /tmp/release --prefix acme --release 1.2.0
 ```
 
 `--to <dir>` writes them elsewhere, and `--prefix <name>` and `--release <version>` name them instead of `package.json`; the archives of the prefix already in the folder are removed first. The archives are written with Node.js alone, and an archive holds up to 65,535 files.
@@ -762,7 +762,7 @@ To build one platform per job, give each job a filter, such as `chassis-assets b
 
 These practices keep a build short while you work, and keep the paths of the output stable for the consumers.
 
-- **Build a part while you work:** `chassis-assets build --brand chassis --platform web` writes one job and keeps the rest of `dist/`.
+- **Build a part while you work:** `chassis-assets build --brand acme --platform web` writes one job and keeps the rest of `dist/`.
 - **Run a full build before the checks:** `chassis-assets validate` and `chassis-assets verify` expect the output of every job.
 - **Start with the default brand:** put the files that every brand shares in `source/_default/<app>/`, and add to a brand folder only what is its own. A file that every app of a brand uses goes in its `_shared/` folder, once.
 - **Keep brand and app names in lowercase with hyphens:** they are folder names in `source/` and in `dist/`, and a consumer reads its files by that path. A name that starts with `_` is no brand and no app, and the build fails on it.

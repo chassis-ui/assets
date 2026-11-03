@@ -25,7 +25,7 @@ export const HELP = `Usage: chassis-assets lfs [options]
 Prints the paths of source/ that a build with the same options reads, separated by commas:
 the value of \`git lfs pull --include\`. A folder whose files are all read is one path.
 
-  git lfs pull --include "$(node packages/assets/build/cli.js lfs --brand chassis --app docs)"
+  git lfs pull --include "$(npx chassis-assets lfs --brand acme --app site)"
 
 Options:
   --brand <name...>      Only these brands

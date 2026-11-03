@@ -31,13 +31,13 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
             containerClass="border-top border-subtle pt-md mt-auto"
             code={`source/
 ├── _default/
-│   └── demo/
+│   └── mobile/
 │       └── images/
 │           ├── brand-logo.svg
 │           ├── hero-img.png
 │           └── hero-img@2x.png
-└── sinefil/
-    └── demo/
+└── globex/
+    └── mobile/
         └── images/
             └── brand-logo.svg`}
           />
@@ -60,13 +60,13 @@ import Code from '@chassis-ui/docs/shortcodes/Code.astro'
 npx chassis-assets build
 
 # Build specific brand
-npx chassis-assets build --brand chassis
+npx chassis-assets build --brand globex
 
 # Build specific app
-npx chassis-assets build --app demo
+npx chassis-assets build --app mobile
 
 # Build with filters
-npx chassis-assets build --brand chassis --app demo`}
+npx chassis-assets build --brand globex --app mobile`}
           />
         </FeatureCard>
       </div>
@@ -83,11 +83,11 @@ npx chassis-assets build --brand chassis --app demo`}
             lang="text"
             containerClass="border-top border-subtle pt-md mt-auto"
             code={`dist/
-├── ios/demo/sinefil/images/
+├── ios/mobile/globex/images/
 │   ├── brand_logo.svg
 │   ├── hero_img.png
 │   └── hero_img@2x.png
-└── android/demo/sinefil/images/
+└── android/mobile/globex/images/
     ├── drawable/
     │   ├── brand_logo.svg
     │   └── hero_img.png

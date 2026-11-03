@@ -8,7 +8,7 @@ toc: true
 
 ## Introduction
 
-The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. In the committed configuration the Android app is `demo` and the brands are `chassis` and `sinefil`; your own configuration has other names in the same places. The file names of the samples, such as `hero_banner.png`, are examples: your output has the files of your source, under the names of the table below.
+The Android output of a brand and an app is the folder `dist/android/<app>/<brand>/`. The build copies the files of `source/` into it, renames them to snake_case, and sorts the images into density folders. The samples use the configuration of the [quick start]([[docsref:/getting-started/quick-start]]): the Android app is `mobile` and the brands are `acme` and `globex`; your own configuration has other names in the same places. The file names of the samples, such as `hero_banner.png`, are examples: your output has the files of your source, under the names of the table below.
 
 ```text
 dist/android/<app>/<brand>/
@@ -42,41 +42,34 @@ The default output is not a `res/` folder. The build keeps the subfolders of `im
 
 ## Installation
 
-An app gets the files in one of three ways: from a release archive, from a Git submodule that it builds, or from a build in a clone. The samples of this page read the output from `website-assets/dist/android/demo/`, with the repository in the folder `website-assets/` at the root of the Android project.
+An app gets the files in one of three ways: from a release archive, from a Git submodule that it builds, or from a build in a clone. The samples of this page read the output from `vendor/assets/dist/android/mobile/`, with the repository of assets in the folder `vendor/assets/` of the Android project.
 
 ### Release archive
 
 A release archive holds the output of one platform, one app and one brand, and needs neither Node.js nor Git LFS. Each GitHub release of a repository of assets has one archive per job attached, named `<name>-<platform>-<app>-<brand>-<version>.zip` after the name and the version of its `package.json`. The archive holds the content of `dist/<platform>/<app>/<brand>/` at its top level, so unpack it into a folder named after the brand:
 
 ```bash
-mkdir -p website-assets-dist/chassis
-unzip "website-assets-android-demo-chassis-<version>.zip" -d website-assets-dist/chassis
+mkdir -p assets-dist/acme
+unzip "acme-assets-android-mobile-acme-<version>.zip" -d assets-dist/acme
 ```
 
 ### Git submodule
 
-A submodule pins the app to one commit of the assets and lets the app build them itself. You need Node.js 22.12 or later and Git LFS, which holds the fonts and the raster images. The repository of assets lists the package `@chassis-ui/assets`, which the install brings and nothing else; use the URL of your own repository in place of the one of the Chassis sites.
+A submodule pins the app to one commit of the assets and lets the app build them itself. You need Node.js 22.12 or later and Git LFS, which holds the fonts and the raster images. A Gradle project has no `package.json`, so the package `@chassis-ui/assets` is installed in the submodule, whose `package.json` lists it and which brings nothing else. The address is an example; use the one of your repository of assets:
 
 ```bash
 git lfs install
-git submodule add https://github.com/chassis-ui/website-assets.git
-cd website-assets
+git submodule add https://github.com/acme/acme-assets.git vendor/assets
+cd vendor/assets
 git lfs pull
 npm install
-npx chassis-assets build --platform android
+npx chassis-assets build --platform android                              # every brand and app of the platform
+npx chassis-assets build --platform android --brand acme --app mobile    # one job
 ```
 
 ### Build from a clone
 
-A clone beside the app works the same way, and suits a team that changes the assets and the app together. The install brings the package and nothing else.
-
-```bash
-git clone https://github.com/chassis-ui/website-assets.git
-cd website-assets
-npm install
-npx chassis-assets build --platform android                              # every brand and app of the platform
-npx chassis-assets build --platform android --brand chassis --app demo   # one job
-```
+A clone in the same folder works the same way, and suits a team that changes the assets and the app together but keeps them in separate histories: run `git clone https://github.com/acme/acme-assets.git vendor/assets` in place of `git submodule add`, then the same commands.
 
 A build with a filter keeps the rest of `dist/`; add `--clean` to remove the folders of the selected jobs first. See the [build system page]([[docsref:/getting-started/build-system]]) for every option.
 
@@ -120,14 +113,14 @@ dist/android/<app>/<brand>/
             └── welcome_light.png
 ```
 
-A file of `source/<brand>/<app>/<type>/` or `source/_default/<app>/<type>/`, or of the `_shared/<type>/` folder of either brand, is under `<type>/` of the job, in the same subfolders, with its name in snake_case, so a path is the same in every brand that has the file. To find the name of a file, list the output of the job: `find dist/android/demo/chassis -name 'hero_banner*'`.
+A file of `source/<brand>/<app>/<type>/` or `source/_default/<app>/<type>/`, or of the `_shared/<type>/` folder of either brand, is under `<type>/` of the job, in the same subfolders, with its name in snake_case, so a path is the same in every brand that has the file. To find the name of a file, list the output of the job: `find dist/android/mobile/acme -name 'hero_banner*'`.
 
 ### Res folder
 
 The build writes a `res/` folder itself when you give it the `--res` option. Add `--vector-drawables`, which needs the package `svg2vectordrawable`, to get the icons into it:
 
 ```bash
-cd website-assets
+cd vendor/assets
 npm install svg2vectordrawable
 npx chassis-assets build --platform android --res --vector-drawables
 ```
@@ -173,8 +166,8 @@ dist/android/<app>/<brand>/
 Copy the folder into the source set of the brand, and the licenses beside it:
 
 ```bash
-BRAND=chassis
-ASSETS="website-assets/dist/android/demo/$BRAND"
+BRAND=acme
+ASSETS="vendor/assets/dist/android/mobile/$BRAND"
 
 mkdir -p "app/src/$BRAND/assets/licenses"
 cp -R "$ASSETS/res" "app/src/$BRAND/"
@@ -194,8 +187,8 @@ Without the option, a copy script moves the files that `res/` accepts as they ar
 # scripts/sync-assets.sh <brand>
 set -euo pipefail
 
-BRAND="${1:-chassis}"
-ASSETS="${ASSETS_ROOT:-website-assets/dist/android/demo}/$BRAND"
+BRAND="${1:-acme}"
+ASSETS="${ASSETS_ROOT:-vendor/assets/dist/android/mobile}/$BRAND"
 SRC="app/src/$BRAND"
 
 # Fonts go to res/font/, their licenses to assets/licenses/
@@ -216,8 +209,8 @@ done
 The script writes to the source set of the brand, `app/src/<brand>/`, which [Brand switching](#brand-switching) uses; an app with one brand sets `SRC` to `app/src/main`. With release archives, set `ASSETS_ROOT` to the folder that holds the unpacked brands:
 
 ```bash
-./scripts/sync-assets.sh chassis                                   # from website-assets/dist/
-ASSETS_ROOT=website-assets-dist ./scripts/sync-assets.sh chassis   # from an unpacked archive
+./scripts/sync-assets.sh acme                                 # from vendor/assets/dist/
+ASSETS_ROOT=assets-dist ./scripts/sync-assets.sh acme          # from an unpacked archive
 ```
 
 When two listed folders hold a PNG of the same name in the same density folder, the folder listed last wins.
@@ -352,7 +345,7 @@ The app reads `R.drawable.welcome` in both modes, and Android picks the file. An
 The default output has no such rule: an image for a dark background is a file of its own with its own name. To let Android choose between the two, copy them to one resource name, the dark one into a folder with the `night` qualifier:
 
 ```bash
-IMAGES="website-assets/dist/android/demo/chassis/images/onboarding"
+IMAGES="vendor/assets/dist/android/mobile/acme/images/onboarding"
 RES="app/src/main/res"
 
 mkdir -p "$RES/drawable-xhdpi" "$RES/drawable-night-xhdpi"
@@ -381,7 +374,7 @@ For an app that holds a copy of Chassis Icons, the files of `icons/svgs/` are th
 An Android app draws an icon from a vector drawable. The build writes one for each icon when you give it the `--vector-drawables` option, which needs the package `svg2vectordrawable`:
 
 ```bash
-cd website-assets
+cd vendor/assets
 npm install svg2vectordrawable
 npx chassis-assets build --platform android --vector-drawables
 ```
@@ -479,8 +472,8 @@ Every brand of `chassis.build.brands` has a job folder with the same folders, an
 The brands do not have to hold the same files. A file that only the folder of one brand holds is in the output of that brand only, and a font role that a brand holds no files for has no files in its output. A resource that only some brands have, such as the font family resource of such a role, goes in the source set of each brand that has it. Compare the output of two brands to see which files they share:
 
 ```bash
-diff <(cd website-assets/dist/android/demo/chassis && find . -type f | sort) \
-     <(cd website-assets/dist/android/demo/sinefil && find . -type f | sort)
+diff <(cd vendor/assets/dist/android/mobile/acme && find . -type f | sort) \
+     <(cd vendor/assets/dist/android/mobile/globex && find . -type f | sort)
 ```
 
 ### Product flavors
@@ -492,20 +485,20 @@ android {
     flavorDimensions += "brand"
 
     productFlavors {
-        create("chassis") { dimension = "brand" }
-        create("sinefil") { dimension = "brand" }
+        create("acme") { dimension = "brand" }
+        create("globex") { dimension = "brand" }
     }
 }
 ```
 
-`./gradlew assembleChassisDebug` then builds the app with the files of `app/src/chassis/`, and `./gradlew assembleSinefilDebug` with those of `app/src/sinefil/`. Put the vector drawables and the `ui.xml` that differ by brand in the same source sets, and the ones that all brands share in `app/src/main/res/`.
+`./gradlew assembleAcmeDebug` then builds the app with the files of `app/src/acme/`, and `./gradlew assembleGlobexDebug` with those of `app/src/globex/`. Put the vector drawables and the `ui.xml` that differ by brand in the same source sets, and the ones that all brands share in `app/src/main/res/`.
 
 ### Gradle task
 
 A Gradle task runs the copy script before every build, so the source sets follow the output. Add one task per brand to `app/build.gradle.kts`:
 
 ```kotlin
-listOf("chassis", "sinefil").forEach { brand ->
+listOf("acme", "globex").forEach { brand ->
     val sync = tasks.register<Exec>("sync${brand.replaceFirstChar { it.uppercase() }}Assets") {
         workingDir = rootDir
         commandLine("scripts/sync-assets.sh", brand)
@@ -515,13 +508,13 @@ listOf("chassis", "sinefil").forEach { brand ->
 }
 ```
 
-The task copies; it does not build the assets. Run `npx chassis-assets build --platform android` in `website-assets/` after a change to `source/` or after moving the submodule, or leave `npx chassis-assets build --watch --platform android` running there, which builds the Android jobs again on every change under `source/`.
+The task copies; it does not build the assets. Run `npx chassis-assets build --platform android` in `vendor/assets/` after a change to `source/` or after moving the submodule, or leave `npx chassis-assets build --watch --platform android` running there, which builds the Android jobs again on every change under `source/`.
 
 An app that holds every brand in one APK and switches at run time cannot use the names as they are, since the brands share them: it needs a script that adds the brand to each name while copying.
 
 ## Continuous integration
 
-A workflow builds the Android jobs, runs the copy script for each brand, then builds the app. The script and the Gradle tasks were run on a Mac with Gradle 9.8 and Android Gradle Plugin 9.4, with the build of the old repository; the build with the package and the workflow itself were not run. The build needs Node.js and the package, which `npm ci` installs in `website-assets/`. This workflow is for GitHub Actions, with the assets as a submodule:
+A workflow builds the Android jobs, runs the copy script for each brand, then builds the app. The script and the Gradle tasks were run on a Mac with Gradle 9.8 and Android Gradle Plugin 9.4, with the build of the old repository; the build with the package and the workflow itself were not run. The build needs Node.js and the package, which `npm ci` installs in `vendor/assets/`. This workflow is for GitHub Actions, with the assets as a submodule:
 
 ```yaml
 name: Android
@@ -539,22 +532,22 @@ jobs:
           submodules: true
 
       - name: Fetch the Git LFS files of the assets
-        run: git -C website-assets lfs pull
+        run: git -C vendor/assets lfs pull
 
       - uses: actions/setup-node@v7
         with:
-          node-version-file: website-assets/.nvmrc
+          node-version-file: vendor/assets/.nvmrc
 
       - name: Build the Android assets
-        working-directory: website-assets
+        working-directory: vendor/assets
         run: |
           npm ci
           npx chassis-assets build --platform android
 
       - name: Copy the assets
         run: |
-          ./scripts/sync-assets.sh chassis
-          ./scripts/sync-assets.sh sinefil
+          ./scripts/sync-assets.sh acme
+          ./scripts/sync-assets.sh globex
 
       - uses: actions/setup-java@v6
         with:
@@ -591,7 +584,7 @@ Each entry gives the message or the symptom, then the cause and the fix.
 
 ### Git LFS pointers
 
-The build stops with `<count> source file(s) are Git LFS pointers, not files`, followed by the first of them. The clone or the submodule was made without Git LFS, so the fonts and the raster images are text files of a few lines. Install Git LFS, run `git lfs pull` in `website-assets/`, and build again.
+The build stops with `<count> source file(s) are Git LFS pointers, not files`, followed by the first of them. The clone or the submodule was made without Git LFS, so the fonts and the raster images are text files of a few lines. Install Git LFS, run `git lfs pull` in `vendor/assets/`, and build again.
 
 ### Unknown brand
 
@@ -611,7 +604,7 @@ Gradle fails with `Duplicate resources` and names two files of one folder, such 
 
 ### Image is missing
 
-An image of `source/` is not where you look for it in the job folder. An image with an indicator is in a density folder under the subfolder of the image, not in `drawable/`, and its name is in snake_case without the indicator. Search for the name with `find dist/android/demo/chassis/images -name '<name>*'`.
+An image of `source/` is not where you look for it in the job folder. An image with an indicator is in a density folder under the subfolder of the image, not in `drawable/`, and its name is in snake_case without the indicator. Search for the name with `find dist/android/mobile/acme/images -name '<name>*'`.
 
 ### Image looks blurry
 
@@ -623,7 +616,7 @@ The build stops with `Two files ask for the resource drawable/<name>`, followed 
 
 ### Icon is not found
 
-The compiler reports `Unresolved reference` for an icon such as `R.drawable.ic_arrow_right`. The name of an icon ends with its style, and the vector drawable exists only after the copy or the import: check the name with `ls dist/android/demo/chassis/icons/svgs`, and use `ic_arrow_right_solid` or `ic_arrow_right_outline`.
+The compiler reports `Unresolved reference` for an icon such as `R.drawable.ic_arrow_right`. The name of an icon ends with its style, and the vector drawable exists only after the copy or the import: check the name with `ls dist/android/mobile/acme/icons/svgs`, and use `ic_arrow_right_solid` or `ic_arrow_right_outline`.
 
 ## Next steps
 

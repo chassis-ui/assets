@@ -6,23 +6,32 @@ copied from `source/<brand>/<app>/<type>/` of a repository of assets to
 The build is file-driven: a designer adds a file, and the build does the rest. It needs
 Node.js 22.12 or later and nothing else.
 
+Write a repository of assets, with this package as a development dependency:
+
 ```shell
-npm install --save-dev @chassis-ui/assets
-npx chassis-assets build
+npx @chassis-ui/assets init acme-assets --brand acme --app site:web mobile:ios,android
+cd acme-assets
+git init && git lfs install
+npm install
+npm run build
 ```
 
-| Command                      | What it does                                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| `chassis-assets build`       | Every brand, app and platform of `chassis.build` in `package.json`                               |
-| `chassis-assets validate`    | Checks an existing output against the source and the configuration                               |
-| `chassis-assets contract`    | Checks an output against the consumer contracts of `chassis.checks.json`                         |
-| `chassis-assets verify`      | The validator, then the contract check                                                           |
-| `chassis-assets lint-source` | Checks the names and the layout of `source/`                                                     |
-| `chassis-assets analyze`     | Sizes, types and duplicates of the source and the output                                         |
-| `chassis-assets lfs`         | The Git LFS paths a build reads, for `git lfs pull --include`                                    |
-| `chassis-assets archive`     | One zip per platform, app and brand of an existing output, for a release                         |
-| `chassis-assets init [dir]`  | Writes the baseline of a repository of assets: `package.json`, the LFS attributes, the workflows |
-| `chassis-assets static-font` | Writes the static font of a variable font at a weight, such as `wght=600`, to each output        |
+| Command                        | What it does                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `chassis-assets build`         | Every brand, app and platform of `chassis.build` in `package.json`                               |
+| `chassis-assets analyze`       | Sizes, types and duplicates of the source and the output                                         |
+| `chassis-assets validate`      | Checks an existing output against the source and the configuration                               |
+| `chassis-assets contract`      | Checks an output against the consumer contracts of `chassis.checks.json`                         |
+| `chassis-assets verify`        | The validator, then the contract check                                                           |
+| `chassis-assets lfs`           | The Git LFS paths a build reads, for `git lfs pull --include`                                    |
+| `chassis-assets archive`       | One zip per platform, app and brand of an existing output, for a release                         |
+| `chassis-assets manifest`      | The files of an existing output with their sizes and hashes, for a release                       |
+| `chassis-assets diff`          | The files added, removed, renamed and changed since a manifest                                   |
+| `chassis-assets release-notes` | Prints the changelog entry of a version, and fails without one                                   |
+| `chassis-assets check-native`  | Compiles an existing output with the tools of Xcode and of Android                               |
+| `chassis-assets init [dir]`    | Writes the baseline of a repository of assets: `package.json`, the LFS attributes, the workflows |
+| `chassis-assets static-font`   | Writes the static font of a variable font at a weight, such as `wght=600`, to each output        |
+| `chassis-assets lint-source`   | Checks the names and the layout of `source/`                                                     |
 
 Every command takes `--help`, and `--cwd <dir>` names the repository root, by default the
 nearest folder upward whose `package.json` has a `chassis` block. The options that convert
@@ -32,5 +41,4 @@ for `--optimize`, `--webp` and `--avif`, `subset-font` for `--subset` and `stati
 
 The [documentation](https://chassis-ui.com/assets/) describes the source layout, the
 configuration, the output of each platform and how to use it in a project. The source of the
-build, its tests and the Chassis assets are in the
-[repository](https://github.com/chassis-ui/assets).
+build and its tests are in the [repository](https://github.com/chassis-ui/assets).

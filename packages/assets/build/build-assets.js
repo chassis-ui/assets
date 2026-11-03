@@ -177,8 +177,8 @@ export function isReservedName(name) {
  * @param {string} app
  * @returns {string[]} Paths relative to `source/`, with forward slashes
  * @example
- * sourceLayers('_default', 'acme', 'docs')
- * // ['_default/_shared', '_default/docs', 'acme/_shared', 'acme/docs']
+ * sourceLayers('_default', 'acme', 'site')
+ * // ['_default/_shared', '_default/site', 'acme/_shared', 'acme/site']
  */
 export function sourceLayers(brandFolder, brand, app) {
   return [...new Set([brandFolder, brand])].flatMap((folder) => [

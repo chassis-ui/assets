@@ -283,12 +283,12 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   differ by app, so that the set is in one folder. The output is byte for byte the one
   before. The source paths, `--include` and the paths `pnpm assets:lfs` prints change, so the
   changeset is a minor one that starts with **Breaking.**. The maintainer, 2026-10-29. The logos
-  of `chassis` moved to `_shared/` of website-assets on 2026-11-01: they differed by rounding.
+  of `chassis` moved to `_shared/` of the Chassis assets on 2026-11-01: they differed by rounding.
 - **D37. Is the build published to npm?** Yes, as `@chassis-ui/assets` with the
   `chassis-assets` command, so that a team installs it in a repository of its own assets and
   runs the build there; the assets of this repository are not published (D2 holds for them).
   The first step of a split: `source/`, `chassis.checks.json` and the `chassis` block move to
-  a repository of files, `chassis-ui/website-assets`, and this one keeps the package and the
+  a repository of files, the repository of the Chassis assets, and this one keeps the package and the
   site. The packages that an option loads are optional entries of `peerDependencies`, and
   `devDependencies` for the tests, not `optionalDependencies`: a plain install of the package
   brings nothing else, and a team installs the one package the option it uses names. The
@@ -297,24 +297,24 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   runs; `--release <version>` names the version where the root `package.json` has none, as
   here. The release workflow publishes with npm trusted publishing, as `chassis-ui/tokens`. The
   maintainer, 2026-10-29.
-- **D38. Where do the assets of the Chassis sites live?** In `chassis-ui/website-assets`, a
+- **D38. Where do the assets of the Chassis sites live?** In the repository of the Chassis assets, a
   repository of files made with `chassis-assets init` and holding `source/`,
   `chassis.checks.json` and the `chassis` block with their history, 38 commits filtered from
   `develop` of this repository at 812c5d2 with `git filter-branch` and merged with unrelated
   histories; `docs/fonts.md`, `build/instance-font.py` and the entries of `ref/OPEN.md` about
   the files of the brands went with them. This repository keeps the package and the site,
   and builds the assets from the `vendor/assets` submodule, pinned to `main` of
-  website-assets, with the root scripts on `--cwd vendor/assets`: the site reads
+  the Chassis assets, with the root scripts on `--cwd vendor/assets`: the site reads
   `vendor/assets/dist/web/docs/chassis/` as every Chassis site does, and CI runs the lint,
   the build, the verification and the iOS catalogs on the real files, with the build of the
-  checkout and not of npm. The archives of a release come from website-assets; the release
+  checkout and not of npm. The archives of a release come from the Chassis assets; the release
   here is the package, its tag and its notes. `app/docs` has no use once the sites pin
-  website-assets, and `build/check-changeset.js` is gone: Changesets sees every released
+  the Chassis assets, and `build/check-changeset.js` is gone: Changesets sees every released
   change. The attributes keep the fixture lines only, since no Git LFS file is left.
   Supersedes D3 for the place of `source/` and `dist/`; the layout rule of AGENTS.md now
   describes a repository of files. The maintainer, 2026-10-29.
 - **D39. How do the Chassis sites and sinefil.org get the assets?** From the release archive
-  of their job, `web/docs/<brand>`, of a pinned version of `chassis-ui/website-assets`, checked
+  of their job, `web/docs/<brand>`, of a pinned version of the repository of the Chassis assets, checked
   by its SHA-256, as sinefil.org did with the archives of this repository. A release is
   built with `--optimize --subset --split`, and the ranges of `chassis.subset` are the union
   of what the sites set, `latin`, `latin-ext`, `symbols2` and `U+2190-2193`, with `cyrillic`
@@ -327,7 +327,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   keeps its submodule, since its CI checks the build of the checkout on the real files. The
   maintainer, 2026-10-29.
 - **D40. Who writes the files by weight of a variable font?** The package, with
-  `chassis-assets static-font`, in place of `build/instance-font.py` of website-assets, a
+  `chassis-assets static-font`, in place of `build/instance-font.py` of the Chassis assets, a
   Python script with fontTools that an adopting team never got. HarfBuzz pins the axes, the
   one of `subset-font`, an optional peer as for `--subset`, loaded from the folder of that
   package: its own options empty the outline of `.notdef` and drop the glyphs no character
@@ -335,7 +335,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   of the naming of fontTools from `STAT`, with the style bits of a regular, a bold and an
   italic, then the rules of the script: the optical size in the family, the PostScript and
   unique names of a download by weight. Checked on 2026-10-30 against the files the script
-  wrote for website-assets, the 18 of `chassis` and the 8 `ui` files of `sinefil`: the names,
+  wrote for the Chassis assets, the 18 of `chassis` and the 8 `ui` files of `sinefil`: the names,
   the glyphs, the style bits and the weights are the same, and so are the outlines but where
   `avar` maps the weight, as Inter's Bold, where HarfBuzz rounds the mapped coordinate
   otherwise than fontTools: points move by 2 units of 2048 at most, and some advances by 1.
@@ -346,7 +346,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   all three, with the maintainer, 2026-11-01: the plan of an example app showed that an app
   could not name a file by role across brands, nor get a catalog of what it needs from a
   release. A release has the catalogs: the `release.yml` that `init` writes runs a script
-  `build:release` with both options, as website-assets does, and a team takes them out of the
+  `build:release` with both options, as the Chassis assets do, and a team takes them out of the
   script if it wants the folders.
   `<name>_light` and `<name>_dark` of a folder are one image set `<name>`, which replaces
   the rule of D10; a name of a catalog so changes where a repository has such a pair.
@@ -419,19 +419,19 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   session, 2026-11-02.
 - **D46. How is a release named, and what is its text?** An archive is
   `<repository>-<platform>-<app>-<brand>-<version>.zip`, the name of `package.json` without its
-  scope being that of the repository, in chassis-ui/tokens as here: website-assets is
-  `@chassis-ui/website-assets`, private as it was, and its archives `website-assets-…`, as they
-  were `chassis-website-assets-…` while `website-tokens-…` had no such start. A consumer names
-  the archive in a setting of its own, as `chassis-ui/android-example`, `chassis-ui/ios-example`
-  and `chassis-ui/vanilla-example` do, so its name moves with the version there. The release of a
-  repository of files takes the entry of its version in `CHANGELOG.md` as its text, with
-  `chassis-assets release-notes`, in CI and first in the release, so that a version without an
-  entry fails and is not released. `--generate-notes` wrote only a link: these repositories push
-  to `main`, and it lists pull requests. The changelog is written by hand, not with Changesets:
-  a designer who adds a font has no reason to install a tool for it. CI does not run
-  `build:release` on a new version: with no pull requests it runs beside the release, for the
-  same result at twice the Git LFS bandwidth. The README and `AGENTS.md` ask for it before the
-  commit. The maintainer, 2026-11-02.
+  scope being that of the repository, in chassis-ui/tokens as here: the package of the Chassis
+  assets keeps its name, private as it was, and its archives start with that name without the
+  scope, as they did with the start of the earlier name, which the archives of the Chassis tokens
+  never had. A consumer names the archive in a setting of its own, as
+  `chassis-ui/android-example`, `chassis-ui/ios-example` and `chassis-ui/vanilla-example` do, so
+  its name moves with the version there. The release of a repository of files takes the entry of
+  its version in `CHANGELOG.md` as its text, with `chassis-assets release-notes`, in CI and first
+  in the release, so that a version without an entry fails and is not released. `--generate-notes`
+  wrote only a link: these repositories push to `main`, and it lists pull requests. The changelog
+  is written by hand, not with Changesets: a designer who adds a font has no reason to install a
+  tool for it. CI does not run `build:release` on a new version: with no pull requests it runs
+  beside the release, for the same result at twice the Git LFS bandwidth. The README and
+  `AGENTS.md` ask for it before the commit. The maintainer, 2026-11-02.
 - **D47. How does a repository made earlier take what `init` writes now?** With `init --check`,
   which reports what differs, and `init --only <file…>`, which writes those files. `--force` was
   all or nothing, and wrote over the `chassis` block and the contracts, so `package.json`,
@@ -449,7 +449,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   repository needs. The maintainer, 2026-11-02.
 - **D49. Where do the checks of real files belong?** With the change they catch. The compilers of
   Xcode and of Android ran only here, on `vendor/assets`, so a bad icon passed the CI of
-  website-assets and failed here when the pin moved, and a problem in a repository of assets could
+  the Chassis assets and failed here when the pin moved, and a problem in a repository of assets could
   stop a release of the package. A change to the build is now checked on `test/native/fixture/`, a
   few small real files with no golden output, kept apart so that `fixtures/` stays lines of text.
   A change to the files is checked where they are: `chassis-assets check-native` is published, the
@@ -461,11 +461,11 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   package has no reason to know a repository of assets. Removing `vendor/assets` and moving the
   docs site to a release archive is chassis-ui/website#33. The maintainer, 2026-11-02.
 - **D50. How does the site of this repository get the assets?** Like every Chassis site, from the
-  archive of `web/docs/chassis` of a pinned release of `chassis-ui/website-assets`, with
+  archive of `web/docs/chassis` of a pinned release of the repository of the Chassis assets, with
   `chassis-docs vendor` of `@chassis-ui/docs` 0.13 and the pin in `vendor/assets.json`. Amends D38:
   the `vendor/assets` submodule, the root scripts on `--cwd vendor/assets` and the steps of CI on
   the real files are gone, and CI here no longer checks the build on them. Those checks run in
-  website-assets (D49), where `chassis-assets verify`, `lint-source` and `check-native` check each
+  the Chassis assets (D49), where `chassis-assets verify`, `lint-source` and `check-native` check each
   change to the files, and a change to the build is tried on them with
   `node packages/assets/build/cli.js <command> --cwd <checkout>`. Supersedes the copy of the site
   in D30: the release has made the choice of the ranges (D39), so `pnpm site:assets` is gone, with

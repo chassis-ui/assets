@@ -167,7 +167,7 @@ function cleanPublicDirectory(dir: string) {
 }
 
 /**
- * Copies the docs build of the pinned release of chassis-ui/website-assets into `public/static/`.
+ * Copies the assets of the pinned release that `vendor/assets.json` names into `public/static/`.
  */
 function copyChassisAssets(root: string, publicDir: string) {
   const source = getChassisAssetsFsPath({ root })

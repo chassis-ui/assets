@@ -69,9 +69,9 @@ A brand replaces a bundle whole, with a bundle of the same path. Keep a bundle i
 Create the folder under the app, put the files in it, and run the build. No configuration names the folder.
 
 ```bash
-mkdir -p source/_default/docs/videos
-cp onboarding-intro.mp4 source/_default/docs/videos/
-chassis-assets build
+mkdir -p source/_default/site/videos
+cp onboarding-intro.mp4 source/_default/site/videos/
+npx chassis-assets build
 ```
 
 A brand replaces a file by adding one with the same path to its own folder, `source/<brand>/<app>/videos/onboarding-intro.mp4`. Subfolders are kept on every platform.

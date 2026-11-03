@@ -32,11 +32,11 @@ dist/web/<app>/
     └── ...
 ```
 
-The commands of this page build the configured web app, `docs`, for the brand `chassis`; with another configuration, use the names of your own app and brand. The file names of the samples, such as `images/hero-banner.png`, are examples: your output has the files of your source, under the names that [Output names](#output-names) describes.
+The commands of this page build the web app `site` for the brand `acme`, the configuration of the [quick start]([[docsref:/getting-started/quick-start]]); with another configuration, use the names of your own app and brand. The file names of the samples, such as `images/hero-banner.png`, are examples: your output has the files of your source, under the names that [Output names](#output-names) describes.
 
 ## Installation
 
-A web application gets the output of its repository of assets from a release archive, from a Git submodule that it builds, or from a build in a clone. The commands below name the repository of the Chassis sites, `chassis-ui/website-assets`, with its web app `docs` and its brand `chassis`; use the repository, the app and the brand of your own.
+A web application gets the output of its repository of assets from a release archive, from a Git submodule that it builds, or from a build in a clone. The commands below name a repository `acme/acme-assets`; use the address of your own.
 
 ### Release archive
 
@@ -46,7 +46,7 @@ Download the archive of your job from the releases of the repository and extract
 
 ```bash
 mkdir -p public/assets
-unzip "website-assets-web-docs-chassis-<version>.zip" -d public/assets
+unzip "acme-assets-web-site-acme-<version>.zip" -d public/assets
 ```
 
 An archive needs no Node.js, no package and no Git LFS on the machine that uses it.
@@ -56,20 +56,20 @@ An archive needs no Node.js, no package and no Git LFS on the machine that uses 
 A submodule pins the assets to a commit and builds them inside your project. The submodule needs nothing installed; the project installs `@chassis-ui/assets` and runs the build on the folder with `--cwd`.
 
 ```bash
-git submodule add https://github.com/chassis-ui/website-assets.git vendor/assets
+git submodule add https://github.com/acme/acme-assets.git vendor/assets
 git -C vendor/assets lfs pull
 npm install --save-dev @chassis-ui/assets
-npx chassis-assets build --cwd vendor/assets --clean --brand chassis --app docs --platform web
+npx chassis-assets build --cwd vendor/assets --clean --brand acme --app site --platform web
 ```
 
-The build writes `vendor/assets/dist/web/docs/chassis/`; `--out <dir>` writes elsewhere, relative to the submodule, so give it an absolute path to write into the project. For another job, give the filters of that job.
+The build writes `vendor/assets/dist/web/site/acme/`; `--out <dir>` writes elsewhere, relative to the submodule, so give it an absolute path to write into the project. For another job, give the filters of that job.
 
-While you change the assets, `npx chassis-assets build --cwd vendor/assets --watch --brand chassis --app docs` keeps running and builds the job again on every change under `source/`.
+While you change the assets, `npx chassis-assets build --cwd vendor/assets --watch --brand acme --app site` keeps running and builds the job again on every change under `source/`.
 
 A project that reads a few files of the output does not have to fetch and build all of it. The `--include` option builds the files that match a pattern, and `chassis-assets lfs` prints the Git LFS paths of the same patterns, so `git lfs pull` fetches those files only:
 
 ```bash
-FILTERS=(--cwd vendor/assets --brand chassis --app docs --include "fonts/**" "images/logo/**")
+FILTERS=(--cwd vendor/assets --brand acme --app site --include "fonts/**" "images/logo/**")
 git -C vendor/assets lfs pull --include "$(npx chassis-assets lfs "${FILTERS[@]}")"
 npx chassis-assets build --clean "${FILTERS[@]}"
 ```
@@ -85,8 +85,8 @@ The fonts and the raster images are Git LFS files. A checkout without Git LFS ho
 A clone is the way to go when you change the assets yourself, in your own repository of assets. It needs Node.js 22.12 or later and Git LFS; the [Quick Start]([[docsref:/getting-started/quick-start]]) page has the setup and the scripts the repository holds.
 
 ```bash
-git clone https://github.com/chassis-ui/website-assets.git
-cd website-assets
+git clone https://github.com/acme/acme-assets.git
+cd acme-assets
 npm install
 npx chassis-assets build --platform web
 ```
@@ -135,7 +135,7 @@ The indicator stays at the end of a name, and a dot inside a name becomes a hyph
 To find the name of a file, list the output of the job, or the folder of a type:
 
 ```bash
-find dist/web/docs/chassis/images -name 'hero-banner*'
+find dist/web/site/acme/images -name 'hero-banner*'
 ```
 
 ### Copy the output
@@ -144,7 +144,7 @@ A web application serves the files from its static folder. Copy the folder of th
 
 ```bash
 mkdir -p public/assets
-cp -R vendor/assets/dist/web/docs/chassis/. public/assets/
+cp -R vendor/assets/dist/web/site/acme/. public/assets/
 ```
 
 The samples of this page read the files from `/assets/`, as this copy serves them.
@@ -160,7 +160,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   resolve: {
     alias: {
-      '@assets': fileURLToPath(new URL('./vendor/assets/dist/web/docs/chassis', import.meta.url))
+      '@assets': fileURLToPath(new URL('./vendor/assets/dist/web/site/acme', import.meta.url))
     }
   }
 })
@@ -174,7 +174,7 @@ const path = require('node:path')
 module.exports = {
   resolve: {
     alias: {
-      '@assets': path.resolve(__dirname, 'vendor/assets/dist/web/docs/chassis')
+      '@assets': path.resolve(__dirname, 'vendor/assets/dist/web/site/acme')
     }
   },
   module: {
@@ -372,16 +372,16 @@ Every brand of `chassis.build.brands` has a folder of its own beside the others,
 To ship one brand, copy the folder of that brand at build time:
 
 ```bash
-BRAND=sinefil
+BRAND=globex
 mkdir -p public/assets
-cp -R vendor/assets/dist/web/docs/$BRAND/. public/assets/
+cp -R vendor/assets/dist/web/site/$BRAND/. public/assets/
 ```
 
 To choose the brand in the browser, copy each brand into a folder of its name and build the path from the brand:
 
 ```bash
 mkdir -p public/assets
-cp -R vendor/assets/dist/web/docs/. public/assets/
+cp -R vendor/assets/dist/web/site/. public/assets/
 ```
 
 ```js
@@ -389,7 +389,7 @@ export function assetUrl(brand, path) {
   return `/assets/${brand}/${path}`
 }
 
-document.querySelector('#logo').src = assetUrl('sinefil', 'images/logo/wordmark.svg')
+document.querySelector('#logo').src = assetUrl('globex', 'images/logo/wordmark.svg')
 ```
 
 ### Brand fallback
@@ -399,8 +399,8 @@ The build fills the output of a brand with the files of its folder in `source/` 
 The brands of an app do not have to hold the same files. A file that only the folder of one brand holds, with no default file of its path, is in the output of that brand only, and a font role that a brand sets in the family of another role has no files in its output. Read such a file only for the brands that have it, and list the output of each brand to see which they are:
 
 ```bash
-diff <(cd vendor/assets/dist/web/docs/chassis && find . -type f | sort) \
-     <(cd vendor/assets/dist/web/docs/sinefil && find . -type f | sort)
+diff <(cd vendor/assets/dist/web/site/acme && find . -type f | sort) \
+     <(cd vendor/assets/dist/web/site/globex && find . -type f | sort)
 ```
 
 `fonts.css` of each brand declares the fonts of that brand: link the stylesheet and you get the fonts of the brand, whichever roles have files.
@@ -430,12 +430,12 @@ jobs:
         run: |
           git -C vendor/assets lfs pull
           npm ci
-          npx chassis-assets build --cwd vendor/assets --clean --brand chassis --app docs --platform web
+          npx chassis-assets build --cwd vendor/assets --clean --brand acme --app site --platform web
 
       - name: Copy the assets
         run: |
           mkdir -p public/assets
-          cp -R vendor/assets/dist/web/docs/chassis/. public/assets/
+          cp -R vendor/assets/dist/web/site/acme/. public/assets/
 ```
 
 A workflow that uses a release archive needs none of these steps: download the archive of the job with `gh release download` and extract it.
@@ -482,7 +482,7 @@ The build stops with `Unknown brand "<name>". Configured: <brands>`. The value o
 
 ### No job selected
 
-The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each filter value is configured, but no app has that platform: `chassis-assets build --app demo --platform web` fails in the committed configuration, where `demo` is built for iOS and Android. Read the jobs with `chassis-assets build --dry-run`.
+The build stops with `The filters select no job. Check --brand, --app and --platform together.` Each filter value is configured, but no app has that platform: `chassis-assets build --app mobile --platform web` fails in the configuration of this page, where `mobile` is built for iOS and Android. Read the jobs with `chassis-assets build --dry-run`.
 
 ## Next steps
 

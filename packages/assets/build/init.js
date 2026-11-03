@@ -181,7 +181,7 @@ export function parseApp(spec) {
   const [app, list, ...more] = spec.split(':')
   if (!app || !list || more.length > 0) {
     throw new Error(
-      `An app is <name>:<platform>[,<platform>…], such as docs:web or mobile:ios,android: ${spec}`
+      `An app is <name>:<platform>[,<platform>…], such as site:web or mobile:ios,android: ${spec}`
     )
   }
   checkName('app', app)
@@ -403,7 +403,7 @@ source/ for the first build. Writes nothing when a file exists. package.json, ch
 Options:
   --name <name>          The package name, default the name of the folder
   --brand <name…>        The brands, default main
-  --app <name:platforms> An app and its platforms, such as docs:web or mobile:ios,android,
+  --app <name:platforms> An app and its platforms, such as site:web or mobile:ios,android,
                          one or more times; default site:web. Platforms: ${getPlatformNames().join(', ')}
   --pm <npm|pnpm>        The package manager the README and the workflows name, default npm
   --repository <repo>    The repository, owner/name or an address; default the origin remote

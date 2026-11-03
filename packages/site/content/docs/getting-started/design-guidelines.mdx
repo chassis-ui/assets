@@ -59,7 +59,7 @@ A name in `source/` is made of lowercase letters, digits and hyphens, with a low
 - **Do not put a dot or an indicator inside a name:** `hero.v2.png` and `hero@2x-final.png` fail the source lint.
 - **Do not put the brand in the name:** the folder says it, and a brand file has to have the name of the default file to replace it.
 
-The source lint checks these rules on every pull request. Run it yourself with `npm run lint`.
+The source lint checks these rules on every pull request. Run it yourself with `npx chassis-assets lint-source`.
 
 ## Formats
 
@@ -117,14 +117,14 @@ A change to the assets is a commit on a branch, reviewed in a pull request again
 
 1. Create a branch from `main`.
 2. Export the file from the design tool into its folder under `source/`.
-3. Run `npm run lint` to check the name, and `npm run build` to see the file in `dist/`.
+3. Run `npx chassis-assets lint-source` to check the name, and `npx chassis-assets build` to see the file in `dist/`.
 4. Commit the files of `source/`, and open a pull request against `main`. Say in the message which files the change adds to `dist/`, removes from it or renames: the changelog entry of the next version names them.
 
 ```bash
 git checkout -b feature/onboarding-assets main
-npm run lint
-npm run build
-git add source/_default/docs/images/onboarding.svg
+npx chassis-assets lint-source
+npx chassis-assets build
+git add source/_default/site/images/onboarding.svg
 git commit -m "feat: add the onboarding illustration"
 git push origin feature/onboarding-assets
 ```

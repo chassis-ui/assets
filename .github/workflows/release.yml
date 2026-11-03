@@ -5,7 +5,7 @@ name: Release
 # v<version> and the GitHub release from the CHANGELOG entry of the version when the tag
 # does not exist. The version and the CHANGELOG are made on develop with Changesets. See
 # "Releases" in .github/CONTRIBUTING.md. The assets and their archives are released by
-# chassis-ui/website-assets.
+# each repository of assets.
 #
 # npm trusted publishing: the package trusts this workflow file of chassis-ui/assets, so no
 # npm token is needed, and every version has provenance. Renaming this file breaks publishing

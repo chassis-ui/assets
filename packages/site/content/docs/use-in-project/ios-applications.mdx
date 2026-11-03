@@ -21,35 +21,38 @@ The build copies, renames and sorts the files. It writes asset catalogs only wit
 
 ## Installation
 
-An app gets the files in one of three ways: from the archive of a release, from a submodule that the app builds, or from a build of a clone. The commands of this page use `demo` and `chassis`, the iOS app and a brand of the committed configuration; use the names of your `chassis.build` block in their place. The file names of the samples, such as `images/hero_banner.png`, are examples: your output has the files of your source, under the names that [Output names](#output-names) describes.
+An app gets the files in one of three ways: from the archive of a release, from a submodule that the app builds, or from a build of a clone. The commands of this page use `mobile` and `acme`, the iOS app and a brand of the configuration of the [quick start]([[docsref:/getting-started/quick-start]]); use the names of your `chassis.build` block in their place. The file names of the samples, such as `images/hero_banner.png`, are examples: your output has the files of your source, under the names that [Output names](#output-names) describes.
 
 ### Release archive
 
 An archive needs no Node.js and no Git LFS on the machine that builds the app. Each GitHub release of a repository of assets has one archive per job attached, named `<name>-<platform>-<app>-<brand>-<version>.zip` after the name and the version of its `package.json`. The archive of an iOS job holds the content of `dist/ios/<app>/<brand>/` at its top level, so it unpacks to `fonts/`, `Assets.xcassets` and `Icons.xcassets`. The release workflow that `chassis-assets init` writes builds with the `build:release` script, which passes `--asset-catalog` and `--icon-catalog`. A file without a place in a catalog stays in `images/` or `icons/`, and a repository that takes the options out of the script has these folders in place of the catalogs.
 
-### Submodule
+### Git submodule
 
-A submodule pins the assets to a commit of the app's repository, and the app builds them. Install [Git LFS](https://git-lfs.com) first, since the fonts and the raster images are Git LFS files, then add the repository of assets, here the one of the Chassis sites, and pull its files:
+A submodule pins the assets to a commit of the app's repository, and the app builds them. Install [Git LFS](https://git-lfs.com) first, since the fonts and the raster images are Git LFS files, then add the repository of assets and pull its files. The address is an example; use the one of your repository of assets:
 
 ```bash
 git lfs install
-git submodule add https://github.com/chassis-ui/website-assets.git assets
-git -C assets lfs pull
+git submodule add https://github.com/acme/acme-assets.git vendor/assets
+git -C vendor/assets lfs pull
 ```
 
-Use the URL of your own repository of assets in place of this one.
-
-### Build from a clone
-
-The build needs Node.js 22.12 or later and the package `@chassis-ui/assets`, which the repository of assets lists and which brings nothing else. Install it once, then run the build from the root of the clone or of the submodule:
+An Xcode project has no `package.json`, so the package `@chassis-ui/assets` is installed in the submodule, whose `package.json` lists it and which brings nothing else. The build needs Node.js 22.12 or later, and runs from the root of the submodule:
 
 ```bash
+cd vendor/assets
 npm install
 npx chassis-assets build --platform ios                              # Every iOS job
-npx chassis-assets build --platform ios --app demo --brand chassis   # One job
+npx chassis-assets build --platform ios --app mobile --brand acme    # One job
 ```
 
 A filtered build keeps the rest of `dist/`; add `--clean` to remove the folder of the selected jobs first. The [build system page]([[docsref:/getting-started/build-system]]) has every option.
+
+### Build from a clone
+
+A clone in the same folder works the same way, and suits a team that changes the assets and the app together but keeps them in separate histories: run `git clone https://github.com/acme/acme-assets.git vendor/assets` in place of `git submodule add`, then the same commands.
+
+The paths of `dist/` on this page are relative to `vendor/assets/`.
 
 <Callout type="warning">
 A clone made without Git LFS holds pointer files in place of the fonts and the raster images. The build fails and lists them; run `git lfs pull`.
@@ -103,7 +106,7 @@ An app reads a file by its path in the folder of the job, and the build derives 
 To find the name of a file, list the output of the job:
 
 ```bash
-find dist/ios/demo/chassis -name 'hero_banner*'
+find dist/ios/mobile/acme -name 'hero_banner*'
 ```
 
 ## Fonts
@@ -131,7 +134,7 @@ Each role that has files has a license, such as `ui_license.txt` and `code_licen
 UIKit and SwiftUI load a custom font by its PostScript name, which is inside the file and is not the file name. On a Mac, read it from a file of the output:
 
 ```bash
-mdimport -t -d2 dist/ios/demo/chassis/fonts/ui_normal.ttf 2>&1 | grep -A 2 name_postscript
+mdimport -t -d2 dist/ios/mobile/acme/fonts/ui_normal.ttf 2>&1 | grep -A 2 name_postscript
 ```
 
 The command reads the file itself, so it also answers for a file that was just built, which Spotlight has not indexed yet.
@@ -363,28 +366,28 @@ The brands of an app have the same folders, and a file that two brands both have
 The brands do not have to hold the same files. A file that only the folder of one brand holds is in the output of that brand only, and a font role that a brand holds no files for has no files in its output. An app that loads such a file builds with the brands that have it; compare the output of two brands to see which files they share:
 
 ```bash
-diff <(cd dist/ios/demo/chassis && find . -type f | sort) \
-     <(cd dist/ios/demo/sinefil && find . -type f | sort)
+diff <(cd dist/ios/mobile/acme && find . -type f | sort) \
+     <(cd dist/ios/mobile/globex && find . -type f | sort)
 ```
 
 ### Brand per build
 
-An app that ships once per brand copies the folder of one brand into the project before it builds. Add a script such as `scripts/sync-assets.sh` to the app's repository, with the assets in the submodule `assets/`:
+An app that ships once per brand copies the folder of one brand into the project before it builds. Add a script such as `scripts/sync-assets.sh` to the app's repository, with the assets in the submodule `vendor/assets/`:
 
 ```bash
 #!/bin/bash
 set -euo pipefail
 
-BRAND="${1:-chassis}"
-APP="${2:-demo}"
+BRAND="${1:-acme}"
+APP="${2:-mobile}"
 
-(cd assets && npx chassis-assets build --platform ios --app "$APP" --brand "$BRAND" --clean)
-rsync -a --delete "assets/dist/ios/$APP/$BRAND/" Resources/Chassis/
+(cd vendor/assets && npx chassis-assets build --platform ios --app "$APP" --brand "$BRAND" --clean)
+rsync -a --delete "vendor/assets/dist/ios/$APP/$BRAND/" Resources/Assets/
 ```
 
 The fonts and a folder reference follow the copy as they are. An image set does not: it holds the files of the brand it was filled from. Keep one asset catalog per brand, with the same image set names, and add each to the target of its brand.
 
-While you work on the assets and the app together, let the build follow the source: `npx chassis-assets build --watch --platform ios --app demo` builds the iOS jobs of the app again on every change under `source/`, and the copy is then the `rsync` line of the script alone.
+While you work on the assets and the app together, let the build follow the source: `npx chassis-assets build --watch --platform ios --app mobile` builds the iOS jobs of the app again on every change under `source/`, and the copy is then the `rsync` line of the script alone.
 
 ### Build phase
 
@@ -394,7 +397,7 @@ A **Run Script** build phase can run the copy on each build of a target. Put it 
 "$SRCROOT/scripts/sync-assets.sh" "$CHASSIS_BRAND"
 ```
 
-A target runs its scripts in a sandbox when **User Script Sandboxing** is **Yes** in its build settings, as it is in a new project, and the phase then fails with `Operation not permitted`: the script writes to `Resources/Chassis/` and to the submodule. Set it to **No** for the target.
+A target runs its scripts in a sandbox when **User Script Sandboxing** is **Yes** in its build settings, as it is in a new project, and the phase then fails with `Operation not permitted`: the script writes to `Resources/Assets/` and to the submodule. Set it to **No** for the target.
 
 Xcode runs the phase with its own `PATH`. When it does not find `npx`, replace the build line of the script with the copy alone and build the assets before opening Xcode.
 
@@ -409,7 +412,7 @@ func brandImage(_ name: String, brand: String) -> UIImage? {
     UIImage(named: "\(brand)/\(name)")
 }
 
-let logo = brandImage("wordmark", brand: "sinefil")
+let logo = brandImage("wordmark", brand: "globex")
 ```
 
 ## Continuous integration
@@ -432,7 +435,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        brand: [chassis, sinefil]
+        brand: [acme, globex]
 
     steps:
       - name: Checkout
@@ -441,17 +444,17 @@ jobs:
           submodules: true
 
       - name: Pull the Git LFS files of the assets
-        run: git -C assets lfs pull
+        run: git -C vendor/assets lfs pull
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version-file: assets/.nvmrc
+          node-version-file: vendor/assets/.nvmrc
 
       - name: Build and copy the assets
         run: |
-          (cd assets && npm ci)
-          ./scripts/sync-assets.sh ${{ matrix.brand }} demo
+          (cd vendor/assets && npm ci)
+          ./scripts/sync-assets.sh ${{ matrix.brand }} mobile
 
       - name: Build the app
         run: |
@@ -472,15 +475,15 @@ A lane takes the brand as an option and runs the same script before the build. A
 platform :ios do
   desc "Build the app with the assets of one brand"
   lane :build_brand do |options|
-    brand = options[:brand] || "chassis"
+    brand = options[:brand] || "acme"
 
-    sh("../scripts/sync-assets.sh", brand, "demo")
+    sh("../scripts/sync-assets.sh", brand, "mobile")
     build_app(scheme: "App-#{brand}")
   end
 end
 ```
 
-Run the lane with `fastlane ios build_brand brand:sinefil`. The lane was not run; the script it calls was.
+Run the lane with `fastlane ios build_brand brand:globex`. The lane was not run; the script it calls was.
 
 ## Best practices
 
@@ -496,7 +499,7 @@ Avoid the habits that undo this:
 
 - **Do not rename the files in the project:** the names of `dist/ios/` are the contract. Rename the file in `source/` and build again.
 - **Do not commit `dist/`:** commit the submodule pointer, or pin the version of the archive, and build or unpack the files.
-- **Do not edit the copied files:** a change to a file under `Resources/Chassis/` is lost at the next copy. Change `source/<brand>/<app>/` instead.
+- **Do not edit the copied files:** a change to a file under `Resources/Assets/` is lost at the next copy. Change `source/<brand>/<app>/` instead.
 
 ## Troubleshooting
 
@@ -512,7 +515,7 @@ The build prints `Unknown brand "<name>". Configured: <brands>`, or the same for
 
 ### Filters select no job
 
-The build prints `The filters select no job. Check --brand, --app and --platform together.` The app is not built for iOS: in the committed configuration `--platform ios --app docs` selects nothing, since `docs` is a web app. Name an app that lists `ios` in `chassis.build.apps`.
+The build prints `The filters select no job. Check --brand, --app and --platform together.` The app is not built for iOS: in the configuration of this page `--platform ios --app site` selects nothing, since `site` is a web app. Name an app that lists `ios` in `chassis.build.apps`.
 
 ### Font does not appear
 

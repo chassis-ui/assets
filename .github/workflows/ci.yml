@@ -54,7 +54,7 @@ jobs:
         run: pnpm check:astro
 
   # The build's lint, type check and tests, and the package as npm publishes it, on the fixture.
-  # The checks of the real files run in chassis-ui/website-assets.
+  # The checks of the real files run in each repository of assets.
   assets:
     name: Assets
     runs-on: ubuntu-latest

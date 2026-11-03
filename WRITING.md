@@ -140,7 +140,7 @@ The project has one word for each concept. Using a synonym makes the reader wond
 
 **Any folder is a type.** `fonts`, `images` and `icons` have rules of their own; any other folder under an app is copied as it is. Write "any other folder", and present names such as `videos/` as examples, not as types.
 
-**Owned and customized.** Chassis Assets is meant to be owned by the team that adopts it. Don't present the committed brands and apps (`chassis`, `sinefil`, `docs`, `demo`) as the only ones; see [§8](#8-counts-versions-and-configuration).
+**Owned and customized.** Chassis Assets is meant to be owned by the team that adopts it. Examples use the names of the quick start, never those of the Chassis sites; see [§8](#8-counts-versions-and-configuration).
 
 Product names keep their spelling: Chassis Assets, Chassis Tokens, Chassis Icons, Chassis CSS, Figma, Git LFS, Node.js, npm, pnpm, Xcode, Android Studio, SwiftUI, UIKit, Jetpack Compose. Formats are uppercase in prose (WOFF2, TTF, SVG, PNG, WebP) and an extension in code (`.woff2`).
 
@@ -157,7 +157,7 @@ Backtick every code reference. A file has one name in `source/` and one per plat
 | An iOS output file     | snake_case, indicator kept            | `` `images/hero_banner@2x.png` ``                   |
 | An Android output file | snake_case, in its density folder     | `` `images/drawable-xhdpi/hero_banner.png` ``       |
 | An Android icon        | snake_case with the `ic_` prefix      | `` `icons/svgs/ic_arrow_right_solid.svg` ``         |
-| A folder               | With a trailing slash                 | `` `fonts/` ``, `` `dist/web/docs/chassis/` ``      |
+| A folder               | With a trailing slash                 | `` `fonts/` ``, `` `dist/web/site/acme/` ``         |
 | A group of files       | A pattern with `*`                    | `` `images/home/comp-gallery-*` ``                  |
 | A format               | Uppercase in prose, extension in code | WOFF2, `` `.woff2` ``                               |
 
@@ -175,14 +175,14 @@ Don't use the name of one platform where another is meant — `hero-banner.png` 
 
 Chassis Assets is a multi-brand, multi-platform repository that its adopters own and customize. The layout of `source/` and `dist/`, the naming rules, the formats each platform gets and the commands are its structure. The files are not: a logo, a font family or a screenshot belongs to one brand, changes with the next release, and is different in the fork of an adopter. Document the structure, never the contents of `source/` ([D34](docs/decisions.md)).
 
-**Examples are placeholders.** A page does not list what `source/` holds: no tree of the files of a brand, no sentence on which brand has which file, no file of this repository as the example of a rule. An example uses a placeholder file, such as `images/hero-banner.png` or `data/country-list.json`, in a path with `<app>` and `<brand>`. A page explains how the reader finds a file instead: the layout, the fallback to the default brand, and the output name of each platform. The names of the font roles, of `fonts.css` and of the files of Chassis Icons are conventions, not contents, and may be named. The committed configuration may name a job in a command ([§8](#8-counts-versions-and-configuration)).
+**Examples are placeholders.** A page does not list what `source/` holds: no tree of the files of a brand, no sentence on which brand has which file, no file of this repository as the example of a rule. An example uses a placeholder file, such as `images/hero-banner.png` or `data/country-list.json`, in a path with `<app>` and `<brand>`. A page explains how the reader finds a file instead: the layout, the fallback to the default brand, and the output name of each platform. The names of the font roles, of `fonts.css` and of the files of Chassis Icons are conventions, not contents, and may be named. An example names a job of the configuration of the quick start ([§8](#8-counts-versions-and-configuration)).
 
 **Names must exist.** Every path, command and option in a doc must exist as written, and the output name of a placeholder file is the one a build writes for it. Don't write a name from memory, and don't invent a flag — a reader will run it. Before adding a name, find it:
 
 ```bash
 chassis-assets build --help
 chassis-assets build --dry-run
-find dist/android/demo/chassis -name 'ic_arrow_right_solid*'
+find dist/android/mobile/acme -name 'ic_arrow_right_solid*'
 ```
 
 **Trees are copied from a build.** A tree of `dist/` shows files that a build wrote, with the names and folders it wrote them in: put the placeholder files in the `source/` of a scratch repository, build it with `--cwd`, and copy the tree. Shorten a tree by leaving lines out and ending a folder with `└── ...`, never by editing a name. Check an output name by building: the web name of `HeroBanner@2x.png` is whatever `chassis-assets build` writes, not what the rule suggests.
@@ -204,7 +204,7 @@ A doc that states a number makes a promise the next commit can break. Don't coun
 
 **Versions.** Write "Node.js 22.12 or later", not "the latest Node.js", and "the version named by `packageManager`" for pnpm. For the version of Chassis Assets, use the `[[config:currentVersion]]` token ([§17](#17-cross-references)) instead of a number typed by hand. In a CI example, use the current major version of each action.
 
-**Configuration.** The brands and apps in the `chassis` block of `package.json` are the committed configuration, not the system. Name them as such ("the configured web app is `docs`"), and use them in examples, not in definitions, so an adopter with another configuration can follow. The same goes for `chassis.checks.json`: its contracts are those of the Chassis sites.
+**Configuration.** The examples use the configuration of the quick start: the repository `acme-assets`, the brands `acme` and `globex`, the web app `site` and the mobile app `mobile`, and a submodule in `vendor/assets`. Say where a name comes from ("the web app `site` of the quick start"), and use the names in examples, not in definitions, so an adopter with another configuration can follow. The assets of the Chassis sites are one repository of assets among others: a page never names that repository, its brands, its apps or its contracts.
 
 **Planned features.** A feature the build does not have is named as planned, in one place, and nowhere described as if the build had it. What is planned is in [ref/OPEN.md](ref/OPEN.md).
 

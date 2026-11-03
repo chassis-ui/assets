@@ -20,14 +20,13 @@ The build needs Node.js and nothing else. The rest is for the repository and its
 
 ## Create the repository
 
-Run `init` with the package, in the folder the repository will be:
+Run `init` with the package and the folder the repository will be in:
 
 ```bash
-mkdir acme-assets && cd acme-assets
-npx @chassis-ui/assets init --brand acme --app docs:web --app mobile:ios,android
+npx @chassis-ui/assets init acme-assets --brand acme --app site:web mobile:ios,android
 ```
 
-Each `--app` is a name and its platforms, `web`, `ios` or `android`, separated by commas. Without options the repository has one brand, `main`, and one app, `site`, on the web. This example has iOS and Android, so the command writes thirteen files and prints them:
+Each app of `--app` is a name and its platforms, `web`, `ios` or `android`, separated by commas. Without options the repository has one brand, `main`, and one app, `site`, on the web. This example has iOS and Android, so the command writes thirteen files and prints them:
 
 ```text
 package.json                              -> The brands, the apps and the scripts
@@ -49,9 +48,10 @@ A repository with only the web has no `native.yml`, and twelve files. It writes 
 
 A later version of the package writes other files. In a repository you already have, `init --check` reports where it differs from what the current version writes, and exits 1 when it does. `init --only <file...>` writes those files; add `--force` for one that exists.
 
-Then make it a repository, and install the package. Commit the lockfile the install writes with the rest: the workflows install from it.
+Then go into the folder, make it a repository, and install the package. Commit the lockfile the install writes with the rest: the workflows install from it.
 
 ```bash
+cd acme-assets
 git init && git lfs install
 npm install
 ```
@@ -68,7 +68,7 @@ Use the options of the build to build a part of it, and `--dry-run` to see the j
 
 ```bash
 npx chassis-assets build --brand acme             # one brand
-npx chassis-assets build --app docs               # one app
+npx chassis-assets build --app site               # one app
 npx chassis-assets build --platform ios android   # two platforms
 npx chassis-assets build --dry-run                # print the jobs, write nothing
 ```
@@ -88,13 +88,13 @@ dist/
 │           └── other/
 │               └── readme.txt
 └── web/
-    └── docs/
+    └── site/
         └── acme/
             └── other/
                 └── readme.txt
 ```
 
-`dist/` is not committed. `npm run verify` checks the output against the source and passes. The [build system]([[docsref:/getting-started/build-system]]) page describes every command and option.
+`dist/` is not committed. `npx chassis-assets verify` checks the output against the source and passes. The [build system]([[docsref:/getting-started/build-system]]) page describes every command and option.
 
 ## Add a file
 
@@ -102,7 +102,7 @@ A file added to `source/` is in the output of the next build. No list or configu
 
 1. Export the file from the design tool, named in lowercase with hyphens.
 2. Put it in `source/_default/<app>/<type>/` when every brand gets it, or in `source/<brand>/<app>/<type>/` when it belongs to one brand. Use `_shared` in place of `<app>` when every app gets it.
-3. Run `npm run lint` to check the name, and `npm run build` to build.
+3. Run `npx chassis-assets lint-source` to check the name, and `npx chassis-assets build` to build.
 4. Find the file in `dist/`, under the name of each platform.
 5. Commit the file of `source/`.
 
@@ -132,7 +132,7 @@ The [design guidelines]([[docsref:/getting-started/design-guidelines]]) have the
 A project reads the folder of one job. Copy it into the project, or point the project at it.
 
 ```bash
-cp -R dist/web/docs/acme/. /path/to/project/public/assets/
+cp -R dist/web/site/acme/. /path/to/project/public/assets/
 ```
 
 A project can also add the repository as a Git submodule and build it there. The repository needs nothing installed for that; the project installs the package and names the folder. `--out` is relative to that folder, so give it a path from the project:
@@ -154,9 +154,9 @@ When an app or a site reads a file of the output by name, add it to `chassis.che
 ```json
 {
   "contracts": {
-    "web/docs/acme": [
+    "web/site/acme": [
       {
-        "reader": "the layout of the documentation site",
+        "reader": "the layout of the site",
         "files": ["images/site-logo.svg", "fonts/fonts.css"]
       }
     ]
@@ -164,7 +164,7 @@ When an app or a site reads a file of the output by name, add it to `chassis.che
 }
 ```
 
-`npm run verify` then fails when a build no longer has the file, before a consumer does. The [build system]([[docsref:/getting-started/build-system#checks-file]]) page describes the forms an entry takes.
+`npx chassis-assets verify` then fails when a build no longer has the file, before a consumer does. The [build system]([[docsref:/getting-started/build-system#checks-file]]) page describes the forms an entry takes.
 
 ## Release a version
 

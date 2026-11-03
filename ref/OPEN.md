@@ -3,22 +3,22 @@
 What is left to do, decide or check in this repository, and what was considered and left
 out. An entry is removed when it is done. A D-number is a decision of
 [docs/decisions.md](../docs/decisions.md). Read on 2026-10-29. The entries about the files
-of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
+of the brands moved to `ref/OPEN.md` of the repository of the Chassis assets with D38.
 
 ## For the maintainer
 
 - **The split of the repository, step 6.** Steps 1 to 5 are done with D37 and D38:
   the package is publishable, `chassis-assets archive` and `chassis-assets init` are
-  commands, `chassis-ui/website-assets` holds the assets with their history, and this
+  commands, the repository of the Chassis assets holds the assets with their history, and this
   repository takes them from a pinned release (D50). The pages
   describe a repository of assets as `init` writes it since step 5, on 2026-10-29; the
   build-system and the use-in-project pages keep their `work-in-progress` callout, since
   their CI samples and the workflows of `init` were not run on GitHub Actions, ; `npx @chassis-ui/assets init` was run from the registry on 2026-10-29, and the
   repository it wrote passed lint, build, verify and archive. Left: (6) the
-  consumers on the releases of website-assets (D39): `@chassis-ui/docs` gets a vendor that
+  consumers on the releases of the Chassis assets (D39): `@chassis-ui/docs` gets a vendor that
   takes a pinned archive, chassis-ui/website#33, which blocks the move of chassis-ui/css#87,
   chassis-ui/icons#19, chassis-ui/figma#14, chassis-ui/react#125 and chassis-ui/tokens#30,
-  and sinefil.org takes its archive from website-assets, ozgurgunes/sinefil-web#222; then
+  and sinefil.org takes its archive from the Chassis assets, ozgurgunes/sinefil-web#222; then
   the `app/docs` branch of this repository deleted on GitHub once no site pins it.
 - **The choices of D29.** `chassis.ignore` adds names and takes none away, a pattern is a
   name and not a path, a list of `chassis.formats` replaces the rule of a processor, and both
@@ -28,18 +28,18 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   the consumer contract is tested, the build has unit and build tests, releases are
   automated, and the docs site uses `@chassis-ui/docs` 0.6 or later. Whether a release
   becomes 1.0, and when, is not decided.
-- **`--webp` in the release of website-assets.** Left off. On the Android job of `chassis` it
+- **`--webp` in the release of the Chassis assets.** Left off. On the Android job of `chassis` it
   takes the images from 10.5 MB to 5.9 MB, lossless, and all 24 become WebP, but the option is
   not per platform: the web jobs would get a WebP beside each PNG and JPEG that no site reads. It
   comes back with an option per platform, or a site that reads them. Measured on 2026-11-01.
-- **The layers of the app icon of D44.** The session drew the `.adaptive` bundles of website-assets
+- **The layers of the app icon of D44.** The session drew the `.adaptive` bundles of the Chassis assets
   from the logomark and the fill of each `.icon` bundle, with a mark of 60 dp for `chassis` and
   46 dp for `sinefil` in the safe zone of 66 dp. They are the designer's to replace.
 
 - **The sites that still read `app/docs`.** Nothing in this repository reads it since D50. The
   sites of chassis-ui/css#87, chassis-ui/icons#19, chassis-ui/figma#14 and chassis-ui/react#125
   move in their own repositories, and `app/docs` stays until they have. sinefil-web reads
-  `chassis-assets-web-docs-<brand>-<version>.zip` of 0.5.0: its move to a release of website-assets
+  `chassis-assets-web-docs-<brand>-<version>.zip` of 0.5.0: its move to a release of the Chassis assets
   (ozgurgunes/sinefil-web#222) takes the name of D46.
 
 ## Not written
@@ -53,7 +53,7 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   `ui-italic-symbols2.woff2`, `display-symbols2.woff2` and `display-italic-symbols2.woff2`
   are written with an empty `glyf` table, which Chrome rejects: "OTS parsing error: glyf:
   zero-length table". No page asks for them while `latin` is named first, so nothing shows. Since D39 the release
-  archives of website-assets carry these files to every Chassis site and to sinefil.org.
+  archives of the Chassis assets carry these files to every Chassis site and to sinefil.org.
   A box drawing character in text of the text font would ask for one, fail, and fall back
   as it would without the file. Found on 2026-10-12 with D30. Montserrat, the `display`
   family of `chassis` since 2026-10-19, gets the two files of `display` too.
@@ -84,7 +84,7 @@ of the brands moved to `ref/OPEN.md` of chassis-ui/website-assets with D38.
   links, and the launcher of the API 35 emulator shows the full icon.
 - The `icon.json` of a later Icon Composer: the lint of D45 reads `groups[].layers[].image-name`,
   the form of the bundles of 2026, and a manifest of another form passes with nothing read.
-  Checked with `actool` of Xcode 27.2 on the two bundles of website-assets on 2026-11-02.
+  Checked with `actool` of Xcode 27.2 on the two bundles of the Chassis assets on 2026-11-02.
 - A WebP or an AVIF file of `--webp` and `--avif` in a browser.
 - `--watch` on Windows. CI runs its tests on Linux.
 
