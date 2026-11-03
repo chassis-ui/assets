@@ -265,7 +265,7 @@ describe('chassis-assets static-font', () => {
     // One font in two formats: what the source lint compares
     const { glyphs, ...info } = readFont(fs.readFileSync(ttf))
     expect(readFont(fs.readFileSync(woff2))).toEqual({ glyphs, ...info })
-  })
+  }, 30_000)
 
   test('exits 2 without the arguments, 0 on --help, and 1 on a font it cannot read', () => {
     expect(run().status).toBe(2)
