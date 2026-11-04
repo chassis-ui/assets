@@ -95,7 +95,7 @@ npx chassis-assets build --platform web
 
 ## Output layout
 
-The folder of a job holds one folder per type, with the subfolders of the source kept. For a source with a font role, a few images, a copy of Chassis Icons and a `data/` folder, the build writes:
+The folder of a job holds one folder per type, with the subfolders of the source kept. For a source with a font role, a few images, a few icons and a `data/` folder, the build writes:
 
 ```text
 dist/web/<app>/<brand>/
@@ -107,10 +107,8 @@ dist/web/<app>/<brand>/
 │   ├── ui-normal.woff2
 │   └── ...
 ├── icons/
-│   ├── icons/
-│   │   └── ...
-│   └── svgs/
-│       └── ...
+│   ├── arrow-right-solid.svg
+│   └── ...
 └── images/
     ├── hero-banner.png
     ├── hero-banner@2x.png
@@ -314,39 +312,22 @@ An image that the output has as WebP and as PNG goes into a `<picture>` element,
 
 ## Icons
 
-The `icons/` folder holds every file of `icons/` of the source, in its subfolders, with kebab-case names. An app that holds a copy of Chassis Icons gets its two folders, and an app may also hold an icon or a sprite of its own, which the build copies the same way:
+The `icons/` folder holds every file of `icons/` of the source, in its subfolders, with kebab-case names, one file per icon:
 
 ```text
 dist/web/<app>/<brand>/icons/
-├── icons/
-│   ├── chassis-icons-min.css
-│   ├── chassis-icons.css
-│   ├── chassis-icons.svg
-│   ├── chassis-icons.woff2
-│   └── ...
-└── svgs/
-    ├── arrow-right-outline.svg
-    ├── arrow-right-solid.svg
-    └── ...
+├── arrow-right-outline.svg
+├── arrow-right-solid.svg
+└── ...
 ```
 
 The [icons]([[docsref:/asset-types/icons#platform-output]]) page has what each platform gets.
 
-### Chassis Icons
-
-An app whose `icons/` holds no copy of Chassis Icons has none of its icons in the output. A web application can also install them from npm, as the package [`@chassis-ui/icons`](https://www.npmjs.com/package/@chassis-ui/icons), which holds the same two folders: the icon font with its stylesheets and its sprite under `icons/`, and one SVG file per icon under `svgs/`. Chassis Icons owns the icons and their font; the [Chassis Icons docs](https://chassis-ui.com/icons/) list them and show how to use the package.
-
-### Sprites
-
-A sprite holds icons as `<symbol>` elements that a page shows with `<use>`. The sprite of Chassis Icons, `icons/icons/chassis-icons.svg`, has the name of each icon as the `id` of its symbol:
+An icon file is an image. Show it with an `<img>` element, or put its markup into the page, where an icon drawn in `currentcolor` takes the color of the text:
 
 ```html
-<svg width="24" height="24" fill="currentColor">
-  <use href="/assets/icons/icons/chassis-icons.svg#arrow-right-solid"></use>
-</svg>
+<img src="/assets/icons/arrow-right-solid.svg" alt="" width="24" height="24" />
 ```
-
-A sprite of your own under `icons/` works the same way, with the `id` values it was drawn with. A page can also put the markup of a sprite into the page and refer to a symbol by its `id` alone, `<use href="#arrow-right-solid"></use>`.
 
 ## Other assets
 

@@ -60,7 +60,7 @@ A clone made without Git LFS holds pointer files in place of the fonts and the r
 
 ## Output layout
 
-Each job has one folder, `dist/ios/<app>/<brand>/`, with a folder per type and the subfolders of `source/` kept. For a source with two font roles, a few images, a copy of Chassis Icons and a `data/` folder, the build writes:
+Each job has one folder, `dist/ios/<app>/<brand>/`, with a folder per type and the subfolders of `source/` kept. For a source with two font roles, a few images, a few icons and a `data/` folder, the build writes:
 
 ```text
 dist/ios/<app>/<brand>/
@@ -74,12 +74,9 @@ dist/ios/<app>/<brand>/
 │   ├── ui_normal_italic.ttf
 │   └── ui_strong.ttf
 ├── icons/
-│   ├── icons/
-│   │   └── chassis_icons.svg
-│   └── svgs/
-│       ├── arrow_right_outline.svg
-│       ├── arrow_right_solid.svg
-│       └── ...
+│   ├── arrow_right_outline.svg
+│   ├── arrow_right_solid.svg
+│   └── ...
 └── images/
     ├── hero_banner.png
     ├── hero_banner@2x.png
@@ -95,7 +92,7 @@ The type of a file decides whether iOS gets it:
 | --- | --- | --- |
 | `fonts/` | `.ttf`, `.otf`, and the `.txt` licenses | WOFF, WOFF2 and the font stylesheets |
 | `images/` | Every format but WebP | `.webp` |
-| `icons/` | `.svg`, `.pdf`, `.png` | The icon font and its stylesheets |
+| `icons/` | `.svg`, `.pdf`, `.png` | Every other format |
 | Any other folder | Every file | None |
 </CxTable>
 
@@ -286,22 +283,18 @@ A designer who exports an image for light and for dark names the two files, as `
 
 ## Icons
 
-The build gives iOS the SVG, PDF and PNG files of `icons/`. For an app that holds a copy of Chassis Icons, these are its SVG files under `icons/svgs/`, one per icon and style, such as `icons/svgs/arrow_right_solid.svg`. The [icons page]([[docsref:/asset-types/icons#platform-output]]) says where they come from.
-
-<Callout type="warning">
-`icons/icons/chassis_icons.svg` is a sprite of `<symbol>` elements, kept because it is an SVG file. An asset catalog takes it as one small image with every icon drawn over the others; use the files of `icons/svgs/`.
-</Callout>
+The build gives iOS the SVG, PDF and PNG files of `icons/`, one file per icon, such as `icons/arrow_right_solid.svg`. The [icons page]([[docsref:/asset-types/icons#platform-output]]) says where they come from.
 
 ### Add the icons
 
-The build does not turn an SVG into a PDF, and Xcode 12 or later needs none: an asset catalog takes an SVG as it is. With the `--icon-catalog` option the build writes the catalog, `Icons.xcassets`, with a folder per subfolder of `icons/`, so an icon of `icons/svgs/` is named `svgs/arrow_right_solid`. Without it, drag the icons the app uses from `icons/svgs/` into a folder of the catalog, which makes one image set per file, then select them and set these attributes:
+The build does not turn an SVG into a PDF, and Xcode 12 or later needs none: an asset catalog takes an SVG as it is. With the `--icon-catalog` option the build writes the catalog, `Icons.xcassets`, with an image set per icon and a folder per subfolder of `icons/`, so `icons/arrow_right_solid.svg` is named `arrow_right_solid`. Without it, drag the icons the app uses from `icons/` into a folder of the catalog, which makes one image set per file, then select them and set these attributes:
 
 <CxTable>
 | Attribute | Value | Why |
 | --- | --- | --- |
 | **Scales** | **Single Scale** | An SVG has no variants |
 | **Preserve Vector Data** | Checked | The icon stays sharp at any size |
-| **Render As** | **Template Image** | The icons have no color of their own (`fill="currentcolor"`), so the tint of the view colors them |
+| **Render As** | **Template Image** | An icon drawn in `currentcolor` has no color of its own, so the tint of the view colors it |
 </CxTable>
 
 A PDF icon takes the same attributes. A PNG icon of a brand goes into the slots of its indicators, as an image does.
@@ -491,7 +484,7 @@ These practices keep the Xcode project in step with `dist/ios/`, so a new export
 
 - **Refer to fonts by role:** list `ui_normal.ttf` in `UIAppFonts` and read the PostScript name from the file, so a brand that changes the family of a role changes no code.
 - **Fill every slot the output has:** put `@2x` and `@3x` files in their slots of an image set. The build does not resize, so a missing variant is fixed by an export into `source/`, not in Xcode.
-- **Take icons from `icons/svgs/`:** add them as single-scale SVG image sets with **Preserve Vector Data** and **Template Image**.
+- **Take each icon from its own file:** add the icons of `icons/` as single-scale SVG image sets with **Preserve Vector Data** and **Template Image**.
 - **Keep the license with the font:** copy `<role>_license.txt` of `fonts/` along with the font files.
 - **Build one job in CI:** `npx chassis-assets build --platform ios --app <app> --brand <brand>` writes only `dist/ios/<app>/<brand>/`.
 
@@ -539,7 +532,7 @@ Continue with one of these pages:
 
 - [Fonts]([[docsref:/asset-types/fonts]]): the roles, the formats and the licenses of the font files.
 - [Images]([[docsref:/asset-types/images]]): the variants and the naming of the images.
-- [Icons]([[docsref:/asset-types/icons]]): the files of Chassis Icons in `icons/`.
+- [Icons]([[docsref:/asset-types/icons]]): where the icons go in `source/` and how they are named.
 - [Other assets]([[docsref:/asset-types/other]]): any other folder of an app.
 - [Build system]([[docsref:/getting-started/build-system]]): the commands, the options and the configuration.
 - [Android applications]([[docsref:/use-in-project/android-applications]]) and [web applications]([[docsref:/use-in-project/web-applications]]): the same assets on the other platforms.

@@ -95,17 +95,17 @@ See [images]([[docsref:/asset-types/images]]) for the variants and the density f
 
 ### Icons
 
-Icons go to `icons/` as the build output of Chassis Icons, in the apps that need them. You do not export them into the repository one by one. A file of another name under `icons/`, such as a sprite drawn for the app, is copied with the same rules.
+Export each icon as an SVG file into `icons/` of the apps that show it, named after what it shows: `arrow-right-solid.svg`.
 
 <CxTable>
 | Platform | Gets | Does not get |
 | --- | --- | --- |
 | Web | Every file | |
-| iOS | SVG, PDF, PNG | The icon font and its stylesheets |
+| iOS | SVG, PDF, PNG | Every other format |
 | Android | SVG, with the `ic_` prefix | Every other format |
 </CxTable>
 
-See [icons]([[docsref:/asset-types/icons]]) for how the copy is refreshed.
+See [icons]([[docsref:/asset-types/icons]]) for the formats and the names of each platform.
 
 ### Other files
 
@@ -143,7 +143,6 @@ These practices keep `source/` to the files the build is meant to copy, and a co
 Avoid the habits that undo this:
 
 - **Do not copy a default file into a brand folder unchanged:** the brand gets the default file anyway, and the copy has to be kept in step by hand.
-- **Do not edit the icon folders by hand:** `icons/icons/` and `icons/svgs/` are replaced by the next copy from Chassis Icons.
 
 ## Next steps
 

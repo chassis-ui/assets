@@ -472,3 +472,18 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   no change to a font a latin page loads. `pnpm vendor` no longer needs Git LFS, and a build of the
   site a download of 36 MB in place of a pull of about 77 MB. `app/docs` has no reader here; deleting
   it stays the maintainer's. chassis-ui/website#33. The maintainer, 2026-11-02.
+- **D51. What do the pages say about an icon library?** Nothing: they name no icon library, its
+  package or a repository built with it, and describe `icons/` as the icons of a team, one file
+  per icon, in the formats and with the names of each platform. No page presents an icon
+  font, its stylesheets or a sprite as files of `icons/`: a font is the output of an icon
+  library, which a site takes from that library, and a sprite in an app of iOS or Android is
+  copied there as one image. The build still copies them as before, every file on the web, so a
+  sprite of the icons a set does not hold, in an app of the web, keeps working. An icon set built with Chassis Icons reaches the
+  apps from its own releases, with names of its own (`<prefix>_<name>` drawables, an asset
+  catalog and a Swift enum); a team that copies its SVG files into `icons/` gets them as any
+  icon, with `ic_` on Android, and the build does nothing of its own for a set. Passing the
+  catalog and the `res/` folder of a set through as bundles was tried and left out: it would do
+  again in the build what Chassis Icons does. `ic_` stays the prefix of the build: Android asks
+  for a resource name, not a prefix. The pages used the copy of `@chassis-ui/icons` 0.3 as their
+  example, with `icons/icons/` and `icons/svgs/`, and the unused callout `icons-docs` is gone.
+  The maintainer, 2026-11-04.

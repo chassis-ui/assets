@@ -153,9 +153,9 @@ npm install svg2vectordrawable
 npx chassis-assets build --vector-drawables
 ```
 
-The file keeps its folder and its name and gets the `.xml` extension: `icons/svgs/ic_arrow_right_solid.svg` becomes `icons/svgs/ic_arrow_right_solid.xml`. A path without a fill color is filled black, which a tint replaces in the app.
+The file keeps its folder and its name and gets the `.xml` extension: `icons/ic_arrow_right_solid.svg` becomes `icons/ic_arrow_right_solid.xml`. A path without a fill color is filled black, which a tint replaces in the app.
 
-The conversion is the one step of the build that uses a package, `svg2vectordrawable`, and the build loads it only with this option. Without the package the build stops before it removes anything and names the package as the fix. An SVG without a shape, such as the SVG file of an icon font, stays an SVG and the build warns about it. A file that is not an SVG fails the build.
+The conversion is the one step of the build that uses a package, `svg2vectordrawable`, and the build loads it only with this option. Without the package the build stops before it removes anything and names the package as the fix. An SVG without a shape stays an SVG and the build warns about it. A file that is not an SVG fails the build.
 
 ### Asset catalog
 
@@ -169,7 +169,7 @@ The files of one base name are one image set, with the `Contents.json` that Xcod
 
 A file without a place in an image set stays in `images/`, and the build warns once per job with the number of such files. These are an SVG or a PDF beside a raster of its name, a variant with another indicator than `@1x`, `@2x` or `@3x`, a second file for one slot, and any format but PNG, JPEG, SVG and PDF. The files of `<name>_light` and `<name>_dark` are one image set, `<name>`, with the dark files in the row of the dark appearance. They stay two sets when one is a vector and the other a raster, or when a set of `<name>` exists.
 
-The `--icon-catalog` option does the same for the icons of an iOS job, from `icons/` into `Icons.xcassets`. An icon SVG that paints only in `currentcolor` renders as a template, in the tint of its view; one with another color or a gradient keeps its colors. A sprite of `<symbol>` elements is no image, and stays in `icons/`.
+The `--icon-catalog` option does the same for the icons of an iOS job, from `icons/` into `Icons.xcassets`. An icon SVG that paints only in `currentcolor` renders as a template, in the tint of its view; one with another color or a gradient keeps its colors. An SVG that holds `<symbol>` elements is no image, and stays in `icons/`.
 
 ```bash
 npx chassis-assets build --asset-catalog --icon-catalog
@@ -278,7 +278,7 @@ Three kinds of rules and fonts stay as they are. A rule with a `unicode-range` o
 
 The split costs a page that has characters of two ranges: the two files share glyphs and are larger together than the one file. A browser also shapes the text of each file on its own, so a pair of letters from two files has no kerning. So the split is a choice of each build: `--split` and `--no-split` win over `split` of the [chassis.subset](#chassissubset) block, which is the choice of the repository. `--split` without `--subset` fails the build.
 
-Only the fonts of `fonts/` of a web job are written again. The TTF and OTF fonts of iOS and Android stay whole, and so does the icon font of `icons/`. A file with the extension of a font that is no font fails the build, which names the file.
+Only the fonts of `fonts/` of a web job are written again. The TTF and OTF fonts of iOS and Android stay whole, and so does a font file outside `fonts/`. A file with the extension of a font that is no font fails the build, which names the file.
 
 The option uses the package `subset-font`, which the build loads only with it. Without the package the build stops before it removes anything and names the package as the fix. Check the license of a font before you publish a subset of it: a license may ask for another name for a changed font.
 
@@ -596,15 +596,15 @@ The set says that every image of the gallery is there in the light and in the da
 | `reason` | String | Why the name is kept, printed with the warning |
 </CxTable>
 
-In `chassis.checks.json`, the entry of a file that another project names:
+In `chassis.checks.json`, the entry of a file whose name a tool chose:
 
 ```json
 {
   "lint": {
     "allow": [
       {
-        "pattern": "*/*/icons/icons/chassis-icons.min.css",
-        "reason": "part of the build output of @chassis-ui/icons, copied as it is"
+        "pattern": "*/*/data/brand.tokens.json",
+        "reason": "the name the tokens export writes, read by name"
       }
     ]
   }

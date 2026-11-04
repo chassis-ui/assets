@@ -156,7 +156,7 @@ Backtick every code reference. A file has one name in `source/` and one per plat
 | A web output file      | kebab-case, indicator kept            | `` `images/hero-banner@2x.png` ``                   |
 | An iOS output file     | snake_case, indicator kept            | `` `images/hero_banner@2x.png` ``                   |
 | An Android output file | snake_case, in its density folder     | `` `images/drawable-xhdpi/hero_banner.png` ``       |
-| An Android icon        | snake_case with the `ic_` prefix      | `` `icons/svgs/ic_arrow_right_solid.svg` ``         |
+| An Android icon        | snake_case with the `ic_` prefix      | `` `icons/ic_arrow_right_solid.svg` ``              |
 | A folder               | With a trailing slash                 | `` `fonts/` ``, `` `dist/web/site/acme/` ``         |
 | A group of files       | A pattern with `*`                    | `` `images/home/comp-gallery-*` ``                  |
 | A format               | Uppercase in prose, extension in code | WOFF2, `` `.woff2` ``                               |
@@ -175,7 +175,7 @@ Don't use the name of one platform where another is meant — `hero-banner.png` 
 
 Chassis Assets is a multi-brand, multi-platform repository that its adopters own and customize. The layout of `source/` and `dist/`, the naming rules, the formats each platform gets and the commands are its structure. The files are not: a logo, a font family or a screenshot belongs to one brand, changes with the next release, and is different in the fork of an adopter. Document the structure, never the contents of `source/` ([D34](docs/decisions.md)).
 
-**Examples are placeholders.** A page does not list what `source/` holds: no tree of the files of a brand, no sentence on which brand has which file, no file of this repository as the example of a rule. An example uses a placeholder file, such as `images/hero-banner.png` or `data/country-list.json`, in a path with `<app>` and `<brand>`. A page explains how the reader finds a file instead: the layout, the fallback to the default brand, and the output name of each platform. The names of the font roles, of `fonts.css` and of the files of Chassis Icons are conventions, not contents, and may be named. An example names a job of the configuration of the quick start ([§8](#8-counts-versions-and-configuration)).
+**Examples are placeholders.** A page does not list what `source/` holds: no tree of the files of a brand, no sentence on which brand has which file, no file of this repository as the example of a rule. An example uses a placeholder file, such as `images/hero-banner.png` or `data/country-list.json`, in a path with `<app>` and `<brand>`. A page explains how the reader finds a file instead: the layout, the fallback to the default brand, and the output name of each platform. The names of the font roles and of `fonts.css` are conventions, not contents, and may be named. An example names a job of the configuration of the quick start ([§8](#8-counts-versions-and-configuration)).
 
 **Names must exist.** Every path, command and option in a doc must exist as written, and the output name of a placeholder file is the one a build writes for it. Don't write a name from memory, and don't invent a flag — a reader will run it. Before adding a name, find it:
 
@@ -250,7 +250,7 @@ Each doc type has a section order. Skip sections that don't apply; don't reorder
 ## Formats                   (the formats of the type, and which platform keeps which)
 ## Naming                    (the rules of the type, and what each platform renames)
 ## Adding files              (exporting from the design tool, variants, licenses)
-## Integration               (Chassis Icons, Chassis Tokens: where the type meets another project)
+## Integration               (Chassis Tokens: where the type meets another project)
 ## Best practices
 ## Platform output           (always last)
 ```
@@ -361,7 +361,7 @@ The build copies an image as the designer exported it. These practices cover wha
 
 Avoid the habits that undo this:
 
-- **Do not put icons of the interface under `images/`:** the files of `icons/` come from Chassis Icons.
+- **Do not put icons of the interface under `images/`:** they belong under `icons/`, where Android gives them the `ic_` prefix.
 ```
 
 ### 16. Troubleshooting entries
@@ -399,7 +399,7 @@ Quote the message as the tool prints it, so a search for the error finds the pag
 
 **Configuration values.** `[[config:<key>]]` prints a value of `packages/site/config.yml`, in prose, links, and code blocks: `[[config:currentVersion]]`, `[[config:repo]]`.
 
-**Other Chassis docs.** Use a standard Markdown link to the page on chassis-ui.com. Chassis Icons owns the icons and their font; Chassis Tokens owns the names of the font roles. Link their docs rather than describing them here.
+**Other Chassis docs.** Use a standard Markdown link to the page on chassis-ui.com. Chassis Tokens owns the names of the font roles; link its docs rather than describing them here. The pages name no icon library, its package or a repository built with it: `icons/` holds the icons of a team, one file per icon, and the build treats a copied icon like any other. The pages do not present an icon font, its stylesheets or a sprite as files of `icons/`: a font and its stylesheets are the output of an icon library, which a site takes from that library, and a sprite, which the build copies like any SVG, reaches the apps of a mobile platform too.
 
 **External references.** Standard Markdown links. Prefer the official docs of Apple, Android, MDN, Git LFS and Figma over blog posts.
 
