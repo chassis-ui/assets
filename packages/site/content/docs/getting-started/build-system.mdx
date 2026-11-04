@@ -295,7 +295,7 @@ A TTF or OTF file of `fonts/` moves to `res/font/`. A PNG, WebP, JPEG or GIF fil
 
 A pair `<name>_light` and `<name>_dark` of one folder is the resource `<name>`, with the dark files in the folders of the `night` qualifier: `res/drawable-xhdpi/<name>.png` and `res/drawable-night-xhdpi/<name>.png`. A vector and a raster stay apart, and a drawable with the name of a pair fails the build. With `--vector-drawables`, a bundle `<name>.adaptive` becomes the app icon `res/mipmap-anydpi-v26/<name>.xml`, see [App icons]([[docsref:/asset-types/app-icons]]); without it the bundle stays, with a warning that names the option.
 
-The `res/` folder does not nest, so the subfolders of `images/` and `icons/` are dropped. When two folders hold an image of one name, the folder nearest to `images/` gets the resource with every density it has, and the files of the other folder stay.
+The `res/` folder does not nest, so the subfolders of `images/` and `icons/` are dropped. When two folders hold an image of one name, the folder nearest to `images/` gets the resource with every density it has, and the files of the other folder stay. The [source lint](#source-lint) warns about those files.
 
 A file without a place in `res/` stays where it is, and the build warns once per job with the number of such files. These are the font licenses, every SVG file, a second file of a name in another format, such as `text.otf` beside `text.ttf` or a WebP beside a PNG, and a name that cannot be a resource: one that starts with a digit, or a word of Java such as `default`.
 
@@ -536,6 +536,8 @@ The lint also reads the fonts. For each `@font-face` rule of a stylesheet in `fo
 A rule declares the file of the web, and the apps get the file of the same name in another format, which no rule declares. The lint checks a rule against those files too: a rule for `ui.woff2` is also the rule of `ui.ttf` in the same folder, and of an `.otf` or a `.woff` file of that name. It also fails when two files of one name are not one font in two formats, and names both files with what differs: the family, the weight, the style, the axes, the version or the number of glyphs.
 
 It warns about a font of the default brand that a brand gets beside a family of its own, where no stylesheet of the brand declares the family of that font. The file is in the output of the brand, and nothing loads it. It also warns about a `format()` of a rule that is not the format of its file.
+
+For an app with Android, the lint reads the images and the icons of each brand as `--res` with `--vector-drawables` would place them. The `res/` folder has no subfolders, so `images/badge.png` and `images/onboarding/badge@2x.png` are both the resource `badge`, and `--res` keeps the file of the folder nearest to `images/`. The lint warns about the other file, with the jobs it is left out of, so that one of the two is renamed before an app misses it.
 
 ### Analyzer
 

@@ -18,6 +18,10 @@
  * family of its own, and that no stylesheet of the brand declares, is a warning, and so is a
  * `format()` that is not the format of its file.
  *
+ * It also checks the images and the icons of each Android job against `res/`, which has no
+ * subfolders: a file whose resource name a file of a folder nearer to the type folder has is
+ * a warning, since `--res` leaves it out.
+ *
  * `lintSource(options)` reads the files and returns the problems; the command-line entry at
  * the bottom prints them and exits 1 on an error.
  *
@@ -33,12 +37,14 @@ import { bundleIndex } from '../build/processors/shared.js'
 import {
   SHARED_FOLDER,
   isLfsPointer,
+  keepsFile,
   loadConfig,
   shouldIgnoreFile,
   sourceLayers
 } from '../build/build-assets.js'
 import { findFontFaces } from '../build/font-faces.js'
 import { READABLE_FORMATS, readFont } from '../build/font-info.js'
+import { planResources } from '../build/res-layout.js'
 import { isEntry, resolveRoot } from '../root.js'
 
 /** @import { FontInfo } from '../build/font-info.js' */
@@ -575,6 +581,103 @@ function lintFonts(sourceDir, files, config) {
 }
 
 /**
+ * The path a file of `images/` or `icons/` of an app has in the output of an Android job, as
+ * the build writes it with `--vector-drawables`: in snake_case, an image in the density folder
+ * of its indicator, an icon with `ic_` and as a vector drawable. Pure.
+ * @param {string} file - Relative to the folder of the app, with forward slashes
+ * @returns {string} Relative to the output of the job, with the separators of the system
+ * @example
+ * androidOutputPath('images/logo/mark@2x.png') // Returns: 'images/logo/drawable-xhdpi/mark.png'
+ * androidOutputPath('icons/arrow-right.svg') // Returns: 'icons/ic_arrow_right.xml'
+ */
+export function androidOutputPath(file) {
+  const parts = file.split('/')
+  const name = /** @type {string} */ (parts.pop())
+  if (parts[0] === 'images') {
+    const density = androidProcessor.imageFolder(name)
+    const renamed = androidProcessor.renameFile(name, {
+      currentDir: density,
+      parentDir: parts[parts.length - 1]
+    })
+    return path.join(...parts, density, renamed)
+  }
+  const renamed = androidProcessor.renameFile(name, {
+    currentDir: parts[parts.length - 1],
+    parentDir: parts[parts.length - 2] ?? ''
+  })
+  const { from, to } = androidProcessor.vectorDrawables ?? {}
+  const converted =
+    from && to && path.extname(renamed) === from ? renamed.slice(0, -from.length) + to : renamed
+  return path.join(...parts, converted)
+}
+
+/**
+ * Check the images and the icons of each Android job against `res/`, which has no
+ * subfolders: two files of one name in two folders of `images/`, or of `icons/`, ask for one
+ * resource, and `--res`, like an app that copies the files into `res/`, keeps the one of the
+ * folder nearest to the type folder. The other is a warning, once for the jobs it is left out
+ * of. The jobs see the files as the build does: those of `sourceLayers()`, a brand file over the
+ * default file of its path, and the formats Android keeps.
+ * @param {string[]} files - Every file of `source/`, of `listSource()`
+ * @param {{ brandFolder: string, brands: string[], apps: Record<string, string[]>,
+ *   formats: Record<string, Record<string, string[]>> }} config
+ * @returns {LintProblem[]} The warnings
+ */
+function lintResources(files, config) {
+  const res = androidProcessor.res
+  if (!res) return []
+  const types = res.drawable.types
+
+  /** @type {Map<string, string[]>} */
+  const byLayer = new Map()
+  for (const file of files) {
+    const parts = file.split('/')
+    if (parts.length < 4 || !types.includes(parts[2])) continue
+    const layer = parts.slice(0, 2).join('/')
+    byLayer.set(layer, [...(byLayer.get(layer) ?? []), file])
+  }
+
+  /** @type {Map<string, { file: string, resource: string, folder: string, jobs: string[] }>} */
+  const found = new Map()
+  for (const [app, platforms] of Object.entries(config.apps)) {
+    if (!platforms.includes(androidProcessor.name)) continue
+    for (const brand of config.brands) {
+      // The files of the job by their path in the app: a later layer replaces an earlier one
+      /** @type {Map<string, string>} */
+      const view = new Map()
+      for (const layer of sourceLayers(config.brandFolder, brand, app)) {
+        for (const file of byLayer.get(layer) ?? []) {
+          view.set(file.slice(layer.length + 1), file)
+        }
+      }
+      /** @type {Map<string, string>} */
+      const sources = new Map()
+      for (const [inApp, file] of view) {
+        const [type] = inApp.split('/')
+        const name = path.basename(inApp)
+        if (!keepsFile(androidProcessor, type, name, config.formats)) continue
+        sources.set(androidOutputPath(inApp), file)
+      }
+      const { shadowed } = planResources([...sources.keys()], res)
+      for (const { file, by } of shadowed) {
+        const source = /** @type {string} */ (sources.get(file))
+        const resource = path.basename(by, path.extname(by))
+        const folder = path.posix.dirname(/** @type {string} */ (sources.get(by)))
+        const key = `${source} ${folder}`
+        const entry = found.get(key) ?? { file: source, resource, folder, jobs: [] }
+        entry.jobs.push(`${app}/${brand}`)
+        found.set(key, entry)
+      }
+    }
+  }
+
+  return [...found.values()].map(({ file, resource, folder, jobs }) => ({
+    file,
+    message: `is the Android resource ${resource}, which a file of source/${folder}/ is too. res/ has no subfolders, so --res keeps that one and leaves this file out (${jobs.join(', ')}): rename one of them`
+  }))
+}
+
+/**
  * Check `source/`.
  * @param {{ cwd?: string, allowLfsPointers?: boolean }} [options]
  * @returns {{ errors: LintProblem[], warnings: LintProblem[], files: number }}
@@ -647,6 +750,8 @@ export function lintSource(options = {}) {
   const fonts = lintFonts(sourceDir, files, config)
   errors.push(...fonts.errors)
   warnings.push(...fonts.warnings)
+
+  warnings.push(...lintResources(files, config))
 
   return { errors, warnings, files: files.length }
 }

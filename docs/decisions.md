@@ -487,3 +487,12 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   for a resource name, not a prefix. The pages used the copy of `@chassis-ui/icons` 0.3 as their
   example, with `icons/icons/` and `icons/svgs/`, and the unused callout `icons-docs` is gone.
   The maintainer, 2026-11-04.
+- **D52. Does the source lint report the images that `res/` cannot take from two folders?**
+  Yes, as a warning. `res/` has no subfolders, so `images/badge.png` and
+  `images/onboarding/badge.png` are one resource, and the build keeps the file of the folder
+  nearest to the type folder (D11) with a warning that only counts the files left. An app that
+  reads the other one misses it without an error. The lint names each such file, for every
+  Android job, as `--res --vector-drawables` would place it: the build's own `planResources()`
+  and its layers and formats, so the lint and the build agree. A warning and not an error, since
+  a repository without `--res` loses nothing, and the build is unchanged: no prefix from the
+  folder name, which would rename every image of a subfolder. The maintainer, 2026-11-04.

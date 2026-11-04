@@ -196,6 +196,17 @@ describe('planResources()', () => {
     })
   })
 
+  test('one name in two folders: the files left out name the file of the resource', () => {
+    const files = [
+      'images/logo/drawable-xhdpi/mark.png',
+      'images/drawable/mark.png',
+      'images/drawable/photo.png',
+      'images/drawable/photo.webp'
+    ].map((file) => path.join(file))
+    // A second format in one folder is left too, but it is no other folder
+    expect(planResources(files, res).shadowed).toEqual([{ file: files[0], by: files[1] }])
+  })
+
   test('an image of one size goes to drawable-nodpi: Android would scale up drawable/', () => {
     expect(plan(['images/logo/drawable/mark.png', 'images/drawable/photo.webp']).moves).toEqual([
       ['images/drawable/photo.webp', 'res/drawable-nodpi/photo.webp'],

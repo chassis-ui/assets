@@ -20,6 +20,7 @@ import {
   declaredWeights,
   iconLayerFiles,
   isOfFamily,
+  androidOutputPath,
   isOfFormat,
   lintSource,
   matchesPattern
@@ -283,6 +284,61 @@ describe('lintSource()', () => {
       'alpha/docs/',
       'gamma/'
     ])
+  })
+
+  describe('the resources of Android', () => {
+    const app = (root) => path.join(root, 'source/_default/mobile')
+    const copy = (root, from, to) => {
+      fs.mkdirSync(path.dirname(path.join(app(root), to)), { recursive: true })
+      fs.copyFileSync(path.join(app(root), from), path.join(app(root), to))
+    }
+
+    test('a name that two folders of a type ask for is a warning, once for the jobs', () => {
+      const root = copyFixture()
+      copy(root, 'images/badge@2x.png', 'images/onboarding/badge@2x.png')
+      copy(root, 'icons/arrow-right.svg', 'icons/extra/arrow-right.svg')
+      const { errors, warnings } = lintSource({ cwd: root })
+      expect(errors).toEqual(lintSource({ cwd: FIXTURE }).errors)
+      expect(warnings.filter((w) => w.message.includes('res/ has no subfolders'))).toEqual([
+        {
+          file: '_default/mobile/icons/extra/arrow-right.svg',
+          message:
+            'is the Android resource ic_arrow_right, which a file of source/_default/mobile/icons/ is too. res/ has no subfolders, so --res keeps that one and leaves this file out (mobile/alpha, mobile/beta): rename one of them'
+        },
+        {
+          file: '_default/mobile/images/onboarding/badge@2x.png',
+          message:
+            'is the Android resource badge, which a file of source/_default/mobile/images/ is too. res/ has no subfolders, so --res keeps that one and leaves this file out (mobile/alpha, mobile/beta): rename one of them'
+        }
+      ])
+    })
+
+    test('a brand file of the path of a default file replaces it, and an app without Android has none', () => {
+      const root = copyFixture()
+      // `site` is built for the web only, and `alpha` replaces `images/badge.png` of the default
+      // brand at its own path, which is no second folder
+      copy(root, 'images/badge.png', '../site/images/onboarding/badge.png')
+      fs.mkdirSync(path.join(root, 'source/alpha/mobile/images'), { recursive: true })
+      fs.copyFileSync(
+        path.join(app(root), 'images/badge.png'),
+        path.join(root, 'source/alpha/mobile/images/badge.png')
+      )
+      const { warnings } = lintSource({ cwd: root })
+      expect(warnings.filter((w) => w.message.includes('res/ has no subfolders'))).toEqual([])
+    })
+
+    test('androidOutputPath() is the path of the build with --vector-drawables', () => {
+      expect(androidOutputPath('images/logo/mark@2x.png')).toBe(
+        path.join('images/logo/drawable-xhdpi/mark.png')
+      )
+      expect(androidOutputPath('images/HeroBanner.png')).toBe(
+        path.join('images/drawable/hero_banner.png')
+      )
+      expect(androidOutputPath('icons/arrow-right.svg')).toBe(path.join('icons/ic_arrow_right.xml'))
+      expect(androidOutputPath('icons/svgs/check-mark.svg')).toBe(
+        path.join('icons/svgs/ic_check_mark.xml')
+      )
+    })
   })
 
   test('the ignored files are left out', () => {

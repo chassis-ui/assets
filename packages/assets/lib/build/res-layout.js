@@ -101,9 +101,11 @@ function joinPairs(placed, ownerOf, candidates, res) {
  * name in its folder, the first format of the processor's list first.
  * @param {string[]} files - The files of the type folders, relative to the output of the job
  * @param {ResLayout} res - The layout, of the processor
- * @returns {{ moves: Array<{ from: string, to: string }>, left: string[], collisions: ResCollision[] }}
+ * @returns {{ moves: Array<{ from: string, to: string }>, left: string[], collisions: ResCollision[],
+ *   shadowed: Array<{ file: string, by: string }> }}
  *   The files that move, with their paths in `res/`, the files that stay, both relative to
- *   the job, and the pairs whose name another drawable has, which stay apart
+ *   the job, the pairs whose name another drawable has, which stay apart, and the files left
+ *   because a file of a folder nearer to the type folder has their resource, with that file
  * @example
  * planResources(['images/logo/drawable-xhdpi/mark.png', 'images/drawable/mark.svg'], res)
  * // Returns: { moves: [{ from: 'images/logo/drawable-xhdpi/mark.png',
@@ -152,16 +154,28 @@ export function planResources(files, res) {
   /** @type {Map<string, string>} */
   const owners = new Map()
   /** @type {Map<string, string>} */
+  const holders = new Map()
+  /** @type {Map<string, string>} */
   const taken = new Map()
+  /** @type {Array<{ file: string, by: string }>} */
+  const shadowed = []
   const placed = []
   for (const candidate of candidates) {
     const { file, base, kind, folder, owner } = candidate
     const resource = `${kind}/${base}`
     const from = owner.join('/')
-    if (!owners.has(resource)) owners.set(resource, from)
+    if (!owners.has(resource)) {
+      owners.set(resource, from)
+      holders.set(resource, file)
+    }
     // A font is one file, an image one file per density folder
     const slot = kind === res.font.folder ? resource : `${folder}/${base}`
-    if (owners.get(resource) !== from || taken.has(slot)) {
+    if (owners.get(resource) !== from) {
+      shadowed.push({ file, by: /** @type {string} */ (holders.get(resource)) })
+      left.push(file)
+      continue
+    }
+    if (taken.has(slot)) {
       left.push(file)
       continue
     }
@@ -198,7 +212,7 @@ export function planResources(files, res) {
     return { from: item.file, to: path.join(res.name, folder, name) }
   })
 
-  return { moves, left: left.sort(), collisions }
+  return { moves, left: left.sort(), collisions, shadowed }
 }
 
 /**

@@ -601,6 +601,14 @@ would reject is found before it reaches one (D45). The build still copies a bund
 - A bundle under `fonts/`, `images/` or `icons/` is an ordinary folder, whose name with a dot
   fails the naming rule.
 
+The lint also reads the images and the icons of each Android job as `res/` takes them
+(`lintResources()`, D52): `androidOutputPath()` gives the path of a source file in the output
+of the job with `--vector-drawables`, and `planResources()` of `res-layout.js` says which files
+lose their resource to a file of a folder nearer to the type folder, its `shadowed`. Each is a
+warning, once for the jobs it is left out of. The layers of `sourceLayers()` and the formats of
+`keepsFile()` are those of the build, so a brand file at the path of a default file is no second
+folder.
+
 ### Res folder
 
 `chassis-assets build --res` is off by default, and the default output is the same file for file
