@@ -126,9 +126,9 @@ And these:
   the pin here. Never edit `dist/` or `packages/assets/test/golden/` by hand either: change the
   source or the build, then run the build or `pnpm test:golden`, and review the difference.
 - **Do not edit the copies of other projects.** The sibling repositories are read, never
-  edited; work for one is reported in its repository, not done from here. The copy of
-  `@chassis-ui/icons` in the Chassis assets is refreshed by the steps of
-  [docs/architecture.md](docs/architecture.md#refreshing-the-icons), there.
+  edited; work for one is reported in its repository, not done from here. The copy of the
+  icons of the Chassis sites, `@chassis-ui/website-icons`, in the Chassis assets is refreshed
+  by the steps of [docs/architecture.md](docs/architecture.md#refreshing-the-icons), there.
 - **Keep the known oddities.** The list in the README of the Chassis assets is part of their output
   contract, and the build keeps the behaviour they rest on. Do not add an entry to
   `lint.allow` of a `chassis.checks.json` to get past the source lint.

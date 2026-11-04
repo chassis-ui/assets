@@ -764,17 +764,19 @@ Do not change either without a changeset that says what breaks.
 
 ## Refreshing the icons
 
-The `icons/` folder of `source/_default/demo/` of the Chassis assets holds the build output of
-`@chassis-ui/icons`. `source/_default/docs/icons/` holds `cx-sprite.svg` only, which is the
-sites' own: the `docs` app has no copy of the package since D33. To bring the copy level with
-the package, in a checkout of the Chassis assets with Git LFS, with the package installed beside
-it:
+The `icons/` folder of `source/_default/demo/` of the Chassis assets holds a copy of the icons
+of the Chassis sites, which `@chassis-ui/website-icons` publishes since 2026-11-04 and
+`@chassis-ui/icons` published until 0.3.1; `@chassis-ui/icons` is the builder of icon sets
+from 0.4.0 and holds no icons. `source/_default/docs/icons/` holds `cx-sprite.svg` only, which
+is the sites' own: the `docs` app has no copy of the package since D33. To bring the copy level
+with the package, in a checkout of the Chassis assets with Git LFS, with
+`@chassis-ui/website-icons` installed beside it:
 
 ```shell
 SOURCE=source/_default/demo/icons
 rm -rf "$SOURCE/icons" "$SOURCE/svgs"
-cp -r node_modules/@chassis-ui/icons/icons "$SOURCE/icons"
-cp -r node_modules/@chassis-ui/icons/svgs "$SOURCE/svgs"
+cp -r node_modules/@chassis-ui/website-icons/dist/web "$SOURCE/icons"
+cp -r node_modules/@chassis-ui/website-icons/dist/svgs "$SOURCE/svgs"
 pnpm build && pnpm verify
 ```
 
@@ -782,7 +784,9 @@ Commit the result there, and say in its release notes that the icon output of ev
 changes; the icon font files are Git LFS objects, so the commit must be made where `git lfs`
 is installed.
 The package ships no `preview.html`, so the copy has none. Compare `dist/` before and after:
-a name that was under `icons/svgs/` and is gone breaks a site that reads it.
+a name that was under `icons/svgs/` and is gone breaks a site that reads it. The first refresh
+from `@chassis-ui/website-icons` 0.1.0 removes two of the 503 icons of the copy,
+`road-outline-1` and `road-solid-1`.
 
 ## History
 

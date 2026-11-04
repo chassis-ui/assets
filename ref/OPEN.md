@@ -35,11 +35,13 @@ of the brands moved to `ref/OPEN.md` of the repository of the Chassis assets wit
 - **The layers of the app icon of D44.** The session drew the `.adaptive` bundles of the Chassis assets
   from the logomark and the fill of each `.icon` bundle, with a mark of 60 dp for `chassis` and
   46 dp for `sinefil` in the safe zone of 66 dp. They are the designer's to replace.
-- **The copy of `@chassis-ui/icons` in the Chassis assets.** The pages describe `icons/` for the
-  icons of a team and name no icon library (2026-11-04); an icon set reaches the apps from its
-  own releases, and a team that copies its SVG files into `icons/` gets them as any icon, with
-  `ic_` on Android. `source/_default/demo/icons/` of the Chassis assets still holds the old copy,
-  which the iOS and Android examples read as `Icons.xcassets` and `ic_*` drawables. When the
+- **The copy of the icons of the Chassis sites in the Chassis assets.** The pages describe
+  `icons/` for the icons of a team and name no icon library (2026-11-04); an icon set reaches
+  the apps from its own releases, and a team that copies its SVG files into `icons/` gets them
+  as any icon, with `ic_` on Android. `source/_default/demo/icons/` of the Chassis assets still
+  holds the old copy, of `@chassis-ui/icons` 0.3.1, which the iOS and Android examples read as
+  `Icons.xcassets` and `ic_*` drawables. The icons are `@chassis-ui/website-icons` since
+  2026-11-04, and this site takes its `dist/web/`. When the
   examples take the archives of chassis-ui/website-icons (`cx_*` drawables,
   `ChassisIcons.xcassets` and `CxIcon`) and that repository drops the copy, its known oddity and
   its `lint.allow` entry, remove "Refreshing the icons" of `docs/architecture.md` and its line

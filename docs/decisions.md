@@ -248,7 +248,12 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   `other/example-tokens.json` of the `chassis` brand, with the content of D7 and without the
   dot, and `sinefil` has none. The contract of the logos that the website reads is removed
   from `chassis.checks.json` until the website reads the new names, see
-  [ref/OPEN.md](../ref/OPEN.md). The maintainer, 2026-10-20.
+  [ref/OPEN.md](../ref/OPEN.md). The maintainer, 2026-10-20. Since 2026-11-04 the icons of
+  the Chassis sites are `@chassis-ui/website-icons`, with the same names and code points, and
+  `@chassis-ui/icons` 0.4.0 builds icon sets and holds none: a page takes the icon font from
+  `dist/web/` of `@chassis-ui/website-icons` through `getChassisIconsFsPath()` of
+  `@chassis-ui/docs` 0.14, as the site of this repository does, and the SVG files from its
+  `dist/svgs/`. The copy in the `demo` app is still that of `@chassis-ui/icons` 0.3.1.
 - **D34. Do the pages of the site list what `source/` holds?** No. They explain how the asset
   system works: the layout `source/<brand>/<app>/<type>/`, the fallback of a brand to the
   default brand, the output name of each platform, and how an app finds a file by that name.

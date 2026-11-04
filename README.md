@@ -253,15 +253,16 @@ Work goes to `develop`. CI runs there and on pull requests, with the jobs Lint, 
 
 ## Chassis ecosystem
 
-| Project                                                     | What it is                                                                  | Docs                                       |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
-| [chassis-ui/website](https://github.com/chassis-ui/website) | chassis-ui.com and `@chassis-ui/docs`, which every site is built on         | [chassis-ui.com](https://chassis-ui.com)   |
-| [chassis-ui/tokens](https://github.com/chassis-ui/tokens)   | The token builder, published as `@chassis-ui/tokens`                        | [/tokens/](https://chassis-ui.com/tokens/) |
-| [chassis-ui/css](https://github.com/chassis-ui/css)         | The CSS framework, published as `@chassis-ui/css`                           | [/css/](https://chassis-ui.com/css/)       |
-| [chassis-ui/icons](https://github.com/chassis-ui/icons)     | The icon library, published as `@chassis-ui/icons`                          | [/icons/](https://chassis-ui.com/icons/)   |
-| **chassis-ui/assets**                                       | This repository: the build of the assets, published as `@chassis-ui/assets` | [/assets/](https://chassis-ui.com/assets/) |
-| [chassis-ui/figma](https://github.com/chassis-ui/figma)     | Documentation of the Figma libraries                                        | [/figma/](https://chassis-ui.com/figma/)   |
-| [chassis-ui/react](https://github.com/chassis-ui/react)     | React components, published as `@chassis-ui/react`                          | Not yet routed on chassis-ui.com           |
+| Project                                                                 | What it is                                                                        | Docs                                       |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------ |
+| [chassis-ui/website](https://github.com/chassis-ui/website)             | chassis-ui.com and `@chassis-ui/docs`, which every site is built on               | [chassis-ui.com](https://chassis-ui.com)   |
+| [chassis-ui/tokens](https://github.com/chassis-ui/tokens)               | The token builder, published as `@chassis-ui/tokens`                              | [/tokens/](https://chassis-ui.com/tokens/) |
+| [chassis-ui/css](https://github.com/chassis-ui/css)                     | The CSS framework, published as `@chassis-ui/css`                                 | [/css/](https://chassis-ui.com/css/)       |
+| [chassis-ui/icons](https://github.com/chassis-ui/icons)                 | The builder of icon sets, published as `@chassis-ui/icons`                        | [/icons/](https://chassis-ui.com/icons/)   |
+| [chassis-ui/website-icons](https://github.com/chassis-ui/website-icons) | The icons of the Chassis sites and apps, published as `@chassis-ui/website-icons` | [/icons/](https://chassis-ui.com/icons/)   |
+| **chassis-ui/assets**                                                   | This repository: the build of the assets, published as `@chassis-ui/assets`       | [/assets/](https://chassis-ui.com/assets/) |
+| [chassis-ui/figma](https://github.com/chassis-ui/figma)                 | Documentation of the Figma libraries                                              | [/figma/](https://chassis-ui.com/figma/)   |
+| [chassis-ui/react](https://github.com/chassis-ui/react)                 | React components, published as `@chassis-ui/react`                                | Not yet routed on chassis-ui.com           |
 
 ## Contributing
 
