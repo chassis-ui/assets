@@ -518,5 +518,7 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   CI skipping a push that also releases, since a push that does not change the version has
   only CI, and the cache makes the second pull of a release push small. Tried on a shallow
   clone of the Chassis assets with the objects of a local checkout and one object removed: the
-  pull downloaded that one, and a wrong token in the header was refused. The session, at the
-  request of the maintainer, 2026-11-10.
+  pull downloaded that one, and a wrong token in the header was refused. In 0.12.1, and on
+  GitHub Actions in the Chassis assets: the first push to `main` pulled in CI and in the build of
+  `native.yml` and saved a cache of 60 MB, and the push of the same commit to `next` restored it
+  and pulled nothing. The session, at the request of the maintainer, 2026-11-10.
