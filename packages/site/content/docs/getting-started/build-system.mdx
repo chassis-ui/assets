@@ -705,7 +705,7 @@ npx chassis-assets diff --base /tmp/base/acme-assets-manifest-1.1.0.json
 
 ## Continuous integration
 
-A CI job builds the output it needs and checks it. The checkout has to fetch the Git LFS files, and the install brings the package and nothing else. `chassis-assets init` writes this workflow, for npm or for pnpm, with the actions pinned to a commit:
+A CI job builds the output it needs and checks it. Every download of a Git LFS file counts against the Git LFS bandwidth of the owner of the repository, so the checkout leaves pointers, a cache keyed by the ids of the objects keeps them between runs, and `git lfs pull` downloads only the objects that changed. The pull passes the token of the run for that command only, since the checkout keeps no credentials. The install brings the package and nothing else. `chassis-assets init` writes this workflow, for npm or for pnpm, with the actions pinned to a commit:
 
 ```yaml
 name: CI
@@ -727,8 +727,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          lfs: true
           persist-credentials: false
+
+      - name: List the Git LFS objects
+        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-ids
+
+      - name: Cache the Git LFS objects
+        uses: actions/cache@v6
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-ids') }}
+          restore-keys: lfs-
+
+      - name: Pull the Git LFS objects
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          rm .lfs-ids
+          AUTH=$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')
+          git -c "http.$GITHUB_SERVER_URL/.extraheader=AUTHORIZATION: basic $AUTH" lfs pull
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -756,7 +773,7 @@ jobs:
 
 A file that the source lint, the build and the validator pass can still fail when an app compiles it. `chassis-assets check-native` compiles an existing output as an app does: the asset catalogs and the `.icon` bundles of iOS with `actool`, which needs Xcode, and the `res/` folders of Android with `aapt2`, which needs the Android SDK in `ANDROID_HOME`. `--platform ios` or `--platform android` picks one, and without it the check takes the platforms with a folder in the output.
 
-For a repository with iOS or Android, `chassis-assets init` writes `.github/workflows/native.yml`, with one job per platform. It runs when `source/`, `chassis.checks.json`, `package.json` or the lockfile changes, builds with `build:release`, and compiles the result. The iOS job needs a macOS runner, whose minutes cost more on a private repository: remove the job when that is not worth it. For Android, `build:release` adds `--res --vector-drawables`, and `init` adds `svg2vectordrawable` as a development dependency.
+For a repository with iOS or Android, `chassis-assets init` writes `.github/workflows/native.yml`, with a build job and one job per platform. It runs when `source/`, `chassis.checks.json`, `package.json` or the lockfile changes. The build job pulls the Git LFS files as CI does and builds with `build:release`, and each platform job downloads that output, with no Git LFS file, and compiles it. The iOS job needs a macOS runner, whose minutes cost more on a private repository: remove the job when that is not worth it. For Android, `build:release` adds `--res --vector-drawables`, and `init` adds `svg2vectordrawable` as a development dependency.
 
 To build one platform per job, give each job a filter, such as `chassis-assets build --platform ios`, and keep its folder, `dist/ios/`. A job that needs the names and not the binaries, such as the source lint alone, can skip the Git LFS files and pass `--allow-lfs-pointers`.
 

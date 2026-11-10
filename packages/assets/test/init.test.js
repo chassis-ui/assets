@@ -74,8 +74,13 @@ describe('chassis-assets init', () => {
     expect(jobs).toContain('--platform android')
     expect(jobs).toContain('- pnpm-lock.yaml')
     expect(jobs).toContain('run: pnpm build:release')
-    expect(jobs.match(/uses: pnpm\/action-setup/g)).toHaveLength(2)
+    expect(jobs.match(/uses: pnpm\/action-setup/g)).toHaveLength(3)
     expect(jobs).not.toMatch(/__[A-Z_]+__/)
+    // One job pulls the Git LFS files and builds; the platform jobs compile its output
+    expect(jobs.match(/ lfs pull\n/g)).toHaveLength(1)
+    expect(jobs.match(/needs: build\n/g)).toHaveLength(2)
+    expect(jobs.match(/uses: actions\/download-artifact@/g)).toHaveLength(2)
+    expect(jobs).toContain('name: native-build')
     const pkg = JSON.parse(both.get('package.json'))
     expect(pkg.scripts['build:release']).toContain('--res --vector-drawables')
     expect(pkg.devDependencies.svg2vectordrawable).toBeDefined()
@@ -165,6 +170,28 @@ describe('chassis-assets init', () => {
       expect(text).not.toContain('__')
     }
     expect(read(pnpm, 'README.md')).toContain('`pnpm build`')
+  })
+
+  test('the workflows pull the Git LFS files with a cache, and keep no credentials', async () => {
+    const files = planFiles({ dir: 'x', apps: { mobile: ['ios', 'android'] } })
+    for (const file of [
+      '.github/workflows/ci.yml',
+      '.github/workflows/release.yml',
+      '.github/workflows/native.yml'
+    ]) {
+      const text = files.get(file)
+      expect(text).not.toContain('lfs: true')
+      expect(text).not.toContain('persist-credentials: true')
+      expect(text).toContain("key: lfs-${{ hashFiles('.lfs-ids') }}")
+      expect(text).toContain('restore-keys: lfs-')
+      // The list of ids is computed before the cache and removed before the build reads the tree
+      expect(text.indexOf('> .lfs-ids')).toBeLessThan(text.indexOf('uses: actions/cache@'))
+      expect(text.indexOf('rm .lfs-ids')).toBeGreaterThan(text.indexOf('uses: actions/cache@'))
+      expect(text).toContain(
+        'git -c "http.$GITHUB_SERVER_URL/.extraheader=AUTHORIZATION: basic $AUTH" lfs pull'
+      )
+      expect(text).not.toMatch(/__[A-Z_]+__/)
+    }
   })
 
   test('--name, --brand and --app set the package and the chassis block', async () => {

@@ -501,3 +501,22 @@ it; an entry with a date only was taken by a session under the maintainer's dele
   and its layers and formats, so the lint and the build agree. A warning and not an error, since
   a repository without `--res` loses nothing, and the build is unchanged: no prefix from the
   folder name, which would rename every image of a subfolder. The maintainer, 2026-11-04.
+- **D53. How do the workflows of `init` fetch the Git LFS files?** Once per job that builds,
+  from a cache. Every download of a Git LFS file counts against the bandwidth of the owner of
+  the repository, 10 GB a month on a free plan, and `lfs: true` downloaded every file in every
+  job: CI, the release and each platform of `native.yml`, about 80 MB a job for the Chassis
+  assets. The CI of this repository, with the same pull in four jobs, used 9 GB of the 10 GB of
+  the organization from 2026-10-01 to 10-09, and the org got GitHub's 90% email.
+  The checkout now leaves pointers, `actions/cache` keeps `.git/lfs` under the hash of the list
+  of the object ids, with `lfs-` as the restore key, and `git lfs pull` downloads only what the
+  restored cache lacks. A run restores the caches of its own branch and of the default branch, so a
+  push to `main` reads those of `main`. The pull passes the token of the run
+  as a header of that one command, as `persist-credentials: false` leaves the clone without one
+  and a private repository needs it. `native.yml` pulls in one Linux job that runs
+  `build:release` and uploads `dist/` without `web/` for a day, and the iOS and Android jobs
+  compile that output, with no Git LFS file: one pull in place of one per platform. Left out:
+  CI skipping a push that also releases, since a push that does not change the version has
+  only CI, and the cache makes the second pull of a release push small. Tried on a shallow
+  clone of the Chassis assets with the objects of a local checkout and one object removed: the
+  pull downloaded that one, and a wrong token in the header was refused. The session, at the
+  request of the maintainer, 2026-11-10.

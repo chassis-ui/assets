@@ -1,8 +1,9 @@
 name: Native
 
 # On a change to the assets: the build of a release, compiled with the tools of each platform, as
-# an app compiles it. A file that the source lint and the build pass can still fail there. Written
-# by `chassis-assets init`, with a job per platform of chassis.build.
+# an app compiles it. A file that the source lint and the build pass can still fail there. One job
+# pulls the Git LFS files and builds, and each platform job compiles its folder of that build, with
+# no Git LFS file. Written by `chassis-assets init`, with a job per platform of chassis.build.
 on:
   push:
     branches: [main]
@@ -24,3 +25,33 @@ permissions:
   contents: read
 
 jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # __LFS_CHECKOUT__
+      # __PNPM_SETUP__
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: __PM__
+
+      - name: Install
+        run: __INSTALL_CI__
+
+      - name: Build
+        run: __RUN__ build:release
+
+      # The folders of the platform jobs, kept for a day
+      - name: Upload the build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-build
+          path: |
+            dist
+            !dist/web
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1

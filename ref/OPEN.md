@@ -20,6 +20,12 @@ of the brands moved to `ref/OPEN.md` of the repository of the Chassis assets wit
   chassis-ui/icons#19, chassis-ui/figma#14, chassis-ui/react#125 and chassis-ui/tokens#30,
   and sinefil.org takes its archive from the Chassis assets, ozgurgunes/sinefil-web#222; then
   the `app/docs` branch of this repository deleted on GitHub once no site pins it.
+- **The Git LFS workflows of D53 in the Chassis assets.** Its `ci.yml`, `release.yml` and
+  `native.yml` still check out with `lfs: true`, about 80 MB a job, and run on `main` and `next`.
+  Take the workflows of `init` there with `init --force --only` once a release of the package has them,
+  keeping its `next` branch and the release group per branch. The new steps were tried on a
+  local clone, not yet on GitHub Actions: check the first runs, that the second run of a push
+  restores the cache, and the Git LFS bandwidth of the organization in its billing.
 - **The choices of D29.** `chassis.ignore` adds names and takes none away, a pattern is a
   name and not a path, a list of `chassis.formats` replaces the rule of a processor, and both
   are read from the configuration without an option. In 0.3.1, and they wait for a

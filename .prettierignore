@@ -9,5 +9,7 @@ packages/assets/test/golden
 packages/assets/test/native/fixture/source
 # Templates: __NAME__ outside a code span is a placeholder, not bold text
 packages/assets/templates/*.md
-# Jobs of native.yml, appended to it: alone they are not a document
+# Jobs of native.yml, appended to it, and the steps of the Git LFS checkout, written into the
+# workflows: alone they are not a document
 packages/assets/templates/workflows/native-*.yml
+packages/assets/templates/workflows/lfs-checkout.yml

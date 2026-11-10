@@ -198,13 +198,15 @@ export function parseApp(spec) {
 }
 
 /**
- * Fill a template: the placeholders, and the line of the pnpm setup step.
+ * Fill a template: the placeholders, and the lines of the Git LFS checkout and the pnpm setup
+ * steps.
  * @param {string} text
  * @param {Record<string, string>} values - By placeholder, without the underscores
  * @returns {string}
  */
 function render(text, values) {
   return text
+    .replace(/^[ \t]*# __LFS_CHECKOUT__\n/gm, () => values.LFS_CHECKOUT)
     .replace(/^[ \t]*# __PNPM_SETUP__\n/m, values.PNPM_SETUP)
     .replace(/__([A-Z_]+?)__/g, (match, key) => (key in values ? values[key] : match))
 }
@@ -244,7 +246,8 @@ export function planFiles(options = {}) {
     RUN: commands.run,
     LOCKFILE: commands.lockfile,
     PM: pm,
-    PNPM_SETUP: commands.setup
+    PNPM_SETUP: commands.setup,
+    LFS_CHECKOUT: fs.readFileSync(path.join(TEMPLATES, 'workflows/lfs-checkout.yml'), 'utf-8')
   }
   const template = (file) => render(fs.readFileSync(path.join(TEMPLATES, file), 'utf-8'), values)
 
@@ -298,7 +301,10 @@ export function planFiles(options = {}) {
     ['.github/workflows/release.yml', template('workflows/release.yml')],
     ...(nativeJobs.length > 0
       ? /** @type {[string, string][]} */ ([
-          ['.github/workflows/native.yml', template('workflows/native.yml') + nativeJobs.join('\n')]
+          [
+            '.github/workflows/native.yml',
+            [template('workflows/native.yml'), ...nativeJobs].join('\n')
+          ]
         ])
       : []),
     [`source/${BRAND_FOLDER}/_shared/other/readme.txt`, template('readme.txt')]
