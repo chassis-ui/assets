@@ -1,23 +1,236 @@
 ---
+/**
+ * The home page of Chassis Assets, composed of the home page sections of `@chassis-ui/docs`.
+ * The copy is that of the Figma design "Assets · Home". A door is one page of the docs with its
+ * real title, and the groups of the doors follow `data/sidebar.yml`.
+ */
+
 import BaseLayout from '@chassis-ui/docs/layouts/BaseLayout.astro'
-import HeroSection from '@components/homepage/HeroSection.astro'
-import IntroSection from '@components/homepage/IntroSection.astro'
-import FeaturesSection from '@components/homepage/FeaturesSection.astro'
-import HowSection from '@components/homepage/HowSection.astro'
-import HomeIcons from '/static/icons/cx-sprite.svg?raw'
+import Cards from '@chassis-ui/docs/sections/Cards.astro'
+import Doors from '@chassis-ui/docs/sections/Doors.astro'
+import Facts from '@chassis-ui/docs/sections/Facts.astro'
+import Hero from '@chassis-ui/docs/sections/Hero.astro'
+import Rows from '@chassis-ui/docs/sections/Rows.astro'
+import Section from '@chassis-ui/docs/sections/Section.astro'
+import Steps from '@chassis-ui/docs/sections/Steps.astro'
+import Icon from '@chassis-ui/docs/shortcodes/Icon.astro'
+import { getConfig, getDocsPath } from '@chassis-ui/docs/site'
+
+const { description, repo, currentVersion } = getConfig()
+const changelog = `${repo}/blob/main/packages/assets/CHANGELOG.md`
+
+const benefits = [
+  {
+    label: 'Brands',
+    title: 'Keep one file until a brand needs its own.',
+    points: [
+      'The default folder holds the files every brand gets.',
+      'A brand folder holds only the files that differ.',
+      'A brand file replaces the default file of the same path.'
+    ]
+  },
+  {
+    label: 'Platforms',
+    title: 'Get the names and folders each platform expects.',
+    points: [
+      'Kebab-case names for the web, snake_case for iOS and Android.',
+      'The @2x and @3x variants go to density folders on Android.',
+      'Each platform gets the font and image formats it can use.'
+    ]
+  },
+  {
+    label: 'Build',
+    title: 'Build one job, or all of them.',
+    points: [
+      'The --brand, --app and --platform options build a part of the output.',
+      'A validator compares the output with the source.',
+      'An analyzer reports sizes and files with the same content.'
+    ]
+  }
+]
+
+const steps = [
+  {
+    name: 'Source to app',
+    stations: [
+      {
+        label: '01 · Save',
+        title: 'Put the files in the source.',
+        body: 'Sort them by brand, app and type. Default files go to every brand.'
+      },
+      {
+        label: '02 · Build',
+        title: 'Run the build.',
+        body: 'The build copies, renames and sorts the files for each platform.'
+      },
+      {
+        label: '03 · Install',
+        title: 'Use the output.',
+        body: 'Each platform, app and brand has its own folder, to copy or to build in CI.'
+      }
+    ]
+  }
+]
+
+const related = [
+  {
+    name: 'Chassis Tokens',
+    icon: 'cx-swatchbook',
+    href: 'https://chassis-ui.com/tokens/',
+    body: 'The colours, type and spacing of each brand, built from one repository in the same way.'
+  },
+  {
+    name: 'Chassis Icons',
+    icon: 'cx-icons',
+    href: 'https://chassis-ui.com/icons/',
+    body: 'The builder of an icon set: a font, a sprite and platform files from SVG files.'
+  },
+  {
+    name: 'Chassis Figma',
+    icon: 'cx-figma',
+    href: 'https://chassis-ui.com/figma/',
+    body: 'The library a designer exports these files from.'
+  }
+]
+
+const facts = [
+  { name: '3 Platforms', detail: 'Web, iOS and Android' },
+  { name: 'Brand Overrides', detail: 'One default, a folder per brand' },
+  { name: 'Build Filters', detail: 'By brand, app and platform' },
+  { name: 'Checks', detail: 'Validator, contract and source lint' }
+]
+
+const doors = [
+  {
+    label: 'Getting started',
+    doors: [
+      {
+        name: 'Welcome to Chassis Assets',
+        href: getDocsPath('/getting-started/introduction/'),
+        body: 'What the build does, and what it leaves alone.'
+      },
+      {
+        name: 'Quick Start',
+        href: getDocsPath('/getting-started/quick-start/'),
+        body: 'Make a repository and run its first build.'
+      },
+      {
+        name: 'Build System',
+        href: getDocsPath('/getting-started/build-system/'),
+        body: 'The commands, the options and the output.'
+      }
+    ]
+  },
+  {
+    label: 'Asset types',
+    doors: [
+      {
+        name: 'Font Assets',
+        href: getDocsPath('/asset-types/fonts/'),
+        body: 'Which font formats go to which platform.'
+      },
+      {
+        name: 'Image Assets',
+        href: getDocsPath('/asset-types/images/'),
+        body: 'Names, resolution variants and formats.'
+      },
+      {
+        name: 'App Icons',
+        href: getDocsPath('/asset-types/app-icons/'),
+        body: 'The icons of the app itself, per platform.'
+      }
+    ]
+  },
+  {
+    label: 'Use in project',
+    doors: [
+      {
+        name: 'Web Applications',
+        href: getDocsPath('/use-in-project/web-applications/'),
+        body: 'Use the web output in a site or an app.'
+      },
+      {
+        name: 'iOS Applications',
+        href: getDocsPath('/use-in-project/ios-applications/'),
+        body: 'Use the iOS output in an Xcode project.'
+      },
+      {
+        name: 'Android Applications',
+        href: getDocsPath('/use-in-project/android-applications/'),
+        body: 'Use the Android output in a Gradle project.'
+      }
+    ]
+  }
+]
 ---
 
-<BaseLayout title="Chassis Assets - Enterprise Asset Distribution System">
-  <!-- Hero Section -->
-  <HeroSection />
-  <hr class="hr container" />
-  <!-- Value Proposition -->
-  <IntroSection />
-  <!-- Key Features -->
-  <FeaturesSection />
-  <!-- How It Works -->
-  <HowSection />
-  <div class="d-none">
-    <Fragment set:html={HomeIcons} />
-  </div>
+<BaseLayout title="Chassis Assets" description={description} navbarContext="alternate">
+  <Hero
+    kicker="Chassis Assets"
+    lead="Chassis Assets copies the files a designer exports into the names, formats and folders of the web, iOS and Android, for every brand and app."
+    command="npx @chassis-ui/assets init acme-assets"
+    illustration="images/illustrations/hero-assets.svg"
+    illustrationLabel="A brand sheet: an app icon, a list of files and icons in several sizes, each on a panel"
+  >
+    <Fragment slot="title">
+      <span class="d-block">Design assets, saved once.</span>{' '}
+      <mark class="d-block">
+        <span class="lg:d-block">Every brand and platform</span>{' '}
+        <span class="lg:d-block">gets its own files.</span>
+      </mark>
+    </Fragment>
+    <Fragment slot="actions">
+      <a class="button primary lg" href={getDocsPath('/getting-started/introduction/')}>
+        <Icon name="book-open-outline" />
+        Getting Started
+      </a>
+      <a class="button alternate lg" href={repo}>
+        <Icon name="github-brand" />
+        View on GitHub
+      </a>
+    </Fragment>
+    <Fragment slot="meta">
+      Currently v{currentVersion}
+      <span aria-hidden="true">&nbsp;/&nbsp;</span>
+      <a href={changelog}>Changes</a>
+    </Fragment>
+  </Hero>
+
+  <Section
+    id="what"
+    eyebrow="What you get"
+    title={['One source tree for every brand.', 'The right files per platform.']}
+    lead="A brand keeps only the files that differ. The build gives each platform the names, formats and folders it expects."
+  >
+    <Rows rows={benefits} />
+  </Section>
+
+  <Section
+    id="how"
+    eyebrow="How it works"
+    title={['From a design export', 'to the folder an app reads.']}
+    lead="One command copies the source into the output of each platform. Nothing is converted or resized on the way."
+  >
+    <Steps stages={steps} />
+  </Section>
+
+  <Section
+    id="works-with"
+    eyebrow="Works with"
+    title={['Assets carry what tokens cannot.', 'Fonts, images and app icons.']}
+    lead="Tokens hold the values and assets hold the files. Both are built once for every brand and every platform."
+  >
+    <Cards cards={related} />
+  </Section>
+
+  <Facts label="Built on" facts={facts} />
+
+  <Section
+    id="docs"
+    eyebrow="Get started"
+    title={['Start with the guide', 'that matches your task.']}
+    lead="Set up an asset repository, read how each type of file is handled, or use the output in the project you already have."
+  >
+    <Doors groups={doors} />
+  </Section>
 </BaseLayout>
