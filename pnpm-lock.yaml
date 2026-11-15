@@ -111,8 +111,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0(@floating-ui/dom@1.8.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(vanilla-calendar-pro@3.4.0)
       '@chassis-ui/docs':
-        specifier: ^0.15.0-next.0
-        version: 0.15.0-next.0(@astrojs/markdown-remark@7.3.4)(@chassis-ui/css@0.15.0(@floating-ui/dom@1.8.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(vanilla-calendar-pro@3.4.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.5.0)(astro@7.4.2(@astrojs/markdown-remark@7.3.4)(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))(autoprefixer@10.6.1(postcss@8.5.31))(html-validate@11.16.2(@vitest/expect@4.1.11)(vitest@5.0.5(@types/node@24.19.0)(vite@8.3.5(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))))(htmlparser2@12.0.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(postcss@8.5.31)(rehype-autolink-headings@7.1.0)(sass@1.105.2)(shiki@4.5.0)(vnu-jar@26.10.12)
+        specifier: ^0.15.0
+        version: 0.15.0(@astrojs/markdown-remark@7.3.4)(@chassis-ui/css@0.15.0(@floating-ui/dom@1.8.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(vanilla-calendar-pro@3.4.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.5.0)(astro@7.4.2(@astrojs/markdown-remark@7.3.4)(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))(autoprefixer@10.6.1(postcss@8.5.31))(html-validate@11.16.2(@vitest/expect@4.1.11)(vitest@5.0.5(@types/node@24.19.0)(vite@8.3.5(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))))(htmlparser2@12.0.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(postcss@8.5.31)(rehype-autolink-headings@7.1.0)(sass@1.105.2)(shiki@4.5.0)(vnu-jar@26.10.12)
       '@chassis-ui/website-icons':
         specifier: ^0.1.0
         version: 0.1.0
@@ -449,8 +449,8 @@ packages:
       tailwindcss:
         optional: true
 
-  '@chassis-ui/docs@0.15.0-next.0':
-    resolution: {integrity: sha512-Ub/aFVG22JhIxAvGHMhlVzgb2h6WgBUOFXXr2ZmojWPfppzOh6LA3B4fdoGj3TY3OISsKjNkF+ch+yHcF8/IBA==}
+  '@chassis-ui/docs@0.15.0':
+    resolution: {integrity: sha512-WfXe9M1tR1MenPnEu7buiXsBvaI3Lluz3JiUezW/DXsskI7bUBs2Mh+uEFHA+j5MszD9S71okWfVUG8hIFvL7A==}
     engines: {node: '>=22.12.0'}
     hasBin: true
     peerDependencies:
@@ -4836,7 +4836,7 @@ snapshots:
     optionalDependencies:
       postcss-prefix-custom-properties: 0.1.0(postcss@8.5.31)
 
-  '@chassis-ui/docs@0.15.0-next.0(@astrojs/markdown-remark@7.3.4)(@chassis-ui/css@0.15.0(@floating-ui/dom@1.8.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(vanilla-calendar-pro@3.4.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.5.0)(astro@7.4.2(@astrojs/markdown-remark@7.3.4)(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))(autoprefixer@10.6.1(postcss@8.5.31))(html-validate@11.16.2(@vitest/expect@4.1.11)(vitest@5.0.5(@types/node@24.19.0)(vite@8.3.5(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))))(htmlparser2@12.0.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(postcss@8.5.31)(rehype-autolink-headings@7.1.0)(sass@1.105.2)(shiki@4.5.0)(vnu-jar@26.10.12)':
+  '@chassis-ui/docs@0.15.0(@astrojs/markdown-remark@7.3.4)(@chassis-ui/css@0.15.0(@floating-ui/dom@1.8.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(vanilla-calendar-pro@3.4.0))(@pagefind/component-ui@1.5.2)(@shikijs/transformers@4.5.0)(astro@7.4.2(@astrojs/markdown-remark@7.3.4)(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))(autoprefixer@10.6.1(postcss@8.5.31))(html-validate@11.16.2(@vitest/expect@4.1.11)(vitest@5.0.5(@types/node@24.19.0)(vite@8.3.5(@types/node@24.19.0)(esbuild@0.28.2)(sass@1.105.2)(yaml@2.9.1))))(htmlparser2@12.0.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(postcss@8.5.31)(rehype-autolink-headings@7.1.0)(sass@1.105.2)(shiki@4.5.0)(vnu-jar@26.10.12)':
     dependencies:
       '@astrojs/markdown-remark': 7.3.4
       '@chassis-ui/css': 0.15.0(@floating-ui/dom@1.8.0)(postcss-prefix-custom-properties@0.1.0(postcss@8.5.31))(vanilla-calendar-pro@3.4.0)
