@@ -43,8 +43,8 @@ const benefits = [
     title: 'Build one job, or all of them.',
     points: [
       'The --brand, --app and --platform options build a part of the output.',
-      'A validator compares the output with the source.',
-      'An analyzer reports sizes and files with the same content.'
+      'Options write iOS asset catalogs, Android vector drawables and WebP or AVIF images.',
+      'A validator and an analyzer check the output, its sizes and duplicate files.'
     ]
   }
 ]
@@ -77,7 +77,7 @@ const related = [
     name: 'Chassis Tokens',
     icon: 'cx-swatchbook',
     href: 'https://chassis-ui.com/tokens/',
-    body: 'The colours, type and spacing of each brand, built from one repository in the same way.'
+    body: 'The colors, type and spacing of each brand, built from one repository in the same way.'
   },
   {
     name: 'Chassis Icons',
@@ -167,7 +167,7 @@ const doors = [
 <BaseLayout title="Chassis Assets" description={description} navbarContext="alternate">
   <Hero
     kicker="Chassis Assets"
-    lead="Chassis Assets copies the files a designer exports into the names, formats and folders of the web, iOS and Android, for every brand and app."
+    lead="Chassis Assets keeps the images, icons and fonts of every brand and app in one source. The build gives each platform the names, formats and folders it expects."
     command="npx @chassis-ui/assets init acme-assets"
     illustration="images/illustrations/hero-assets.svg"
     illustrationLabel="A brand sheet: an app icon, a list of files and icons in several sizes, each on a panel"
@@ -182,7 +182,7 @@ const doors = [
     <Fragment slot="actions">
       <a class="button primary lg" href={getDocsPath('/getting-started/introduction/')}>
         <Icon name="book-open-outline" />
-        Getting Started
+        Get started
       </a>
       <a class="button alternate lg" href={repo}>
         <Icon name="github-brand" />
@@ -209,7 +209,7 @@ const doors = [
     id="how"
     eyebrow="How it works"
     title={['From a design export', 'to the folder an app reads.']}
-    lead="One command copies the source into the output of each platform. Nothing is converted or resized on the way."
+    lead="One command builds the output of each platform. Options can also optimize the images, convert them to WebP and subset the fonts."
   >
     <Steps stages={steps} />
   </Section>
@@ -223,7 +223,7 @@ const doors = [
     <Cards cards={related} />
   </Section>
 
-  <Facts label="Built on" facts={facts} />
+  <Facts label="At a glance" facts={facts} />
 
   <Section
     id="docs"
